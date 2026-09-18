@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>対象者検索</title>
+</head>
+<body>
+
+    <h1>🔍 対象者検索</h1>
+
+    <% if (error) { %>
+        <p style="color:red;"><%= error %></p>
+    <% } %>
+
+    <form action="/search-target/result" method="GET">
+        <label>名前 または ID：</label><br>
+        <input type="text" name="keyword" required><br><br>
+
+        <button type="submit">検索する</button>
+    </form>
+
+    <br>
+    <a href="/dashboard">← ダッシュボードへ戻る</a>
+
+</body>
+</html>
+

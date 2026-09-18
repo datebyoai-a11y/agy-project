@@ -1,0 +1,19 @@
+{
+  "name": "incident-system",
+  "version": "1.0.0",
+  "description": "インシデント管理システム",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.19.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.3.1",
+    "multer": "^2.2.0"
+  }
+}

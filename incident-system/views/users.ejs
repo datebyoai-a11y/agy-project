@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユーザー管理 - インシデント管理システム</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: #e0e7ff;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 📌 固定ヘッダーエリア */
+    .sticky-top-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    header {
+      background: #1e293b;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    header h1 { margin: 0; font-size: 1.1rem; }
+    
+    .top-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+    }
+    .status-chip {
+      background: rgba(255,255,255,0.15);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.25);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .status-chip strong { color: #818cf8; }
+
+    .btn-logout {
+      background: #ef4444; color: white; border: none; padding: 0.25rem 0.6rem; border-radius: 4px;
+      text-decoration: none; font-size: 0.8rem; transition: background 0.2s;
+    }
+    .btn-logout:hover { background: #dc2626; }
+
+    /* ⚙️ 歯車印メニュー */
+    .gear-menu-container {
+      position: relative;
+      display: inline-block;
+    }
+    .btn-gear {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.88rem;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .btn-gear:hover, .btn-gear.active {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    .btn-gear .gear-icon {
+      font-size: 1.15rem;
+      display: inline-block;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .btn-gear:hover .gear-icon, .btn-gear.active .gear-icon {
+      transform: rotate(60deg);
+    }
+    .gear-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 300px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      z-index: 2500;
+      padding: 0.5rem 0;
+      color: #1e293b;
+      animation: gearSlideDown 0.18s ease-out;
+    }
+    .gear-dropdown.show {
+      display: block;
+    }
+    @keyframes gearSlideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .gear-dropdown-header {
+      padding: 0.5rem 1rem 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 0.3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .gear-section-label {
+      padding: 0.45rem 1rem 0.2rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.03em;
+    }
+    .gear-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 1rem;
+      color: #1e293b;
+      text-decoration: none;
+      font-size: 0.86rem;
+      transition: background 0.15s, color 0.15s;
+    }
+    .gear-dropdown-item:hover {
+      background: #f1f5f9;
+      color: #6366f1;
+    }
+    .gear-dropdown-item.active {
+      background: #eef2ff;
+      color: #4f46e5;
+      font-weight: bold;
+      border-left: 3px solid #6366f1;
+    }
+    .gear-dropdown-item .item-icon {
+      font-size: 1.15rem;
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .gear-dropdown-item .item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .gear-dropdown-item .item-title {
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .gear-dropdown-item .item-desc {
+      font-size: 0.72rem;
+      color: #64748b;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .gear-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 0.4rem 0;
+    }
+
+    .nav-tabs {
+      background: #334155;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      overflow-x: auto;
+    }
+    .nav-tab {
+      color: #94a3b8;
+      padding: 0.5rem 0.9rem;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.85rem;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+    }
+    .nav-tab:hover { color: white; }
+    .nav-tab.active {
+      color: white;
+      border-bottom-color: var(--primary);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    .page-title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* 統計パネル */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 1.2rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+    .icon-total { background: #e0e7ff; color: #4f46e5; }
+    .icon-admin { background: #fef3c7; color: #d97706; }
+    .icon-user { background: #dcfce7; color: #15803d; }
+    .stat-info h4 { margin: 0; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-info div { font-size: 1.5rem; font-weight: bold; color: var(--text-main); margin-top: 2px; }
+
+    /* カード・テーブルスタイル */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1rem 1.25rem;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .search-box {
+      position: relative;
+      min-width: 250px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.8rem 0.5rem 2.2rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .search-box input:focus {
+      border-color: var(--primary);
+    }
+    .search-box span {
+      position: absolute;
+      left: 0.7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #64748b; color: white; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+    .btn-outline-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+    .btn-outline-danger:hover { background: var(--danger); color: white; }
+    .btn-outline-primary { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+    .btn-outline-primary:hover { background: var(--primary); color: white; }
+    .btn-outline-warning { background: transparent; border: 1px solid var(--warning); color: #b45309; }
+    .btn-outline-warning:hover { background: var(--warning); color: white; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    td {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    tr:hover td {
+      background-color: #f1f5f9;
+    }
+
+    /* ロールバッジ */
+    .badge-role {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .badge-admin { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-user { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+
+    /* 所属部署バッジ */
+    .badge-dept {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .badge-dept-doctor { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .badge-dept-nurse { background: #fdf2f8; color: #be185d; border-color: #fbcfe8; }
+    .badge-dept-pharmacist { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .badge-dept-radiologist { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+    .badge-dept-rehab { background: #f0fdfa; color: #0f766e; border-color: #99f6e4; }
+    .badge-dept-caregiver { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .badge-dept-dietitian { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .badge-dept-clerk { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+
+    /* 部署フィルターバー */
+    .dept-filter-container {
+      background: #f8fafc;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .dept-filter-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-right: 0.25rem;
+    }
+    .dept-filter-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.3rem 0.7rem;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.2s;
+    }
+    .dept-filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #eef2ff;
+    }
+    .dept-filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
+    }
+    .dept-filter-count {
+      background: rgba(0, 0, 0, 0.08);
+      padding: 0.05rem 0.4rem;
+      border-radius: 10px;
+      font-size: 0.72rem;
+    }
+    .dept-filter-btn.active .dept-filter-count {
+      background: rgba(255, 255, 255, 0.28);
+      color: white;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #6366f1;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+    .user-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-card {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      animation: modalSlide 0.2s ease-out;
+    }
+    @keyframes modalSlide {
+      from { transform: translateY(15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
+    .modal-close {
+      background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);
+    }
+    .modal-close:hover { color: var(--text-main); }
+    .modal-body {
+      padding: 1.25rem;
+    }
+    .modal-footer {
+      padding: 0.9rem 1.25rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text-main);
+    }
+    .form-control {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+
+    /* トースト通知 */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .toast {
+      background: #1e293b;
+      color: white;
+      padding: 0.75rem 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: toastIn 0.3s ease-out;
+    }
+    .toast-success { border-left: 4px solid var(--success); }
+    .toast-error { border-left: 4px solid var(--danger); }
+    @keyframes toastIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 📌 固定ヘッダーエリア -->
+  <div class="sticky-top-header">
+    <header>
+      <h1>インシデント管理システム</h1>
+      
+      <div class="top-status-bar">
+        <div class="status-chip">
+          👤 ログイン中: <strong><%= user %></strong>
+        </div>
+
+        <!-- ⚙️ 右上の歯車印メニュー（その他のメニュー） -->
+        <div class="gear-menu-container">
+          <button id="gearMenuBtn" class="btn-gear" type="button" title="メニューを開く" aria-expanded="false" aria-haspopup="true">
+            <span class="gear-icon">⚙️</span>
+            <span>メニュー</span>
+          </button>
+          <div id="gearDropdown" class="gear-dropdown" role="menu">
+            <div class="gear-dropdown-header">
+              <span>システムメニュー</span>
+              <button type="button" id="gearCloseBtn" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1rem;padding:0;line-height:1;">✕</button>
+            </div>
+
+            <div class="gear-section-label">診療記録・ナレッジ</div>
+            <a href="/target-people" class="gear-dropdown-item">
+              <span class="item-icon">🎯</span>
+              <div class="item-info">
+                <div class="item-title">対象者管理 (初期画面)</div>
+                <div class="item-desc">対象者マスタ登録・個別カルテ移動</div>
+              </div>
+            </a>
+            <a href="/articles" class="gear-dropdown-item">
+              <span class="item-icon">💬</span>
+              <div class="item-info">
+                <div class="item-title">記事・電子カルテ</div>
+                <div class="item-desc">診療記事・各種記録の閲覧・投稿</div>
+              </div>
+            </a>
+            <a href="/articles?order=radiology" class="gear-dropdown-item">
+              <span class="item-icon">🩻</span>
+              <div class="item-info">
+                <div class="item-title">放射線科オーダー</div>
+                <div class="item-desc">X線・CT・MRI等検査指示の発行</div>
+              </div>
+            </a>
+            <a href="/articles?order=iv" class="gear-dropdown-item">
+              <span class="item-icon">💉</span>
+              <div class="item-info">
+                <div class="item-title">点滴・注射オーダー</div>
+                <div class="item-desc">点滴・輸液・注射薬剤の投与指示</div>
+              </div>
+            </a>
+
+            <div class="gear-divider"></div>
+            <div class="gear-section-label">インシデント管理</div>
+            <a href="/dashboard" class="gear-dropdown-item">
+              <span class="item-icon">🚨</span>
+              <div class="item-info">
+                <div class="item-title">インシデント管理ダッシュボード</div>
+                <div class="item-desc">報告状況グラフ・発生状況の集計確認</div>
+              </div>
+            </a>
+            <a href="/incident/list" class="gear-dropdown-item">
+              <span class="item-icon">📋</span>
+              <div class="item-info">
+                <div class="item-title">提出レポート一覧</div>
+                <div class="item-desc">提出済み報告の検索・修正・CSV出力</div>
+              </div>
+            </a>
+            <a href="/incident/report/level0" class="gear-dropdown-item">
+              <span class="item-icon">⚠️</span>
+              <div class="item-info">
+                <div class="item-title">レベル0（ヒヤリハット）入力</div>
+                <div class="item-desc">未遂事例の簡易迅速レポート</div>
+              </div>
+            </a>
+            <a href="/incident/report/level1" class="gear-dropdown-item">
+              <span class="item-info">🚨</span>
+              <div class="item-info">
+                <div class="item-title">レベル1以上 レポート入力</div>
+                <div class="item-desc">患者影響のあるインシデントの詳細報告</div>
+              </div>
+            </a>
+
+            <div class="gear-divider"></div>
+            <div class="gear-section-label">管理・システム設定</div>
+            <a href="/users" class="gear-dropdown-item active">
+              <span class="item-icon">👤</span>
+              <div class="item-info">
+                <div class="item-title">ユーザー管理</div>
+                <div class="item-desc">利用者の参照・追加・権限編集</div>
+              </div>
+            </a>
+            <a href="/api/backup/database" class="gear-dropdown-item" onclick="return confirm('データベース全体のバックアップをダウンロードします。実行しますか？');">
+              <span class="item-icon">💾</span>
+              <div class="item-info">
+                <div class="item-title">DBバックアップ</div>
+                <div class="item-desc">DB全体の復元可能バックアップ取得</div>
+              </div>
+            </a>
+
+            <div class="gear-divider"></div>
+            <a href="/logout" class="gear-dropdown-item" style="color:#ef4444;">
+              <span class="item-icon">🚪</span>
+              <div class="item-info">
+                <div class="item-title">ログアウト</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <a href="/logout" class="btn-logout">ログアウト</a>
+      </div>
+    </header>
+  </div>
+
+  <div class="container">
+    <div class="page-title-bar">
+      <div>
+        <h2 style="margin:0; font-size:1.4rem;">👤 ユーザー管理画面</h2>
+        <p style="margin:0.2rem 0 0; color: var(--text-muted); font-size:0.9rem;">システム利用者の参照・新規追加・権限編集・削除を行います。</p>
+      </div>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <span>＋</span> 新規ユーザー登録
+      </button>
+    </div>
+
+    <!-- 統計パネル -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon icon-total">👥</div>
+        <div class="stat-info">
+          <h4>総ユーザー数</h4>
+          <div id="statTotal"><%= users ? users.length : 0 %> 名</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-admin">👑</div>
+        <div class="stat-info">
+          <h4>管理者ユーザー</h4>
+          <div id="statAdmin"><%= users ? users.filter(u => u.role === 'admin').length : 0 %> 名</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-user">👤</div>
+        <div class="stat-info">
+          <h4>一般ユーザー</h4>
+          <div id="statUser"><%= users ? users.filter(u => u.role !== 'admin').length : 0 %> 名</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ユーザー一覧テーブルカード -->
+    <div class="card">
+      <div class="card-header">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="searchInput" placeholder="ログインID、氏名、部署で検索..." oninput="filterUsers()">
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          表示件数: <strong id="visibleUserCount" style="color: var(--primary);"><%= users ? users.length : 0 %></strong> / <%= users ? users.length : 0 %> 件
+        </div>
+      </div>
+
+      <!-- 所属部署クイックフィルターバー -->
+      <div class="dept-filter-container">
+        <span class="dept-filter-label">所属部署:</span>
+        <button type="button" class="dept-filter-btn active" data-dept="all" onclick="setDeptFilter('all')">
+          すべて <span class="dept-filter-count" id="countDeptAll"><%= users ? users.length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="医師" onclick="setDeptFilter('医師')">
+          🩺 医師 <span class="dept-filter-count" id="countDept-医師"><%= users ? users.filter(u => u.department === '医師').length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="看護師" onclick="setDeptFilter('看護師')">
+          💉 看護師 <span class="dept-filter-count" id="countDept-看護師"><%= users ? users.filter(u => u.department === '看護師').length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="薬剤師" onclick="setDeptFilter('薬剤師')">
+          💊 薬剤師 <span class="dept-filter-count" id="countDept-薬剤師"><%= users ? users.filter(u => u.department === '薬剤師').length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="放射線技師" onclick="setDeptFilter('放射線技師')">
+          🩻 放射線技師 <span class="dept-filter-count" id="countDept-放射線技師"><%= users ? users.filter(u => u.department === '放射線技師').length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="リハビリ" onclick="setDeptFilter('リハビリ')">
+          🏃 リハビリ <span class="dept-filter-count" id="countDept-リハビリ"><%= users ? users.filter(u => u.department && (u.department === 'リハビリ' || u.department.includes('リハビリ') || u.department.includes('療法'))).length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="介護士" onclick="setDeptFilter('介護士')">
+          🤝 介護士 <span class="dept-filter-count" id="countDept-介護士"><%= users ? users.filter(u => u.department === '介護士').length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="栄養士" onclick="setDeptFilter('栄養士')">
+          🥗 栄養士 <span class="dept-filter-count" id="countDept-栄養士"><%= users ? users.filter(u => u.department === '栄養士').length : 0 %></span>
+        </button>
+        <button type="button" class="dept-filter-btn" data-dept="事務" onclick="setDeptFilter('事務')">
+          📋 事務 <span class="dept-filter-count" id="countDept-事務"><%= users ? users.filter(u => u.department === '事務').length : 0 %></span>
+        </button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ユーザー</th>
+              <th>ログインID</th>
+              <th>所属部署</th>
+              <th>ロール (権限)</th>
+              <th>登録日時</th>
+              <th style="text-align: right;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <% if (users && users.length > 0) { %>
+              <% users.forEach(u => { 
+                const deptVal = u.department || '看護師';
+                let deptBadgeCls = '';
+                let deptIcon = '🏢';
+                if (deptVal === '医師') { deptBadgeCls = 'badge-dept-doctor'; deptIcon = '🩺'; }
+                else if (deptVal === '看護師') { deptBadgeCls = 'badge-dept-nurse'; deptIcon = '💉'; }
+                else if (deptVal === '薬剤師') { deptBadgeCls = 'badge-dept-pharmacist'; deptIcon = '💊'; }
+                else if (deptVal === '放射線技師') { deptBadgeCls = 'badge-dept-radiologist'; deptIcon = '🩻'; }
+                else if (deptVal === 'リハビリ' || deptVal.includes('リハビリ') || deptVal.includes('療法')) { deptBadgeCls = 'badge-dept-rehab'; deptIcon = '🏃'; }
+                else if (deptVal === '介護士') { deptBadgeCls = 'badge-dept-caregiver'; deptIcon = '🤝'; }
+                else if (deptVal === '栄養士') { deptBadgeCls = 'badge-dept-dietitian'; deptIcon = '🥗'; }
+                else if (deptVal === '事務') { deptBadgeCls = 'badge-dept-clerk'; deptIcon = '📋'; }
+              %>
+                <tr data-id="<%= u._id %>" data-login-id="<%= u.loginId %>" data-name="<%= u.userName %>" data-dept="<%= deptVal %>" data-role="<%= u.role || 'user' %>">
+                  <td>
+                    <div class="user-meta">
+                      <div class="user-avatar"><%= u.userName ? u.userName.charAt(0) : 'U' %></div>
+                      <div>
+                        <strong style="color: var(--text-main);"><%= u.userName %></strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td><code><%= u.loginId %></code></td>
+                  <td>
+                    <span class="badge-dept <%= deptBadgeCls %>">
+                      <span><%= deptIcon %></span>
+                      <span><%= deptVal %></span>
+                    </span>
+                  </td>
+                  <td>
+                    <% if (u.role === 'admin') { %>
+                      <span class="badge-role badge-admin">👑 管理者</span>
+                    <% } else { %>
+                      <span class="badge-role badge-user">👤 一般</span>
+                    <% } %>
+                  </td>
+                  <td style="color: var(--text-muted); font-size: 0.85rem;">
+                    <%= u.createdAt ? new Date(u.createdAt).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-' %>
+                  </td>
+                  <td style="text-align: right;">
+                    <div class="action-btns" style="justify-content: flex-end;">
+                      <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('<%= u._id %>', '<%= u.userName %>', '<%= deptVal %>', '<%= u.role || 'user' %>')">
+                        ✏️ 編集
+                      </button>
+                      <button class="btn btn-sm btn-outline-warning" onclick="openPasswordModal('<%= u._id %>', '<%= u.userName %>')">
+                        🔑 PW変更
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteUser('<%= u._id %>', '<%= u.userName %>', '<%= u.loginId %>')">
+                        🗑️ 削除
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr id="emptyRow">
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  登録されているユーザーはありません。
+                </td>
+              </tr>
+            <% } %>
+            <tr id="noResultsRow" style="display: none;">
+              <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                条件に一致するユーザーは見つかりませんでした。
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. 新規ユーザー追加モーダル -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>👤 新規ユーザー追加</h3>
+        <button class="modal-close" onclick="closeAddModal()">&times;</button>
+      </div>
+      <form id="addForm" onsubmit="handleAddUser(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="addLoginId">ログインID <span style="color:red;">*</span></label>
+            <input type="text" id="addLoginId" class="form-control" placeholder="例: tanaka.taro" required>
+          </div>
+          <div class="form-group">
+            <label for="addUserName">ユーザー氏名 <span style="color:red;">*</span></label>
+            <input type="text" id="addUserName" class="form-control" placeholder="例: 田中 太郎" required>
+          </div>
+          <div class="form-group">
+            <label for="addPassword">パスワード <span style="color:red;">*</span></label>
+            <input type="password" id="addPassword" class="form-control" placeholder="パスワードを入力" required>
+          </div>
+          <div class="form-group">
+            <label for="addDepartment">所属部署 <span style="color:red;">*</span></label>
+            <select id="addDepartment" class="form-control" required>
+              <option value="医師">🩺 医師</option>
+              <option value="看護師" selected>💉 看護師</option>
+              <option value="薬剤師">💊 薬剤師</option>
+              <option value="放射線技師">🩻 放射線技師</option>
+              <option value="リハビリ">🏃 リハビリ</option>
+              <option value="介護士">🤝 介護士</option>
+              <option value="栄養士">🥗 栄養士</option>
+              <option value="事務">📋 事務</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="addRole">ロール (権限)</label>
+            <select id="addRole" class="form-control">
+              <option value="user" selected>👤 一般ユーザー</option>
+              <option value="admin">👑 システム管理者</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddModal()">キャンセル</button>
+          <button type="submit" class="btn btn-primary">登録する</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. ユーザー編集モーダル -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>✏️ ユーザー情報編集</h3>
+        <button class="modal-close" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="editForm" onsubmit="handleEditUser(event)">
+        <input type="hidden" id="editUserId">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editUserName">ユーザー氏名 <span style="color:red;">*</span></label>
+            <input type="text" id="editUserName" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="editDepartment">所属部署 <span style="color:red;">*</span></label>
+            <select id="editDepartment" class="form-control" required>
+              <option value="医師">🩺 医師</option>
+              <option value="看護師">💉 看護師</option>
+              <option value="薬剤師">💊 薬剤師</option>
+              <option value="放射線技師">🩻 放射線技師</option>
+              <option value="リハビリ">🏃 リハビリ</option>
+              <option value="介護士">🤝 介護士</option>
+              <option value="栄養士">🥗 栄養士</option>
+              <option value="事務">📋 事務</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editRole">ロール (権限)</label>
+            <select id="editRole" class="form-control">
+              <option value="user">👤 一般ユーザー</option>
+              <option value="admin">👑 システム管理者</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">キャンセル</button>
+          <button type="submit" class="btn btn-primary">保存する</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. パスワード変更モーダル -->
+  <div class="modal-overlay" id="passwordModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🔑 パスワード変更</h3>
+        <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+      </div>
+      <form id="passwordForm" onsubmit="handlePasswordChange(event)">
+        <input type="hidden" id="passUserId">
+        <div class="modal-body">
+          <p style="font-size:0.9rem; color: var(--text-muted); margin-top:0;" id="passUserLabel"></p>
+          <div class="form-group">
+            <label for="newPassword">新しいパスワード <span style="color:red;">*</span></label>
+            <input type="password" id="newPassword" class="form-control" placeholder="新しいパスワードを入力" required minlength="4">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">キャンセル</button>
+          <button type="submit" class="btn btn-primary">更新する</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- トースト通知コンテナ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // トースト通知関数
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3500);
+    }
+
+    // フィルタリング処理用状態
+    let currentDeptFilter = 'all';
+
+    function setDeptFilter(dept) {
+      currentDeptFilter = dept;
+      document.querySelectorAll('.dept-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-dept') === dept) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      filterUsers();
+    }
+
+    // フィルタリング処理
+    function filterUsers() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const rows = document.querySelectorAll('#userTableBody tr[data-id]');
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const loginId = row.getAttribute('data-login-id').toLowerCase();
+        const name = row.getAttribute('data-name').toLowerCase();
+        const dept = row.getAttribute('data-dept') || '';
+
+        const matchesQuery = !query || loginId.includes(query) || name.includes(query) || dept.toLowerCase().includes(query);
+        const matchesDept = (currentDeptFilter === 'all') || (dept === currentDeptFilter) || (currentDeptFilter === 'リハビリ' && (dept.includes('リハビリ') || dept.includes('療法')));
+
+        if (matchesQuery && matchesDept) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      document.getElementById('visibleUserCount').textContent = visibleCount;
+      const noResultsRow = document.getElementById('noResultsRow');
+      if (noResultsRow) {
+        noResultsRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+      }
+    }
+
+    // 統計の更新
+    function updateStats() {
+      const rows = Array.from(document.querySelectorAll('#userTableBody tr[data-id]'));
+      const total = rows.length;
+      const admin = rows.filter(r => r.getAttribute('data-role') === 'admin').length;
+      const user = total - admin;
+
+      document.getElementById('statTotal').textContent = total + ' 名';
+      document.getElementById('statAdmin').textContent = admin + ' 名';
+      document.getElementById('statUser').textContent = user + ' 名';
+      
+      const allCountEl = document.getElementById('countDeptAll');
+      if (allCountEl) allCountEl.textContent = total;
+
+      const depts = ['医師', '看護師', '薬剤師', '放射線技師', 'リハビリ', '介護士', '栄養士', '事務'];
+      depts.forEach(dept => {
+        const count = rows.filter(r => {
+          const d = r.getAttribute('data-dept') || '';
+          return (d === dept) || (dept === 'リハビリ' && (d.includes('リハビリ') || d.includes('療法')));
+        }).length;
+        const countEl = document.getElementById(`countDept-${dept}`);
+        if (countEl) countEl.textContent = count;
+      });
+
+      filterUsers();
+    }
+
+    // --- モーダル制御 ---
+    function openAddModal() {
+      document.getElementById('addForm').reset();
+      document.getElementById('addDepartment').value = '看護師';
+      document.getElementById('addModal').classList.add('active');
+    }
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('active');
+    }
+
+    function openEditModal(id, name, dept, role) {
+      document.getElementById('editUserId').value = id;
+      document.getElementById('editUserName').value = name;
+      
+      const deptSelect = document.getElementById('editDepartment');
+      deptSelect.value = dept;
+      // 既存の古い部署名（「一般病棟」等）が選択肢にない場合のフォールバック
+      if (dept && deptSelect.value !== dept) {
+        const opt = new Option(`🏢 ${dept}`, dept);
+        deptSelect.add(opt);
+        deptSelect.value = dept;
+      }
+      
+      document.getElementById('editRole').value = role;
+      document.getElementById('editModal').classList.add('active');
+    }
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
+
+    function openPasswordModal(id, name) {
+      document.getElementById('passUserId').value = id;
+      document.getElementById('passUserLabel').textContent = `対象ユーザー: ${name}`;
+      document.getElementById('passwordForm').reset();
+      document.getElementById('passwordModal').classList.add('active');
+    }
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.remove('active');
+    }
+
+    // --- AJAX処理 ---
+
+    // 1. ユーザー追加
+    async function handleAddUser(e) {
+      e.preventDefault();
+      const loginId = document.getElementById('addLoginId').value.trim();
+      const userName = document.getElementById('addUserName').value.trim();
+      const password = document.getElementById('addPassword').value;
+      const department = document.getElementById('addDepartment').value;
+      const role = document.getElementById('addRole').value;
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ loginId, userName, password, department, role })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          closeAddModal();
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast(data.message || '追加に失敗しました', 'error');
+        }
+      } catch (err) {
+        showToast('通信エラーが発生しました', 'error');
+      }
+    }
+
+    // 2. ユーザー編集
+    async function handleEditUser(e) {
+      e.preventDefault();
+      const id = document.getElementById('editUserId').value;
+      const userName = document.getElementById('editUserName').value.trim();
+      const department = document.getElementById('editDepartment').value;
+      const role = document.getElementById('editRole').value;
+
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userName, department, role })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          closeEditModal();
+          setTimeout(() => location.reload(), 800);
+        } else {
+          showToast(data.message || '更新に失敗しました', 'error');
+        }
+      } catch (err) {
+        showToast('通信エラーが発生しました', 'error');
+      }
+    }
+
+    // 3. パスワード変更
+    async function handlePasswordChange(e) {
+      e.preventDefault();
+      const id = document.getElementById('passUserId').value;
+      const newPassword = document.getElementById('newPassword').value;
+
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newPassword })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast('パスワードを正常に変更しました', 'success');
+          closePasswordModal();
+        } else {
+          showToast(data.message || '変更に失敗しました', 'error');
+        }
+      } catch (err) {
+        showToast('通信エラーが発生しました', 'error');
+      }
+    }
+
+    // 4. ユーザー削除
+    async function confirmDeleteUser(id, name, loginId) {
+      if (!confirm(`ユーザー [${name} (${loginId})] を本当に削除しますか？\nこの操作は取り消せません。`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showToast(data.message, 'success');
+          const row = document.querySelector(`tr[data-id="${id}"]`);
+          if (row) row.remove();
+          updateStats();
+        } else {
+          showToast(data.message || '削除に失敗しました', 'error');
+        }
+      } catch (err) {
+        showToast('通信エラーが発生しました', 'error');
+      }
+    }
+
+    // ⚙️ 歯車印メニューの開閉制御
+    (function initGearMenu() {
+      const gearBtn = document.getElementById('gearMenuBtn');
+      const gearDropdown = document.getElementById('gearDropdown');
+      const gearCloseBtn = document.getElementById('gearCloseBtn');
+
+      if (!gearBtn || !gearDropdown) return;
+
+      function toggleGearMenu(e) {
+        if (e) e.stopPropagation();
+        const isOpen = gearDropdown.classList.toggle('show');
+        gearBtn.classList.toggle('active', isOpen);
+        gearBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      }
+
+      function closeGearMenu() {
+        gearDropdown.classList.remove('show');
+        gearBtn.classList.remove('active');
+        gearBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      gearBtn.addEventListener('click', toggleGearMenu);
+      if (gearCloseBtn) {
+        gearCloseBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeGearMenu();
+        });
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!gearDropdown.contains(e.target) && !gearBtn.contains(e.target)) {
+          closeGearMenu();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && gearDropdown.classList.contains('show')) {
+          closeGearMenu();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

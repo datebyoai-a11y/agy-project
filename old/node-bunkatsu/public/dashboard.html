@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ドラッグ可能な三分割</title>
+
+  <!-- Split.js CDN -->
+  <script src="https://unpkg.com/split.js/dist/split.min.js"></script>
+
+  <style>
+    body, html {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 上下分割のコンテナ */
+    #vertical {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 上のバー */
+    #top {
+      background: #ccc;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      padding: 5px 5px;
+    }
+
+    /* 下の左右分割 */
+    #horizontal {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+
+    /* 左メニュー */
+    #left {
+      background: #f7f7f7;
+      border-right: 1px solid #ccc;
+      padding: 5px;
+      overflow: auto;
+    }
+
+    /* メイン画面 */
+    #right {
+      flex: 1;
+      padding: 5px;
+      overflow: auto;
+    }
+
+    /* Split.js のバー */
+    .gutter {
+      background: #ccc;
+      background-repeat: no-repeat;
+      background-position: 10%;
+    }
+    .gutter.gutter-horizontal {
+      cursor: col-resize;
+      width: 3px;
+    }
+    .gutter.gutter-vertical {
+      cursor: row-resize;
+      height: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="vertical">
+    <div id="top">
+      <button>ボタン1</button>
+      <button>ボタン2</button>
+      <button>ボタン3</button>
+    </div>
+
+    <div id="horizontal">
+      <div id="left">
+        <p>メニュー1</p>
+        <p>メニュー2</p>
+        <p>メニュー3</p>
+      </div>
+
+      <div id="right">
+        <h2>メイン画面</h2>
+        <p>ここに内容を表示</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 上下分割（上：固定気味、下：可変）
+    Split(['#top', '#horizontal'], {
+      direction: 'vertical',
+      sizes: [10, 90],   // 上10%、下90%
+      minSize: [50, 200] // 上の最小高さ50px
+    });
+
+    // 左右分割（左：細いメニュー、右：メイン）
+    Split(['#left', '#right'], {
+      direction: 'horizontal',
+      sizes: [20, 80],   // 左20%、右80%
+      minSize: [150, 300]
+    });
+  </script>
+
+</body>
+</html>
+

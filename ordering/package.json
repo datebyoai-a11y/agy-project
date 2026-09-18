@@ -1,0 +1,30 @@
+{
+  "name": "ordering-practice-system",
+  "version": "1.0.0",
+  "description": "オーダリングソフトの雛形練習用システム（送信側サーバー & 受信側サーバー）",
+  "main": "start.js",
+  "scripts": {
+    "start": "USE_HTTPS=true node start.js",
+    "start:http": "USE_HTTPS=false node start.js",
+    "start:https": "USE_HTTPS=true node start.js",
+    "sender": "USE_HTTPS=true node sender/server.js",
+    "sender:http": "USE_HTTPS=false node sender/server.js",
+    "receiver": "USE_HTTPS=true node receiver/server.js",
+    "receiver:http": "USE_HTTPS=false node receiver/server.js",
+    "gen-certs": "node scripts/generate-certs.js",
+    "import-medicines": "python3 scripts/import-medicines.py"
+  },
+  "keywords": [
+    "ordering",
+    "hospital",
+    "medical",
+    "sender",
+    "receiver"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "ejs": "^3.1.10"
+  }
+}

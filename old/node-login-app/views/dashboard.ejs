@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ダッシュボード</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .article-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .article-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #28a745;
+        }
+
+        .btn-secondary:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1>📋 ダッシュボード</h1>
+        <div>
+            <a class="btn" href="/logout">ログアウト</a>
+        </div>
+    </div>
+
+<div class="filter-box">
+    <form method="GET" action="/dashboard">
+        <label for="targetId">🎯 対象者で絞り込み：</label>
+        <select name="targetId" id="targetId" onchange="this.form.submit()">
+            <option value="">全て表示</option>
+
+            <% targets.forEach(t => { %>
+                <option value="<%= t.targetId %>" 
+                    <%= selectedTargetId === t.targetId ? "selected" : "" %>>
+                    <%= t.name %>（ID: <%= t.targetId %>）
+                </option>
+            <% }) %>
+        </select>
+    </form>
+
+    <br>
+    <a class="btn-secondary" href="/add-target">＋ 対象者を追加</a>
+    <br><br>
+    <a class="btn" href="/search-target">🔍 対象者を検索</a>
+</div>
+
+    <div class="filter-box">
+        <form method="GET" action="/dashboard">
+            <label for="targetId">🎯 対象者で絞り込み：</label>
+            <select name="targetId" id="targetId" onchange="this.form.submit()">
+                <option value="">全て表示</option>
+
+                <% targets.forEach(t => { %>
+                    <option value="<%= t.targetId %>" 
+                        <%= selectedTargetId === t.targetId ? "selected" : "" %>>
+                        <%= t.name %>（ID: <%= t.targetId %>）
+                    </option>
+                <% }) %>
+            </select>
+        </form>
+
+        <br>
+        <a class="btn-secondary" href="/add-target">＋ 対象者を追加</a>
+    </div>
+
+    <h2>📝 記事一覧</h2>
+
+    <% if (articles.length === 0) { %>
+        <p>記事がありません。</p>
+    <% } %>
+
+    <% articles.forEach(a => { %>
+        <div class="article-card">
+            <div class="article-meta">
+                🎯 対象者: <%= a.targetName %>（ID: <%= a.targetId %>）
+                <br>
+                    投稿日: <%= a.createdAt.toLocaleString() %>
+            </div>
+                <div>
+                    <%= a.content %>
+                </div>
+        </div>
+    <% }) %>
+
+    <br>
+    <h2>🖊 新規記事投稿</h2>
+
+    <form action="/post-article" method="POST">
+        <label>対象者：</label><br>
+        <select name="targetId" required>
+            <% targets.forEach(t => { %>
+                <option value="<%= t.targetId %>"><%= t.name %></option>
+            <% }) %>
+        </select>
+        <br><br>
+
+        <label>内容：</label><br>
+        <textarea name="content" rows="4" cols="40" required></textarea><br><br>
+
+        <button class="btn" type="submit">投稿する</button>
+    </form>
+
+</body>
+</html>
+

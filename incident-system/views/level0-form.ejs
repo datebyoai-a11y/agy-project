@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レベル0 インシデントレポート入力</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; }
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="date"], input[type="datetime-local"], select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0069d9; }
+    </style>
+</head>
+<body>
+    <h1>⚠️ レベル0 インシデントレポート入力</h1>
+    
+    <form action="/api/incident/level0" method="POST">
+        <!-- 提出者情報エリア -->
+        <fieldset style="margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px;">提出者情報</legend>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label>氏名：</label>
+                    <input type="text" name="reporterName" placeholder="山田 太郎" required>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>経験年数：</label>
+                    <select name="reporterExperienceYears" required>
+                        <option value="">選択</option>
+                        <option value="1年未満">1年未満</option>
+                        <option value="1〜3年">1〜3年</option>
+                        <option value="3〜5年">3〜5年</option>
+                        <option value="5〜10年">5〜10年</option>
+                        <option value="10年以上">10年以上</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>職種：</label>
+                    <select name="reporterJobTitle" required>
+                        <option value="">選択してください</option>
+                        <option value="看護師">看護師</option>
+                        <option value="医師">医師</option>
+                        <option value="薬剤師">薬剤師</option>
+                        <option value="放射線技師">放射線技師</option>
+                        <option value="リハビリ">リハビリ</option>
+                        <option value="介護職">介護職</option>
+                        <option value="事務職">事務職</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>所属部署：</label>
+                    <input type="text" name="reporterDepartment" placeholder="例: 東病棟3階" required>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- 対象者情報（マスタ連動） -->
+        <fieldset style="margin-bottom: 20px; border: 1px solid #cbd5e1; padding: 15px; border-radius: 4px; background-color: #f8fafc;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #1e293b;">対象者情報（マスタ連動）</legend>
+            <div class="form-group">
+                <label>対象者マスタより選択：</label>
+                <select name="targetPersonRef">
+                    <option value="">未指定 / 直接入力</option>
+                    <% if (typeof targetPeople !== 'undefined' && targetPeople) { %>
+                        <% targetPeople.forEach(tp => { %>
+                            <option value="<%= tp._id %>">[<%= tp.customId %>] <%= tp.name %> (<%= tp.department %>)</option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+        </fieldset>
+
+        <!-- 提出年月日 -->
+        <div class="form-group">
+            <label>提出年月日：</label>
+            <input type="date" id="reportDate" name="reportDate" required>
+        </div>
+
+        <!-- ⭕ 修正後：発生日時を日付と時刻に分離 -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>発生年月日：</label>
+                <input type="date" name="occurrenceDateOnly" required>
+            </div>
+            <div class="form-group">
+                <label>発生時刻：</label>
+                <input type="time" name="occurrenceTimeOnly" required>
+            </div>
+            <div class="form-group">
+                <label>発生場所：</label>
+                <input type="text" name="location" placeholder="例: A病棟 2階" required>
+            </div>
+        </div>
+
+
+        <!-- 状況・内容 -->
+        <div class="form-group">
+            <label>状況・内容（ヒヤリハット）：</label>
+            <textarea name="description" rows="4" placeholder="どのような事象が発生したか、詳細を記入してください。" required></textarea>
+        </div>
+
+<!-- 👇 【追加】発生原因（環境的因子の選択エリア） -->
+<fieldset style="margin-bottom: 20px; border: 1px solid #bce8f1; background-color: #d9edf7; padding: 15px; border-radius: 4px;">
+    <legend style="font-weight: bold; padding: 0 5px; color: #31708f;">発生原因（環境的要因）</legend>
+    <div class="form-row">
+        <div class="form-group">
+            <label>環境的主要因（必須）：</label>
+            <select name="environmentalPrimary" required>
+                <option value="">選択してください</option>
+                <option value="整理整頓・清掃不備（床の濡れ、障害物など）">整理整頓・清掃不備（床の濡れ、障害物など）</option>
+                <option value="照明・視認性不良（暗さ、見えにくさなど）">照明・視認性不良（暗さ、見えにくさなど）</option>
+                <option value="機器・設備の配置（動線の問題、狭さなど）">機器・設備の配置（動線の問題、狭さなど）</option>
+                <option value="騒音・中断（アラーム音、他者からの割り込みなど）">騒音・中断（アラーム音、他者からの割り込みなど）</option>
+                <option value="システム・ハードウェア異常（バグ、故障など）">システム・ハードウェア異常（バグ、故障など）</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>環境的副要因（任意）：</label>
+            <select name="environmentalSecondary">
+                <option value="">なし（または選択してください）</option>
+                <option value="整理整頓・清掃不備（床の濡れ、障害物など）">整理整頓・清掃不備（床の濡れ、障害物など）</option>
+                <option value="照明・視認性不良（暗さ、見えにくさなど）">照明・視認性不良（暗さ、見えにくさなど）</option>
+                <option value="機器・設備の配置（動線の問題、狭さなど）">機器・設備の配置（動線の問題、狭さなど）</option>
+                <option value="騒音・中断（アラーム音、他者からの割り込みなど）">騒音・中断（アラーム音、他者からの割り込みなど）</option>
+                <option value="システム・ハードウェア異常（バグ、故障など）">システム・ハードウェア異常（バグ、故障など）</option>
+                <option value="その他">その他</option>
+            </select>
+        </div>
+    </div>
+</fieldset>
+
+%>
+
+        <!-- 👇 【追加】結果（影響度）の選択肢 -->
+        <div class="form-group">
+            <label>結果（対象・患者への影響）：</label>
+            <select name="resultStatus" required>
+                <option value="">選択してください</option>
+                <option value="影響なし（エラーが届く前に気付いた）">影響なし（エラーが届く前に気付いた）</option>
+                <option value="影響なし（届いたが実害はなかった）">影響なし（届いたが実害はなかった）</option>
+                <option value="処置や治療は不要だった">処置や治療は不要だった</option>
+                <option value="一時的な処置・治療が必要となった">一時的な処置・治療が必要となった</option>
+            </select>
+        </div>
+
+        <!-- 👇 【追加】当面の対策・再発防止策 -->
+        <div class="form-group">
+            <label>今後の対策・再発防止策：</label>
+            <textarea name="countermeasure" rows="4" placeholder="今回の事象を受けて、今後どのような改善や対策を行いますか？" required></textarea>
+        </div>
+        <button type="submit">レポートを提出</button>
+    </form>
+
+    <br>
+    <p><a href="/">メニュー画面に戻る</a></p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T');
+            document.getElementById('reportDate').value = today[0];
+        });
+    </script>
+</body>
+</html>
+

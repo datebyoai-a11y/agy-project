@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インシデント管理システム - メニュー</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 2rem; background-color: #f8fafc; color: #1e293b; max-width: 900px; margin: 0 auto; }
+        h1 { border-bottom: 3px solid #2563eb; padding-bottom: 0.5rem; }
+        .user-bar {
+            background-color: #e2e8f0;
+            padding: 12px 20px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .btn-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
+        .btn-card {
+            display: block;
+            padding: 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .btn-card h3 { margin: 0 0 8px 0; font-size: 1.2rem; }
+        .btn-card p { margin: 0; font-size: 0.85rem; font-weight: normal; opacity: 0.9; }
+
+        .bg-dashboard { background-color: #2563eb; }
+        .bg-articles { background-color: #0284c7; }
+        .bg-targets { background-color: #0d9488; }
+        .bg-users { background-color: #6366f1; }
+        .bg-level0 { background-color: #16a34a; }
+        .bg-level1 { background-color: #dc2626; }
+        .bg-radiology { background-color: #8b5cf6; }
+        .bg-iv { background-color: #059669; }
+        .bg-list { background-color: #475569; }
+        .btn-logout { background-color: #ef4444; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <h1>インシデント管理システム</h1>
+    <% if (user) { %>
+    <div class="user-bar">
+        <span>👤 現在のログイン担当者: <strong><%= user.name %></strong> さん (ID: <%= user.id %>)</span>
+        <a href="/logout" class="btn-logout">ログアウト</a>
+    </div>
+    <% } %>
+
+    <h2>機能を選択してください</h2>
+    <div class="btn-container">
+        <a href="/dashboard" class="btn-card bg-dashboard">
+            <h3>🚨 インシデント管理</h3>
+            <p>インシデント報告一覧およびダッシュボードの確認</p>
+        </a>
+        <a href="/articles" class="btn-card bg-articles">
+            <h3>💬 記事</h3>
+            <p>ナレッジシェア・申し送り事項・各種指示オーダーの投稿と閲覧</p>
+        </a>
+        <a href="/target-people" class="btn-card bg-targets">
+            <h3>🎯 対象者管理</h3>
+            <p>対象者マスタの登録・限定申し送り画面への即時移動</p>
+        </a>
+        <a href="/users" class="btn-card bg-users">
+            <h3>👤 ユーザー管理</h3>
+            <p>利用者のアカウント参照・追加・権限編集・削除</p>
+        </a>
+        <a href="/incident/report/level0" class="btn-card bg-level0">
+            <h3>⚠️ レベル0 入力</h3>
+            <p>ヒヤリハット（レベル0）レポートの入力</p>
+        </a>
+        <a href="/incident/report/level1" class="btn-card bg-level1">
+            <h3>🚨 レベル1以上 入力</h3>
+            <p>インシデント（レベル1〜）レポートの入力</p>
+        </a>
+        <a href="/articles?order=radiology" class="btn-card bg-radiology">
+            <h3>🩻 放射線科オーダー</h3>
+            <p>X線・CT・MRI等の放射線検査指示の発行・外部連携</p>
+        </a>
+        <a href="/articles?order=iv" class="btn-card bg-iv">
+            <h3>💉 点滴・注射オーダー</h3>
+            <p>輸液・注射薬剤の投与指示の発行・外部連携</p>
+        </a>
+        <a href="/incident/list" class="btn-card bg-list">
+            <h3>📋 提出データ一覧</h3>
+            <p>提出済みレポートの検索・修正・CSV出力</p>
+        </a>
+        <a href="/api/backup/database" class="btn-card" style="background-color: #7c3aed;" onclick="return confirm('データベース全体のバックアップをダウンロードします。機密情報を含むため、安全に保管してください。実行しますか？');">
+            <h3>💾 DBバックアップ</h3>
+            <p>データベース全体を復元可能な圧縮ファイルで保存（管理者専用）</p>
+        </a>
+        <div class="btn-card" style="background-color: #b45309;">
+            <h3>♻️ DBリストア</h3>
+            <p>バックアップからデータベースを復元（管理者専用）</p>
+            <form action="/api/backup/database/restore" method="post" enctype="multipart/form-data" style="margin-top:12px;" onsubmit="return confirm('現在のデータをバックアップで置き換えます。復元直前のDBバックアップも作成します。実行しますか？');">
+                <input type="file" name="backupFile" accept=".archive.gz" required style="display:block; width:100%; margin-bottom:8px; color:white;">
+                <button type="submit" style="background:#fff; color:#92400e; border:0; border-radius:4px; padding:7px 12px; font-weight:bold; cursor:pointer;">バックアップから復元</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

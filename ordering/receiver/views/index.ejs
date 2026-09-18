@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オーダリング【受信側】部門システム モニター</title>
+  <style>
+    :root {
+      --primary: #059669;
+      --primary-hover: #047857;
+      --bg-dark: #0f172a;
+      --card-bg: #ffffff;
+      --selected-bg: #e0f2fe;
+      --selected-border: #0284c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    header {
+      background: #064e3b;
+      color: white;
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .header-badge {
+      background: #10b981;
+      color: white;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: bold;
+    }
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.82rem;
+    }
+    .header-links a {
+      color: #a7f3d0;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .header-links a:hover { text-decoration: underline; }
+
+    /* メインコンテナ */
+    .container {
+      flex: 1;
+      width: 100%;
+      padding: 0.6rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      overflow: hidden;
+    }
+
+    /* ツールバー & フィルター */
+    .toolbar-card {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      flex-shrink: 0;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 0.25rem 0.6rem;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: #059669;
+      color: white;
+      border-color: #047857;
+    }
+    .status-count-badge {
+      background: rgba(0,0,0,0.08);
+      padding: 0.05rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      margin-left: 0.2rem;
+    }
+
+    /* =========================================================
+       縦2列（左右スプリット）レイアウト & ドラッグスプリッター
+       ========================================================= */
+    .split-layout {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 左列: オーダー一覧 (行を多数とるコンパクト表示) */
+    .left-column {
+      flex: 0 0 54%;
+      min-width: 280px;
+      max-width: calc(100% - 280px);
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 左右境界スプリッター (ドラッグ移動ハンドル) */
+    .split-resizer {
+      flex: 0 0 9px;
+      background: #f1f5f9;
+      cursor: col-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: none;
+      z-index: 20;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      transition: background-color 0.15s;
+    }
+    .split-resizer:hover,
+    .split-resizer.is-resizing {
+      background: #bae6fd;
+    }
+    .split-resizer-handle {
+      width: 3px;
+      height: 36px;
+      border-left: 1px solid #94a3b8;
+      border-right: 1px solid #94a3b8;
+      border-radius: 1px;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .split-resizer:hover .split-resizer-handle,
+    .split-resizer.is-resizing .split-resizer-handle {
+      border-color: #0284c7;
+      background-color: #0284c7;
+    }
+
+    body.is-resizing-split {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+    body.is-resizing-split * {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+    .pane-header {
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.45rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #334155;
+      flex-shrink: 0;
+    }
+    .table-scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    /* オーダー一覧テーブル: 行高さをスリム化して多数行を俯瞰 */
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      text-align: left;
+      table-layout: fixed;
+    }
+    .orders-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 2px solid #cbd5e1;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      user-select: none;
+    }
+    .orders-table td {
+      padding: 0.35rem 0.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.25;
+    }
+    .orders-table tr.order-row {
+      cursor: pointer;
+      transition: background-color 0.1s;
+    }
+    .orders-table tr.order-row:hover {
+      background-color: #f1f5f9;
+    }
+
+    /* 選択中の行（ハイライト表示） */
+    .orders-table tr.order-row.selected-row {
+      background-color: var(--selected-bg) !important;
+      outline: 2px solid var(--selected-border);
+      outline-offset: -2px;
+      font-weight: 600;
+    }
+    .orders-table tr.order-row.selected-row td:first-child {
+      border-left: 5px solid var(--selected-border) !important;
+    }
+
+    /* 優先度別行アクセント */
+    .order-row.priority-STAT td:first-child { border-left: 4px solid #dc2626; }
+    .order-row.priority-URGENT td:first-child { border-left: 4px solid #ea580c; }
+    .order-row.priority-ROUTINE td:first-child { border-left: 4px solid #94a3b8; }
+    .order-row.status-COMPLETED { opacity: 0.75; }
+
+    /* バッジ類 */
+    .priority-badge {
+      display: inline-block;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.68rem;
+      font-weight: bold;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .priority-badge.STAT { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
+    .priority-badge.URGENT { background: #ffedd5; color: #ea580c; border: 1px solid #fdba74; }
+    .priority-badge.ROUTINE { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+    .time-cell {
+      font-family: monospace;
+      font-size: 0.74rem;
+      color: #64748b;
+    }
+    .order-id-cell {
+      font-family: monospace;
+      font-size: 0.74rem;
+      font-weight: bold;
+      color: #334155;
+    }
+    .badge-type {
+      font-size: 0.68rem;
+      font-weight: bold;
+      padding: 0.12rem 0.4rem;
+      border-radius: 3px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .badge-type.IV { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .badge-type.PRESCRIPTION { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-type.RADIOLOGY { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+    .badge-type.LAB_EXAM { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-type.REHAB { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+    .badge-type.MEAL { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+
+    .patient-cell {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .patient-name {
+      font-weight: bold;
+      color: #0f172a;
+    }
+    .patient-meta {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-left: 0.2rem;
+    }
+    .doctor-cell {
+      color: #334155;
+      font-size: 0.75rem;
+    }
+
+    /* 指示詳細（ホバーで表示・1行コンパクト） */
+    .details-hover-cell {
+      color: #0369a1;
+      cursor: help;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      overflow: hidden;
+    }
+    .details-hover-cell .summary-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .details-hover-cell:hover .summary-text {
+      color: #0284c7;
+      text-decoration: underline;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.12rem 0.38rem;
+      border-radius: 3px;
+      font-weight: bold;
+      font-size: 0.68rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .status-badge.RECEIVED { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .status-badge.ACCEPTED { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .status-badge.IN_PROGRESS { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+    .status-badge.COMPLETED { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+    /* =========================================================
+       右列: 選択オーダーの詳細パネル
+       ========================================================= */
+    .right-column {
+      flex: 1;
+      min-width: 280px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .right-pane-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: #64748b;
+      text-align: center;
+    }
+    .right-pane-placeholder .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .right-pane-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.9rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    /* 右ペイン内の各セクション */
+    .detail-top-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .detail-title-group h2 {
+      font-size: 1.05rem;
+      color: #0f172a;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .detail-meta-line {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* アクションボタンバー */
+    .action-bar {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      border: none;
+      padding: 0.35rem 0.75rem;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s;
+    }
+    .btn-accept { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .btn-accept:hover { background: #fde68a; }
+    .btn-complete { background: #10b981; color: white; border: 1px solid #059669; }
+    .btn-complete:hover { background: #059669; }
+    .btn-rx-print { background: #e0f2fe; color: #0284c7; border: 1px solid #7dd3fc; }
+    .btn-rx-print:hover { background: #0284c7; color: white; }
+
+    .detail-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 0.75rem 0.9rem;
+    }
+    .detail-section-title {
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #334155;
+      margin-bottom: 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .detail-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 0.8rem;
+      font-size: 0.8rem;
+    }
+    .detail-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .field-label {
+      color: #64748b;
+      font-size: 0.72rem;
+      margin-bottom: 0.1rem;
+    }
+    .field-value {
+      font-weight: bold;
+      color: #0f172a;
+      word-break: break-word;
+    }
+
+    /* 薬剤タグ・バッジ */
+    .med-inline-badges {
+      display: inline-flex;
+      gap: 0.2rem;
+      align-items: center;
+    }
+    .med-tag {
+      display: inline-block;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      white-space: nowrap;
+      line-height: 1.15;
+    }
+    .med-tag-ok { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .med-tag-warn { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .med-tag-ng { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .med-tag-blue { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+    .med-pharmacy-alert {
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      border-left: 4px solid #ea580c;
+      border-radius: 4px;
+      padding: 0.45rem 0.65rem;
+      margin-top: 0.4rem;
+      font-size: 0.75rem;
+      color: #9a3412;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    /* タイムライン */
+    .timeline-item {
+      padding: 0.3rem 0;
+      border-bottom: 1px dashed #e2e8f0;
+      font-size: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      color: #475569;
+    }
+    .timeline-item:last-child { border-bottom: none; }
+
+    /* =========================================================
+       リッチ・浮動ホバーツールチップ
+       ========================================================= */
+    #customHoverTooltip {
+      position: fixed;
+      display: none;
+      z-index: 9999;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 0.65rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      line-height: 1.45;
+      max-width: 420px;
+      pointer-events: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border: 1px solid #334155;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* =========================================================
+       処方箋 A4 印刷モーダル & スタイル
+       ========================================================= */
+    .prescription-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+    .prescription-modal-wrapper {
+      background: #f8fafc;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      border: 1px solid #cbd5e1;
+    }
+    .rx-preview-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .btn-print-action {
+      background: #059669;
+      color: white;
+      border: 1px solid #047857;
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 2px 5px rgba(5,150,105,0.25);
+    }
+    .btn-print-action:hover { background: #047857; }
+    .btn-close-print {
+      background: white;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 0.9rem;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* A4 処方箋シート (日本の処方箋様式) */
+    .prescription-sheet {
+      background: #ffffff;
+      border: 2px solid #1e293b;
+      padding: 1.5rem 1.75rem;
+      color: #0f172a;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    }
+    .rx-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .rx-header-left { width: 32%; }
+    .rx-institution-title { font-size: 1.05rem; font-weight: 800; }
+    .rx-institution-info { font-size: 0.72rem; color: #334155; line-height: 1.4; margin-top: 0.2rem; }
+    .rx-header-center { text-align: center; flex: 1; }
+    .rx-main-title { font-size: 1.8rem; font-weight: 900; letter-spacing: 12px; text-indent: 12px; margin-bottom: 0.2rem; }
+    .rx-type-sub { font-size: 0.85rem; color: #475569; font-weight: bold; }
+    .rx-header-right { width: 32%; display: flex; justify-content: flex-end; }
+    .rx-date-table { border-collapse: collapse; font-size: 0.75rem; border: 1px solid #0f172a; width: 100%; }
+    .rx-date-table th, .rx-date-table td { border: 1px solid #0f172a; padding: 0.25rem 0.45rem; }
+    .rx-date-table th { background: #f8fafc; font-weight: bold; color: #334155; width: 38%; }
+    .rx-date-table td { font-weight: bold; }
+
+    .rx-meta-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .rx-box-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; border: 1px solid #0f172a; }
+    .rx-box-table th { background: #f8fafc; border: 1px solid #0f172a; padding: 0.35rem 0.5rem; font-weight: bold; color: #334155; }
+    .rx-box-table td { border: 1px solid #0f172a; padding: 0.35rem 0.5rem; vertical-align: middle; }
+    .rx-stamp-box { width: 65px; text-align: center; background: #fafafa; }
+    .rx-stamp-circle {
+      width: 52px; height: 52px; border: 2px solid #dc2626; border-radius: 50%;
+      margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #dc2626; line-height: 1.1;
+    }
+    .rx-body-section { border: 1px solid #0f172a; margin-bottom: 0.75rem; }
+    .rx-section-bar { background: #0f172a; color: white; font-weight: bold; font-size: 0.82rem; padding: 0.3rem 0.6rem; display: flex; align-items: center; }
+    .rx-medicines-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .rx-medicines-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 0.4rem 0.5rem; font-weight: bold; color: #334155; font-size: 0.75rem; }
+    .rx-medicines-table td { border: 1px solid #e2e8f0; padding: 0.5rem 0.6rem; vertical-align: middle; }
+    .rx-medicines-table tr.rx-row:nth-child(even) { background-color: #f8fafc; }
+
+    .rx-remarks-section { border: 1px solid #0f172a; margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; min-height: 48px; }
+    .rx-remarks-header { font-size: 0.74rem; font-weight: bold; color: #475569; margin-bottom: 0.2rem; }
+    .rx-remarks-body { font-size: 0.82rem; color: #1e293b; white-space: pre-wrap; }
+
+    .rx-footer-grid { border: 1px solid #0f172a; }
+    .rx-dispense-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .rx-dispense-table th { border: 1px solid #0f172a; padding: 0.35rem 0.5rem; font-weight: bold; color: #334155; }
+    .rx-dispense-table td { border: 1px solid #0f172a; padding: 0.35rem 0.5rem; }
+    .rx-stamp-cell { text-align: center; height: 56px; vertical-align: middle; background: #fafafa; }
+    .rx-stamp-placeholder {
+      width: 46px; height: 46px; border: 1px dashed #cbd5e1; border-radius: 4px;
+      margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; color: #94a3b8;
+    }
+
+    /* 印刷用 */
+    @media print {
+      @page { size: A4 portrait; margin: 10mm 12mm; }
+      body * { visibility: hidden !important; }
+      #prescriptionModal, #prescriptionModal * { visibility: visible !important; }
+      #prescriptionModal {
+        position: absolute !important; left: 0 !important; top: 0 !important;
+        width: 100% !important; height: auto !important; background: transparent !important;
+        padding: 0 !important; margin: 0 !important; display: block !important;
+      }
+      .prescription-modal-wrapper {
+        box-shadow: none !important; border: none !important; padding: 0 !important;
+        width: 100% !important; max-width: 100% !important; background: transparent !important;
+      }
+      .no-print { display: none !important; }
+      .prescription-sheet {
+        border: 2px solid #000 !important; box-shadow: none !important;
+        padding: 6mm 8mm !important; margin: 0 !important; width: 100% !important;
+      }
+      .rx-stamp-circle { border-color: #dc2626 !important; color: #dc2626 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rx-section-bar { background: #000 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .rx-box-table th, .rx-box-table td, .rx-date-table th, .rx-date-table td,
+      .rx-medicines-table th, .rx-medicines-table td, .rx-dispense-table th, .rx-dispense-table td {
+        border-color: #000 !important;
+      }
+    }
+
+    /* レスポンシブ対応（画面が極端に狭い場合） */
+    @media (max-width: 1024px) {
+      .split-layout {
+        flex-direction: column;
+      }
+      .left-column {
+        flex: 0 0 45%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-title">
+      <span>🏥</span>
+      <span>オーダリングシステム【受信側】部門モニター</span>
+      <span class="header-badge">PORT <%= port %> (Receiver)</span>
+      <% if (typeof isHttps !== 'undefined' && isHttps) { %>
+        <span class="header-badge" style="background:#10b981; color:white;">🔒 HTTPS 暗号化</span>
+      <% } else { %>
+        <span class="header-badge" style="background:#64748b; color:white;">🔓 HTTP 平文</span>
+      <% } %>
+    </div>
+    <div class="header-links">
+      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="_blank">🚀 送信側を開く</a>
+      <a href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles" target="_blank">📋 電子カルテ(Port 3000)</a>
+      <button type="button" onclick="clearAllOrders()" style="background:#dc2626; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
+        🧹 履歴クリア
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- フィルターツールバー -->
+    <div class="toolbar-card">
+      <div class="filter-group">
+        <span style="font-size:0.8rem; font-weight:bold; color:#475569;">部門・種別:</span>
+        <button type="button" class="filter-btn active" onclick="filterType('ALL', this)">全部門 <span class="status-count-badge" id="countAll"><%= orders.length %></span></button>
+        <button type="button" class="filter-btn" onclick="filterType('PRESCRIPTION', this)">💊 薬剤部 (処方)</button>
+        <button type="button" class="filter-btn" onclick="filterType('IV', this)">💉 処置室/病棟 (注射)</button>
+        <button type="button" class="filter-btn" onclick="filterType('RADIOLOGY', this)">🩻 放射線科 (CT/透視/X線)</button>
+        <button type="button" class="filter-btn" onclick="filterType('LAB_EXAM', this)">🔬 検査部 (生理/検体)</button>
+        <button type="button" class="filter-btn" onclick="filterType('REHAB', this)">🏃 リハビリ科</button>
+        <button type="button" class="filter-btn" onclick="filterType('MEAL', this)">🍱 栄養管理室</button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.78rem; color:#64748b;">
+        <label style="display:flex; align-items:center; gap:0.25rem; cursor:pointer;">
+          <input type="checkbox" id="autoPollToggle" checked>
+          <span>🔄 3秒自動更新</span>
+        </label>
+        <button type="button" onclick="loadOrdersList()" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:0.22rem 0.55rem; border-radius:4px; font-size:0.76rem; font-weight:bold; cursor:pointer;">
+          更新
+        </button>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         縦2列 スプリットビュー (ドラッグで境界調整可能)
+         ======================================================= -->
+    <div class="split-layout" id="splitLayout">
+      <!-- 左列: オーダー一覧テーブル (行を多数とるスリム設計) -->
+      <div class="left-column" id="leftColumn">
+        <div class="pane-header">
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span>📥 受信オーダー一覧</span>
+            <span style="font-size:0.72rem; color:#64748b;">(行クリックで右側に詳細表示 / 指示詳細はホバーで全文)</span>
+          </div>
+          <span style="font-size:0.72rem; color:#64748b;" id="listCountSummary">表示: <%= orders.length %>件</span>
+        </div>
+
+        <div class="table-scroll-area">
+          <table class="orders-table" id="ordersTable">
+            <colgroup>
+              <col style="width: 54px;">
+              <col style="width: 68px;">
+              <col style="width: 110px;">
+              <col style="width: 65px;">
+              <col style="width: 110px;">
+              <col style="width: 80px;">
+              <col style="width: auto;">
+              <col style="width: 65px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th style="text-align: center;">優先度</th>
+                <th>受信時刻</th>
+                <th>オーダーID</th>
+                <th>種別</th>
+                <th>患者情報</th>
+                <th>指示医</th>
+                <th>指示詳細 (💬ホバーで表示)</th>
+                <th style="text-align: center;">状態</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- JSで初期化・動的レンダリング -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 左右境界線スプリッター (ドラッグで移動) -->
+      <div class="split-resizer" id="splitResizer" title="左右にドラッグして境界幅を調整 (ダブルクリックで初期幅に戻す)">
+        <div class="split-resizer-handle"></div>
+      </div>
+
+      <!-- 右列: 選択オーダーの詳細パネル -->
+      <div class="right-column" id="rightColumn">
+        <!-- 未選択時のプレースホルダー -->
+        <div id="rightPaneEmpty" class="right-pane-placeholder" style="display: none;">
+          <div class="icon">👈</div>
+          <p style="font-weight: bold; font-size: 0.95rem; color: #475569;">オーダーを選択してください</p>
+          <p style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.25rem;">左側の一覧をクリックすると、ここにオーダーの詳細・マスタ情報・操作ボタンが表示されます。</p>
+        </div>
+
+        <!-- 選択中のオーダー詳細コンテンツ -->
+        <div id="rightPaneContent" class="right-pane-content" style="display: none;">
+          <!-- 動的注入 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ホバー時に表示するリッチポップオーバーツールチップ -->
+  <div id="customHoverTooltip"></div>
+
+  <!-- 処方箋プレビュー & A4印刷モーダル -->
+  <div id="prescriptionModal" class="modal-overlay prescription-modal-overlay" onclick="closePrescriptionModal(event)">
+    <div class="modal-content prescription-modal-wrapper" onclick="event.stopPropagation()">
+      <div class="no-print rx-preview-toolbar">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <span style="font-size:1.4rem;">🖨️</span>
+          <div>
+            <div style="font-weight:bold; font-size:1.05rem; color:#0f172a;">処方箋 A4印刷プレビュー</div>
+            <div style="font-size:0.75rem; color:#64748b;">日本の標準医療処方箋様式（様式第二号準拠）</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <button type="button" class="btn-print-action" onclick="printPrescriptionSheet()">
+            <span>🖨️</span>
+            <span>今すぐ印刷 (A4)</span>
+          </button>
+          <button type="button" class="btn-close-print" onclick="closePrescriptionModal()">
+            ✕ 閉じる
+          </button>
+        </div>
+      </div>
+
+      <!-- A4 処方箋 用紙エリア -->
+      <div class="prescription-sheet" id="prescriptionPrintSheet">
+        <div class="rx-header">
+          <div class="rx-header-left">
+            <div class="rx-institution-title">医療法人 社団 交雄会 だて病院</div>
+            <div class="rx-institution-info">
+              〒052-0024 北海道伊達市鹿島町20-1<br>
+              TEL: 0142-23-2211 / FAX: 0142-23-2212<br>
+              保険医療機関コード: 01-1-0520024
+            </div>
+          </div>
+          <div class="rx-header-center">
+            <h1 class="rx-main-title">処　方　箋</h1>
+            <div class="rx-type-sub" id="printRxTypeSub">(院内処方箋 / 定期処方)</div>
+          </div>
+          <div class="rx-header-right">
+            <table class="rx-date-table">
+              <tr>
+                <th>交付年月日</th>
+                <td id="printIssueDate">2026年 09月 15日</td>
+              </tr>
+              <tr>
+                <th>有効期間</th>
+                <td id="printValidDate">交付の日を含め4日以内<br>(2026年 09月 18日まで)</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="rx-meta-grid">
+          <table class="rx-box-table rx-patient-table">
+            <tr>
+              <th style="width:18%;">患者番号</th>
+              <td style="width:32%; font-family:monospace; font-weight:bold;" id="printPatientId">PT001</td>
+              <th style="width:18%;">受診科/病棟</th>
+              <td style="width:32%;" id="printPatientDept">内科 / 3階病棟</td>
+            </tr>
+            <tr>
+              <th>ふりがな</th>
+              <td colspan="3" id="printPatientKana" style="font-size:0.75rem; color:#475569;">やまだ たろう</td>
+            </tr>
+            <tr>
+              <th>患者氏名</th>
+              <td colspan="2" style="font-size:1.15rem; font-weight:bold;" id="printPatientName">山田 太郎 殿</td>
+              <td style="text-align:center; font-weight:bold;">
+                <span id="printPatientGender">男</span> / 
+                <span id="printPatientAge">45歳</span>
+              </td>
+            </tr>
+            <tr>
+              <th>生年月日</th>
+              <td id="printPatientBirthDate">1981年04月15日 生</td>
+              <th>保険種別</th>
+              <td id="printPatientInsurance">社保 (本人)</td>
+            </tr>
+          </table>
+
+          <table class="rx-box-table rx-doctor-table">
+            <tr>
+              <th style="width:30%;">処方医師名</th>
+              <td id="printDoctorName" style="font-weight:bold; font-size:1rem;">田中 一郎</td>
+              <td rowspan="2" class="rx-stamp-box">
+                <div class="rx-stamp-circle">
+                  <span style="font-size:0.62rem;">医師印</span>
+                  <span id="printDoctorStampName" style="font-weight:bold; font-size:0.82rem;">田中</span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>診療科名</th>
+              <td id="printDoctorDept">総合内科</td>
+            </tr>
+            <tr>
+              <th>オーダーID</th>
+              <td colspan="2" style="font-family:monospace; font-size:0.75rem;" id="printOrderId">ORD-PRESCRIPTION-...</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="rx-body-section">
+          <div class="rx-section-bar">
+            <span>【 処　方 (Rp.) 】</span>
+            <span style="font-size:0.72rem; font-weight:normal; margin-left:auto;">※調剤上の注意事項・粉砕指示・用法用量を確認のこと</span>
+          </div>
+          <table class="rx-medicines-table">
+            <thead>
+              <tr>
+                <th style="width: 42px; text-align:center;">Rp</th>
+                <th>薬品名・規格・一般名</th>
+                <th style="width: 175px;">用法・用量</th>
+                <th style="width: 80px; text-align:center;">日数 / 回数</th>
+                <th style="width: 80px; text-align:right;">調剤数量</th>
+                <th style="width: 135px;">調剤指示 / 粉砕</th>
+              </tr>
+            </thead>
+            <tbody id="printMedicinesTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="rx-remarks-section">
+          <div class="rx-remarks-header">【 備考・指示医自由記載事項 】</div>
+          <div class="rx-remarks-body" id="printRemarksBody">特記なし</div>
+        </div>
+
+        <div class="rx-footer-grid">
+          <table class="rx-dispense-table">
+            <tr>
+              <th rowspan="2" style="width: 130px; text-align:center; background:#f8fafc;">
+                調剤済記録<br><span style="font-size:0.65rem; font-weight:normal;">(薬剤部 / 保険薬局)</span>
+              </th>
+              <th style="width: 95px; text-align:center;">調剤者</th>
+              <th style="width: 95px; text-align:center;">鑑査者</th>
+              <th style="width: 95px; text-align:center;">受領印/患者確認</th>
+              <th style="text-align:left; padding-left:0.75rem;">調剤年月日 / 薬局特記事項</th>
+            </tr>
+            <tr>
+              <td class="rx-stamp-cell"><div class="rx-stamp-placeholder">調剤</div></td>
+              <td class="rx-stamp-cell"><div class="rx-stamp-placeholder">鑑査</div></td>
+              <td class="rx-stamp-cell"><div class="rx-stamp-placeholder">受領</div></td>
+              <td style="vertical-align:top; font-size:0.75rem; color:#475569; padding:0.4rem 0.6rem; line-height:1.5;">
+                調剤実施日: 2026年　月　日<br>
+                後発医薬品への変更: 可 / 不可
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // サーバーから渡された初期データ
+    let currentOrders = <%- JSON.stringify(orders) %>;
+    let currentFilterType = 'ALL';
+    let selectedOrderId = null;
+    let pollInterval = null;
+
+    // ヘルパー: 1行要約テキスト作成
+    function getOrderSummaryJs(order) {
+      const details = order.details || {};
+      const type = order.orderType;
+      if (type === 'PRESCRIPTION') {
+        const parts = [];
+        if (details.prescriptionType) parts.push('[' + details.prescriptionType + ']');
+        if (details.deptType) parts.push('[' + details.deptType + ']');
+        if (details.medicines && Array.isArray(details.medicines) && details.medicines.length > 0) {
+          const medParts = details.medicines.map(m => {
+            let s = 'Rp' + (m.rp || '') + ': ' + (m.medicine || '薬剤未定');
+            if (m.dosage) s += ' ' + m.dosage;
+            if (m.days) s += ' ×' + m.days + '日分';
+            if (m.quantity) s += ' [' + m.quantity + ']';
+            if (m.instruction) s += ' (' + m.instruction + ')';
+            return s;
+          });
+          parts.push(medParts.join(' / '));
+        } else {
+          if (details.medicine) parts.push(details.medicine);
+          if (details.dosage || details.dose) parts.push(details.dosage || details.dose);
+          if (details.days) parts.push(details.days + '日分');
+        }
+        if (details.remarks) parts.push('📝' + details.remarks);
+        return parts.join(' | ') || '処方指示';
+      } else if (type === 'IV') {
+        const parts = [];
+        if (details.route) parts.push('[' + details.route + ']');
+        if (details.medicine) parts.push(details.medicine);
+        if (details.rate) parts.push('速度:' + details.rate);
+        if (details.scheduleDays) parts.push('期間:' + details.scheduleDays);
+        if (details.pharmacistChecked) parts.push('鑑査済');
+        if (details.remarks) parts.push('📝' + details.remarks);
+        return parts.join(' | ') || '注射指示';
+      } else if (type === 'RADIOLOGY') {
+        const parts = [];
+        if (details.formName) parts.push(details.formName);
+        if (details.subType === 'XRAY' || details.formName === '診療Ｘ線照射録') {
+          if (details.xraySites) parts.push(details.xraySites);
+          else if (details.examType) parts.push(details.examType);
+          if (details.isPortable) parts.push('ポータブル:' + (details.portable || '病室'));
+          if (details.technician) parts.push('技師:' + details.technician);
+        } else {
+          if (details.examType) parts.push(details.examType);
+          if (details.contrast) parts.push('[' + details.contrast + ']');
+          if (details.dynamic) parts.push('(' + details.dynamic + ')');
+          if (details.items) parts.push(details.items);
+        }
+        if (details.purpose) parts.push('目的:' + details.purpose);
+        if (details.remarks && details.remarks !== details.purpose) parts.push('📝' + details.remarks);
+        return parts.join(' | ') || '放射線検査指示';
+      } else if (type === 'LAB_EXAM') {
+        const parts = [];
+        if (details.formName) parts.push(details.formName);
+        if (details.items || details.testName || details.category) parts.push(details.items || details.testName || details.category);
+        if (details.sample || details.sampleType) parts.push('検体:' + (details.sample || details.sampleType));
+        if (details.purpose) parts.push('目的:' + details.purpose);
+        if (details.remarks && details.remarks !== details.purpose) parts.push('📝' + details.remarks);
+        return parts.join(' | ') || '検査指示';
+      } else if (type === 'REHAB') {
+        const parts = [];
+        if (details.therapyTypes) parts.push(details.therapyTypes);
+        if (details.goals) parts.push('目標:' + details.goals);
+        if (details.diagnoses && details.diagnoses.length > 0) {
+          parts.push('診断:' + details.diagnoses.map(d => d.name).join('、'));
+        }
+        if (details.contraindications) parts.push('⚠️禁忌:' + details.contraindications);
+        return parts.join(' | ') || 'リハビリテーション指示';
+      } else if (type === 'MEAL') {
+        const parts = [];
+        if (details.mealType) parts.push(details.mealType);
+        if (details.timing) parts.push('(' + details.timing + ')');
+        if (details.stapleFood || details.sideDish) parts.push('主副:' + (details.stapleFood || '米飯') + '/' + (details.sideDish || '常菜'));
+        if (details.allergies) parts.push('アレルギー:' + details.allergies);
+        return parts.join(' | ') || '食事指示';
+      }
+      if (typeof details === 'object' && details !== null) {
+        return Object.entries(details).map(([k, v]) => `${k}: ${v}`).join(' | ');
+      }
+      return String(details || '');
+    }
+
+    // ヘルパー: ホバー用ツールチップ全文テキスト作成
+    function getOrderTooltipJs(order) {
+      const details = order.details || {};
+      const type = order.orderType;
+      let text = '';
+      if (type === 'IV') {
+        text = `【💉 注射指示書】\n投与経路: ${details.route || 'DIV'}\n薬剤名: ${details.medicine || '未設定'}\n速度・滴下: ${details.rate || '指示通り'}\n期間・頻度: ${details.scheduleDays || '指示通り'}\n薬剤師鑑査: ${details.pharmacistChecked ? '確認済' : '未'}\n自由記載: ${details.remarks || '特記なし'}`;
+      } else if (type === 'RADIOLOGY') {
+        if (details.subType === 'XRAY' || details.formName === '診療Ｘ線照射録') {
+          text = `【🩻 ${details.formName || '診療Ｘ線照射録'}】\n部位・方向: ${details.xraySites || details.examType || '-'}\n撮影場所: ${details.portable || '一般撮影室'}\n担当技師: ${details.technician || '技師'}\n撮影条件: ${details.conditions || '-'}\n媒体/取込: ${details.media || '-'}\n目的・特記: ${details.remarks || '特記なし'}`;
+        } else {
+          text = `【🩻 ${details.formName || '放射線科検査'}】\n検査種別: ${details.examType || '一般撮影'}\n区分: ${details.contrast || '単純'} ${details.dynamic ? '(' + details.dynamic + ')' : ''}\n部位: ${details.parts || details.examType || '-'}\n使用薬剤: ${details.medications || details.medication || 'なし'}\n撮影条件: ${details.conditions || '-'}\n目的・臨床所見: ${details.purpose || '精査'}\n自由記載: ${details.remarks || '特記なし'}`;
+        }
+      } else if (type === 'LAB_EXAM') {
+        text = `【🔬 ${details.formName || '検査部指示'}】\n検査項目: ${details.items || details.testName || '検体検査'}\n検体: ${details.sample || details.sampleType || '血液'}\n予定: ${details.schedule || '指示通り'}\n目的・臨床情報: ${details.purpose || '精査'}\n自由記載: ${details.remarks || '特記なし'}`;
+      } else if (type === 'REHAB') {
+        const diagStr = details.diagnoses ? details.diagnoses.map(d => d.name + (d.onsetDate ? ' (発症:' + d.onsetDate + ')' : '')).join(' / ') : '';
+        text = `【🏃 リハビリテーション指示書】\n場所: ${details.location || '病室/リハ室'}\n指示区分: ${details.therapyTypes || 'PT/OT'}\n診断名: ${diagStr || '未記入'}\n治療目的: ${details.goals || '運動機能改善'}\n物理療法: ${details.physicals || 'なし'}\n⚠️禁忌・注意事項: ${details.contraindications || '特記なし'}\n自由記載: ${details.remarks || '特記なし'}`;
+      } else if (type === 'MEAL') {
+        text = `【🍱 栄養管理室 食事指示】\n食種: ${details.mealType || '常食'}\n区分: ${details.timing || '毎食'}\n主食/副食: ${details.stapleFood || '米飯'} / ${details.sideDish || '常菜'}\nアレルギー: ${details.allergies || 'なし'}\n自由記載: ${details.remarks || '特記なし'}`;
+      } else if (type === 'PRESCRIPTION') {
+        let medLines = '';
+        if (details.medicines && Array.isArray(details.medicines) && details.medicines.length > 0) {
+          medLines = details.medicines.map(m => {
+            let line = `【Rp ${m.rp}】 ${m.medicine || ''}\n  用法用量: ${m.dosage || ''}\n  日数/数量: ${m.days ? m.days + '日分' : ''} / ${m.quantity || ''}\n  指示: ${m.instruction || 'なし'}`;
+            if (m.medicineMaster) {
+              line += `\n  マスタ情報: 粉砕[${m.medicineMaster.crushOk || '-'}] 懸濁[${m.medicineMaster.suspensionOk || '-'}] ${m.medicineMaster.pharmacyComment ? '⚠️' + m.medicineMaster.pharmacyComment : ''}`;
+            }
+            return line;
+          }).join('\n');
+        } else {
+          medLines = `処方薬: ${details.medicine || '処方箋指示'}\n用法用量: ${details.dosage || details.dose || '指示通り'}\n日数: ${details.days || '7'}日分`;
+        }
+        text = `【💊 処方指示】\n処方区分: ${details.prescriptionType || '定期'} (${details.deptType || '院内'})\n${medLines}\n自由記載: ${details.remarks || '特記なし'}`;
+      } else {
+        text = JSON.stringify(details, null, 2);
+      }
+
+      if (order.medicineMaster) {
+        const m = order.medicineMaster;
+        text += `\n\n【💊 代表薬品マスタ情報】\n・薬品名: ${m.name}\n・一般名: ${m.genericName || '-'}\n・薬効: ${m.therapeuticCategoryMajor || ''}\n・粉砕: ${m.crushOk || '-'} / 懸濁: ${m.suspensionOk || '-'}`;
+        if (m.pharmacyComment) {
+          text += `\n・⚠️調剤注意: ${m.pharmacyComment}`;
+        }
+      }
+      return text;
+    }
+
+    // 薬剤バッジ作成 (コンパクト)
+    function getMedBadgesJs(order) {
+      if (order.orderType === 'PRESCRIPTION' && order.details && order.details.medicines && order.details.medicines.length > 0) {
+        const meds = order.details.medicines;
+        let hasCrushNg = false;
+        let hasWarn = false;
+        meds.forEach(m => {
+          if (m.medicineMaster) {
+            if (m.medicineMaster.crushOk === '×') hasCrushNg = true;
+            if (m.medicineMaster.pharmacyComment) hasWarn = true;
+          }
+        });
+        let html = '<span class="med-inline-badges">';
+        html += `<span class="med-tag med-tag-blue">${meds.length}剤</span>`;
+        if (hasCrushNg) html += '<span class="med-tag med-tag-ng">粉砕不可</span>';
+        if (hasWarn) html += '<span class="med-tag med-tag-warn">注意</span>';
+        html += '</span>';
+        return html;
+      }
+      if (!order.medicineMaster) return '';
+      const m = order.medicineMaster;
+      let html = '<span class="med-inline-badges">';
+      if (m.crushOk === '×') html += '<span class="med-tag med-tag-ng">粉砕不可</span>';
+      if (m.pharmacyComment) html += '<span class="med-tag med-tag-warn">注意</span>';
+      html += '</span>';
+      return html;
+    }
+
+    function getPriorityBadgeJs(priority) {
+      if (priority === 'STAT') return '<span class="priority-badge STAT">🚨至急</span>';
+      if (priority === 'URGENT') return '<span class="priority-badge URGENT">⚡早急</span>';
+      return '<span class="priority-badge ROUTINE">通常</span>';
+    }
+
+    function getTypeBadgeJs(type) {
+      const labels = {
+        PRESCRIPTION: '💊処方',
+        IV: '💉注射',
+        RADIOLOGY: '🩻放射線',
+        LAB_EXAM: '🔬検査',
+        REHAB: '🏃リハビリ',
+        MEAL: '🍱食事'
+      };
+      return `<span class="badge-type ${type}">${labels[type] || type}</span>`;
+    }
+
+    function getStatusBadgeJs(status) {
+      if (status === 'RECEIVED') return '<span class="status-badge RECEIVED">📥受信</span>';
+      if (status === 'ACCEPTED') return '<span class="status-badge ACCEPTED">🟡受付</span>';
+      if (status === 'IN_PROGRESS') return '<span class="status-badge IN_PROGRESS">🔵実施中</span>';
+      if (status === 'COMPLETED') return '<span class="status-badge COMPLETED">✅完了</span>';
+      return `<span class="status-badge">${status}</span>`;
+    }
+
+    function formatTimeJs(isoStr) {
+      if (!isoStr) return '--:--';
+      const d = new Date(isoStr);
+      const now = new Date();
+      const isSameDay = d.toDateString() === now.toDateString();
+      const time = d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+      if (isSameDay) return time;
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      return `${month}/${day} ${time}`;
+    }
+
+    // =========================================================
+    // オーダー選択 & 右ペイン描画
+    // =========================================================
+    function selectOrder(orderId) {
+      selectedOrderId = orderId;
+
+      // 行のハイライト更新
+      document.querySelectorAll('.order-row').forEach(row => {
+        if (row.getAttribute('data-order-id') === orderId) {
+          row.classList.add('selected-row');
+        } else {
+          row.classList.remove('selected-row');
+        }
+      });
+
+      // 該当オーダーを検索
+      const order = currentOrders.find(o => o.orderId === orderId);
+      renderRightPane(order);
+    }
+
+    function renderRightPane(order) {
+      const emptyEl = document.getElementById('rightPaneEmpty');
+      const contentEl = document.getElementById('rightPaneContent');
+
+      if (!order) {
+        emptyEl.style.display = 'flex';
+        contentEl.style.display = 'none';
+        contentEl.innerHTML = '';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      contentEl.style.display = 'flex';
+
+      const details = order.details || {};
+      const rxMeds = (details.medicines && Array.isArray(details.medicines) && details.medicines.length > 0)
+        ? details.medicines
+        : (details.medicine ? [{
+            rp: 1,
+            medicine: details.medicine,
+            medicineId: details.medicineId || '',
+            dosage: details.dosage || details.dose || '',
+            days: details.days || '',
+            quantity: details.quantity || '',
+            instruction: details.instruction || '',
+            medicineMaster: order.medicineMaster || null
+          }] : []);
+
+      // 処方薬セクション
+      let medSectionHtml = '';
+      if (order.orderType === 'PRESCRIPTION' && rxMeds.length > 0) {
+        medSectionHtml = `
+          <div class="detail-section" style="border-left: 4px solid #059669; background:#f0fdf4;">
+            <div class="detail-section-title" style="color:#065f46; justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:0.35rem;">
+                <span>💊</span>
+                <span>処方指示・薬剤一覧 (計${rxMeds.length}剤)</span>
+              </div>
+              <button type="button" class="action-btn btn-rx-print" onclick="openPrescriptionPrintModal('${order.orderId}')">
+                🖨️ A4処方箋印刷
+              </button>
+            </div>
+
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.5rem; font-size:0.75rem;">
+              <span class="med-tag med-tag-blue">処方種別: ${escapeHtml(details.prescriptionType || '定期処方')}</span>
+              <span class="med-tag med-tag-blue">調剤区分: ${escapeHtml(details.deptType || '院内処方')}</span>
+              ${details.days ? `<span class="med-tag med-tag-ok">基準日数: ${escapeHtml(details.days)}日分</span>` : ''}
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              ${rxMeds.map((m, idx) => {
+                const mm = m.medicineMaster;
+                const crushCls = mm && mm.crushOk === '〇' ? 'med-tag-ok' : (mm && mm.crushOk === '△' ? 'med-tag-warn' : (mm && mm.crushOk === '×' ? 'med-tag-ng' : ''));
+                const suspCls = mm && mm.suspensionOk === '〇' ? 'med-tag-ok' : (mm && mm.suspensionOk === '×' ? 'med-tag-ng' : '');
+                
+                return `
+                  <div style="background:white; border:1px solid #bbf7d0; border-radius:5px; padding:0.5rem 0.7rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                      <div>
+                        <span style="background:#059669; color:white; font-size:0.72rem; font-weight:bold; padding:0.1rem 0.35rem; border-radius:3px; margin-right:0.3rem;">Rp ${m.rp || (idx + 1)}</span>
+                        <strong style="font-size:0.9rem; color:#064e3b;">${escapeHtml(m.medicine)}</strong>
+                        ${mm && mm.genericName ? `<span style="font-size:0.72rem; color:#64748b; margin-left:0.25rem;">(${escapeHtml(mm.genericName)})</span>` : ''}
+                      </div>
+                      <span style="font-size:0.7rem; color:#64748b; font-family:monospace;">${escapeHtml(m.medicineId || '')}</span>
+                    </div>
+
+                    <div class="detail-grid-3" style="margin-top:0.35rem; font-size:0.76rem;">
+                      <div><span style="color:#64748b;">用法用量:</span> <strong>${escapeHtml(m.dosage || '指示通り')}</strong></div>
+                      <div><span style="color:#64748b;">日数:</span> <strong>${m.days ? escapeHtml(m.days) + '日分' : '-'}</strong></div>
+                      <div><span style="color:#64748b;">数量:</span> <strong style="font-family:monospace; color:#0369a1;">${escapeHtml(m.quantity || '-')}</strong></div>
+                    </div>
+
+                    ${m.instruction ? `
+                      <div style="margin-top:0.25rem; font-size:0.74rem; color:#0369a1; background:#f0f9ff; padding:0.15rem 0.45rem; border-radius:3px;">
+                        📌 <strong>個別指示:</strong> ${escapeHtml(m.instruction)}
+                      </div>
+                    ` : ''}
+
+                    ${mm ? `
+                      <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; margin-top:0.35rem; padding-top:0.3rem; border-top:1px dashed #e2e8f0; font-size:0.72rem;">
+                        <span style="color:#475569; font-weight:bold;">マスタ適応:</span>
+                        ${mm.crushOk ? `<span class="med-tag ${crushCls}">粉砕:${mm.crushOk}</span>` : ''}
+                        ${mm.suspensionOk ? `<span class="med-tag ${suspCls}">懸濁:${mm.suspensionOk}</span>` : ''}
+                        ${mm.uncapsuleOk ? `<span class="med-tag med-tag-blue">脱カプセル:${mm.uncapsuleOk}</span>` : ''}
+                        <span style="color:#64748b; margin-left:auto;">${escapeHtml(mm.therapeuticCategoryMajor || '')}</span>
+                      </div>
+                      ${mm.pharmacyComment ? `
+                        <div class="med-pharmacy-alert" style="margin-top:0.25rem; font-size:0.72rem; padding:0.3rem 0.45rem;">
+                          ⚠️ <strong>調剤注意:</strong> ${escapeHtml(mm.pharmacyComment)}
+                        </div>
+                      ` : ''}
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      } else if (order.medicineMaster) {
+        const m = order.medicineMaster;
+        const crushCls = m.crushOk === '〇' ? 'med-tag-ok' : (m.crushOk === '△' ? 'med-tag-warn' : (m.crushOk === '×' ? 'med-tag-ng' : ''));
+        const suspCls = m.suspensionOk === '〇' ? 'med-tag-ok' : (m.suspensionOk === '×' ? 'med-tag-ng' : '');
+        medSectionHtml = `
+          <div class="detail-section" style="border-left: 4px solid #059669; background:#f0fdf4;">
+            <div class="detail-section-title" style="color:#065f46;">
+              <span>💊</span>
+              <span>薬品マスタ連動情報</span>
+              <span class="med-tag med-tag-blue" style="margin-left:auto;">ID: ${escapeHtml(m.id)}</span>
+            </div>
+            <div class="detail-grid-2">
+              <div><div class="field-label">薬品名・規格</div><div class="field-value">${escapeHtml(m.name)}</div></div>
+              <div><div class="field-label">一般名</div><div class="field-value">${escapeHtml(m.genericName || '-')}</div></div>
+            </div>
+            <div style="display:flex; gap:0.4rem; align-items:center; margin-top:0.4rem; padding-top:0.35rem; border-top:1px dashed #bbf7d0; font-size:0.75rem;">
+              ${m.crushOk ? `<span class="med-tag ${crushCls}">粉砕可否: ${m.crushOk}</span>` : ''}
+              ${m.suspensionOk ? `<span class="med-tag ${suspCls}">簡易懸濁: ${m.suspensionOk}</span>` : ''}
+              ${m.uncapsuleOk ? `<span class="med-tag med-tag-blue">脱カプセル: ${m.uncapsuleOk}</span>` : ''}
+            </div>
+            ${m.pharmacyComment ? `
+              <div class="med-pharmacy-alert">⚠️ <strong>調剤上の注意:</strong> ${escapeHtml(m.pharmacyComment)}</div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // 診療X線照射録セクション
+      let xraySectionHtml = '';
+      if (details.formName === '診療Ｘ線照射録' || details.subType === 'XRAY') {
+        xraySectionHtml = `
+          <div class="detail-section" style="border-left: 4px solid #059669; background:#f0fdf4;">
+            <div class="detail-section-title" style="color:#065f46; justify-content:space-between;">
+              <span>🩻 診療Ｘ線照射録 (だて病院 写真6様式)</span>
+              <span class="med-tag med-tag-ok">一般撮影 / ポータブル</span>
+            </div>
+            <div class="detail-grid-3" style="font-size:0.76rem;">
+              <div><span style="color:#64748b;">場所:</span> <strong>${escapeHtml(details.portable || '一般撮影室')}</strong></div>
+              <div><span style="color:#64748b;">技師:</span> <strong>${escapeHtml(details.technician || '担当技師')}</strong></div>
+              <div><span style="color:#64748b;">媒体:</span> <strong>${escapeHtml(details.media || '-')}</strong></div>
+            </div>
+            <div style="margin-top:0.4rem; background:white; border:1px solid #bbf7d0; border-radius:5px; padding:0.4rem 0.6rem;">
+              <div style="font-weight:bold; color:#065f46; font-size:0.78rem; margin-bottom:0.2rem;">🎯 照射部位・撮影方向:</div>
+              <div style="font-size:0.82rem; color:#0f172a; line-height:1.5;">
+                ${escapeHtml(details.xraySites || details.examType || '胸部')}
+              </div>
+            </div>
+            ${details.conditions ? `
+              <div style="margin-top:0.35rem; font-size:0.75rem; color:#334155;">
+                ⚙️ <strong>撮影条件:</strong> ${escapeHtml(details.conditions)}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      const remarksHtml = details.remarks ? `
+        <div style="background:#fffbeb; border:1px solid #fef3c7; border-left:4px solid #f59e0b; padding:0.45rem 0.65rem; border-radius:4px; margin-top:0.4rem;">
+          <div style="font-size:0.7rem; color:#b45309; font-weight:bold;">📝 自由記載・特記事項:</div>
+          <div style="font-size:0.8rem; color:#78350f; font-weight:bold; margin-top:0.15rem;">${escapeHtml(details.remarks)}</div>
+        </div>
+      ` : '';
+
+      const historyHtml = (order.executionHistory || []).map(h => `
+        <div class="timeline-item">
+          <span><strong>${escapeHtml(h.actor || '')}</strong>: ${escapeHtml(h.note || h.status)}</span>
+          <span style="font-family:monospace; color:#94a3b8;">${formatTimeJs(h.timestamp)}</span>
+        </div>
+      `).join('');
+
+      contentEl.innerHTML = `
+        <!-- 上部ヘッダー & アクションバー -->
+        <div class="detail-top-card">
+          <div class="detail-title-group">
+            <h2>
+              <span>${getTypeBadgeJs(order.orderType)}</span>
+              <span>[${order.orderId}]</span>
+              <span style="font-size:0.9rem; color:#475569; font-weight:normal;">${escapeHtml(order.title || '')}</span>
+            </h2>
+            <div class="detail-meta-line">
+              <span>受信: <strong>${new Date(order.receivedAt).toLocaleString('ja-JP')}</strong></span>
+              <span>•</span>
+              <span>送信元: <strong>${escapeHtml(order.senderHost || '電子カルテ')}</strong></span>
+              <span>•</span>
+              ${getPriorityBadgeJs(order.priority)}
+              ${getStatusBadgeJs(order.status)}
+            </div>
+          </div>
+
+          <!-- クイック操作ボタン -->
+          <div class="action-bar">
+            ${order.status === 'RECEIVED' ? `
+              <button type="button" class="action-btn btn-accept" onclick="updateOrderStatus('${order.orderId}', 'ACCEPTED', '受付済')">
+                🟡 受付済にする
+              </button>
+            ` : ''}
+            ${order.status !== 'COMPLETED' ? `
+              <button type="button" class="action-btn btn-complete" onclick="updateOrderStatus('${order.orderId}', 'COMPLETED', '実施完了')">
+                ✅ 実施完了にする
+              </button>
+            ` : '<span style="color:#059669; font-weight:bold; font-size:0.8rem;">✅ 完了済</span>'}
+            ${order.orderType === 'PRESCRIPTION' ? `
+              <button type="button" class="action-btn btn-rx-print" onclick="openPrescriptionPrintModal('${order.orderId}')">
+                🖨️ A4処方箋
+              </button>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- 患者情報 & 指示医カード -->
+        <div class="detail-section">
+          <div class="detail-grid-3">
+            <div>
+              <div class="field-label">患者氏名 / ID</div>
+              <div class="field-value" style="font-size:0.95rem;">
+                ${escapeHtml(order.patient ? order.patient.name : '未指定')}
+                <span style="font-family:monospace; color:#0369a1; font-size:0.8rem;">[${escapeHtml(order.patient ? order.patient.id : '')}]</span>
+              </div>
+              <div style="font-size:0.72rem; color:#475569; margin-top:0.15rem;">
+                ${escapeHtml(order.patient ? (order.patient.ward || order.patient.department || '') : '')} ${escapeHtml(order.patient && order.patient.room ? order.patient.room : '')}
+                | ${escapeHtml(order.patient ? (order.patient.gender || '') : '')} ${order.patient && order.patient.age ? order.patient.age + '歳' : ''}
+              </div>
+            </div>
+            <div>
+              <div class="field-label">指示医師</div>
+              <div class="field-value">${escapeHtml(order.doctor ? order.doctor.name : '医師')}</div>
+              <div style="font-size:0.72rem; color:#64748b;">${escapeHtml(order.doctor ? (order.doctor.department || '') : '')}</div>
+            </div>
+            <div>
+              <div class="field-label">感染症 / 移動区分</div>
+              <div style="display:flex; gap:0.25rem; align-items:center; margin-top:0.2rem; flex-wrap:wrap;">
+                ${order.patient && order.patient.infection && order.patient.infection !== '無' ? `<span class="med-tag med-tag-ng">感染症: ${escapeHtml(order.patient.infection)}</span>` : '<span class="med-tag med-tag-ok">感染症: 無</span>'}
+                ${order.patient && order.patient.mobility ? `<span class="med-tag med-tag-blue">移動: ${escapeHtml(order.patient.mobility)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 処方薬マスタ情報 (存在時) -->
+        ${medSectionHtml}
+
+        <!-- 診療X線照射録 (存在時) -->
+        ${xraySectionHtml}
+
+        <!-- 指示詳細全文 -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <span>📋</span>
+            <span>指示・オーダー詳細全文</span>
+          </div>
+          <div style="font-size:0.82rem; line-height:1.55; color:#1e293b; background:white; padding:0.5rem 0.75rem; border-radius:5px; border:1px solid #cbd5e1;">
+            ${escapeHtml(getOrderSummaryJs(order))}
+          </div>
+          ${remarksHtml}
+        </div>
+
+        <!-- 実施履歴タイムライン -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <span>🕒</span>
+            <span>実施履歴タイムライン</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.2rem;">
+            ${historyHtml || '<div style="color:#94a3b8; font-size:0.75rem;">履歴なし</div>'}
+          </div>
+        </div>
+
+        <!-- 生データ (RAW JSON) アコーディオン -->
+        <details style="font-size:0.72rem;">
+          <summary style="cursor:pointer; color:#64748b; font-weight:bold; user-select:none;">
+            🔍 生データ (RAW JSON) を展開
+          </summary>
+          <pre style="background:#0f172a; color:#38bdf8; padding:0.6rem; border-radius:5px; font-size:0.72rem; overflow-x:auto; margin-top:0.3rem; line-height:1.35;">${escapeHtml(JSON.stringify(order, null, 2))}</pre>
+        </details>
+      `;
+    }
+
+    // =========================================================
+    // テーブル行の描画（左ペイン: 行を多数とるコンパクト表示）
+    // =========================================================
+    function renderOrdersTable(orders) {
+      const tbody = document.getElementById('ordersTableBody');
+      const countSummary = document.getElementById('listCountSummary');
+      const countBadge = document.getElementById('countAll');
+      if (countBadge) countBadge.textContent = orders.length;
+
+      let visibleCount = 0;
+      const filtered = orders.filter(order => {
+        return (currentFilterType === 'ALL' || order.orderType === currentFilterType);
+      });
+
+      if (countSummary) {
+        countSummary.textContent = `表示: ${filtered.length}件 / 全${orders.length}件`;
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:3rem 1rem; color:#64748b;">
+              <div style="font-size:1.8rem; margin-bottom:0.3rem;">📭</div>
+              <strong>オーダーはありません</strong>
+            </td>
+          </tr>
+        `;
+        renderRightPane(null);
+        return;
+      }
+
+      const rowsHtml = filtered.map(order => {
+        const isSelected = (order.orderId === selectedOrderId);
+        const timeStr = formatTimeJs(order.receivedAt);
+        const summary = getOrderSummaryJs(order);
+        const tooltip = getOrderTooltipJs(order);
+        const medBadges = getMedBadgesJs(order);
+        const priorityBadge = getPriorityBadgeJs(order.priority);
+        const typeBadge = getTypeBadgeJs(order.orderType);
+        const statusBadge = getStatusBadgeJs(order.status);
+        const patientName = escapeHtml(order.patient ? order.patient.name : '未指定');
+        const patientId = escapeHtml(order.patient ? order.patient.id : '');
+        const doctorName = escapeHtml(order.doctor ? order.doctor.name : '医師');
+
+        return `
+          <tr class="order-row priority-${order.priority || 'ROUTINE'} status-${order.status || 'RECEIVED'} ${isSelected ? 'selected-row' : ''}"
+              data-order-id="${order.orderId}"
+              data-type="${order.orderType}"
+              data-status="${order.status}"
+              onclick="selectOrder('${order.orderId}')">
+            <td style="text-align: center;">${priorityBadge}</td>
+            <td class="time-cell">${timeStr}</td>
+            <td class="order-id-cell">${order.orderId}</td>
+            <td>${typeBadge}</td>
+            <td class="patient-cell" title="${patientName} [${patientId}]">
+              <span class="patient-name">${patientName}</span>
+              ${patientId ? `<span class="patient-meta">[${patientId}]</span>` : ''}
+            </td>
+            <td class="doctor-cell">${doctorName}</td>
+            <td class="details-hover-cell"
+                data-tooltip="${escapeHtml(tooltip)}"
+                title="${escapeHtml(tooltip)}">
+              <span class="summary-text">${escapeHtml(summary)}</span>
+              ${medBadges}
+            </td>
+            <td style="text-align: center;">${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = rowsHtml;
+
+      // ツールチップイベントを再登録
+      attachTooltipEvents();
+
+      // 選択中オーダーが現在も存在するか確認。なければ1件目を自動選択
+      if (!selectedOrderId || !filtered.some(o => o.orderId === selectedOrderId)) {
+        if (filtered.length > 0) {
+          selectOrder(filtered[0].orderId);
+        } else {
+          renderRightPane(null);
+        }
+      } else {
+        // 現在選択中のオーダーの最新情報を右ペインに反映
+        const currentSelected = filtered.find(o => o.orderId === selectedOrderId);
+        renderRightPane(currentSelected);
+      }
+    }
+
+    // =========================================================
+    // ホバーツールチップのイベント処理
+    // =========================================================
+    const hoverTooltip = document.getElementById('customHoverTooltip');
+
+    function attachTooltipEvents() {
+      const hoverCells = document.querySelectorAll('.details-hover-cell');
+      hoverCells.forEach(cell => {
+        cell.addEventListener('mouseenter', (e) => {
+          const text = cell.getAttribute('data-tooltip');
+          if (!text) return;
+          hoverTooltip.textContent = text;
+          hoverTooltip.style.display = 'block';
+          positionTooltip(e);
+        });
+
+        cell.addEventListener('mousemove', (e) => {
+          positionTooltip(e);
+        });
+
+        cell.addEventListener('mouseleave', () => {
+          hoverTooltip.style.display = 'none';
+        });
+      });
+    }
+
+    function positionTooltip(e) {
+      const padding = 14;
+      let left = e.clientX + padding;
+      let top = e.clientY + padding;
+
+      // 画面右端からはみ出る場合の補正
+      const tooltipRect = hoverTooltip.getBoundingClientRect();
+      if (left + tooltipRect.width > window.innerWidth - 10) {
+        left = e.clientX - tooltipRect.width - padding;
+      }
+      // 画面下端からはみ出る場合の補正
+      if (top + tooltipRect.height > window.innerHeight - 10) {
+        top = e.clientY - tooltipRect.height - padding;
+      }
+
+      hoverTooltip.style.left = left + 'px';
+      hoverTooltip.style.top = top + 'px';
+    }
+
+    // =========================================================
+    // 部門フィルター切り替え
+    // =========================================================
+    function filterType(type, btn) {
+      currentFilterType = type;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderOrdersTable(currentOrders);
+    }
+
+    // =========================================================
+    // ステータス更新 (受付 / 完了)
+    // =========================================================
+    async function updateOrderStatus(orderId, status, note) {
+      try {
+        const res = await fetch(`/api/orders/${orderId}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status,
+            actor: '部門モニター操作者',
+            note: note || ''
+          })
+        });
+        if (res.ok) {
+          await loadOrdersList();
+        }
+      } catch (e) {
+        alert('ステータス更新エラー: ' + e.message);
+      }
+    }
+
+    // =========================================================
+    // ポーリング再取得
+    // =========================================================
+    async function loadOrdersList() {
+      try {
+        const res = await fetch('/api/orders?_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && data.orders) {
+          currentOrders = data.orders;
+          renderOrdersTable(currentOrders);
+        }
+      } catch (e) {
+        console.error('Failed to load orders:', e);
+      }
+    }
+
+    // =========================================================
+    // 履歴クリア
+    // =========================================================
+    async function clearAllOrders() {
+      if (!confirm('受信したすべてのオーダー履歴をクリアしますか？')) return;
+      try {
+        const res = await fetch('/api/orders/clear', { method: 'POST' });
+        if (res.ok) {
+          selectedOrderId = null;
+          await loadOrdersList();
+        }
+      } catch (e) {
+        alert('クリアエラー: ' + e.message);
+      }
+    }
+
+    // =========================================================
+    // A4 処方箋プレビュー & 印刷モーダル
+    // =========================================================
+    async function openPrescriptionPrintModal(orderId) {
+      try {
+        const order = currentOrders.find(o => o.orderId === orderId);
+        if (!order) {
+          alert('処方箋データが見つかりません');
+          return;
+        }
+
+        const details = order.details || {};
+        const patient = order.patient || {};
+        const doctor = order.doctor || {};
+
+        const rxTypeStr = `(${details.deptType || '院内処方'} / ${details.prescriptionType || '定期処方'})`;
+        document.getElementById('printRxTypeSub').textContent = rxTypeStr;
+
+        const issueDate = order.receivedAt ? new Date(order.receivedAt) : new Date();
+        const validDate = new Date(issueDate);
+        validDate.setDate(validDate.getDate() + 3);
+
+        const fmtDate = d => `${d.getFullYear()}年 ${(d.getMonth() + 1).toString().padStart(2, '0')}月 ${d.getDate().toString().padStart(2, '0')}日`;
+        document.getElementById('printIssueDate').textContent = fmtDate(issueDate);
+        document.getElementById('printValidDate').innerHTML = `交付の日を含め4日以内<br>(${fmtDate(validDate)}まで)`;
+
+        document.getElementById('printPatientId').textContent = patient.id || 'PT-XXXX';
+        document.getElementById('printPatientDept').textContent = (patient.department || '') + (patient.ward ? ' / ' + patient.ward : '');
+        document.getElementById('printPatientKana').textContent = patient.kana || '';
+        document.getElementById('printPatientName').textContent = (patient.name || '患者未指定') + ' 殿';
+        document.getElementById('printPatientGender').textContent = patient.gender || '不詳';
+        document.getElementById('printPatientAge').textContent = patient.age ? `${patient.age}歳` : '-';
+        document.getElementById('printPatientBirthDate').textContent = patient.birthDate ? `${patient.birthDate} 生` : '-';
+        document.getElementById('printPatientInsurance').textContent = patient.insurance || '社保 (本人)';
+
+        document.getElementById('printDoctorName').textContent = doctor.name || '担当医';
+        document.getElementById('printDoctorDept').textContent = doctor.department || '診療科';
+        const docLastName = (doctor.name || '医師').split(/\s+/)[0] || '印';
+        document.getElementById('printDoctorStampName').textContent = docLastName;
+        document.getElementById('printOrderId').textContent = order.orderId;
+
+        const medicines = (details.medicines && Array.isArray(details.medicines) && details.medicines.length > 0)
+          ? details.medicines
+          : (details.medicine ? [{
+              rp: 1,
+              medicine: details.medicine,
+              medicineId: details.medicineId || '',
+              dosage: details.dosage || details.dose || '',
+              days: details.days || '',
+              quantity: details.quantity || '',
+              instruction: details.instruction || '',
+              medicineMaster: order.medicineMaster || null
+            }] : []);
+
+        const tbody = document.getElementById('printMedicinesTbody');
+        if (medicines.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#64748b;">処方薬の指定がありません</td></tr>`;
+        } else {
+          let rowsHtml = medicines.map((m, idx) => {
+            const mm = m.medicineMaster;
+            const rpNum = m.rp || (idx + 1);
+
+            let medNameHtml = `<div style="font-weight:bold; font-size:0.92rem; color:#0f172a;">${escapeHtml(m.medicine || '薬剤未定')}</div>`;
+            if (mm && mm.genericName) {
+              medNameHtml += `<div style="font-size:0.72rem; color:#475569;">一般名: ${escapeHtml(mm.genericName)}</div>`;
+            }
+            if (m.medicineId) {
+              medNameHtml += `<div style="font-size:0.68rem; color:#64748b; font-family:monospace;">[${escapeHtml(m.medicineId)}]</div>`;
+            }
+
+            let instructHtml = '';
+            if (m.instruction) {
+              instructHtml += `<div style="font-weight:bold; color:#0369a1;">${escapeHtml(m.instruction)}</div>`;
+            }
+            if (mm) {
+              let tags = [];
+              if (mm.crushOk) tags.push(`粉砕:${mm.crushOk}`);
+              if (mm.suspensionOk) tags.push(`懸濁:${mm.suspensionOk}`);
+              if (tags.length > 0) {
+                instructHtml += `<div style="font-size:0.7rem; color:#475569;">${tags.join(' / ')}</div>`;
+              }
+              if (mm.pharmacyComment) {
+                instructHtml += `<div style="font-size:0.7rem; color:#b91c1c; font-weight:bold;">⚠️${escapeHtml(mm.pharmacyComment)}</div>`;
+              }
+            }
+            if (!instructHtml) instructHtml = '<span style="color:#94a3b8;">-</span>';
+
+            return `
+              <tr class="rx-row">
+                <td style="text-align:center; font-weight:bold; font-size:1rem; color:#0f172a; background:#f8fafc;">${rpNum}</td>
+                <td>${medNameHtml}</td>
+                <td style="font-weight:bold; color:#1e293b;">${escapeHtml(m.dosage || '指示通り')}</td>
+                <td style="text-align:center; font-weight:bold;">${m.days ? escapeHtml(m.days) + '日分' : '-'}</td>
+                <td style="text-align:right; font-weight:bold; font-family:monospace; font-size:0.95rem;">${escapeHtml(m.quantity || '-')}</td>
+                <td style="font-size:0.75rem;">${instructHtml}</td>
+              </tr>
+            `;
+          }).join('');
+
+          rowsHtml += `
+            <tr>
+              <td colspan="6" style="text-align:center; padding:0.5rem; font-weight:bold; letter-spacing:6px; color:#64748b; background:#fcfcfc; border-top:1px solid #cbd5e1;">
+                ＊＊＊＊＊ 以　下　余　白 ＊＊＊＊＊
+              </td>
+            </tr>
+          `;
+          tbody.innerHTML = rowsHtml;
+        }
+
+        const remarksEl = document.getElementById('printRemarksBody');
+        if (details.remarks && details.remarks.trim()) {
+          remarksEl.innerHTML = `<span style="font-weight:bold; color:#1e293b;">${escapeHtml(details.remarks)}</span>`;
+        } else {
+          remarksEl.innerHTML = `<span style="color:#94a3b8;">特記なし</span>`;
+        }
+
+        document.getElementById('prescriptionModal').style.display = 'flex';
+      } catch (e) {
+        alert('処方箋データ表示エラー: ' + e.message);
+      }
+    }
+
+    function printPrescriptionSheet() {
+      window.print();
+    }
+
+    function closePrescriptionModal(event) {
+      if (!event || event.target === document.getElementById('prescriptionModal') || event.type === 'click') {
+        document.getElementById('prescriptionModal').style.display = 'none';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 自動ポーリング設定
+    const toggle = document.getElementById('autoPollToggle');
+    function setupPolling() {
+      if (toggle && toggle.checked) {
+        if (!pollInterval) {
+          pollInterval = setInterval(loadOrdersList, 3000);
+        }
+      } else {
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      }
+    }
+    if (toggle) toggle.addEventListener('change', setupPolling);
+    setupPolling();
+
+    // =========================================================
+    // 左右境界線スプリッターのドラッグ調整
+    // =========================================================
+    function initSplitResizer() {
+      const splitLayout = document.getElementById('splitLayout');
+      const leftCol = document.getElementById('leftColumn');
+      const resizer = document.getElementById('splitResizer');
+      if (!splitLayout || !leftCol || !resizer) return;
+
+      const STORAGE_KEY = 'ordering_receiver_split_ratio';
+      const DEFAULT_RATIO = 0.54; // デフォルト 54%
+
+      // 保存された幅比率の復元
+      try {
+        const savedRatio = parseFloat(localStorage.getItem(STORAGE_KEY));
+        if (!isNaN(savedRatio) && savedRatio >= 0.2 && savedRatio <= 0.8) {
+          applyRatio(savedRatio);
+        } else {
+          applyRatio(DEFAULT_RATIO);
+        }
+      } catch (e) {
+        applyRatio(DEFAULT_RATIO);
+      }
+
+      function applyRatio(ratio) {
+        leftCol.style.flex = `0 0 ${ratio * 100}%`;
+      }
+
+      // ダブルクリックで初期比率（54%）にリセット
+      resizer.addEventListener('dblclick', () => {
+        applyRatio(DEFAULT_RATIO);
+        localStorage.setItem(STORAGE_KEY, DEFAULT_RATIO.toString());
+      });
+
+      // ドラッグ処理 (PointerEvents)
+      resizer.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        resizer.classList.add('is-resizing');
+        document.body.classList.add('is-resizing-split');
+
+        const layoutRect = splitLayout.getBoundingClientRect();
+        const minLeftPx = 280;
+        const maxLeftPx = layoutRect.width - 280;
+
+        function onPointerMove(ev) {
+          const currentX = ev.clientX - layoutRect.left;
+          const clampedX = Math.max(minLeftPx, Math.min(maxLeftPx, currentX));
+          const newRatio = clampedX / layoutRect.width;
+
+          applyRatio(newRatio);
+          localStorage.setItem(STORAGE_KEY, newRatio.toFixed(4));
+        }
+
+        function onPointerUp() {
+          resizer.classList.remove('is-resizing');
+          document.body.classList.remove('is-resizing-split');
+          document.removeEventListener('pointermove', onPointerMove);
+          document.removeEventListener('pointerup', onPointerUp);
+        }
+
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', onPointerUp);
+      });
+    }
+
+    // 初回初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      renderOrdersTable(currentOrders);
+      initSplitResizer();
+    });
+    renderOrdersTable(currentOrders);
+    initSplitResizer();
+  </script>
+</body>
+</html>

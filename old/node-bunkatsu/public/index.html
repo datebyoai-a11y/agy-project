@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>分割画面</title>
+  <style>
+    body, html {
+      margin: 0;
+      height: 100%;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    .left, .right {
+      flex: 1;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      左側コンテンツ
+    </div>
+    <div class="right">
+      右側コンテンツ
+    </div>
+  </div>
+</body>
+</html>
+

@@ -1,0 +1,57 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リアルタイム通知・ログ</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .input-area { margin-bottom: 20px; }
+        input { padding: 8px; width: 70%; }
+        button { padding: 8px 15px; cursor: pointer; }
+        #log-container { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; background: #f9f9f9; }
+        .log-item { margin-bottom: 8px; padding: 5px; border-bottom: 1px dashed #ddd; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <h2>リアルタイムログ・通知システム</h2>
+    
+    <div class="input-area">
+        <input type="text" id="message-input" placeholder="ログメッセージを入力...">
+        <button onclick="sendLog()">送信</button>
+    </div>
+
+    <h3>受信したログ・通知一覧（全員に共有）</h3>
+    <div id="log-container"></div>
+
+    <!-- Socket.ioクライアントライブラリの自動読み込み -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // ボタン押下時にサーバーへデータを送信する関数
+        function sendLog() {
+            const input = document.getElementById('message-input');
+            if (input.value.trim() !== "") {
+                socket.emit('send-log', { message: input.value });
+                input.value = ""; // 入力欄をクリア
+            }
+        }
+
+        // サーバーから通知（Change Stream経由）を受信したときの処理
+        socket.on('notification', (data) => {
+            const logContainer = document.getElementById('log-container');
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            
+            const time = new Date(data.timestamp).toLocaleTimeString();
+            logItem.innerText = `[${time}] ${data.message}`;
+            
+            logContainer.appendChild(logItem);
+            logContainer.scrollTop = logContainer.scrollHeight; // 自動最下部スクロール
+        });
+    </script>
+</body>
+</html>

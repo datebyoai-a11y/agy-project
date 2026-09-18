@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インシデントレポートの修正</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea { 
+            width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; 
+        }
+        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.1em; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <h1>✏️ インシデントレポートの修正・再提出</h1>
+    
+    <form action="/api/incident/update/<%= incident._id %>" method="POST">
+        
+        <fieldset style="margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px;">提出者情報</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>氏名：</label>
+                    <input type="text" name="reporterName" value="<%= incident.reporter.name %>" required>
+                </div>
+                <div class="form-group">
+                    <label>経験年数：</label>
+                    <select name="reporterExperienceYears" required>
+                        <option value="1年未満" <%= incident.reporter.experienceYears === '1年未満' ? 'selected' : '' %>>1年未満</option>
+                        <option value="1〜3年" <%= incident.reporter.experienceYears === '1〜3年' ? 'selected' : '' %>>1〜3年</option>
+                        <option value="3〜5年" <%= incident.reporter.experienceYears === '3〜5年' ? 'selected' : '' %>>3〜5年</option>
+                        <option value="5〜10年" <%= incident.reporter.experienceYears === '5〜10年' ? 'selected' : '' %>>5〜10年</option>
+                        <option value="10年以上" <%= incident.reporter.experienceYears === '10年以上' ? 'selected' : '' %>>10年以上</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>職種：</label>
+                    <input type="text" name="reporterJobTitle" value="<%= incident.reporter.jobTitle %>" required>
+                </div>
+                <div class="form-group">
+                    <label>所属部署：</label>
+                    <input type="text" name="reporterDepartment" value="<%= incident.reporter.department %>" required>
+                </div>
+            </div>
+            <label style="font-weight: normal; margin-top: 10px; display: block;">
+                <input type="checkbox" name="reporterIsInvolved" value="true" <%= incident.reporter.isInvolved ? 'checked' : '' %> style="width: auto;"> 私はこのインシデントの当事者です
+            </label>
+        </fieldset>
+
+        <fieldset style="margin-bottom: 20px; border: 1px solid #ffeeba; background-color: #fffdf5; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #856404;">当該者情報（任意）</legend>
+            <div class="form-row" style="margin-bottom: 10px;">
+                <div class="form-group" style="flex: 2;">
+                    <label>当該者氏名：</label>
+                    <input type="text" name="patientName" value="<%= incident.patient ? incident.patient.name : '' %>">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>当該者ID・患者番号：</label>
+                    <input type="text" name="patientId" value="<%= incident.patient ? incident.patient.id : '' %>">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>年齢：</label>
+                    <input type="number" name="patientAge" min="0" max="150" value="<%= incident.patient ? incident.patient.age : '' %>">
+                </div>
+                <div class="form-group">
+                    <label>性別：</label>
+                    <select name="patientGender">
+                        <option value="" <%= (!incident.patient || !incident.patient.gender) ? 'selected' : '' %>>選択なし</option>
+                        <option value="男性" <%= (incident.patient && incident.patient.gender === '男性') ? 'selected' : '' %>>男性</option>
+                        <option value="女性" <%= (incident.patient && incident.patient.gender === '女性') ? 'selected' : '' %>>女性</option>
+                        <option value="その他" <%= (incident.patient && incident.patient.gender === 'その他') ? 'selected' : '' %>>その他・不明</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group">
+            <label>インシデントレベル：</label>
+            <select name="level" required>
+                <option value="0" <%= incident.level === '0' ? 'selected' : '' %>>レベル 0 （ヒヤリハット）</option>
+                <option value="1" <%= incident.level === '1' ? 'selected' : '' %>>レベル 1</option>
+                <option value="2" <%= incident.level === '2' ? 'selected' : '' %>>レベル 2</option>
+                <option value="3a" <%= incident.level === '3a' ? 'selected' : '' %>>レベル 3a</option>
+                <option value="3b" <%= incident.level === '3b' ? 'selected' : '' %>>レベル 3b</option>
+                <option value="4" <%= incident.level === '4' ? 'selected' : '' %>>レベル 4</option>
+                <option value="5" <%= incident.level === '5' ? 'selected' : '' %>>レベル 5</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>提出年月日：</label>
+            <input type="date" name="reportDate" value="<%= incident.reportDate ? incident.reportDate.toISOString().split('T')[0] : '' %>" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>発生年月日：</label>
+                <input type="date" name="occurrenceDateOnly" value="<%= incident.occurrenceDate ? incident.occurrenceDate.toISOString().split('T')[0] : '' %>" required>
+            </div>
+            <div class="form-group">
+                <label>発生時刻：</label>
+                <input type="time" name="occurrenceTimeOnly" value="<%= incident.occurrenceDate ? incident.occurrenceDate.toTimeString().slice(0,5) : '' %>" required>
+            </div>
+            <div class="form-group">
+                <label>発生場所：</label>
+                <input type="text" name="location" value="<%= incident.location %>" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>出来事の領域：</label>
+            <input type="text" name="eventCategory" value="<%= incident.eventCategory %>" required>
+        </div>
+        <div class="form-group">
+            <label>出来事の概要：</label>
+            <input type="text" name="eventSummary" value="<%= incident.eventSummary %>" required>
+        </div>
+
+        <div class="form-group">
+            <label>事象の状況・具体的な内容：</label>
+            <textarea name="description" rows="4" required><%= incident.description %></textarea>
+        </div>
+        <div class="form-group">
+            <label>発見後の対応：</label>
+            <textarea name="postDiscoveryAction" rows="3" required><%= incident.postDiscoveryAction %></textarea>
+        </div>
+        <div class="form-group">
+            <label>原因（詳細）：</label>
+            <textarea name="detailedCauseDescription" rows="3" required><%= incident.detailedCauseDescription %></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>環境的主要因：</label>
+                <input type="text" name="environmentalPrimary" value="<%= incident.causes ? incident.causes.environmentalPrimary : '' %>" required>
+            </div>
+            <div class="form-group">
+                <label>環境的副要因：</label>
+                <input type="text" name="environmentalSecondary" value="<%= incident.causes ? incident.causes.environmentalSecondary : '' %>">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>人為的主要因：</label>
+                <input type="text" name="humanPrimary" value="<%= incident.humanFactors ? incident.humanFactors.primary : '' %>">
+            </div>
+            <div class="form-group">
+                <label>人為的副要因：</label>
+                <input type="text" name="humanSecondary" value="<%= incident.humanFactors ? incident.humanFactors.secondary : '' %>">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>結果（対象・患者への影響）：</label>
+            <input type="text" name="resultStatus" value="<%= incident.resultStatus %>" required>
+        </div>
+        <div class="form-group">
+            <label>今後の対策・再発防止策：</label>
+            <textarea name="countermeasure" rows="4" required><%= incident.countermeasure %></textarea>
+        </div>
+        <button type="submit">修正内容を保存（上書き）</button>
+    </form>
+    <br>
+    <p style="text-align: center;"><a href="/incident/list">一覧に戻る</a></p>
+</body>
+</html>
+

@@ -1,0 +1,18 @@
+app.get('/search-target', requireLogin, async (req, res) => {
+    const keyword = req.query.keyword;
+
+    const target = await Target.findOne({
+        $or: [
+            { name: keyword },
+            { targetId: keyword }
+        ]
+    });
+
+    if (!target) {
+        return res.send('対象者が見つかりませんでした');
+    }
+
+    // 対象者のページへ移動
+    res.redirect(`/dashboard?targetId=${target.targetId}`);
+});
+

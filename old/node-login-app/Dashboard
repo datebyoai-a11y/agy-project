@@ -1,0 +1,22 @@
+app.get('/dashboard', requireLogin, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+
+        const targets = await Target.find(); // ★対象者一覧を取得
+        const selectedTargetId = req.query.targetId;
+
+        const filter = selectedTargetId ? { targetId: selectedTargetId } : {};
+        const articles = await Article.find(filter).sort({ createdAt: -1 });
+
+        res.render('dashboard', {
+            user: user.username,
+            targets,
+            articles,
+            selectedTargetId
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('エラー');
+    }
+});
+

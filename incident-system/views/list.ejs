@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>提出データ一覧</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f8fafc; color: #1e293b; }
+        .top-nav { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
+        .btn { display: inline-block; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .btn-dash { background-color: #0284c7; color: white; }
+        .btn-menu { background-color: #64748b; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        th { background-color: #f1f5f9; font-weight: bold; }
+        .btn-edit { background-color: #eab308; color: black; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 0.9em; }
+        .badge { padding: 3px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; }
+        .badge-0 { background-color: #3b82f6; }
+        .badge-1 { background-color: #f59e0b; }
+        .btn-users { background-color: #6366f1; color: white; }
+        .btn-targets { background-color: #0d9488; color: white; }
+        .search-panel { background: white; padding: 16px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 20px; }
+        .search-form { display: flex; gap: 8px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 220px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem; }
+        .btn-search { background-color: #2563eb; color: white; border: 0; cursor: pointer; }
+        .btn-clear { background-color: #e2e8f0; color: #334155; }
+        .result-count { margin: 12px 0 0; color: #64748b; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <h1>📋 提出済みインシデントレポート一覧</h1>
+    <div class="top-nav">
+        <a href="/" class="btn btn-menu">🏠 メニューに戻る</a>
+        <a href="/dashboard" class="btn btn-dash">📊 統合ダッシュボード</a>
+        <a href="/target-people" class="btn btn-targets">🎯 対象者管理</a>
+        <a href="/users" class="btn btn-users">👤 ユーザー管理</a>
+    </div>
+
+    <section class="search-panel" aria-label="インシデント検索">
+        <form action="/incident/list" method="get" class="search-form">
+            <input
+                type="search"
+                name="q"
+                class="search-input"
+                value="<%= searchQuery || '' %>"
+                placeholder="対象者ID・氏名、提出者、部署、場所、内容などで検索..."
+                aria-label="検索キーワード"
+            >
+            <button type="submit" class="btn btn-search">🔍 検索</button>
+            <% if (searchQuery) { %>
+                <a href="/incident/list" class="btn btn-clear">クリア</a>
+            <% } %>
+        </form>
+        <% if (searchQuery) { %>
+            <p class="result-count">「<%= searchQuery %>」の検索結果: <strong><%= incidents.length %>件</strong></p>
+        <% } %>
+    </section>
+
+    <table>
+        <thead>
+            <tr>
+                <th>レベル</th>
+                <th>提出日</th>
+                <th>発生日時</th>
+                <th>対象者</th>
+                <th>部署 / 提出者</th>
+                <th>出来事の領域</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (incidents && incidents.length > 0) { %>
+                <% incidents.forEach(item => { %>
+                    <tr>
+                        <td><span class="badge badge-<%= item.level %>">レベル <%= item.level %></span></td>
+                        <td><%= item.reportDate ? new Date(item.reportDate).toISOString().split('T')[0] : '' %></td>
+                        <td><%= item.occurrenceDate ? new Date(item.occurrenceDate).toLocaleString('ja-JP') : '' %></td>
+                        <td>
+                            <% if (item.patient && item.patient.targetPersonRef) { %>
+                                <strong>[<%= item.patient.targetPersonRef.customId %>] <%= item.patient.targetPersonRef.name %></strong>
+                            <% } else if (item.patient && item.patient.name) { %>
+                                <%= item.patient.name %>
+                            <% } else { %>
+                                <span style="color:#94a3b8;">未指定</span>
+                            <% } %>
+                        </td>
+                        <td><%= item.reporter.department %> / <%= item.reporter.name %></td>
+                        <td><%= item.eventCategory %></td>
+                        <td>
+                            <a href="/incident/edit/<%= item._id %>" class="btn-edit">✏️ 修正する</a>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">データがありません</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+        <a href="/api/export/csv" 
+           onclick="return verifyCsvPassword();" 
+           style="background-color: #16a34a; color: white; padding: 10px 18px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+           📥 全データをCSVで出力
+        </a>
+    </div>
+
+    <script>
+        function verifyCsvPassword() {
+            const password = prompt("CSVを出力するには、閲覧用パスワードを入力してください：");
+            if (password === null) return false; 
+            if (password === "kon") {
+                alert("認証に成功しました。CSVのダウンロードを開始します。");
+                return true;
+            } else {
+                alert("パスワードが間違っています。ダウンロードを中止しました。");
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>

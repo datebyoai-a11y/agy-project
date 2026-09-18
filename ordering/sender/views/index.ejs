@@ -1,0 +1,3915 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>医療法人 社団 交雄会 だて病院 - オーダリング指示発行システム</title>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --success: #10b981;
+      --danger: #ef4444;
+      --date-navy: #0f3460;
+      --date-blue: #1a5276;
+      --ct-yellow-bg: #fef9c3;
+      --ct-yellow-border: #facc15;
+      --ct-yellow-text: #854d0e;
+      --fluoro-blue-bg: #e0f2fe;
+      --fluoro-blue-border: #38bdf8;
+      --fluoro-blue-text: #0369a1;
+      --physio-pink-bg: #fce7f3;
+      --physio-pink-border: #f472b6;
+      --physio-pink-text: #9d174d;
+      --iv-green-bg: #f0fdf4;
+      --iv-green-border: #4ade80;
+      --iv-green-text: #166534;
+      --rehab-teal-bg: #ecfdf5;
+      --rehab-teal-border: #34d399;
+      --rehab-teal-text: #065f46;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: linear-gradient(135deg, #0a2540 0%, #173b6c 50%, #0369a1 100%);
+      color: white;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .header-branding {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .header-logo-icon {
+      font-size: 1.6rem;
+      background: rgba(255,255,255,0.15);
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+    }
+    .header-hospital-name {
+      font-size: 0.8rem;
+      color: #7dd3fc;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+    }
+    .header-app-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .header-badges {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-left: 0.5rem;
+    }
+    .header-badge {
+      font-size: 0.72rem;
+      padding: 0.15rem 0.55rem;
+      border-radius: 9999px;
+      font-weight: bold;
+    }
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      font-size: 0.82rem;
+    }
+    .header-links a {
+      color: #e0f2fe;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.1);
+      transition: background 0.15s;
+    }
+    .header-links a:hover {
+      background: rgba(255,255,255,0.25);
+      color: #ffffff;
+    }
+
+    .container {
+      flex: 1;
+      max-width: 100%;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-direction: row;
+      gap: 0;
+      min-height: 0;
+      position: relative;
+      box-sizing: border-box;
+      align-items: stretch;
+    }
+
+    /* 左ペイン: 入力フォーム */
+    .form-card {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      flex: 0 0 58%;
+      min-width: 320px;
+      max-width: calc(100% - 280px);
+      box-sizing: border-box;
+      overflow-x: auto;
+    }
+
+    /* 左右分割スプリッター (Pane Resizer) */
+    .pane-resizer {
+      width: 14px;
+      cursor: col-resize;
+      user-select: none;
+      touch-action: none;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      z-index: 50;
+      margin: 0 -2px;
+    }
+    .pane-resizer::after {
+      content: '';
+      width: 4px;
+      height: 60px;
+      background: #cbd5e1;
+      border-radius: 2px;
+      transition: all 0.15s ease;
+    }
+    .pane-resizer:hover::after,
+    .pane-resizer.is-resizing::after {
+      background: #0284c7;
+      height: 100%;
+      width: 5px;
+    }
+    .pane-resizer:hover,
+    .pane-resizer.is-resizing {
+      background: rgba(2, 132, 199, 0.12);
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .form-card {
+        flex: none;
+        width: 100%;
+        max-width: 100%;
+      }
+      .pane-resizer {
+        display: none;
+      }
+      .history-card {
+        flex: none;
+        width: 100%;
+      }
+    }
+
+    .section-title {
+      font-size: 0.88rem;
+      font-weight: bold;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .form-label {
+      font-size: 0.78rem;
+      font-weight: bold;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .form-control {
+      padding: 0.4rem 0.6rem;
+      font-size: 0.82rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.5rem;
+    }
+
+    /* だて病院 共通患者ヘッダーボックス */
+    .patient-master-card {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #0369a1;
+      border-radius: 6px;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .patient-master-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed #cbd5e1;
+      padding-bottom: 0.4rem;
+    }
+    .patient-master-title {
+      font-weight: bold;
+      font-size: 0.85rem;
+      color: #0369a1;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .hospital-stamp-label {
+      font-size: 0.72rem;
+      color: #64748b;
+      font-weight: bold;
+      background: #e2e8f0;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+    }
+
+    /* 写真準拠フォームタイトルバナー */
+    .photo-form-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      margin-bottom: 0.5rem;
+    }
+    .photo-form-banner.banner-ct {
+      background: var(--ct-yellow-bg);
+      border-color: var(--ct-yellow-border);
+      color: var(--ct-yellow-text);
+    }
+    .photo-form-banner.banner-fluoro {
+      background: var(--fluoro-blue-bg);
+      border-color: var(--fluoro-blue-border);
+      color: var(--fluoro-blue-text);
+    }
+    .photo-form-banner.banner-physio {
+      background: var(--physio-pink-bg);
+      border-color: var(--physio-pink-border);
+      color: var(--physio-pink-text);
+    }
+    .photo-form-banner.banner-iv {
+      background: var(--iv-green-bg);
+      border-color: var(--iv-green-border);
+      color: var(--iv-green-text);
+    }
+    .photo-form-banner.banner-rehab {
+      background: var(--rehab-teal-bg);
+      border-color: var(--rehab-teal-border);
+      color: var(--rehab-teal-text);
+    }
+    .photo-form-banner.banner-xray {
+      background: #ecfdf5;
+      border-color: #86efac;
+      color: #065f46;
+    }
+    .photo-form-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .photo-form-badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: bold;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    /* サブタブ (放射線科・検査科の切り替え) */
+    .subtabs-nav {
+      display: flex;
+      gap: 0.35rem;
+      margin-bottom: 0.6rem;
+      background: #e2e8f0;
+      padding: 0.2rem;
+      border-radius: 6px;
+    }
+    .subtab-btn {
+      flex: 1;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.78rem;
+      font-weight: bold;
+      border: none;
+      background: transparent;
+      color: #475569;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .subtab-btn.active {
+      background: white;
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    /* チェックボックス・ラジオボタングリッド */
+    .chk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 0.4rem;
+    }
+    .chk-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      padding: 0.25rem 0.45rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      background: #ffffff;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chk-item:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .chk-item input[type="checkbox"], .chk-item input[type="radio"] {
+      cursor: pointer;
+    }
+
+    /* 大タブナビゲーション */
+    .tabs-nav {
+      display: flex;
+      gap: 0.25rem;
+      background: #e2e8f0;
+      padding: 0.25rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.45rem 0.3rem;
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-size: 0.8rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: white;
+      color: #0284c7;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+
+    /* 優先度ラジオ */
+    .priority-group {
+      display: flex;
+      gap: 0.4rem;
+    }
+    .priority-label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      font-size: 0.78rem;
+      font-weight: bold;
+      padding: 0.35rem 0.2rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .priority-label input { cursor: pointer; }
+    .priority-label.stat { color: #dc2626; border-color: #fca5a5; }
+    .priority-label.urgent { color: #ea580c; border-color: #fdba74; }
+    .priority-label.routine { color: #0284c7; border-color: #bae6fd; }
+
+    /* 送信ボタン */
+    .btn-submit {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      font-size: 0.95rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 3px 8px rgba(2,132,199,0.3);
+      margin-top: 0.25rem;
+    }
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    }
+    .btn-submit:active {
+      transform: translateY(1px);
+    }
+
+    /* 右ペイン: 送信履歴 */
+    .history-card {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      flex: 1 1 0;
+      min-width: 280px;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      height: 100%;
+    }
+    .history-mode-btn {
+      background: transparent;
+      border: none;
+      padding: 0.2rem 0.45rem;
+      border-radius: 3px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .history-mode-btn.active {
+      background: white;
+      color: #0284c7;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      max-height: 750px;
+    }
+    .history-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #0284c7;
+      border-radius: 6px;
+      padding: 0.6rem 0.75rem;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .history-card.wrap-mode .history-title,
+    .history-card.wrap-mode .history-remarks,
+    .history-card.wrap-mode .history-action-note,
+    .history-card.wrap-mode .history-meta {
+      white-space: normal !important;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+    .history-card:not(.wrap-mode) .history-title,
+    .history-card:not(.wrap-mode) .history-remarks {
+      white-space: nowrap !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 送信履歴テーブル表示モード */
+    .history-table-container {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 750px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: white;
+      position: relative;
+    }
+    .history-table {
+      width: 100%;
+      min-width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      table-layout: fixed;
+    }
+    .history-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      padding: 0.55rem 0.5rem;
+      border-bottom: 2px solid #cbd5e1;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      user-select: none;
+      box-sizing: border-box;
+      overflow: visible;
+    }
+    .history-table td {
+      padding: 0.5rem 0.55rem;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      box-sizing: border-box;
+    }
+    .history-table.wrap-mode td {
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .history-table.wrap-mode .details-cell {
+      white-space: normal !important;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+    .history-table:not(.wrap-mode) td {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 列幅ドラッグ境界線 (Resizer Handle) */
+    .col-resizer {
+      position: absolute;
+      top: 0;
+      right: -4px;
+      width: 10px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      z-index: 20;
+      touch-action: none;
+    }
+    .col-resizer::after {
+      content: '';
+      position: absolute;
+      top: 15%;
+      bottom: 15%;
+      right: 4px;
+      width: 2px;
+      background: #cbd5e1;
+      border-radius: 1px;
+      transition: all 0.15s ease;
+    }
+    .col-resizer:hover::after,
+    .col-resizer.is-resizing::after {
+      background: #0284c7;
+      width: 4px;
+      right: 3px;
+      top: 0;
+      bottom: 0;
+    }
+    .col-resizer:hover,
+    .col-resizer.is-resizing {
+      background: rgba(2, 132, 199, 0.12);
+    }
+    body.is-col-resizing {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+    .col-resize-guide {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      background: #0284c7;
+      pointer-events: none;
+      z-index: 25;
+      display: none;
+      box-shadow: 0 0 6px rgba(2, 132, 199, 0.6);
+    }
+
+    /* 薬品マスタモーダルテーブル */
+    .med-master-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      table-layout: fixed;
+    }
+    .med-master-table th {
+      background: #f8fafc;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+      user-select: none;
+      position: relative;
+    }
+    .med-master-table td {
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    .history-item.status-SENT { border-left-color: #64748b; }
+    .history-item.status-RECEIVED { border-left-color: #0284c7; background: #f0f9ff; }
+    .history-item.status-ACCEPTED { border-left-color: #f59e0b; background: #fffdf5; }
+    .history-item.status-IN_PROGRESS { border-left-color: #8b5cf6; background: #faf5ff; }
+    .history-item.status-COMPLETED { border-left-color: #10b981; background: #f0fdf4; }
+    .history-item.status-FAILED { border-left-color: #ef4444; background: #fffcfc; }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.25rem;
+    }
+    .history-meta {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+    }
+    .status-tag {
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .status-tag.SENT { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .status-tag.RECEIVED { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .status-tag.ACCEPTED { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .status-tag.IN_PROGRESS { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .status-tag.COMPLETED { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .status-tag.FAILED { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    @keyframes highlightPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(16, 185, 129, 0.6); }
+      50% { transform: scale(1.015); box-shadow: 0 0 10px rgba(16, 185, 129, 0.7); background: #f0fdf4; }
+      100% { transform: scale(1); box-shadow: none; }
+    }
+    .history-item.status-updated {
+      animation: highlightPulse 1.2s ease-in-out;
+    }
+
+    /* トースト通知 */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      z-index: 9999;
+    }
+
+    /* 薬品サジェスト ドロップダウン & 詳細バッジ */
+    .med-suggest-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 1000;
+      margin-top: 3px;
+    }
+    .med-suggest-item {
+      padding: 0.45rem 0.7rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.12s;
+    }
+    .med-suggest-item:hover {
+      background-color: #f0fdf4;
+    }
+    .med-suggest-main {
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #0f172a;
+    }
+    .med-suggest-sub {
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 0.1rem;
+    }
+    .med-suggest-badges {
+      display: flex;
+      gap: 0.2rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .med-detail-card {
+      margin-top: 0.35rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #0284c7;
+      border-radius: 6px;
+      padding: 0.45rem 0.7rem;
+      font-size: 0.73rem;
+      line-height: 1.35;
+    }
+    .med-tag {
+      display: inline-block;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .med-tag-brand-orig { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .med-tag-brand-gen { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .med-tag-ok { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .med-tag-ng { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .med-tag-warn { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+
+    .btn-lookup {
+      background: #f0f9ff;
+      color: #0284c7;
+      border: 1px solid #bae6fd;
+      padding: 0.18rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-lookup:hover {
+      background: #0284c7;
+      color: white;
+    }
+
+    /* 薬品マスタモーダル */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      width: 92%;
+      max-width: 860px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 1.25rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    }
+    .filter-btn {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: #0284c7;
+      color: white;
+      border-color: #0369a1;
+    }
+
+    /* 複数薬剤処方カード */
+    .rx-item-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #0284c7;
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .rx-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+    .rx-rp-badge {
+      background: #0284c7;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 0.12rem 0.45rem;
+      border-radius: 4px;
+    }
+    .btn-rx-delete {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-rx-delete:hover {
+      background: #fca5a5;
+      color: white;
+    }
+
+    /* 注射指示 投与経路選択ボタン群 */
+    .route-pill-group {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .route-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 9999px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .route-pill.active {
+      background: #166534;
+      color: white;
+      border-color: #15803d;
+    }
+
+    /* リハビリ大区分見出し */
+    .rehab-section-title {
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #065f46;
+      background: #e6fcf5;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin-top: 0.4rem;
+      margin-bottom: 0.3rem;
+      border-left: 3px solid #20c997;
+    }
+  </style>
+</head>
+<body>
+  <!-- 最上部ヘッダー -->
+  <header>
+    <div class="header-branding">
+      <div class="header-logo-icon">🏥</div>
+      <div>
+        <div class="header-hospital-name">医療法人 社団 交雄会 だて病院</div>
+        <div class="header-app-title">オーダリング指示発行システム</div>
+      </div>
+      <div class="header-badges">
+        <span class="header-badge" style="background:#38bdf8; color:#0c4a6e;">Port <%= port %> (Sender)</span>
+        <% if (typeof isHttps !== 'undefined' && isHttps) { %>
+          <span class="header-badge" style="background:#10b981; color:white;">🔒 HTTPS 暗号化</span>
+        <% } else { %>
+          <span class="header-badge" style="background:#64748b; color:white;">🔓 HTTP 平文</span>
+        <% } %>
+      </div>
+    </div>
+    <div class="header-links">
+      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 5443 : 5000 %>" target="_blank">📥 受信側モニター</a>
+      <a href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles" target="_blank">📋 電子カルテ</a>
+      <button type="button" onclick="clearHistory()" style="background:rgba(255,255,255,0.18); color:white; border:none; padding:0.25rem 0.55rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
+        履歴クリア
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 左ペイン: 入力フォーム -->
+    <div class="form-card">
+      <!-- 1. 送信先サーバー設定 -->
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label class="form-label" for="receiverUrlInput">📡 送信先サーバー (受信エンドポイント):</label>
+          <select onchange="document.getElementById('receiverUrlInput').value = this.value;" class="form-control" style="width:175px; font-size:0.75rem; padding:0.2rem 0.4rem;">
+            <option value="<%= defaultReceiverUrl %>">標準 (Port <%= typeof protocol !== 'undefined' && protocol === 'https' ? 5443 : 5000 %>)</option>
+            <option value="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:5000">Port 5000 (HTTP)</option>
+            <option value="https://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:5443">Port 5443 (HTTPS)</option>
+            <option value="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000">Port 3000 (カルテ連携)</option>
+          </select>
+        </div>
+        <input type="text" id="receiverUrlInput" class="form-control" style="font-family:monospace; font-size:0.8rem;" value="<%= defaultReceiverUrl %>">
+      </div>
+
+      <!-- 2. だて病院 共通患者情報セクション (写真様式準拠) -->
+      <div class="patient-master-card">
+        <div class="patient-master-header">
+          <div class="patient-master-title">
+            <span>👤 患者情報 & 指示医 (交雄会 だて病院 共通書式)</span>
+          </div>
+          <span class="hospital-stamp-label">だて病院 診療録・指示票様式</span>
+        </div>
+
+        <!-- 行1: プリセット選択 / ID番号 / 氏名 / カナ -->
+        <div class="form-row" style="grid-template-columns: 1.4fr 0.9fr 1.1fr 1.1fr;">
+          <div class="form-group">
+            <label class="form-label" for="patientSelect">📋 患者プリセット:</label>
+            <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)">
+              <% patients.forEach(p => { %>
+                <option value="<%= p.id %>"
+                        data-id="<%= p.id %>"
+                        data-name="<%= p.name %>"
+                        data-kana="<%= p.kana || '' %>"
+                        data-age="<%= p.age || '' %>"
+                        data-gender="<%= p.gender || '男' %>"
+                        data-birthdate="<%= p.birthDate || '' %>"
+                        data-era="<%= p.era || '昭' %>"
+                        data-ward="<%= p.ward || 'しおかぜ' %>"
+                        data-room="<%= p.room || '' %>"
+                        data-dept="<%= p.department || '内科' %>"
+                        data-infection="<%= p.infection || '無' %>"
+                        data-mobility="<%= p.mobility || '徒歩' %>"
+                        data-height="<%= p.height || '' %>"
+                        data-weight="<%= p.weight || '' %>"
+                        data-examcategory="<%= p.examCategory || '一般診療' %>">[<%= p.id %>] <%= p.name %> (<%= p.ward || p.department %> / <%= p.gender %> <%= p.age %>歳)</option>
+              <% }); %>
+              <option value="CUSTOM">✏️ 手動入力 (新規患者)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientIdInput">ID番号 (カルテ):</label>
+            <input type="text" id="patientIdInput" class="form-control" value="<%= patients[0].id %>" style="font-family:monospace; font-weight:bold;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientNameInput">氏名 (漢字):</label>
+            <input type="text" id="patientNameInput" class="form-control" value="<%= patients[0].name %>" style="font-weight:bold;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientKanaInput">フリガナ (カナ):</label>
+            <input type="text" id="patientKanaInput" class="form-control" value="<%= patients[0].kana || '' %>">
+          </div>
+        </div>
+
+        <!-- 行2: 性別 / 生年月日(和暦・西暦) / 年齢 / 身体計測(身長・体重) -->
+        <div class="form-row" style="grid-template-columns: 0.8fr 1.6fr 0.8fr 1fr;">
+          <div class="form-group">
+            <label class="form-label" for="patientGenderInput">性別:</label>
+            <select id="patientGenderInput" class="form-control">
+              <option value="男" <%= patients[0].gender === '男' ? 'selected' : '' %>>男 (M)</option>
+              <option value="女" <%= patients[0].gender === '女' ? 'selected' : '' %>>女 (F)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientBirthDateInput">生年月日 (和暦/西暦):</label>
+            <div style="display:flex; gap:0.25rem; align-items:center;">
+              <select id="patientEraInput" class="form-control" style="width:65px; padding:0.35rem 0.25rem;">
+                <option value="昭" selected>昭和</option>
+                <option value="平">平成</option>
+                <option value="令">令和</option>
+                <option value="大">大正</option>
+              </select>
+              <input type="text" id="patientEraYearInput" class="form-control" style="width:45px; text-align:center;" value="21" title="元号年">
+              <span style="font-size:0.75rem;">年</span>
+              <input type="date" id="patientBirthDateInput" class="form-control" style="flex:1;" value="<%= patients[0].birthDate || '' %>" onchange="updateAgeAndEraFromBirthDate(this.value)">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientAgeInput">年齢:</label>
+            <div style="display:flex; align-items:center; gap:0.2rem;">
+              <input type="number" id="patientAgeInput" class="form-control" value="<%= patients[0].age || '' %>" style="width:60px;">
+              <span style="font-size:0.75rem;">才</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">身体計測:</label>
+            <div style="display:flex; gap:0.25rem; align-items:center;">
+              <input type="number" id="patientHeightInput" class="form-control" placeholder="身長" value="<%= patients[0].height || '' %>" style="width:55px;">
+              <span style="font-size:0.72rem;">cm</span>
+              <input type="number" id="patientWeightInput" class="form-control" placeholder="体重" value="<%= patients[0].weight || '' %>" style="width:55px;">
+              <span style="font-size:0.72rem;">kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 行3: 所属・病棟 / 病室 / 区分 / 感染症 / 移動方法 (写真6様式忠実準拠) -->
+        <div class="form-row" style="grid-template-columns: 1.1fr 0.9fr 1fr 1.2fr 1.1fr;">
+          <div class="form-group">
+            <label class="form-label" for="patientWardInput">所属・病棟 (写真様式):</label>
+            <select id="patientWardInput" class="form-control">
+              <option value="しおかぜ" selected>しおかぜ (療養)</option>
+              <option value="うみかぜ">うみかぜ (介護院)</option>
+              <option value="医療">医療 (療養病棟)</option>
+              <option value="外来">外来処置室</option>
+              <option value="プライム">プライム病棟</option>
+              <option value="一般病棟">一般病棟</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientRoomInput">病室:</label>
+            <input type="text" id="patientRoomInput" class="form-control" value="<%= patients[0].room || '302号室' %>" placeholder="例: 302号室">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientExamCategoryInput">区分 (写真6様式):</label>
+            <select id="patientExamCategoryInput" class="form-control">
+              <option value="入院時検査" <%= (patients[0].examCategory === '入院時検査') ? 'selected' : '' %>>入院時検査</option>
+              <option value="一般診療" <%= (patients[0].examCategory === '一般診療') ? 'selected' : '' %>>一般診療</option>
+              <option value="プライム" <%= (patients[0].examCategory === 'プライム') ? 'selected' : '' %>>プライム</option>
+              <option value="健診" <%= (patients[0].examCategory === '健診') ? 'selected' : '' %>>健診</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientInfectionInput">感染症:</label>
+            <div style="display:flex; gap:0.3rem;">
+              <select id="patientInfectionInput" class="form-control" style="width:65px;" onchange="toggleInfectionDetail(this.value)">
+                <option value="無" selected>無</option>
+                <option value="有">有</option>
+              </select>
+              <input type="text" id="patientInfectionDetailInput" class="form-control" style="flex:1; display:none;" placeholder="詳細 (MRSA等)" value="">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientMobilityInput">移動方法:</label>
+            <select id="patientMobilityInput" class="form-control">
+              <option value="車椅子" selected>車椅子</option>
+              <option value="徒歩">徒歩</option>
+              <option value="ベッド">ベッド</option>
+              <option value="ストレッチャー">ストレッチャー</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 行4: 指示医 / 優先度 / 実施予定日時 -->
+        <div class="form-row" style="grid-template-columns: 1.2fr 1.3fr 1.3fr;">
+          <div class="form-group">
+            <label class="form-label" for="doctorNameInput">🩺 指示医師 (処方医師):</label>
+            <input type="text" id="doctorNameInput" class="form-control" value="北島 先生 (内科)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">⚡ 優先度区分:</label>
+            <div class="priority-group">
+              <label class="priority-label routine">
+                <input type="radio" name="orderPriority" value="ROUTINE" checked> 通常
+              </label>
+              <label class="priority-label urgent">
+                <input type="radio" name="orderPriority" value="URGENT"> 至急
+              </label>
+              <label class="priority-label stat">
+                <input type="radio" name="orderPriority" value="STAT"> 緊急
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="orderScheduleTime">📅 実施・撮影予定日時:</label>
+            <input type="datetime-local" id="orderScheduleTime" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. オーダー種別タブナビゲーション -->
+      <div class="section-title">
+        <span>📝 オーダー指示書種別 (だて病院様式選択)</span>
+      </div>
+
+      <div class="tabs-nav">
+        <button type="button" class="tab-btn active" onclick="switchOrderType('PRESCRIPTION', this)">💊 処方 (内服・外用)</button>
+        <button type="button" class="tab-btn" onclick="switchOrderType('IV', this)">💉 注射指示</button>
+        <button type="button" class="tab-btn" onclick="switchOrderType('RADIOLOGY', this)">🩻 放射線科 (CT/透視/X線)</button>
+        <button type="button" class="tab-btn" onclick="switchOrderType('LAB_EXAM', this)">🔬 検査科 (生理/検体)</button>
+        <button type="button" class="tab-btn" onclick="switchOrderType('REHAB', this)">🏃 リハビリテーション</button>
+        <button type="button" class="tab-btn" onclick="switchOrderType('MEAL', this)">🍱 食事管理</button>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ペイン 1: 💊 処方オーダー (複数Rp & 薬品集マスタ連動) -->
+      <!-- ========================================================= -->
+      <div id="pane-PRESCRIPTION" class="order-pane">
+        <div class="photo-form-banner" style="background:#eff6ff; border-color:#93c5fd; color:#1e40af;">
+          <div class="photo-form-title">
+            <span>💊 処方箋指示書 (院内処方 / 院外処方)</span>
+          </div>
+          <span class="photo-form-badge">薬品集マスタ(607品目)連動</span>
+        </div>
+
+        <div class="form-row" style="margin-bottom:0.65rem; background:#f8fafc; padding:0.5rem 0.65rem; border-radius:6px; border:1px solid #e2e8f0;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="rxPrescriptionType">処方区分:</label>
+            <select id="rxPrescriptionType" class="form-control">
+              <option value="定期処方" selected>定期処方 (内服・定期)</option>
+              <option value="臨時処方">臨時処方 (急性期・追加)</option>
+              <option value="頓服処方">頓服処方 (疼痛・発熱時)</option>
+              <option value="退院時処方">退院時処方</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="rxDeptType">処方場所区分:</label>
+            <select id="rxDeptType" class="form-control">
+              <option value="院内処方" selected>院内処方 (病棟・薬局)</option>
+              <option value="院外処方">院外処方箋 (保険薬局)</option>
+            </select>
+          </div>
+          <div class="form-group" style="width:140px;">
+            <label class="form-label" for="rxCommonDays">一括処方日数:</label>
+            <div style="display:flex; gap:0.25rem;">
+              <input type="number" id="rxCommonDays" class="form-control" value="7" min="1" max="90" onchange="applyCommonDaysToAll(this.value)">
+              <button type="button" onclick="applyCommonDaysToAll(document.getElementById('rxCommonDays').value)" title="全Rpに一括適用" class="btn-lookup" style="white-space:nowrap;">適用</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 処方薬剤リスト (Rp. 1, Rp. 2 ...) -->
+        <div id="rxMedicinesListContainer" style="display:flex; flex-direction:column; gap:0.65rem;">
+          <!-- 動的レンダリング -->
+        </div>
+
+        <!-- 薬剤追加バー -->
+        <div style="margin-top:0.6rem; display:flex; justify-content:space-between; align-items:center; background:#f0fdf4; padding:0.45rem 0.75rem; border-radius:6px; border:1px dashed #86efac;">
+          <button type="button" class="btn-lookup" style="padding:0.35rem 0.8rem; font-size:0.8rem; background:#059669; color:white; border:none;" onclick="addNewRxMedicineRow()">
+            ➕ 処方薬剤を追加 (Rp追加)
+          </button>
+          <span style="font-size:0.75rem; font-weight:bold; color:#166534;" id="rxTotalMedCountText">登録薬剤: 1品目</span>
+        </div>
+
+        <!-- 処方 自由記載欄 -->
+        <div class="form-group" style="margin-top:0.6rem;">
+          <label class="form-label" for="rxRemarks">📝 自由記載欄（調剤指示・粉砕指示・特記事項・アレルギー歴等）:</label>
+          <textarea id="rxRemarks" class="form-control" rows="2" placeholder="例: 定期処方 (アレルギー歴なし確認済)、嚥下状態に応じ簡易懸濁可、食前服用希望など">定期処方 (アレルギー歴なし確認済)</textarea>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ペイン 2: 💉 注射指示 (Photo 4 準拠: 交雄会 だて病院 注射指示) -->
+      <!-- ========================================================= -->
+      <div id="pane-IV" class="order-pane" style="display:none;">
+        <div class="photo-form-banner banner-iv">
+          <div class="photo-form-title">
+            <span>💉 注射指示書 (医療法人 交雄会 だて病院)</span>
+          </div>
+          <span class="photo-form-badge">写真様式準拠 (DIV/iv/im/is/IVH)</span>
+        </div>
+
+        <!-- 投与経路 選択 (用紙表記の通りの記号) -->
+        <div class="form-group" style="background:#f8fafc; padding:0.5rem 0.65rem; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:0.6rem;">
+          <label class="form-label">💉 投与経路 (用紙記号):</label>
+          <div class="route-pill-group">
+            <label class="route-pill active" onclick="setIvRoute('DIV', this)">
+              <input type="radio" name="ivRouteRadio" value="DIV" checked style="display:none;"> DIV (点滴静脈注射)
+            </label>
+            <label class="route-pill" onclick="setIvRoute('iv', this)">
+              <input type="radio" name="ivRouteRadio" value="iv" style="display:none;"> iv (静脈内注射)
+            </label>
+            <label class="route-pill" onclick="setIvRoute('im', this)">
+              <input type="radio" name="ivRouteRadio" value="im" style="display:none;"> im (筋肉内注射)
+            </label>
+            <label class="route-pill" onclick="setIvRoute('is', this)">
+              <input type="radio" name="ivRouteRadio" value="is" style="display:none;"> is (皮下注射)
+            </label>
+            <label class="route-pill" onclick="setIvRoute('IVH', this)">
+              <input type="radio" name="ivRouteRadio" value="IVH" style="display:none;"> IVH (中心静脈)
+            </label>
+            <label class="route-pill" onclick="setIvRoute('その他', this)">
+              <input type="radio" name="ivRouteRadio" value="その他" style="display:none;"> その他
+            </label>
+          </div>
+          <input type="hidden" id="ivSelectedRoute" value="DIV">
+        </div>
+
+        <!-- 処方注射薬 (輸液ベース + 混注薬剤) -->
+        <div class="form-group" style="position:relative;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label class="form-label" for="ivMedicine">💊 基本輸液・注射薬名 (注射剤マスタ連動):</label>
+            <button type="button" class="btn-lookup" onclick="openMedicineModal('iv')">🔍 注射薬マスタから検索</button>
+          </div>
+          <div style="position:relative;">
+            <input type="text" id="ivMedicine" class="form-control" placeholder="注射薬名・輸液名を入力（例: セフォセフ、大塚生食注、ソルデム...）" value="セフォセフ静注用1g + 大塚生食注100ｍL" autocomplete="off" oninput="onMedicineInput('iv', this.value)" onfocus="onMedicineInput('iv', this.value)">
+            <div id="ivMedicineSuggest" class="med-suggest-dropdown" style="display:none;"></div>
+          </div>
+          <div id="ivMedDetailCard" class="med-detail-card" style="display:none;"></div>
+          <input type="hidden" id="ivMedicineId" value="DR0010">
+        </div>
+
+        <!-- 投与速度 & 滴下指示 -->
+        <div class="form-row" style="margin-top:0.4rem;">
+          <div class="form-group">
+            <label class="form-label" for="ivRate">投与速度・時間 (滴下指示):</label>
+            <input type="text" id="ivRate" class="form-control" value="80mL/h (約1時間15分で点滴静注)">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="ivScheduleDays">指示日数 / 実施頻度:</label>
+            <input type="text" id="ivScheduleDays" class="form-control" value="1日2回 (朝・夕) 3日間">
+          </div>
+        </div>
+
+        <!-- 鑑査印・確認欄 -->
+        <div style="margin-top:0.4rem; background:#f0fdf4; border:1px solid #bbf7d0; padding:0.45rem 0.65rem; border-radius:5px; display:flex; justify-content:space-between; align-items:center;">
+          <label style="font-size:0.78rem; font-weight:bold; color:#166534; display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
+            <input type="checkbox" id="ivPharmacistCheck" checked>
+            <span>薬剤師鑑査確認済 (調剤・混注可)</span>
+          </label>
+          <span style="font-size:0.72rem; color:#475569;">確認印: 薬剤部鑑査</span>
+        </div>
+
+        <!-- 注射 自由記載欄 -->
+        <div class="form-group" style="margin-top:0.5rem;">
+          <label class="form-label" for="ivRemarks">📝 自由記載欄（投与指示・血管痛注意・刺入部確認・看護申し送り等）:</label>
+          <textarea id="ivRemarks" class="form-control" rows="2" placeholder="例: 点滴刺入部の腫脹・疼痛に注意のこと、開始時血圧測定希望など">点滴刺入部の腫脹・疼痛に注意のこと</textarea>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ペイン 3: 🩻 放射線科 (Photo 1: CT検査依頼書 / Photo 2: 透視検査依頼書 / Photo 6: 診療Ｘ線照射録) -->
+      <!-- ========================================================= -->
+      <div id="pane-RADIOLOGY" class="order-pane" style="display:none;">
+        <!-- 放射線サブタブ -->
+        <div class="subtabs-nav">
+          <button type="button" class="subtab-btn active" onclick="switchRadSubTab('CT', this)">🩻 ＣＴ検査依頼書 (Photo 1)</button>
+          <button type="button" class="subtab-btn" onclick="switchRadSubTab('FLUORO', this)">🩻 透視検査依頼書 (Photo 2)</button>
+          <button type="button" class="subtab-btn" onclick="switchRadSubTab('XRAY', this)">🩻 診療Ｘ線照射録 (Photo 6)</button>
+        </div>
+
+        <!-- サブペイン 3-A: ＣＴ検査依頼書 (Photo 1 準拠, 黄色ヘッダー) -->
+        <div id="rad-subpane-CT" class="rad-subpane">
+          <div class="photo-form-banner banner-ct">
+            <div class="photo-form-title">
+              <span>🩻 ＣＴ検査依頼書 (医療法人 交雄会 だて病院)</span>
+            </div>
+            <span class="photo-form-badge">写真1準拠</span>
+          </div>
+
+          <!-- 区分: 単純 / 造影 / Dynamic -->
+          <div class="form-row" style="background:#fefce8; padding:0.45rem 0.65rem; border:1px solid #fef08a; border-radius:6px; margin-bottom:0.5rem; align-items:center;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">ＣＴ区分:</label>
+              <div style="display:flex; gap:0.6rem; font-size:0.8rem; font-weight:bold;">
+                <label style="cursor:pointer;"><input type="radio" name="ctContrast" value="単純" checked onchange="toggleCtDynamic(false)"> 単純CT</label>
+                <label style="cursor:pointer;"><input type="radio" name="ctContrast" value="造影" onchange="toggleCtDynamic(true)"> 造影CT</label>
+              </div>
+            </div>
+            <div class="form-group" id="ctDynamicBox" style="flex:1; display:none;">
+              <label class="form-label">Dynamic phase:</label>
+              <div style="display:flex; gap:0.5rem; font-size:0.78rem;">
+                <label><input type="checkbox" id="ctDynamic2"> 2phase</label>
+                <label><input type="checkbox" id="ctDynamic3"> 3phase</label>
+              </div>
+            </div>
+            <div class="form-group" style="width:160px;">
+              <label class="form-label">加算:</label>
+              <label style="font-size:0.78rem; font-weight:bold; cursor:pointer;">
+                <input type="checkbox" id="ctElecImgAdd" checked> 電子画像管理加算
+              </label>
+            </div>
+          </div>
+
+          <!-- 撮影部位 (写真の9箇所チェックボックス + 部位詳細) -->
+          <div class="form-group" style="margin-bottom:0.5rem;">
+            <label class="form-label">🎯 撮影部位 (用紙記載の9項目):</label>
+            <div class="chk-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <label class="chk-item"><input type="checkbox" id="ctPart_head" value="頭部"> 頭部 <input type="text" id="ctPartDetail_head" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_neck" value="頸部"> 頸部 <input type="text" id="ctPartDetail_neck" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_chest" value="胸部" checked> 胸部 (肺・横隔) <input type="text" id="ctPartDetail_chest" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_abdomen" value="腹部"> 腹部 (肝・胆・膵・腎) <input type="text" id="ctPartDetail_abdomen" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_pelvis" value="骨盤腔"> 骨盤腔 <input type="text" id="ctPartDetail_pelvis" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_spine" value="脊椎"> 脊椎 <input type="text" id="ctPartDetail_spine" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_upperLimb" value="上肢"> 上肢 <input type="text" id="ctPartDetail_upperLimb" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_lowerLimb" value="下肢"> 下肢 <input type="text" id="ctPartDetail_lowerLimb" placeholder="詳細" style="width:50px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="ctPart_other" value="その他"> その他 <input type="text" id="ctPartDetail_other" placeholder="部位記入" style="width:70px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+            </div>
+          </div>
+
+          <!-- 使用薬剤 & 撮影条件 (kV / mA / sec) -->
+          <div class="form-row" style="margin-bottom:0.5rem;">
+            <div class="form-group" style="flex:2;">
+              <label class="form-label" for="ctMedication">使用薬剤 (造影剤・生食等):</label>
+              <input type="text" id="ctMedication" class="form-control" placeholder="例: イオパミロン注300 (100mL)、生食" value="">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">撮影条件 (kV/mA/sec):</label>
+              <div style="display:flex; gap:0.2rem; align-items:center;">
+                <input type="text" id="ctKv" class="form-control" placeholder="kV" value="120" style="font-size:0.75rem;">
+                <input type="text" id="ctMa" class="form-control" placeholder="mA" value="200" style="font-size:0.75rem;">
+                <input type="text" id="ctSec" class="form-control" placeholder="sec" value="0.5" style="font-size:0.75rem;">
+              </div>
+            </div>
+          </div>
+
+          <!-- 検査目的 (臨床所見・疑い病名) 自由記載欄 -->
+          <div class="form-group">
+            <label class="form-label" for="ctPurpose">📝 検査目的 (臨床所見・疑い病名・自由記載欄):</label>
+            <textarea id="ctPurpose" class="form-control" rows="2" placeholder="例: 肺炎疑い、発熱・咳嗽の精査、経過観察など">発熱・咳嗽持続のため肺炎疑い、胸部精査</textarea>
+          </div>
+        </div>
+
+        <!-- サブペイン 3-B: 透視検査依頼書 (Photo 2 準拠, 青色ヘッダー) -->
+        <div id="rad-subpane-FLUORO" class="rad-subpane" style="display:none;">
+          <div class="photo-form-banner banner-fluoro">
+            <div class="photo-form-title">
+              <span>🩻 透視検査依頼書 (医療法人 交雄会 だて病院)</span>
+            </div>
+            <span class="photo-form-badge">写真2準拠</span>
+          </div>
+
+          <!-- 検査項目 (PEG交換 / VF検査 / 消化管造影 / 単純透視 / その他) -->
+          <div class="form-group" style="margin-bottom:0.5rem;">
+            <label class="form-label">📋 検査項目 (用紙記載項目):</label>
+            <div class="chk-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+              <label class="chk-item"><input type="checkbox" id="fluoro_peg" value="PEG交換" checked> PEG交換 (胃瘻交換)</label>
+              <label class="chk-item"><input type="checkbox" id="fluoro_vf" value="VF検査"> VF検査 (嚥下造影)</label>
+              <label class="chk-item"><input type="checkbox" id="fluoro_gi" value="消化管造影検査"> 消化管造影検査</label>
+              <label class="chk-item"><input type="checkbox" id="fluoro_plain" value="単純透視"> 単純透視</label>
+              <label class="chk-item"><input type="checkbox" id="fluoro_other" value="その他"> その他 <input type="text" id="fluoro_other_detail" placeholder="詳細" style="width:60px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+            </div>
+          </div>
+
+          <!-- 使用薬剤 (だて病院のチェック式薬品リスト + 数量) -->
+          <div class="form-group" style="background:#f8fafc; padding:0.5rem 0.65rem; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:0.5rem;">
+            <label class="form-label">💊 使用薬剤 (だて病院 常備薬品リスト):</label>
+            <div class="chk-grid" style="grid-template-columns: 1fr 1fr;">
+              <label class="chk-item" style="justify-content:space-between;">
+                <span><input type="checkbox" id="fluoro_med_gastro"> ガストログラフィン</span>
+                <span><input type="number" id="fluoro_med_gastro_val" placeholder="ml" value="20" style="width:50px; font-size:0.72rem;"> ml</span>
+              </label>
+              <label class="chk-item" style="justify-content:space-between;">
+                <span><input type="checkbox" id="fluoro_med_xylo" checked> キシロカインゼリー2%</span>
+                <span><input type="number" id="fluoro_med_xylo_val" placeholder="ml" value="10" style="width:50px; font-size:0.72rem;"> ml</span>
+              </label>
+              <label class="chk-item" style="justify-content:space-between;">
+                <span><input type="checkbox" id="fluoro_med_saline" checked> 生理食塩水</span>
+                <span><input type="number" id="fluoro_med_saline_val" placeholder="ml" value="20" style="width:50px; font-size:0.72rem;"> ml</span>
+              </label>
+              <label class="chk-item" style="justify-content:space-between;">
+                <span><input type="checkbox" id="fluoro_med_barium"> 硫酸バリウム散98.8%ホリイ 300g</span>
+                <span><input type="number" id="fluoro_med_barium_val" placeholder="本" style="width:45px; font-size:0.72rem;"> 本</span>
+              </label>
+              <label class="chk-item" style="justify-content:space-between;">
+                <span><input type="checkbox" id="fluoro_med_baricon"> バリコンミール 300g</span>
+                <span><input type="number" id="fluoro_med_baricon_val" placeholder="本" style="width:45px; font-size:0.72rem;"> 本</span>
+              </label>
+              <label class="chk-item" style="justify-content:space-between;">
+                <span><input type="checkbox" id="fluoro_med_baros"> バロス発泡顆粒-S 3.5g×2</span>
+                <span><input type="number" id="fluoro_med_baros_val" placeholder="包" style="width:45px; font-size:0.72rem;"> 包</span>
+              </label>
+            </div>
+            <div style="margin-top:0.35rem; display:flex; gap:0.4rem; align-items:center;">
+              <span style="font-size:0.75rem; color:#475569;">その他薬品:</span>
+              <input type="text" id="fluoro_med_custom" class="form-control" placeholder="追加の薬剤名や量" style="flex:1; font-size:0.75rem;">
+            </div>
+          </div>
+
+          <!-- 医療材料欄 -->
+          <div class="form-group" style="margin-bottom:0.5rem;">
+            <label class="form-label" for="fluoroMaterials">💉 医療材料欄 (カテーテル型番・バルーン等):</label>
+            <input type="text" id="fluoroMaterials" class="form-control" placeholder="例: ガストロボタン 24Fr 3.5cm、交換用シリンジ、滅菌ガーゼ等" value="ガストロボタン 24Fr 3.5cm">
+          </div>
+
+          <!-- 検査目的・臨床情報 自由記載欄 -->
+          <div class="form-group">
+            <label class="form-label" for="fluoroRemarks">📝 自由記載欄（検査目的・臨床情報・胃瘻状態等）:</label>
+            <textarea id="fluoroRemarks" class="form-control" rows="2" placeholder="例: 定期PEGチューブ交換、瘻孔状態良好、造影確認希望など">定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認</textarea>
+          </div>
+        </div>
+
+        <!-- サブペイン 3-C: 診療Ｘ線照射録 (Photo 6 準拠, だて病院様式) -->
+        <div id="rad-subpane-XRAY" class="rad-subpane" style="display:none;">
+          <div class="photo-form-banner banner-xray">
+            <div class="photo-form-title">
+              <span>🩻 診療Ｘ線照射録 (医療法人 交雄会 だて病院)</span>
+            </div>
+            <span class="photo-form-badge">写真6準拠 (一般撮影・ポータブル・撮影条件)</span>
+          </div>
+
+          <!-- ヘッダーメタ情報: 技師・ポータブル・媒体連携 -->
+          <div class="form-row" style="background:#f0fdf4; padding:0.5rem 0.65rem; border:1px solid #bbf7d0; border-radius:6px; margin-bottom:0.6rem; align-items:center;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="xrayTechnician">🧑‍🔬 担当技師 (技師印):</label>
+              <input type="text" id="xrayTechnician" class="form-control" value="放射線技師" placeholder="技師名">
+            </div>
+            <div class="form-group" style="flex:1.2;">
+              <label class="form-label">🛏️ 撮影場所・ポータブル:</label>
+              <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.8rem;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:0.25rem; font-weight:bold;">
+                  <input type="checkbox" id="xrayPortableCheck" onchange="toggleXrayPortable(this.checked)">
+                  ポータブル
+                </label>
+                <div id="xrayPortableRoomBox" style="display:none; align-items:center; gap:0.2rem;">
+                  <span>(</span>
+                  <input type="text" id="xrayPortableRoom" class="form-control" style="width:75px; padding:0.2rem 0.4rem; font-size:0.75rem;" placeholder="病室" value="<%= patients[0].room ? patients[0].room.replace('号室','') : '302' %>">
+                  <span>) 号室</span>
+                </div>
+              </div>
+            </div>
+            <div class="form-group" style="flex:1.3;">
+              <label class="form-label">💿 他院紹介用DVD作成・画像取込:</label>
+              <div style="display:flex; gap:0.6rem; font-size:0.76rem;">
+                <div>
+                  <span style="color:#475569;">DVD作成:</span>
+                  <label style="margin-left:0.15rem; cursor:pointer;"><input type="radio" name="xrayDvd" value="未" checked> 未</label>
+                  <label style="margin-left:0.15rem; cursor:pointer;"><input type="radio" name="xrayDvd" value="済"> 済</label>
+                </div>
+                <div>
+                  <span style="color:#475569;">画像取込:</span>
+                  <label style="margin-left:0.15rem; cursor:pointer;"><input type="radio" name="xrayImgImport" value="未" checked> 未</label>
+                  <label style="margin-left:0.15rem; cursor:pointer;"><input type="radio" name="xrayImgImport" value="済"> 済</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 部位・方向 (①～⑩ 写真様式忠実再現) -->
+          <div class="form-group" style="margin-bottom:0.6rem;">
+            <label class="form-label" style="font-weight:bold; color:#065f46; display:flex; justify-content:space-between;">
+              <span>🎯 照射部位・撮影方向 (写真様式 ①～⑩ 項目):</span>
+              <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">※ 複数部位の指示可能</span>
+            </label>
+
+            <div style="display:flex; flex-direction:column; gap:0.4rem;">
+              <!-- ① 胸部 -->
+              <div class="xray-site-row" style="background:#f0fdf4; border:1px solid #059669; border-radius:6px; padding:0.4rem 0.6rem;">
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                  <label class="chk-item" style="font-weight:bold; border-color:#059669; background:#dcfce7; width:110px;">
+                    <input type="checkbox" id="xray_site_chest" checked onchange="toggleSiteRow(this)"> ① 胸部
+                  </label>
+                  <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
+                    <span style="color:#475569; font-weight:bold;">正:</span>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_chest_ap_stand" checked> 立位</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_chest_ap_sit"> 座位</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_chest_ap_supine"> 臥位</label>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem; border-left:1px solid #cbd5e1; padding-left:0.5rem;">
+                    <span style="color:#475569; font-weight:bold;">側面:</span>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_chest_lat_rl" checked> R-L</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_chest_lat_lr"> L-R</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ② 腹部 -->
+              <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.6rem;">
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                  <label class="chk-item" style="font-weight:bold; width:110px;">
+                    <input type="checkbox" id="xray_site_abdo" onchange="toggleSiteRow(this)"> ② 腹部
+                  </label>
+                  <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
+                    <span style="color:#475569; font-weight:bold;">正:</span>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_abdo_stand" checked> 立位</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_abdo_sit"> 座位</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_abdo_supine"> 臥位</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ③ 腰椎 -->
+              <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.6rem;">
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.6rem;">
+                  <label class="chk-item" style="font-weight:bold; width:110px;">
+                    <input type="checkbox" id="xray_site_lumbar" onchange="toggleSiteRow(this)"> ③ 腰椎
+                  </label>
+                  <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.78rem;">
+                    <span style="color:#475569; font-weight:bold;">方向:</span>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_lumbar_ap" checked> 正</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="xray_lumbar_lat" checked> 側</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ④ 膝関節 & ⑤ 股関節 (2カラム) -->
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
+                <!-- ④ 膝関節 -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.6rem;">
+                  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem;">
+                    <label class="chk-item" style="font-weight:bold; width:95px;">
+                      <input type="checkbox" id="xray_site_knee" onchange="toggleSiteRow(this)"> ④ 膝関節
+                    </label>
+                    <div style="display:flex; align-items:center; gap:0.25rem; font-size:0.76rem;">
+                      <span style="color:#475569; font-weight:bold;">左右:</span>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_knee_r" checked> R</label>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_knee_l" checked> L</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.25rem; font-size:0.76rem; border-left:1px solid #cbd5e1; padding-left:0.35rem;">
+                      <span style="color:#475569; font-weight:bold;">方向:</span>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_knee_ap" checked> 正</label>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_knee_lat" checked> 側</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ⑤ 股関節 -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.6rem;">
+                  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem;">
+                    <label class="chk-item" style="font-weight:bold; width:95px;">
+                      <input type="checkbox" id="xray_site_hip" onchange="toggleSiteRow(this)"> ⑤ 股関節
+                    </label>
+                    <div style="display:flex; align-items:center; gap:0.25rem; font-size:0.76rem;">
+                      <span style="color:#475569; font-weight:bold;">左右:</span>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_hip_r" checked> R</label>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_hip_l"> L</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.25rem; font-size:0.76rem; border-left:1px solid #cbd5e1; padding-left:0.35rem;">
+                      <span style="color:#475569; font-weight:bold;">方向:</span>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_hip_ap" checked> 正</label>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_hip_lat" checked> 側</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ⑥ 骨盤 & ⑦ 手(リウマチ) (2カラム) -->
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem;">
+                <!-- ⑥ 骨盤 -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.6rem;">
+                  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem;">
+                    <label class="chk-item" style="font-weight:bold; width:95px;">
+                      <input type="checkbox" id="xray_site_pelvis" onchange="toggleSiteRow(this)"> ⑥ 骨盤
+                    </label>
+                    <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.76rem;">
+                      <span style="color:#475569; font-weight:bold;">方向:</span>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_pelvis_ap" checked> 正</label>
+                      <label style="cursor:pointer;"><input type="checkbox" id="xray_pelvis_obl"> 斜</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ⑦ 手 (リウマチ) -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.6rem;">
+                  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem;">
+                    <label class="chk-item" style="font-weight:bold; width:130px;">
+                      <input type="checkbox" id="xray_site_hand" onchange="toggleSiteRow(this)"> ⑦ 手(リウマチ) 2R
+                    </label>
+                    <div style="display:flex; align-items:center; gap:0.35rem; font-size:0.76rem;">
+                      <label style="cursor:pointer;"><input type="radio" name="xray_hand_which" value="両" checked> 両</label>
+                      <label style="cursor:pointer;"><input type="radio" name="xray_hand_which" value="右"> 右</label>
+                      <label style="cursor:pointer;"><input type="radio" name="xray_hand_which" value="左"> 左</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ⑧, ⑨, ⑩ 自由記入行 (3カラム) -->
+              <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.4rem;">
+                <!-- ⑧ 自由部位 -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.35rem 0.5rem;">
+                  <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:0.25rem;">
+                    <label class="chk-item" style="padding:0.15rem 0.35rem; font-size:0.74rem; width:100%;">
+                      <input type="checkbox" id="xray_site_free8" onchange="toggleSiteRow(this)"> ⑧ 自由入力
+                    </label>
+                  </div>
+                  <input type="text" id="xray_free8_part" class="form-control" style="font-size:0.75rem; padding:0.25rem 0.4rem; margin-bottom:0.2rem; width:100%;" placeholder="部位 (例: 頸椎)">
+                  <input type="text" id="xray_free8_dir" class="form-control" style="font-size:0.75rem; padding:0.25rem 0.4rem; width:100%;" placeholder="方向・条件 (例: 正・側・斜)">
+                </div>
+
+                <!-- ⑨ 自由部位 -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.35rem 0.5rem;">
+                  <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:0.25rem;">
+                    <label class="chk-item" style="padding:0.15rem 0.35rem; font-size:0.74rem; width:100%;">
+                      <input type="checkbox" id="xray_site_free9" onchange="toggleSiteRow(this)"> ⑨ 自由入力
+                    </label>
+                  </div>
+                  <input type="text" id="xray_free9_part" class="form-control" style="font-size:0.75rem; padding:0.25rem 0.4rem; margin-bottom:0.2rem; width:100%;" placeholder="部位 (例: 足関節)">
+                  <input type="text" id="xray_free9_dir" class="form-control" style="font-size:0.75rem; padding:0.25rem 0.4rem; width:100%;" placeholder="方向・条件 (例: R/L 正・側)">
+                </div>
+
+                <!-- ⑩ 自由部位 -->
+                <div class="xray-site-row" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:0.35rem 0.5rem;">
+                  <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:0.25rem;">
+                    <label class="chk-item" style="padding:0.15rem 0.35rem; font-size:0.74rem; width:100%;">
+                      <input type="checkbox" id="xray_site_free10" onchange="toggleSiteRow(this)"> ⑩ 自由入力
+                    </label>
+                  </div>
+                  <input type="text" id="xray_free10_part" class="form-control" style="font-size:0.75rem; padding:0.25rem 0.4rem; margin-bottom:0.2rem; width:100%;" placeholder="部位 (例: 肩関節)">
+                  <input type="text" id="xray_free10_dir" class="form-control" style="font-size:0.75rem; padding:0.25rem 0.4rem; width:100%;" placeholder="方向・条件 (例: 正・軸位)">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 撮影条件 & 電子画像管理 -->
+          <div class="form-row" style="background:#f8fafc; padding:0.45rem 0.65rem; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:0.5rem; align-items:center;">
+            <div class="form-group" style="flex:2;">
+              <label class="form-label">⚙️ 撮影条件（照射録記載欄）:</label>
+              <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem;">
+                <span>管電圧:</span>
+                <input type="number" id="xrayKv" class="form-control" style="width:55px; padding:0.25rem 0.35rem;" value="75">
+                <span>kV</span>
+                <span style="margin-left:0.3rem;">管電流:</span>
+                <input type="number" id="xrayMa" class="form-control" style="width:55px; padding:0.25rem 0.35rem;" value="100">
+                <span>mA</span>
+                <span style="margin-left:0.3rem;">時間:</span>
+                <input type="number" id="xrayMsec" class="form-control" style="width:55px; padding:0.25rem 0.35rem;" value="20">
+                <span>msec</span>
+              </div>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">💾 画像保存区分:</label>
+              <label style="font-size:0.78rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.3rem;">
+                <input type="checkbox" id="xrayElecArchive" checked>
+                電子保存済 (PACS連携)
+              </label>
+            </div>
+          </div>
+
+          <!-- 自由記載欄 (備考・指示・臨床情報) -->
+          <div class="form-group">
+            <label class="form-label" for="xrayRemarks">📝 自由記載欄（備考・体位配慮・臨床所見・指示特記事項等）:</label>
+            <textarea id="xrayRemarks" class="form-control" rows="2" placeholder="例: 肺炎治療後の経過観察。立位保持困難時は座位または車椅子撮影可。酸素投与中など">肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ペイン 4: 🔬 検査科 (Photo 3: 生理検査依頼書 / 検体検査) -->
+      <!-- ========================================================= -->
+      <div id="pane-LAB_EXAM" class="order-pane" style="display:none;">
+        <!-- 検査サブタブ -->
+        <div class="subtabs-nav">
+          <button type="button" class="subtab-btn active" onclick="switchLabSubTab('PHYSIO', this)">🔬 生理検査依頼書 (Photo 3)</button>
+          <button type="button" class="subtab-btn" onclick="switchLabSubTab('SPECIMEN', this)">🔬 検体検査 (生化学・血液・尿)</button>
+        </div>
+
+        <!-- サブペイン 4-A: 生理検査依頼書 (Photo 3 準拠, ピンク色ヘッダー) -->
+        <div id="lab-subpane-PHYSIO" class="lab-subpane">
+          <div class="photo-form-banner banner-physio">
+            <div class="photo-form-title">
+              <span>🔬 生理検査依頼書 (医療法人 交雄会 だて病院)</span>
+            </div>
+            <span class="photo-form-badge">写真3準拠 (心電図/肺機能/聴力/エコー)</span>
+          </div>
+
+          <!-- 心電図 / 肺機能 / 簡易聴力 -->
+          <div class="form-row" style="background:#fdf2f8; padding:0.5rem 0.65rem; border:1px solid #fbcfe8; border-radius:6px; margin-bottom:0.5rem;">
+            <div class="form-group" style="flex:1.2;">
+              <label class="form-label">📈 心電図検査:</label>
+              <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                <label class="chk-item"><input type="checkbox" id="physio_ecg12" checked> ① 標準12誘導心電図</label>
+                <label class="chk-item"><input type="checkbox" id="physio_holter"> ② ホルター心電図 ※外注</label>
+              </div>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">🫁 肺機能・聴力検査:</label>
+              <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                <label class="chk-item"><input type="checkbox" id="physio_lung"> 肺機能検査 (スパイロ)</label>
+                <label class="chk-item"><input type="checkbox" id="physio_hearing"> 簡易聴力検査</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 超音波検査 (エコー) -->
+          <div class="form-group" style="background:#f8fafc; padding:0.5rem 0.65rem; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:0.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+              <label class="form-label">📡 超音波検査 (エコー検査項目):</label>
+              <div style="display:flex; gap:0.5rem; font-size:0.75rem; font-weight:bold; color:#9d174d;">
+                <label><input type="checkbox" id="echo_doppler"> パルスドプラ法</label>
+                <label><input type="checkbox" id="echo_elasto"> 超音波エラストグラフィー</label>
+              </div>
+            </div>
+            <div class="chk-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <label class="chk-item"><input type="checkbox" id="echo_abdomen" checked> 腹部エコー</label>
+              <label class="chk-item"><input type="checkbox" id="echo_heart"> 心臓エコー (心エコー)</label>
+              <label class="chk-item"><input type="checkbox" id="echo_thyroid"> 甲状腺エコー</label>
+              <label class="chk-item"><input type="checkbox" id="echo_carotid"> 頸動脈エコー</label>
+              <label class="chk-item"><input type="checkbox" id="echo_joint"> 関節エコー <input type="text" id="echo_joint_part" placeholder="部位" style="width:45px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+              <label class="chk-item"><input type="checkbox" id="echo_vessel"> 血管エコー <select id="echo_vessel_type" style="font-size:0.7rem;"><option value="下肢静脈">下肢静脈</option><option value="下肢動脈">下肢動脈</option><option value="上肢">上肢</option></select></label>
+              <label class="chk-item" style="grid-column: span 3;"><input type="checkbox" id="echo_other"> その他エコー <input type="text" id="echo_other_detail" placeholder="部位・内容" style="width:150px; font-size:0.7rem; border:1px solid #cbd5e1; border-radius:3px; padding:1px 3px;"></label>
+            </div>
+          </div>
+
+          <!-- 生理検査 自由記載欄 -->
+          <div class="form-group">
+            <label class="form-label" for="physioRemarks">📝 自由記載欄（検査目的・臨床所見・疑い病名・既往歴等）:</label>
+            <textarea id="physioRemarks" class="form-control" rows="2" placeholder="例: 不整脈・動悸の精査、心不全フォロー、腹部腫瘤疑いなど">心窩部不快感および肝機能値軽度上昇のため腹部エコー精査</textarea>
+          </div>
+        </div>
+
+        <!-- サブペイン 4-B: 検体検査 (生化学・血液・尿) -->
+        <div id="lab-subpane-SPECIMEN" class="lab-subpane" style="display:none;">
+          <div class="photo-form-banner" style="background:#f1f5f9; border-color:#cbd5e1; color:#334155;">
+            <div class="photo-form-title">
+              <span>🔬 検体検査オーダー (生化学・血液・尿検査)</span>
+            </div>
+            <span class="photo-form-badge">院内検査室 / 外注</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">検査項目セット:</label>
+            <input type="text" id="labItems" class="form-control" value="一般生化学12項目 + 血算 (CBC) + CRP + 凝固 (PT-INR)">
+          </div>
+          <div class="form-row" style="margin-top:0.4rem;">
+            <div class="form-group">
+              <label class="form-label">検体種別:</label>
+              <select id="labSampleType" class="form-control">
+                <option value="静脈血" selected>静脈血</option>
+                <option value="動脈血 (ガス分析)">動脈血 (ガス分析)</option>
+                <option value="尿 (一般・沈渣)">尿 (一般・沈渣)</option>
+                <option value="喀痰">喀痰 (細菌培養・抗酸菌)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">採取予定日時:</label>
+              <input type="text" id="labSchedule" class="form-control" value="本日午前中 (早朝空腹時採血)">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:0.4rem;">
+            <label class="form-label" for="labRemarks">📝 自由記載欄（採取指示・至急理由・特記事項等）:</label>
+            <textarea id="labRemarks" class="form-control" rows="2" placeholder="例: 穿刺困難時は左前腕推奨、結果出次第内線連絡希望など"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ペイン 5: 🏃 リハビリテーション (Photo 5 準拠: 交雄会 だて病院 指示書) -->
+      <!-- ========================================================= -->
+      <div id="pane-REHAB" class="order-pane" style="display:none;">
+        <div class="photo-form-banner banner-rehab">
+          <div class="photo-form-title">
+            <span>🏃 リハビリテーション指示書 (医療法人 交雄会 だて病院)</span>
+          </div>
+          <span class="photo-form-badge">写真5準拠 (PT/OT/ST/物理療法)</span>
+        </div>
+
+        <!-- 実施場所 & 日付 -->
+        <div class="form-row" style="background:#f8fafc; padding:0.45rem 0.65rem; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:0.4rem;">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">実施場所:</label>
+            <div style="display:flex; gap:0.6rem; font-size:0.8rem; font-weight:bold;">
+              <label style="cursor:pointer;"><input type="checkbox" id="rehabLocBed" checked> ベッドサイド</label>
+              <label style="cursor:pointer;"><input type="checkbox" id="rehabLocRoom" checked> リハビリテーション室</label>
+            </div>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="rehabAdmitDate">入院年月日:</label>
+            <input type="date" id="rehabAdmitDate" class="form-control" value="2026-09-01">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="rehabOrderDate">指示年月日:</label>
+            <input type="date" id="rehabOrderDate" class="form-control" value="2026-09-15">
+          </div>
+        </div>
+
+        <!-- 診断名1 / 発症日 & 診断名2 / 発症日 & 禁忌 -->
+        <div class="form-row" style="margin-bottom:0.4rem;">
+          <div class="form-group" style="flex:2;">
+            <label class="form-label" for="rehabDiag1">診断名1:</label>
+            <input type="text" id="rehabDiag1" class="form-control" value="脳梗塞後遺症 (右不全片麻痺)">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="rehabDiagDate1">発症年月日1:</label>
+            <input type="date" id="rehabDiagDate1" class="form-control" value="2026-08-15">
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:0.4rem;">
+          <div class="form-group" style="flex:2;">
+            <label class="form-label" for="rehabDiag2">診断名2:</label>
+            <input type="text" id="rehabDiag2" class="form-control" value="廃用症候群・誤嚥性肺炎後">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label" for="rehabDiagDate2">発症年月日2:</label>
+            <input type="date" id="rehabDiagDate2" class="form-control" value="2026-08-28">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0.45rem;">
+          <label class="form-label" for="rehabContra" style="color:#b91c1c;">⚠️ 治療上の禁忌・注意事項:</label>
+          <input type="text" id="rehabContra" class="form-control" style="border-color:#fca5a5; background:#fff1f2; font-weight:bold; color:#991b1b;" value="収縮期血圧180以上または脈拍110以上で中止、起立時ふらつき注意">
+        </div>
+
+        <!-- 指示区分 (PT, OT, ST, 物理療法) -->
+        <div class="form-group" style="background:#ecfdf5; border:1px solid #a7f3d0; padding:0.45rem 0.65rem; border-radius:6px; margin-bottom:0.45rem;">
+          <label class="form-label" style="color:#065f46;">🎯 指示区分 (チェック):</label>
+          <div style="display:flex; gap:0.8rem; font-weight:bold; font-size:0.82rem; flex-wrap:wrap;">
+            <label style="cursor:pointer;"><input type="checkbox" id="rehabType_pt" checked> 理学療法 (PT)</label>
+            <label style="cursor:pointer;"><input type="checkbox" id="rehabType_ot" checked> 作業療法 (OT)</label>
+            <label style="cursor:pointer;"><input type="checkbox" id="rehabType_st"> 言語聴覚療法 (ST)</label>
+            <label style="cursor:pointer;"><input type="checkbox" id="rehabType_phys"> 物理療法・マッサージ</label>
+          </div>
+        </div>
+
+        <!-- 治療目的 (写真記載の9大区分) -->
+        <div class="rehab-section-title">治療目的 (用紙記載項目)</div>
+        <div style="display:flex; flex-direction:column; gap:0.35rem; font-size:0.75rem; background:#ffffff; padding:0.4rem; border:1px solid #e2e8f0; border-radius:5px;">
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <strong>1. 運動機能改善:</strong>
+            <label><input type="checkbox" id="goal_rom" checked> ROM</label>
+            <label><input type="checkbox" id="goal_bal" checked> バランス</label>
+            <label><input type="checkbox" id="goal_str" checked> 筋力</label>
+            <label><input type="checkbox" id="goal_coord"> 協調運動</label>
+            <label><input type="checkbox" id="goal_neuro"> 神経筋促通</label>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <strong>2. 動作能力改善:</strong>
+            <label><input type="checkbox" id="goal_basic" checked> 基本動作</label>
+            <label><input type="checkbox" id="goal_adl_mov" checked> ADL動作 <input type="text" id="goal_adl_detail" placeholder="内容" style="width:60px; font-size:0.7rem;"></label>
+            <label><input type="checkbox" id="goal_trans" checked> 移動・移乗</label>
+            <label><input type="checkbox" id="goal_walk" checked> 歩行</label>
+            <label><input type="checkbox" id="goal_wc"> 車いす</label>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <strong>3. ADL改善:</strong>
+            <label><input type="checkbox" id="goal_adl" checked> ADL自立度向上</label>
+            <strong style="margin-left:0.5rem;">4. 認知機能:</strong>
+            <label><input type="checkbox" id="goal_cog"> 高次脳機能 <input type="text" id="goal_cog_detail" placeholder="内容" style="width:60px; font-size:0.7rem;"></label>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <strong>5. 精神心理:</strong>
+            <label><input type="checkbox" id="goal_ind"> 個別的活動</label>
+            <label><input type="checkbox" id="goal_phy"> 身体的活動</label>
+            <label><input type="checkbox" id="goal_rec"> レク</label>
+            <strong style="margin-left:0.5rem;">6. 趣味:</strong>
+            <label><input type="checkbox" id="goal_craft"> 手工芸</label>
+            <label><input type="checkbox" id="goal_sing"> 歌唱</label>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <strong>7. 摂食機能改善:</strong>
+            <label><input type="checkbox" id="goal_swallow"> 摂食機能訓練</label>
+            <strong style="margin-left:0.5rem;">8. 構音・失語改善:</strong>
+            <label><input type="checkbox" id="goal_art"> 構音器官運動拡大</label>
+            <label><input type="checkbox" id="goal_speak"> 発話向上</label>
+            <label><input type="checkbox" id="goal_comp"> 理解向上</label>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <strong>9. その他:</strong>
+            <label><input type="checkbox" id="goal_suct"> サクション</label>
+            <label><input type="checkbox" id="goal_other"> その他 <input type="text" id="goal_other_detail" placeholder="自由記入" style="width:120px; font-size:0.7rem;"></label>
+          </div>
+        </div>
+
+        <!-- 物理療法・マッサージ (写真記載項目) -->
+        <div class="rehab-section-title">物理療法・マッサージ (用紙記載項目)</div>
+        <div class="chk-grid" style="grid-template-columns: repeat(3, 1fr); font-size:0.75rem;">
+          <label class="chk-item"><input type="checkbox" id="phys_massage"> マッサージ 部位 <input type="text" id="phys_massage_part" placeholder="部位" style="width:45px; font-size:0.7rem;"></label>
+          <label class="chk-item"><input type="checkbox" id="phys_hotpack"> 1. ホットパック 部位 <input type="text" id="phys_hotpack_part" placeholder="部位" style="width:45px; font-size:0.7rem;"></label>
+          <label class="chk-item"><input type="checkbox" id="phys_ssp"> 2. SSP 部位 <input type="text" id="phys_ssp_part" placeholder="部位" style="width:45px; font-size:0.7rem;"></label>
+          <label class="chk-item"><input type="checkbox" id="phys_micro"> 3. マイクロ波 部位 <input type="text" id="phys_micro_part" placeholder="部位" style="width:45px; font-size:0.7rem;"></label>
+          <label class="chk-item"><input type="checkbox" id="phys_medmer"> 4. メドマー 部位 <input type="text" id="phys_medmer_part" placeholder="部位" style="width:45px; font-size:0.7rem;"></label>
+          <label class="chk-item">
+            <input type="checkbox" id="phys_tract"> 5. 牽引:
+            頸椎<input type="number" id="phys_tract_c" placeholder="kg" style="width:35px; font-size:0.7rem;">kg
+            腰椎<input type="number" id="phys_tract_l" placeholder="kg" style="width:35px; font-size:0.7rem;">kg
+          </label>
+        </div>
+
+        <!-- リハビリ 自由記載欄 -->
+        <div class="form-group" style="margin-top:0.4rem;">
+          <label class="form-label" for="rehabRemarks">📝 自由記載欄（特記事項・訓練強度・ゴール設定等）:</label>
+          <textarea id="rehabRemarks" class="form-control" rows="2" placeholder="例: 病棟内自立歩行獲得を目標、疲労時は適宜休憩を挟むことなど">病棟内での歩行器歩行自立、およびトイレ移乗動作の安定化を目指す</textarea>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ペイン 6: 🍱 食事管理オーダー -->
+      <!-- ========================================================= -->
+      <div id="pane-MEAL" class="order-pane" style="display:none;">
+        <div class="photo-form-banner" style="background:#fff7ed; border-color:#fed7aa; color:#9a3412;">
+          <div class="photo-form-title">
+            <span>🍱 栄養管理室・食事指示書 (医療法人 交雄会 だて病院)</span>
+          </div>
+          <span class="photo-form-badge">病棟配膳・栄養管理</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="mealType">食種・食形態:</label>
+            <select id="mealType" class="form-control">
+              <option value="常食" selected>常食</option>
+              <option value="全粥食">全粥食</option>
+              <option value="軟菜食 (きざみ食)">軟菜食 (きざみ食)</option>
+              <option value="嚥下食 (とろみ対応)">嚥下食 (とろみ対応)</option>
+              <option value="減塩食 (6g/日)">減塩食 (6g/日)</option>
+              <option value="糖尿病食 (1600kcal)">糖尿病食 (1600kcal)</option>
+              <option value="透析食 / 腎臓食">透析食 / 腎臓食</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="mealTiming">開始・提供区分:</label>
+            <select id="mealTiming" class="form-control">
+              <option value="毎食 (朝・昼・夕)" selected>毎食 (朝・昼・夕)</option>
+              <option value="昼食より開始">昼食より開始</option>
+              <option value="夕食より開始">夕食より開始</option>
+              <option value="明日朝食より">明日朝食より</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:0.4rem;">
+          <label class="form-label" for="mealAllergies">アレルギー・禁止食品:</label>
+          <input type="text" id="mealAllergies" class="form-control" value="甲殻類アレルギー (エビ・カニ禁止)">
+        </div>
+        <div class="form-group" style="margin-top:0.4rem;">
+          <label class="form-label" for="mealRemarks">📝 自由記載欄（配膳要望・とろみ指示・自助具等）:</label>
+          <textarea id="mealRemarks" class="form-control" rows="2" placeholder="例: スプーン・フォーク提供希望、主食は柔らかめ、魚の骨抜き希望など">スプーン・フォーク提供希望、お茶にとろみ中度付加</textarea>
+        </div>
+      </div>
+
+      <!-- 送信ボタン -->
+      <button type="button" id="submitOrderBtn" class="btn-submit" onclick="submitOrder()">
+        <span>🚀 受信側サーバーへ指示票を送信</span>
+      </button>
+    </div>
+
+    <!-- 左右分割リサイザー境界線 (ドラッグで入力画面と履歴の幅を調整可能) -->
+    <div id="paneResizer" class="pane-resizer" title="左右の境界線をドラッグして幅を調整 (ダブルクリックで初期比率 58%:42% にリセット)"></div>
+
+    <!-- 右ペイン: 送信履歴 & 状況追跡 -->
+    <div class="history-card wrap-mode" id="historyCard">
+      <div class="section-title" style="justify-content:space-between; flex-wrap:wrap; gap:0.4rem;">
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <span>📋 送信履歴・ステータス</span>
+          <span id="sseStatusBadge" style="font-size:0.68rem; padding:0.15rem 0.45rem; border-radius:9999px; background:#dcfce7; color:#15803d; font-weight:bold; border:1px solid #bbf7d0;">
+            ⚡ リアルタイム接続中
+          </span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+          <!-- 表示形式切替 (カード / 一覧表) -->
+          <div style="display:flex; background:#e2e8f0; padding:2px; border-radius:4px; font-size:0.72rem;">
+            <button type="button" id="viewModeCardBtn" onclick="setHistoryViewMode('card')" class="history-mode-btn active" title="カード形式で表示">📋 カード</button>
+            <button type="button" id="viewModeTableBtn" onclick="setHistoryViewMode('table')" class="history-mode-btn" title="一覧表テーブル形式で表示（列境界ドラッグ調整可能）">📊 一覧表</button>
+          </div>
+
+          <!-- 折り返し切替ボタン -->
+          <button type="button" id="historyWrapToggleBtn" onclick="toggleHistoryWrapMode()" style="background:#f0fdf4; color:#166534; border:1px solid #86efac; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold; cursor:pointer;" title="画面横からはみ出す内容を折り返して表示 / 1行表示 を切替">
+            ↩️ 折り返し: ON
+          </button>
+
+          <!-- 列幅リセットボタン (一覧表モード用) -->
+          <button type="button" id="historyResetColBtn" onclick="resetHistoryColWidths()" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:0.2rem 0.45rem; border-radius:4px; font-size:0.72rem; font-weight:bold; cursor:pointer; display:none;" title="一覧表の列幅を初期値にリセット">
+            ↔️ 列幅リセット
+          </button>
+
+          <label style="font-size:0.75rem; color:#475569; display:flex; align-items:center; gap:0.25rem; cursor:pointer;">
+            <input type="checkbox" id="autoSyncToggle" checked onchange="toggleAutoSync(this.checked)">
+            <span>自動同期</span>
+          </label>
+          <button type="button" onclick="syncAllStatus()" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.72rem; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-weight:bold;">
+            一括同期
+          </button>
+          <button type="button" onclick="pollHistory()" style="background:#f1f5f9; border:1px solid #cbd5e1; font-size:0.72rem; padding:0.2rem 0.45rem; border-radius:4px; cursor:pointer;">
+            再読込
+          </button>
+        </div>
+      </div>
+
+      <!-- 履歴コンテナ (カード表示 / テーブル表示を切替) -->
+      <div id="historyContainer" style="flex:1; display:flex; flex-direction:column; min-height:0; overflow:hidden;">
+        <!-- JSで動的レンダリング -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 薬品マスタ検索・選択モーダル -->
+  <div id="medMasterModal" class="modal-overlay" onclick="closeMedicineModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.25rem;">💊</span>
+          <h3 id="medModalTitle" style="font-size:1.05rem; color:#0f172a;">だて病院 薬品集マスタ検索</h3>
+          <span id="medModalCountBadge" style="font-size:0.75rem; background:#e0f2fe; color:#0369a1; padding:0.15rem 0.5rem; border-radius:9999px; font-weight:bold;">
+            607品目採用
+          </span>
+        </div>
+        <button type="button" onclick="closeMedicineModal()" style="background:none; border:none; font-size:1.25rem; cursor:pointer; color:#64748b;">✕</button>
+      </div>
+
+      <!-- 検索バー -->
+      <div style="margin-bottom:0.75rem;">
+        <input type="text" id="medModalSearchInput" class="form-control" placeholder="薬品名、成分名、読み仮名、薬品IDで検索..." style="font-size:0.9rem; padding:0.5rem 0.75rem;" oninput="onModalSearchInput(this.value)">
+      </div>
+
+      <!-- カテゴリフィルター -->
+      <div id="medModalCategoryFilters" style="display:flex; gap:0.4rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+        <button type="button" class="filter-btn active" onclick="filterModalCategory('ALL', this)">全部門</button>
+        <button type="button" class="filter-btn" onclick="filterModalCategory('内服薬', this)">内服薬</button>
+        <button type="button" class="filter-btn" onclick="filterModalCategory('外用薬', this)">外用薬</button>
+        <button type="button" class="filter-btn" onclick="filterModalCategory('注射剤', this)">注射剤</button>
+      </div>
+
+      <!-- 結果テーブル (列幅ドラッグ調整 & 折り返し対応) -->
+      <div id="medModalTableContainer" style="max-height:480px; overflow-y:auto; overflow-x:auto; border:1px solid #e2e8f0; border-radius:6px; position:relative;">
+        <div id="medColResizeGuide" class="col-resize-guide"></div>
+        <table id="medModalTable" class="med-master-table wrap-mode" style="width:100%; border-collapse:collapse; font-size:0.78rem; table-layout:fixed;">
+          <colgroup id="medModalColgroup">
+            <col style="width: 75px;">
+            <col style="width: 65px;">
+            <col id="colMedName" style="width: auto;">
+            <col style="width: 160px;">
+            <col style="width: 80px;">
+            <col style="width: 65px;">
+          </colgroup>
+          <thead style="background:#f8fafc; position:sticky; top:0; z-index:10; border-bottom:2px solid #cbd5e1;">
+            <tr>
+              <th data-col-index="0" style="padding:0.45rem 0.6rem; text-align:left;">ID</th>
+              <th data-col-index="1" style="padding:0.45rem 0.6rem; text-align:left;">区分</th>
+              <th data-col-index="2" style="padding:0.45rem 0.6rem; text-align:left;">薬品名 / 成分名</th>
+              <th data-col-index="3" style="padding:0.45rem 0.6rem; text-align:left;">用法用量</th>
+              <th data-col-index="4" style="padding:0.45rem 0.6rem; text-align:center;">粉砕/懸濁</th>
+              <th data-col-index="5" style="padding:0.45rem 0.6rem; text-align:center;">選択</th>
+            </tr>
+          </thead>
+          <tbody id="medModalTableBody">
+            <!-- JSで動的描画 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast"></div>
+
+  <script>
+    let currentOrderType = 'PRESCRIPTION';
+    let currentRadSubTab = 'CT';
+    let currentLabSubTab = 'PHYSIO';
+
+    // 初期予定日時（現在時刻から1時間後）
+    (function initDefaultSchedule() {
+      const d = new Date();
+      d.setHours(d.getHours() + 1);
+      d.setMinutes(0, 0, 0);
+      const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      const el = document.getElementById('orderScheduleTime');
+      if (el) el.value = iso;
+    })();
+
+    // 大タブ切替
+    function switchOrderType(type, btn) {
+      currentOrderType = type;
+      document.querySelectorAll('.tabs-nav .tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('.order-pane').forEach(p => p.style.display = 'none');
+      const targetPane = document.getElementById(`pane-${type}`);
+      if (targetPane) targetPane.style.display = 'block';
+    }
+
+    // 放射線サブタブ切替 (CT / 透視 / 一般撮影)
+    function switchRadSubTab(sub, btn) {
+      currentRadSubTab = sub;
+      document.querySelectorAll('.subtabs-nav .subtab-btn').forEach(b => {
+        if (b.closest('#pane-RADIOLOGY')) b.classList.remove('active');
+      });
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('#pane-RADIOLOGY .rad-subpane').forEach(p => p.style.display = 'none');
+      const target = document.getElementById(`rad-subpane-${sub}`);
+      if (target) target.style.display = 'block';
+    }
+
+    // 検査サブタブ切替 (生理検査 / 検体検査)
+    function switchLabSubTab(sub, btn) {
+      currentLabSubTab = sub;
+      document.querySelectorAll('.subtabs-nav .subtab-btn').forEach(b => {
+        if (b.closest('#pane-LAB_EXAM')) b.classList.remove('active');
+      });
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('#pane-LAB_EXAM .lab-subpane').forEach(p => p.style.display = 'none');
+      const target = document.getElementById(`lab-subpane-${sub}`);
+      if (target) target.style.display = 'block';
+    }
+
+    // 注射投与経路切替
+    function setIvRoute(routeVal, pillEl) {
+      document.getElementById('ivSelectedRoute').value = routeVal;
+      document.querySelectorAll('.route-pill').forEach(p => p.classList.remove('active'));
+      if (pillEl) pillEl.classList.add('active');
+    }
+
+    // 感染症詳細トグル
+    function toggleInfectionDetail(val) {
+      const det = document.getElementById('patientInfectionDetailInput');
+      if (det) det.style.display = val === '有' ? 'block' : 'none';
+    }
+
+    // CT 造影Dynamic表示切替
+    function toggleCtDynamic(show) {
+      const box = document.getElementById('ctDynamicBox');
+      if (box) box.style.display = show ? 'block' : 'none';
+    }
+
+    // Photo 6: 診療Ｘ線照射録 ポータブル病室トグル
+    function toggleXrayPortable(checked) {
+      const box = document.getElementById('xrayPortableRoomBox');
+      if (box) box.style.display = checked ? 'flex' : 'none';
+      if (checked) {
+        const pRoom = document.getElementById('patientRoomInput')?.value || '';
+        if (pRoom) {
+          document.getElementById('xrayPortableRoom').value = pRoom.replace('号室', '');
+        }
+      }
+    }
+
+    // Photo 6: 撮影部位選択行ハイライト
+    function toggleSiteRow(chk) {
+      const row = chk.closest('.xray-site-row');
+      if (row) {
+        if (chk.checked) {
+          row.style.borderColor = '#059669';
+          row.style.background = '#f0fdf4';
+        } else {
+          row.style.borderColor = '#cbd5e1';
+          row.style.background = '#ffffff';
+        }
+      }
+    }
+
+    // 患者生年月日から年齢 & 和暦自動算出
+    function updateAgeAndEraFromBirthDate(birthDateStr) {
+      if (!birthDateStr) return;
+      const bDate = new Date(birthDateStr);
+      if (isNaN(bDate.getTime())) return;
+
+      const now = new Date();
+      let age = now.getFullYear() - bDate.getFullYear();
+      const m = now.getMonth() - bDate.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < bDate.getDate())) {
+        age--;
+      }
+      document.getElementById('patientAgeInput').value = age;
+
+      // 和暦算出
+      const year = bDate.getFullYear();
+      const eraEl = document.getElementById('patientEraInput');
+      const eraYearEl = document.getElementById('patientEraYearInput');
+      if (year >= 2019) {
+        eraEl.value = '令';
+        eraYearEl.value = year === 2019 ? '元' : (year - 2018);
+      } else if (year >= 1989) {
+        eraEl.value = '平';
+        eraYearEl.value = year === 1989 ? '元' : (year - 1988);
+      } else if (year >= 1926) {
+        eraEl.value = '昭';
+        eraYearEl.value = year === 1926 ? '元' : (year - 1925);
+      } else {
+        eraEl.value = '大';
+        eraYearEl.value = year - 1911;
+      }
+    }
+
+    // 患者プリセット変更イベント (14項目全連動)
+    function onPatientSelectChange(select) {
+      const opt = select.options[select.selectedIndex];
+      if (select.value === 'CUSTOM') {
+        document.getElementById('patientIdInput').value = 'P' + Math.floor(100 + Math.random() * 900);
+        document.getElementById('patientNameInput').value = '';
+        document.getElementById('patientKanaInput').value = '';
+        document.getElementById('patientBirthDateInput').value = '';
+        document.getElementById('patientAgeInput').value = '';
+        document.getElementById('patientHeightInput').value = '';
+        document.getElementById('patientWeightInput').value = '';
+        document.getElementById('patientRoomInput').value = '';
+        document.getElementById('patientExamCategoryInput').value = '一般診療';
+        document.getElementById('patientInfectionInput').value = '無';
+        toggleInfectionDetail('無');
+        document.getElementById('patientNameInput').focus();
+      } else {
+        document.getElementById('patientIdInput').value = opt.getAttribute('data-id') || select.value;
+        document.getElementById('patientNameInput').value = opt.getAttribute('data-name') || '';
+        document.getElementById('patientKanaInput').value = opt.getAttribute('data-kana') || '';
+        document.getElementById('patientGenderInput').value = opt.getAttribute('data-gender') || '男';
+        document.getElementById('patientAgeInput').value = opt.getAttribute('data-age') || '';
+        document.getElementById('patientBirthDateInput').value = opt.getAttribute('data-birthdate') || '';
+        document.getElementById('patientEraInput').value = opt.getAttribute('data-era') || '昭';
+        updateAgeAndEraFromBirthDate(opt.getAttribute('data-birthdate'));
+        document.getElementById('patientWardInput').value = opt.getAttribute('data-ward') || 'しおかぜ';
+        document.getElementById('patientRoomInput').value = opt.getAttribute('data-room') || '';
+        document.getElementById('patientExamCategoryInput').value = opt.getAttribute('data-examcategory') || '一般診療';
+        document.getElementById('patientHeightInput').value = opt.getAttribute('data-height') || '';
+        document.getElementById('patientWeightInput').value = opt.getAttribute('data-weight') || '';
+        document.getElementById('patientMobilityInput').value = opt.getAttribute('data-mobility') || '徒歩';
+
+        const pRoomVal = (opt.getAttribute('data-room') || '').replace('号室', '');
+        if (pRoomVal && document.getElementById('xrayPortableRoom')) {
+          document.getElementById('xrayPortableRoom').value = pRoomVal;
+        }
+
+        const inf = opt.getAttribute('data-infection') || '無';
+        if (inf.startsWith('有')) {
+          document.getElementById('patientInfectionInput').value = '有';
+          document.getElementById('patientInfectionDetailInput').value = inf.replace('有', '').replace(/[()]/g, '');
+          toggleInfectionDetail('有');
+        } else {
+          document.getElementById('patientInfectionInput').value = '無';
+          document.getElementById('patientInfectionDetailInput').value = '';
+          toggleInfectionDetail('無');
+        }
+      }
+      showToast(`👤 患者「${document.getElementById('patientNameInput').value || '未設定'}」に切り替えました`);
+    }
+
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.background = isError ? '#b91c1c' : '#0f172a';
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
+    }
+
+    // =================================================================
+    // オーダー送信メイン関数 (submitOrder)
+    // =================================================================
+    async function submitOrder() {
+      const btn = document.getElementById('submitOrderBtn');
+      const receiverUrl = document.getElementById('receiverUrlInput').value.trim();
+
+      // 患者データの収集 (だて病院様式の14項目)
+      const patientId = document.getElementById('patientIdInput').value.trim() || 'P001';
+      const patientName = document.getElementById('patientNameInput').value.trim() || '未指定患者';
+      const kana = document.getElementById('patientKanaInput').value.trim() || '';
+      const gender = document.getElementById('patientGenderInput').value || '男';
+      const era = document.getElementById('patientEraInput').value || '昭';
+      const eraYear = document.getElementById('patientEraYearInput').value || '';
+      const birthDate = document.getElementById('patientBirthDateInput').value || '';
+      const age = document.getElementById('patientAgeInput').value || '';
+      const height = document.getElementById('patientHeightInput').value || '';
+      const weight = document.getElementById('patientWeightInput').value || '';
+      const ward = document.getElementById('patientWardInput').value || 'しおかぜ';
+      const room = document.getElementById('patientRoomInput').value.trim() || '';
+      const examCategory = document.getElementById('patientExamCategoryInput')?.value || '一般診療';
+      const mobility = document.getElementById('patientMobilityInput').value || '車椅子';
+      const infectionStatus = document.getElementById('patientInfectionInput').value;
+      const infectionDetail = document.getElementById('patientInfectionDetailInput').value.trim();
+      const infection = infectionStatus === '有' ? (infectionDetail ? `有(${infectionDetail})` : '有') : '無';
+
+      const doctorName = document.getElementById('doctorNameInput').value.trim() || '北島 先生';
+      const priority = document.querySelector('input[name="orderPriority"]:checked')?.value || 'ROUTINE';
+      const scheduledAt = document.getElementById('orderScheduleTime').value || new Date().toISOString();
+
+      const patientData = {
+        id: patientId,
+        name: patientName,
+        kana,
+        gender,
+        era: era + eraYear,
+        birthDate,
+        age: parseInt(age, 10) || '',
+        height: parseFloat(height) || '',
+        weight: parseFloat(weight) || '',
+        ward,
+        room,
+        department: ward,
+        infection,
+        mobility,
+        examCategory
+      };
+
+      let details = {};
+      let title = '';
+
+      if (currentOrderType === 'PRESCRIPTION') {
+        const medicines = [];
+        rxItems.forEach((item, index) => {
+          const med = document.getElementById(`rxMedicine_${item.id}`)?.value.trim() || item.medicine;
+          const medicineId = document.getElementById(`rxMedicineId_${item.id}`)?.value || item.medicineId;
+          const dosage = document.getElementById(`rxDosage_${item.id}`)?.value.trim() || item.dosage;
+          const days = document.getElementById(`rxDays_${item.id}`)?.value || item.days;
+          const quantity = document.getElementById(`rxQuantity_${item.id}`)?.value.trim() || item.quantity;
+          const instruction = document.getElementById(`rxInstruction_${item.id}`)?.value.trim() || item.instruction;
+          if (med) {
+            medicines.push({
+              rp: index + 1,
+              medicine: med,
+              medicineId,
+              dosage,
+              days,
+              quantity,
+              instruction
+            });
+          }
+        });
+
+        if (medicines.length === 0) {
+          showToast('❌ 少なくとも1つの処方薬剤を入力してください', true);
+          return;
+        }
+
+        const prescriptionType = document.getElementById('rxPrescriptionType')?.value || '定期処方';
+        const deptType = document.getElementById('rxDeptType')?.value || '院内処方';
+        const commonDays = document.getElementById('rxCommonDays')?.value || '7';
+        const remarks = document.getElementById('rxRemarks')?.value.trim() || '';
+
+        details = {
+          prescriptionType,
+          deptType,
+          days: commonDays,
+          medicines,
+          medicine: medicines.length > 1 ? `${medicines[0].medicine} 他${medicines.length - 1}品目` : medicines[0].medicine,
+          medicineId: medicines[0].medicineId || '',
+          dosage: medicines.length > 1 ? `${medicines[0].dosage} 等` : medicines[0].dosage,
+          remarks,
+          scheduledAt
+        };
+
+        const medSummary = medicines.map(m => m.medicine).join('、');
+        title = `💊 処方指示: ${medSummary.length > 32 ? medicines[0].medicine + ' 他' + (medicines.length - 1) + '品目' : medSummary} (${patientName})`;
+
+      } else if (currentOrderType === 'IV') {
+        // Photo 4: 注射指示
+        const route = document.getElementById('ivSelectedRoute').value || 'DIV';
+        const med = document.getElementById('ivMedicine').value.trim();
+        const medicineId = document.getElementById('ivMedicineId')?.value || '';
+        const rate = document.getElementById('ivRate').value.trim();
+        const scheduleDays = document.getElementById('ivScheduleDays').value.trim();
+        const pharmacistChecked = document.getElementById('ivPharmacistCheck').checked;
+        const remarks = document.getElementById('ivRemarks').value.trim();
+
+        details = {
+          route,
+          medicine: med,
+          medicineId,
+          rate,
+          scheduleDays,
+          pharmacistChecked,
+          remarks,
+          scheduledAt
+        };
+        title = `💉 注射指示: [${route}] ${med} (${patientName})`;
+
+      } else if (currentOrderType === 'RADIOLOGY') {
+        if (currentRadSubTab === 'CT') {
+          // Photo 1: ＣＴ検査依頼書
+          const contrast = document.querySelector('input[name="ctContrast"]:checked')?.value || '単純';
+          const dynamic2 = document.getElementById('ctDynamic2').checked;
+          const dynamic3 = document.getElementById('ctDynamic3').checked;
+          const dynamicStr = dynamic3 ? '3phase' : (dynamic2 ? '2phase' : '');
+          const elecImageAdd = document.getElementById('ctElecImgAdd').checked;
+
+          const parts = [];
+          const partDefs = [
+            { id: 'head', label: '頭部' },
+            { id: 'neck', label: '頸部' },
+            { id: 'chest', label: '胸部(肺・横隔)' },
+            { id: 'abdomen', label: '腹部(肝・胆・膵・腎)' },
+            { id: 'pelvis', label: '骨盤腔' },
+            { id: 'spine', label: '脊椎' },
+            { id: 'upperLimb', label: '上肢' },
+            { id: 'lowerLimb', label: '下肢' },
+            { id: 'other', label: 'その他' }
+          ];
+          partDefs.forEach(def => {
+            const chk = document.getElementById(`ctPart_${def.id}`);
+            if (chk && chk.checked) {
+              const det = document.getElementById(`ctPartDetail_${def.id}`)?.value.trim();
+              parts.push(det ? `${def.label}(${det})` : def.label);
+            }
+          });
+
+          const medication = document.getElementById('ctMedication').value.trim();
+          const kv = document.getElementById('ctKv').value.trim();
+          const ma = document.getElementById('ctMa').value.trim();
+          const sec = document.getElementById('ctSec').value.trim();
+          const purpose = document.getElementById('ctPurpose').value.trim();
+
+          details = {
+            subType: 'CT',
+            formName: 'ＣＴ検査依頼書',
+            examType: `ＣＴ検査 [${parts.join('、') || '全般'}]`,
+            contrast,
+            dynamic: dynamicStr,
+            parts: parts.join('、') || '胸部',
+            medication,
+            conditions: `${kv}kV / ${ma}mA / ${sec}sec`,
+            elecImageAdd,
+            purpose,
+            remarks: purpose,
+            scheduledAt
+          };
+          title = `🩻 ＣＴ検査依頼書: ${parts.join('、') || '部位指定'} [${contrast}] (${patientName})`;
+
+        } else if (currentRadSubTab === 'FLUORO') {
+          // Photo 2: 透視検査依頼書
+          const items = [];
+          if (document.getElementById('fluoro_peg').checked) items.push('PEG交換');
+          if (document.getElementById('fluoro_vf').checked) items.push('VF検査');
+          if (document.getElementById('fluoro_gi').checked) items.push('消化管造影検査');
+          if (document.getElementById('fluoro_plain').checked) items.push('単純透視');
+          if (document.getElementById('fluoro_other').checked) {
+            const od = document.getElementById('fluoro_other_detail').value.trim();
+            items.push(od ? `その他(${od})` : 'その他透視');
+          }
+
+          const meds = [];
+          if (document.getElementById('fluoro_med_gastro').checked) meds.push(`ガストログラフィン ${document.getElementById('fluoro_med_gastro_val').value}ml`);
+          if (document.getElementById('fluoro_med_xylo').checked) meds.push(`キシロカインゼリー2% ${document.getElementById('fluoro_med_xylo_val').value}ml`);
+          if (document.getElementById('fluoro_med_saline').checked) meds.push(`生食 ${document.getElementById('fluoro_med_saline_val').value}ml`);
+          if (document.getElementById('fluoro_med_barium').checked) meds.push(`硫酸バリウム散98.8%ホリイ ${document.getElementById('fluoro_med_barium_val').value}本`);
+          if (document.getElementById('fluoro_med_baricon').checked) meds.push(`バリコンミール ${document.getElementById('fluoro_med_baricon_val').value}本`);
+          if (document.getElementById('fluoro_med_baros').checked) meds.push(`バロス発泡顆粒-S ${document.getElementById('fluoro_med_baros_val').value}包`);
+          const customMed = document.getElementById('fluoro_med_custom').value.trim();
+          if (customMed) meds.push(customMed);
+
+          const materials = document.getElementById('fluoroMaterials').value.trim();
+          const remarks = document.getElementById('fluoroRemarks').value.trim();
+
+          details = {
+            subType: 'FLUORO',
+            formName: '透視検査依頼書',
+            examType: `透視検査 [${items.join('、') || '透視'}]`,
+            items: items.join('、'),
+            medications: meds.join('、'),
+            materials,
+            purpose: remarks,
+            remarks,
+            scheduledAt
+          };
+          title = `🩻 透視検査依頼書: ${items.join('、') || '透視'} (${patientName})`;
+
+        } else {
+          // Photo 6: 診療Ｘ線照射録 (交雄会 だて病院)
+          const sites = [];
+
+          // ① 胸部
+          if (document.getElementById('xray_site_chest').checked) {
+            let chestStr = '①胸部';
+            const pos = [];
+            if (document.getElementById('xray_chest_ap_stand').checked) pos.push('立位');
+            if (document.getElementById('xray_chest_ap_sit').checked) pos.push('座位');
+            if (document.getElementById('xray_chest_ap_supine').checked) pos.push('臥位');
+            const lat = [];
+            if (document.getElementById('xray_chest_lat_rl').checked) lat.push('R-L');
+            if (document.getElementById('xray_chest_lat_lr').checked) lat.push('L-R');
+            
+            const sub = [];
+            if (pos.length > 0) sub.push(`正(${pos.join('/')})`);
+            if (lat.length > 0) sub.push(`側(${lat.join('/')})`);
+            if (sub.length > 0) chestStr += `[${sub.join('・')}]`;
+            sites.push(chestStr);
+          }
+
+          // ② 腹部
+          if (document.getElementById('xray_site_abdo').checked) {
+            let abdoStr = '②腹部';
+            const pos = [];
+            if (document.getElementById('xray_abdo_stand').checked) pos.push('立位');
+            if (document.getElementById('xray_abdo_sit').checked) pos.push('座位');
+            if (document.getElementById('xray_abdo_supine').checked) pos.push('臥位');
+            if (pos.length > 0) abdoStr += `[正(${pos.join('/')})]`;
+            sites.push(abdoStr);
+          }
+
+          // ③ 腰椎
+          if (document.getElementById('xray_site_lumbar').checked) {
+            let lumbarStr = '③腰椎';
+            const dir = [];
+            if (document.getElementById('xray_lumbar_ap').checked) dir.push('正');
+            if (document.getElementById('xray_lumbar_lat').checked) dir.push('側');
+            if (dir.length > 0) lumbarStr += `[${dir.join('・')}]`;
+            sites.push(lumbarStr);
+          }
+
+          // ④ 膝関節
+          if (document.getElementById('xray_site_knee').checked) {
+            let kneeStr = '④膝関節';
+            const lr = [];
+            if (document.getElementById('xray_knee_r').checked) lr.push('R');
+            if (document.getElementById('xray_knee_l').checked) lr.push('L');
+            const dir = [];
+            if (document.getElementById('xray_knee_ap').checked) dir.push('正');
+            if (document.getElementById('xray_knee_lat').checked) dir.push('側');
+            kneeStr += `[${lr.join('/') || '両'} ${dir.join('・') || '正側'}]`;
+            sites.push(kneeStr);
+          }
+
+          // ⑤ 股関節
+          if (document.getElementById('xray_site_hip').checked) {
+            let hipStr = '⑤股関節';
+            const lr = [];
+            if (document.getElementById('xray_hip_r').checked) lr.push('R');
+            if (document.getElementById('xray_hip_l').checked) lr.push('L');
+            const dir = [];
+            if (document.getElementById('xray_hip_ap').checked) dir.push('正');
+            if (document.getElementById('xray_hip_lat').checked) dir.push('側');
+            hipStr += `[${lr.join('/') || '両'} ${dir.join('・') || '正側'}]`;
+            sites.push(hipStr);
+          }
+
+          // ⑥ 骨盤
+          if (document.getElementById('xray_site_pelvis').checked) {
+            let pelStr = '⑥骨盤';
+            const dir = [];
+            if (document.getElementById('xray_pelvis_ap').checked) dir.push('正');
+            if (document.getElementById('xray_pelvis_obl').checked) dir.push('斜');
+            if (dir.length > 0) pelStr += `[${dir.join('・')}]`;
+            sites.push(pelStr);
+          }
+
+          // ⑦ 手 (リウマチ)
+          if (document.getElementById('xray_site_hand').checked) {
+            let handStr = '⑦手(リウマチ)2R';
+            const which = document.querySelector('input[name="xray_hand_which"]:checked')?.value || '両';
+            handStr += `[${which}]`;
+            sites.push(handStr);
+          }
+
+          // ⑧ 自由部位
+          if (document.getElementById('xray_site_free8').checked) {
+            const p = document.getElementById('xray_free8_part').value.trim() || '部位⑧';
+            const d = document.getElementById('xray_free8_dir').value.trim();
+            sites.push(`⑧${p}${d ? '[' + d + ']' : ''}`);
+          }
+
+          // ⑨ 自由部位
+          if (document.getElementById('xray_site_free9').checked) {
+            const p = document.getElementById('xray_free9_part').value.trim() || '部位⑨';
+            const d = document.getElementById('xray_free9_dir').value.trim();
+            sites.push(`⑨${p}${d ? '[' + d + ']' : ''}`);
+          }
+
+          // ⑩ 自由部位
+          if (document.getElementById('xray_site_free10').checked) {
+            const p = document.getElementById('xray_free10_part').value.trim() || '部位⑩';
+            const d = document.getElementById('xray_free10_dir').value.trim();
+            sites.push(`⑩${p}${d ? '[' + d + ']' : ''}`);
+          }
+
+          const isPortable = document.getElementById('xrayPortableCheck').checked;
+          const portableRoom = isPortable ? (document.getElementById('xrayPortableRoom').value.trim() || room || '病室') : '無 (撮影室)';
+          const technician = document.getElementById('xrayTechnician').value.trim() || '放射線技師';
+          const dvdMedia = document.querySelector('input[name="xrayDvd"]:checked')?.value || '未';
+          const imgImport = document.querySelector('input[name="xrayImgImport"]:checked')?.value || '未';
+          const kv = document.getElementById('xrayKv').value.trim();
+          const ma = document.getElementById('xrayMa').value.trim();
+          const msec = document.getElementById('xrayMsec').value.trim();
+          const elecArchive = document.getElementById('xrayElecArchive').checked;
+          const remarks = document.getElementById('xrayRemarks').value.trim();
+
+          const siteSummary = sites.join('、') || '胸部[正(立位)]';
+
+          details = {
+            subType: 'XRAY',
+            formName: '診療Ｘ線照射録',
+            examType: `一般Ｘ線 [${siteSummary}]`,
+            xraySites: siteSummary,
+            sitesList: sites,
+            portable: isPortable ? `${portableRoom}号室` : '一般撮影室',
+            isPortable,
+            technician,
+            media: `DVD作成:${dvdMedia} / 画像取込:${imgImport}`,
+            dvdMedia,
+            imgImport,
+            conditions: `${kv}kV / ${ma}mA / ${msec}msec`,
+            elecArchive,
+            purpose: remarks,
+            remarks,
+            scheduledAt
+          };
+
+          title = `🩻 診療Ｘ線照射録: ${siteSummary} ${isPortable ? `[ポータブル:${portableRoom}号室]` : ''} (${patientName})`;
+        }
+
+      } else if (currentOrderType === 'LAB_EXAM') {
+        if (currentLabSubTab === 'PHYSIO') {
+          // Photo 3: 生理検査依頼書
+          const items = [];
+          if (document.getElementById('physio_ecg12').checked) items.push('標準12誘導心電図');
+          if (document.getElementById('physio_holter').checked) items.push('ホルター心電図');
+          if (document.getElementById('physio_lung').checked) items.push('肺機能検査');
+          if (document.getElementById('physio_hearing').checked) items.push('簡易聴力検査');
+
+          const echoItems = [];
+          if (document.getElementById('echo_abdomen').checked) echoItems.push('腹部');
+          if (document.getElementById('echo_heart').checked) echoItems.push('心臓');
+          if (document.getElementById('echo_thyroid').checked) echoItems.push('甲状腺');
+          if (document.getElementById('echo_carotid').checked) echoItems.push('頸動脈');
+          if (document.getElementById('echo_joint').checked) {
+            const jp = document.getElementById('echo_joint_part').value.trim();
+            echoItems.push(jp ? `関節(${jp})` : '関節');
+          }
+          if (document.getElementById('echo_vessel').checked) {
+            echoItems.push(`血管(${document.getElementById('echo_vessel_type').value})`);
+          }
+          if (document.getElementById('echo_other').checked) {
+            const op = document.getElementById('echo_other_detail').value.trim();
+            echoItems.push(op ? `その他(${op})` : 'その他エコー');
+          }
+
+          if (echoItems.length > 0) {
+            let echoStr = `エコー [${echoItems.join('、')}]`;
+            if (document.getElementById('echo_doppler').checked) echoStr += '(ドプラ)';
+            if (document.getElementById('echo_elasto').checked) echoStr += '(エラスト)';
+            items.push(echoStr);
+          }
+
+          const remarks = document.getElementById('physioRemarks').value.trim();
+
+          details = {
+            subType: 'PHYSIO',
+            formName: '生理検査依頼書',
+            items: items.join('、'),
+            testName: items.join('、'),
+            purpose: remarks,
+            remarks,
+            scheduledAt
+          };
+          title = `🔬 生理検査依頼書: ${items.join('、') || '生理検査'} (${patientName})`;
+
+        } else {
+          // 検体検査
+          const items = document.getElementById('labItems').value.trim();
+          const sampleType = document.getElementById('labSampleType').value;
+          const schedule = document.getElementById('labSchedule').value.trim();
+          const remarks = document.getElementById('labRemarks').value.trim();
+          details = {
+            subType: 'SPECIMEN',
+            formName: '検体検査指示票',
+            items,
+            testName: items,
+            sampleType,
+            sample: sampleType,
+            schedule,
+            remarks,
+            scheduledAt
+          };
+          title = `🔬 検体検査指示: ${items} (${patientName})`;
+        }
+
+      } else if (currentOrderType === 'REHAB') {
+        // Photo 5: リハビリテーション指示書
+        const rehabLoc = [];
+        if (document.getElementById('rehabLocBed').checked) rehabLoc.push('ベッドサイド');
+        if (document.getElementById('rehabLocRoom').checked) rehabLoc.push('リハビリテーション室');
+
+        const admitDate = document.getElementById('rehabAdmitDate').value;
+        const orderDate = document.getElementById('rehabOrderDate').value;
+        const diag1 = document.getElementById('rehabDiag1').value.trim();
+        const diagDate1 = document.getElementById('rehabDiagDate1').value;
+        const diag2 = document.getElementById('rehabDiag2').value.trim();
+        const diagDate2 = document.getElementById('rehabDiagDate2').value;
+        const contra = document.getElementById('rehabContra').value.trim();
+
+        const therapyTypes = [];
+        if (document.getElementById('rehabType_pt').checked) therapyTypes.push('PT (理学療法)');
+        if (document.getElementById('rehabType_ot').checked) therapyTypes.push('OT (作業療法)');
+        if (document.getElementById('rehabType_st').checked) therapyTypes.push('ST (言語聴覚療法)');
+        if (document.getElementById('rehabType_phys').checked) therapyTypes.push('物理療法・マッサージ');
+
+        const goals = [];
+        if (document.getElementById('goal_rom').checked) goals.push('ROM');
+        if (document.getElementById('goal_bal').checked) goals.push('バランス');
+        if (document.getElementById('goal_str').checked) goals.push('筋力');
+        if (document.getElementById('goal_coord').checked) goals.push('協調運動');
+        if (document.getElementById('goal_neuro').checked) goals.push('神経筋促通');
+        if (document.getElementById('goal_basic').checked) goals.push('基本動作');
+        if (document.getElementById('goal_adl_mov').checked) goals.push(`ADL(${document.getElementById('goal_adl_detail').value.trim() || '日常'})`);
+        if (document.getElementById('goal_trans').checked) goals.push('移乗');
+        if (document.getElementById('goal_walk').checked) goals.push('歩行');
+        if (document.getElementById('goal_wc').checked) goals.push('車いす');
+        if (document.getElementById('goal_adl').checked) goals.push('ADL自立度');
+        if (document.getElementById('goal_swallow').checked) goals.push('摂食訓練');
+        if (document.getElementById('goal_art').checked) goals.push('構音訓練');
+
+        const physicals = [];
+        if (document.getElementById('phys_massage').checked) physicals.push(`マッサージ(${document.getElementById('phys_massage_part').value.trim() || '指定'})`);
+        if (document.getElementById('phys_hotpack').checked) physicals.push(`ホットパック(${document.getElementById('phys_hotpack_part').value.trim() || '指定'})`);
+        if (document.getElementById('phys_ssp').checked) physicals.push(`SSP(${document.getElementById('phys_ssp_part').value.trim() || '指定'})`);
+        if (document.getElementById('phys_micro').checked) physicals.push(`マイクロ波(${document.getElementById('phys_micro_part').value.trim() || '指定'})`);
+        if (document.getElementById('phys_medmer').checked) physicals.push(`メドマー(${document.getElementById('phys_medmer_part').value.trim() || '指定'})`);
+        if (document.getElementById('phys_tract').checked) {
+          physicals.push(`牽引(頸${document.getElementById('phys_tract_c').value || 0}kg/腰${document.getElementById('phys_tract_l').value || 0}kg)`);
+        }
+
+        const remarks = document.getElementById('rehabRemarks').value.trim();
+
+        details = {
+          formName: 'リハビリテーション指示書',
+          location: rehabLoc.join('、'),
+          admitDate,
+          orderDate,
+          diagnoses: [
+            { name: diag1, onsetDate: diagDate1 },
+            { name: diag2, onsetDate: diagDate2 }
+          ].filter(d => d.name),
+          contraindications: contra,
+          therapyTypes: therapyTypes.join('、'),
+          goals: goals.join('、'),
+          physicals: physicals.join('、'),
+          remarks,
+          scheduledAt
+        };
+        title = `🏃 リハビリ指示書: ${therapyTypes.join('、') || 'PT/OT'} [${goals.slice(0, 3).join('・')}] (${patientName})`;
+
+      } else if (currentOrderType === 'MEAL') {
+        const mealType = document.getElementById('mealType').value;
+        const timing = document.getElementById('mealTiming').value;
+        const allergies = document.getElementById('mealAllergies').value.trim();
+        const remarks = document.getElementById('mealRemarks').value.trim();
+        details = {
+          mealType,
+          timing,
+          allergies,
+          remarks,
+          scheduledAt
+        };
+        title = `🍱 食事指示: ${mealType} [${timing}] (${patientName})`;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳ 送信中...</span>`;
+
+      try {
+        const res = await fetch('/api/orders/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            receiverUrl,
+            orderType: currentOrderType,
+            priority,
+            patientId,
+            patientName,
+            doctorName,
+            title,
+            details,
+            patient: patientData
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`✅ [${data.order.orderId}] 送信成功！ (${data.order.elapsedMs}ms)`);
+          pollHistory();
+        } else {
+          showToast(`❌ 送信エラー: ${data.error || '失敗'}`, true);
+          pollHistory();
+        }
+      } catch (err) {
+        showToast(`❌ 通信エラー: ${err.message}`, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>🚀 受信側サーバーへ指示票を送信</span>`;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 履歴管理ステート & 描画
+    const prevOrderStatuses = {};
+    let latestHistoryOrders = <%- JSON.stringify(sentOrders || []) %>;
+    let historyViewMode = localStorage.getItem('ordering_sender_history_view_mode') || 'card';
+    let isHistoryWrap = localStorage.getItem('ordering_sender_history_wrap') !== 'false'; // デフォルト折り返しON
+
+    const DEFAULT_HISTORY_COL_WIDTHS = [75, 85, 125, 85, 110, 'auto', 70];
+    const MIN_HISTORY_COL_WIDTHS = [60, 70, 100, 65, 90, 140, 60];
+
+    const DEFAULT_MED_COL_WIDTHS = [75, 65, 'auto', 160, 80, 65];
+    const MIN_MED_COL_WIDTHS = [55, 50, 120, 110, 65, 55];
+
+    function toggleHistoryWrapMode() {
+      isHistoryWrap = !isHistoryWrap;
+      localStorage.setItem('ordering_sender_history_wrap', isHistoryWrap ? 'true' : 'false');
+      applyHistoryWrapUI();
+      renderHistory(latestHistoryOrders);
+      showToast(isHistoryWrap ? '↩️ 送信履歴の折り返し: ON にしました' : '➡️ 送信履歴の1行表示 にしました');
+    }
+
+    function applyHistoryWrapUI() {
+      const btn = document.getElementById('historyWrapToggleBtn');
+      const card = document.getElementById('historyCard');
+      if (card) {
+        if (isHistoryWrap) card.classList.add('wrap-mode');
+        else card.classList.remove('wrap-mode');
+      }
+      if (btn) {
+        if (isHistoryWrap) {
+          btn.innerHTML = '↩️ 折り返し: ON';
+          btn.style.background = '#f0fdf4';
+          btn.style.color = '#166534';
+          btn.style.borderColor = '#86efac';
+        } else {
+          btn.innerHTML = '➡️ 1行表示: ON';
+          btn.style.background = '#f8fafc';
+          btn.style.color = '#475569';
+          btn.style.borderColor = '#cbd5e1';
+        }
+      }
+    }
+
+    function setHistoryViewMode(mode) {
+      historyViewMode = mode;
+      localStorage.setItem('ordering_sender_history_view_mode', mode);
+      const cardBtn = document.getElementById('viewModeCardBtn');
+      const tableBtn = document.getElementById('viewModeTableBtn');
+      const resetBtn = document.getElementById('historyResetColBtn');
+
+      if (cardBtn && tableBtn) {
+        if (mode === 'card') {
+          cardBtn.classList.add('active');
+          tableBtn.classList.remove('active');
+          if (resetBtn) resetBtn.style.display = 'none';
+        } else {
+          cardBtn.classList.remove('active');
+          tableBtn.classList.add('active');
+          if (resetBtn) resetBtn.style.display = 'inline-block';
+        }
+      }
+      renderHistory(latestHistoryOrders);
+    }
+
+    function getStatusBadgeHtml(status) {
+      switch (status) {
+        case 'SENT': return '<span class="status-tag SENT">📤 送信済</span>';
+        case 'RECEIVED': return '<span class="status-tag RECEIVED">📥 受信済</span>';
+        case 'ACCEPTED': return '<span class="status-tag ACCEPTED">🟡 受付済</span>';
+        case 'IN_PROGRESS': return '<span class="status-tag IN_PROGRESS">⚙️ 実施中</span>';
+        case 'COMPLETED': return '<span class="status-tag COMPLETED">✅ 完了</span>';
+        case 'FAILED': return '<span class="status-tag FAILED">❌ 失敗</span>';
+        default: return `<span class="status-tag">${escapeHtml(status || 'UNKNOWN')}</span>`;
+      }
+    }
+
+    function renderHistory(orders) {
+      latestHistoryOrders = orders || [];
+      const container = document.getElementById('historyContainer');
+      if (!container) return;
+
+      if (!latestHistoryOrders || latestHistoryOrders.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:3rem 1rem; color:#94a3b8; font-size:0.85rem;">送信履歴はまだありません。左のフォームからオーダーを送信してみてください。</div>`;
+        return;
+      }
+
+      if (historyViewMode === 'table') {
+        renderHistoryTable(latestHistoryOrders, container);
+      } else {
+        renderHistoryCards(latestHistoryOrders, container);
+      }
+    }
+
+    function renderHistoryCards(orders, container) {
+      const itemsHtml = orders.map(item => {
+        let actionNoteHtml = '';
+        if (item.lastActor || item.lastNote) {
+          actionNoteHtml = `
+            <div class="history-action-note" style="margin-top:0.3rem; padding:0.25rem 0.5rem; background:rgba(0,0,0,0.03); border-radius:4px; font-size:0.72rem; color:#475569; border-left:2px solid #0284c7; word-break:break-word; overflow-wrap:anywhere;">
+              🏢 最新対応: <strong>${escapeHtml(item.lastActor || '部門担当者')}</strong> ${item.lastNote ? `(${escapeHtml(item.lastNote)})` : ''}
+            </div>
+          `;
+        }
+
+        const isChanged = prevOrderStatuses[item.orderId] && prevOrderStatuses[item.orderId] !== item.status;
+        prevOrderStatuses[item.orderId] = item.status;
+        const animationClass = isChanged ? 'status-updated' : '';
+
+        return `
+          <div class="history-item status-${item.status} ${animationClass}" id="history-${item.orderId}">
+            <div class="history-header">
+              <strong style="color:#0f172a; font-family:monospace;">${escapeHtml(item.orderId)}</strong>
+              ${getStatusBadgeHtml(item.status)}
+            </div>
+            <div class="history-meta">
+              <span>患者: <strong>${escapeHtml(item.patient ? item.patient.name : '')}</strong></span>
+              <span style="margin-left:0.5rem;">種別: ${escapeHtml(item.orderType || '')}</span>
+              ${item.elapsedMs ? `<span style="margin-left:0.5rem;">${item.elapsedMs}ms</span>` : ''}
+            </div>
+            <div class="history-title" style="font-size:0.78rem; color:#334155; line-height:1.45; word-break:break-word; overflow-wrap:anywhere;">
+              ${escapeHtml(item.title || '')}
+            </div>
+            ${item.details && item.details.remarks ? `
+              <div class="history-remarks" style="margin-top:0.25rem; font-size:0.72rem; color:#475569; background:#f1f5f9; padding:0.2rem 0.45rem; border-radius:3px; word-break:break-word; overflow-wrap:anywhere;">
+                📝 自由記載: <strong>${escapeHtml(item.details.remarks)}</strong>
+              </div>
+            ` : ''}
+            ${actionNoteHtml}
+            <div style="margin-top:0.35rem; display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#64748b;">
+              <span>送信: ${new Date(item.sentAt).toLocaleTimeString('ja-JP')}</span>
+              <button type="button" onclick="checkRemoteStatus('${item.orderId}')" style="background:#ffffff; border:1px solid #cbd5e1; padding:0.15rem 0.45rem; border-radius:3px; cursor:pointer; font-size:0.7rem;">
+                🔍 状況照会
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = `<div class="history-list ${isHistoryWrap ? 'wrap-mode' : ''}" id="historyCardsList">${itemsHtml}</div>`;
+    }
+
+    function renderHistoryTable(orders, container) {
+      const rowsHtml = orders.map(item => {
+        const timeStr = item.sentAt ? new Date(item.sentAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+        const patientName = escapeHtml(item.patient ? item.patient.name : '患者未指定');
+        const orderType = escapeHtml(item.orderType || '');
+        const title = escapeHtml(item.title || '');
+        const remarks = item.details && item.details.remarks ? escapeHtml(item.details.remarks) : '';
+        const actorNote = item.lastActor || item.lastNote ? ` [${escapeHtml(item.lastActor || '')}: ${escapeHtml(item.lastNote || '')}]` : '';
+
+        return `
+          <tr class="history-row" id="row-${item.orderId}">
+            <td style="text-align:center;">${getStatusBadgeHtml(item.status)}</td>
+            <td style="font-size:0.74rem; color:#64748b; white-space:nowrap;">${timeStr}</td>
+            <td style="font-family:monospace; font-weight:bold; font-size:0.75rem; white-space:nowrap;">${escapeHtml(item.orderId)}</td>
+            <td><span class="status-tag" style="background:#f1f5f9; color:#475569;">${orderType}</span></td>
+            <td style="font-weight:bold; color:#0f172a;">${patientName}</td>
+            <td class="details-cell" title="${title} ${remarks ? `\n📝自由記載: ` + remarks : ''}${actorNote}">
+              <span>${title}</span>
+              ${remarks ? `<div style="font-size:0.7rem; color:#64748b; margin-top:2px;">📝 ${remarks}</div>` : ''}
+              ${actorNote ? `<div style="font-size:0.7rem; color:#0284c7; margin-top:1px;">🏢 ${actorNote}</div>` : ''}
+            </td>
+            <td style="text-align:center;">
+              <button type="button" onclick="checkRemoteStatus('${item.orderId}')" style="background:#ffffff; border:1px solid #cbd5e1; padding:0.15rem 0.4rem; border-radius:3px; cursor:pointer; font-size:0.7rem; white-space:nowrap;">
+                🔍 照会
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <div class="history-table-container" id="historyTableContainer">
+          <div id="historyColResizeGuide" class="col-resize-guide"></div>
+          <table class="history-table ${isHistoryWrap ? 'wrap-mode' : ''}" id="historyOrdersTable">
+            <colgroup id="historyColgroup">
+              <col style="width: 75px;">
+              <col style="width: 85px;">
+              <col style="width: 125px;">
+              <col style="width: 85px;">
+              <col style="width: 110px;">
+              <col id="colHistoryDetails" style="width: auto;">
+              <col style="width: 70px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th data-col-index="0" style="text-align:center;">状態</th>
+                <th data-col-index="1">送信日時</th>
+                <th data-col-index="2">オーダーID</th>
+                <th data-col-index="3">種別</th>
+                <th data-col-index="4">患者名</th>
+                <th data-col-index="5">指示・オーダー内容 (ホバーで全文)</th>
+                <th data-col-index="6" style="text-align:center;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      initHistoryTableColResizing();
+    }
+
+    function initHistoryTableColResizing() {
+      const table = document.getElementById('historyOrdersTable');
+      const colgroup = document.getElementById('historyColgroup');
+      const guide = document.getElementById('historyColResizeGuide');
+      const container = document.getElementById('historyTableContainer');
+      if (!table || !colgroup) return;
+
+      const ths = table.querySelectorAll('thead th');
+      const cols = colgroup.querySelectorAll('col');
+
+      // 幅復元
+      try {
+        const saved = JSON.parse(localStorage.getItem('ordering_sender_history_col_widths') || 'null');
+        if (saved && Array.isArray(saved)) {
+          saved.forEach((w, idx) => {
+            if (cols[idx] && w !== null && w !== undefined) {
+              cols[idx].style.width = (typeof w === 'number' || !isNaN(w)) ? (w + 'px') : w;
+            }
+          });
+        }
+      } catch (e) {}
+
+      ths.forEach((th, idx) => {
+        if (th.querySelector('.col-resizer')) return;
+
+        const resizer = document.createElement('div');
+        resizer.className = 'col-resizer';
+        resizer.title = '境界をドラッグして列幅を調整 (ダブルクリックでリセット)';
+        th.appendChild(resizer);
+
+        resizer.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          resetSingleHistoryColWidth(idx);
+        });
+
+        function startResize(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const startX = e.pageX;
+          const startWidth = th.offsetWidth;
+          const minW = MIN_HISTORY_COL_WIDTHS[idx] || 50;
+
+          resizer.classList.add('is-resizing');
+          document.body.classList.add('is-col-resizing');
+
+          if (guide && container) {
+            guide.style.display = 'block';
+            guide.style.height = table.offsetHeight + 'px';
+            const containerRect = container.getBoundingClientRect();
+            guide.style.left = (e.pageX - containerRect.left + container.scrollLeft) + 'px';
+          }
+
+          function onPointerMove(ev) {
+            const currentX = ev.pageX;
+            const diff = currentX - startX;
+            const newWidth = Math.max(minW, startWidth + diff);
+
+            if (cols[idx]) {
+              cols[idx].style.width = newWidth + 'px';
+            }
+
+            if (guide && container) {
+              const containerRect = container.getBoundingClientRect();
+              const targetX = (th.getBoundingClientRect().left + newWidth - containerRect.left + container.scrollLeft);
+              guide.style.left = targetX + 'px';
+              guide.style.height = table.offsetHeight + 'px';
+            }
+          }
+
+          function onPointerUp() {
+            resizer.classList.remove('is-resizing');
+            document.body.classList.remove('is-col-resizing');
+            if (guide) guide.style.display = 'none';
+
+            document.removeEventListener('pointermove', onPointerMove);
+            document.removeEventListener('pointerup', onPointerUp);
+            document.removeEventListener('mousemove', onPointerMove);
+            document.removeEventListener('mouseup', onPointerUp);
+
+            saveHistoryColWidths();
+          }
+
+          document.addEventListener('pointermove', onPointerMove);
+          document.addEventListener('pointerup', onPointerUp);
+          document.addEventListener('mousemove', onPointerMove);
+          document.addEventListener('mouseup', onPointerUp);
+        }
+
+        resizer.addEventListener('pointerdown', startResize);
+        resizer.addEventListener('mousedown', startResize);
+      });
+    }
+
+    function saveHistoryColWidths() {
+      const colgroup = document.getElementById('historyColgroup');
+      if (!colgroup) return;
+      const cols = colgroup.querySelectorAll('col');
+      const widths = Array.from(cols).map(c => {
+        const w = c.style.width;
+        if (w === 'auto' || !w) return 'auto';
+        return parseInt(w, 10) || 'auto';
+      });
+      localStorage.setItem('ordering_sender_history_col_widths', JSON.stringify(widths));
+    }
+
+    function resetSingleHistoryColWidth(idx) {
+      const colgroup = document.getElementById('historyColgroup');
+      if (!colgroup) return;
+      const cols = colgroup.querySelectorAll('col');
+      if (cols[idx]) {
+        const def = DEFAULT_HISTORY_COL_WIDTHS[idx];
+        cols[idx].style.width = (def === 'auto') ? 'auto' : (def + 'px');
+        saveHistoryColWidths();
+        const thText = document.querySelectorAll('#historyOrdersTable th')[idx]?.textContent?.trim() || '';
+        showToast(`↔️ 列「${thText}」の幅を初期値に戻しました`);
+      }
+    }
+
+    function resetHistoryColWidths() {
+      localStorage.removeItem('ordering_sender_history_col_widths');
+      const colgroup = document.getElementById('historyColgroup');
+      if (!colgroup) return;
+      const cols = colgroup.querySelectorAll('col');
+      cols.forEach((col, idx) => {
+        const def = DEFAULT_HISTORY_COL_WIDTHS[idx];
+        col.style.width = (def === 'auto') ? 'auto' : (def + 'px');
+      });
+      showToast('↔️ 履歴一覧表の全列幅を初期設定にリセットしました');
+    }
+
+    async function pollHistory() {
+      try {
+        const res = await fetch('/api/orders/history?_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && data.orders) {
+          renderHistory(data.orders);
+        }
+      } catch (e) {
+        console.error('History poll failed:', e);
+      }
+    }
+
+    async function syncAllStatus() {
+      try {
+        const res = await fetch('/api/orders/sync-all?_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success) {
+          renderHistory(data.orders);
+          showToast(`🔄 受信側の最新状況を同期しました (${data.updatedCount}件更新)`);
+        }
+      } catch (e) {
+        showToast('❌ 同期エラー: ' + e.message, true);
+      }
+    }
+
+    // SSE 接続
+    let sseSource = null;
+    function connectSSE() {
+      const badge = document.getElementById('sseStatusBadge');
+      try {
+        if (sseSource) sseSource.close();
+        sseSource = new EventSource('/api/orders/events');
+
+        sseSource.addEventListener('connected', () => {
+          if (badge) {
+            badge.innerHTML = '⚡ リアルタイム接続中';
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#bbf7d0';
+          }
+        });
+
+        sseSource.addEventListener('status-update', (e) => {
+          try {
+            const payload = JSON.parse(e.data);
+            if (payload.orders) {
+              renderHistory(payload.orders);
+            } else {
+              pollHistory();
+            }
+            showToast(`🔔 [${payload.orderId || 'オーダー'}] ステータス更新: ${payload.status || ''} (${payload.lastActor || ''})`);
+          } catch (err) {
+            pollHistory();
+          }
+        });
+
+        sseSource.addEventListener('order-sent', (e) => {
+          try {
+            const payload = JSON.parse(e.data);
+            if (payload.orders) renderHistory(payload.orders);
+          } catch (err) {
+            pollHistory();
+          }
+        });
+
+        sseSource.onerror = () => {
+          if (badge) {
+            badge.innerHTML = '🔄 自動同期中 (再接続待機)';
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#b45309';
+            badge.style.borderColor = '#fde68a';
+          }
+        };
+      } catch (err) {
+        console.warn('SSE connection failed, falling back to polling:', err);
+      }
+    }
+
+    async function syncAllStatusSilently() {
+      try {
+        const res = await fetch('/api/orders/sync-all?_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success) {
+          renderHistory(data.orders);
+          if (data.updatedCount > 0) {
+            showToast(`🔄 受信側の更新を同期しました (${data.updatedCount}件更新)`);
+          }
+        }
+      } catch (e) {
+        // バックグラウンドポーリング失敗時は静かにフォールバック
+        pollHistory();
+      }
+    }
+
+    let autoSyncTimer = null;
+    function startAutoSync() {
+      if (autoSyncTimer) clearInterval(autoSyncTimer);
+      // 受信側の最新ステータス（受付・完了）を定期的に自動同期
+      autoSyncTimer = setInterval(syncAllStatusSilently, 2500);
+    }
+    function stopAutoSync() {
+      if (autoSyncTimer) {
+        clearInterval(autoSyncTimer);
+        autoSyncTimer = null;
+      }
+    }
+    function toggleAutoSync(enabled) {
+      if (enabled) {
+        startAutoSync();
+        syncAllStatusSilently();
+        showToast('🔄 自動同期を有効にしました');
+      } else {
+        stopAutoSync();
+        showToast('⏸️ 自動同期を一時停止しました');
+      }
+    }
+
+    async function checkRemoteStatus(orderId) {
+      try {
+        const res = await fetch(`/api/orders/${orderId}/check-status?_t=` + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`ℹ️ [${orderId}] 受信側の最新ステータス: ${data.status}`);
+          pollHistory();
+        } else {
+          showToast(`⚠️ ステータス照会: ${data.message || data.error}`, true);
+        }
+      } catch (e) {
+        showToast(`❌ 照会エラー: ${e.message}`, true);
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm('送信履歴をクリアしますか？')) return;
+      try {
+        const res = await fetch('/api/orders/clear-history', { method: 'POST' });
+        if (res.ok) pollHistory();
+      } catch (e) {
+        alert('クリアエラー: ' + e.message);
+      }
+    }
+
+    // =================================================================
+    // 💊 薬品集マスタ連動 (オートコンプリート・複数Rp管理・モーダル)
+    // =================================================================
+    let allMedicines = [];
+    let activeLookupTarget = 'rx';
+    let modalCategoryFilter = 'ALL';
+
+    async function initMedicineMaster() {
+      try {
+        const res = await fetch('/api/medicines?limit=1000');
+        const data = await res.json();
+        if (data.success && data.medicines) {
+          allMedicines = data.medicines;
+          console.log('[Sender] 薬品マスタ読み込み完了: ' + allMedicines.length + '件');
+          const defaultIvMed = allMedicines.find(m => m.id === 'DR0010' || m.name.includes('セフォセフ'));
+          if (defaultIvMed) renderMedDetailCard('iv', defaultIvMed);
+          renderRxMedicinesList();
+        }
+      } catch (err) {
+        console.error('薬品マスタ取得失敗:', err);
+      }
+    }
+
+    let rxItems = [
+      {
+        id: 'med_' + Date.now() + '_1',
+        medicine: 'ユナシン錠375ｍｇ',
+        medicineId: 'DR0001',
+        dosage: '1回1錠 1日2～3回 毎食後',
+        days: 7,
+        quantity: '21錠',
+        instruction: ''
+      }
+    ];
+
+    function buildMedDetailCardHtml(med) {
+      if (!med) return '';
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.2rem;">
+          <div>
+            <strong style="color:#0f172a; font-size:0.78rem;">[${escapeHtml(med.id)}] ${escapeHtml(med.name)}</strong>
+            <span style="font-size:0.7rem; color:#64748b; margin-left:0.3rem;">(${escapeHtml(med.kana || '')})</span>
+          </div>
+          <div style="display:flex; gap:0.2rem;">
+            <span class="med-tag ${med.brandType === '先発' ? 'med-tag-brand-orig' : 'med-tag-brand-gen'}">${escapeHtml(med.brandType || '後発')}</span>
+            <span class="med-tag" style="background:#e0f2fe; color:#0369a1;">${escapeHtml(med.category)}</span>
+          </div>
+        </div>
+        <div style="color:#475569; font-size:0.7rem;">
+          <span>成分: <strong>${escapeHtml(med.genericName || '―')}</strong></span>
+          ${med.therapeuticCategoryMajor ? `<span style="margin-left:0.4rem;">薬効: ${escapeHtml(med.therapeuticCategoryMajor)}</span>` : ''}
+        </div>
+        <div style="margin-top:0.2rem; display:flex; gap:0.3rem; align-items:center; flex-wrap:wrap;">
+          ${med.crushOk ? `<span class="med-tag ${med.crushOk === '〇' ? 'med-tag-ok' : (med.crushOk === '×' ? 'med-tag-ng' : 'med-tag-warn')}">粉砕:${escapeHtml(med.crushOk)}</span>` : ''}
+          ${med.suspensionOk ? `<span class="med-tag ${med.suspensionOk === '〇' ? 'med-tag-ok' : (med.suspensionOk === '×' ? 'med-tag-ng' : 'med-tag-warn')}">懸濁:${escapeHtml(med.suspensionOk)}</span>` : ''}
+          ${med.uncapsuleOk ? `<span class="med-tag ${med.uncapsuleOk === '〇' ? 'med-tag-ok' : (med.uncapsuleOk === '×' ? 'med-tag-ng' : 'med-tag-warn')}">脱カプセル:${escapeHtml(med.uncapsuleOk)}</span>` : ''}
+        </div>
+        ${med.pharmacyComment ? `
+          <div style="margin-top:0.25rem; padding:0.15rem 0.4rem; background:#fff1f2; border:1px solid #fecdd3; border-radius:3px; color:#be123c; font-weight:bold; font-size:0.7rem;">
+            ⚠️ ${escapeHtml(med.pharmacyComment)}
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function renderRxMedicinesList() {
+      const container = document.getElementById('rxMedicinesListContainer');
+      if (!container) return;
+      const countLabel = document.getElementById('rxTotalMedCountText');
+      if (countLabel) countLabel.textContent = `登録薬剤: ${rxItems.length}品目`;
+
+      container.innerHTML = rxItems.map((item, index) => {
+        const med = allMedicines.find(m => m.id === item.medicineId) || allMedicines.find(m => m.name === item.medicine);
+        let detailCardHtml = '';
+        if (med) detailCardHtml = buildMedDetailCardHtml(med);
+
+        return `
+          <div class="rx-item-card" id="rxCard_${item.id}">
+            <div class="rx-item-header">
+              <span class="rx-rp-badge">Rp. ${index + 1}</span>
+              <div style="display:flex; gap:0.35rem; align-items:center;">
+                <button type="button" class="btn-lookup" onclick="openMedicineModal('rx_${item.id}')">🔍 薬品マスタ選択</button>
+                ${rxItems.length > 1 ? `
+                  <button type="button" onclick="removeRxMedicineRow('${item.id}')" class="btn-rx-delete" title="この薬剤を削除">✕ 削除</button>
+                ` : ''}
+              </div>
+            </div>
+            <div class="form-group" style="position:relative; margin-top:0.3rem;">
+              <div style="position:relative;">
+                <input type="text" id="rxMedicine_${item.id}" class="form-control"
+                       placeholder="薬品名・カナ・成分名を入力（例: ユナシン、カロナール、ロキソ...）"
+                       value="${escapeHtml(item.medicine)}"
+                       autocomplete="off"
+                       oninput="onRxItemInput('${item.id}', this.value)"
+                       onfocus="onRxItemInput('${item.id}', this.value)"
+                       onchange="updateRxItemField('${item.id}', 'medicine', this.value)">
+                <div id="rxMedicineSuggest_${item.id}" class="med-suggest-dropdown" style="display:none;"></div>
+              </div>
+              <input type="hidden" id="rxMedicineId_${item.id}" value="${item.medicineId || ''}">
+              <div id="rxMedDetailCard_${item.id}" class="med-detail-card" style="${detailCardHtml ? '' : 'display:none;'}">
+                ${detailCardHtml}
+              </div>
+            </div>
+            <div class="form-row" style="margin-top:0.35rem; gap:0.45rem;">
+              <div class="form-group" style="flex:2;">
+                <label class="form-label" style="font-size:0.73rem;">用法・用量 (服用時期):</label>
+                <input type="text" id="rxDosage_${item.id}" class="form-control"
+                       value="${escapeHtml(item.dosage || '')}"
+                       placeholder="例: 1回1錠 1日3回 毎食後"
+                       onchange="updateRxItemField('${item.id}', 'dosage', this.value)">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" style="font-size:0.73rem;">日数/回数:</label>
+                <input type="number" id="rxDays_${item.id}" class="form-control"
+                       value="${item.days || 7}" min="1" max="90"
+                       onchange="updateRxItemField('${item.id}', 'days', this.value); autoCalcQuantity('${item.id}');">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" style="font-size:0.73rem;">調剤総量:</label>
+                <input type="text" id="rxQuantity_${item.id}" class="form-control"
+                       value="${escapeHtml(item.quantity || '')}"
+                       placeholder="例: 21錠"
+                       onchange="updateRxItemField('${item.id}', 'quantity', this.value)">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label" style="font-size:0.73rem;">調剤指示:</label>
+                <input type="text" id="rxInstruction_${item.id}" class="form-control"
+                       value="${escapeHtml(item.instruction || '')}"
+                       placeholder="例: 粉砕、一包化"
+                       onchange="updateRxItemField('${item.id}', 'instruction', this.value)">
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function addNewRxMedicineRow() {
+      const commonDays = parseInt(document.getElementById('rxCommonDays')?.value || '7', 10) || 7;
+      const newId = 'med_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      rxItems.push({
+        id: newId,
+        medicine: '',
+        medicineId: '',
+        dosage: '1回1錠 1日3回 毎食後',
+        days: commonDays,
+        quantity: '',
+        instruction: ''
+      });
+      renderRxMedicinesList();
+      setTimeout(() => {
+        const inp = document.getElementById(`rxMedicine_${newId}`);
+        if (inp) inp.focus();
+      }, 50);
+      showToast(`➕ 処方薬剤 (Rp. ${rxItems.length}) を追加しました`);
+    }
+
+    function removeRxMedicineRow(id) {
+      if (rxItems.length <= 1) return;
+      rxItems = rxItems.filter(item => item.id !== id);
+      renderRxMedicinesList();
+      showToast('🗑️ 薬剤を削除しました');
+    }
+
+    function updateRxItemField(id, field, val) {
+      const item = rxItems.find(it => it.id === id);
+      if (item) item[field] = val;
+    }
+
+    function applyCommonDaysToAll(days) {
+      const d = parseInt(days, 10) || 7;
+      rxItems.forEach(it => {
+        it.days = d;
+        const el = document.getElementById(`rxDays_${it.id}`);
+        if (el) el.value = d;
+        autoCalcQuantity(it.id);
+      });
+      showToast(`全薬剤の処方日数を ${d} 日分に統一しました`);
+    }
+
+    function autoCalcQuantity(id) {
+      const item = rxItems.find(it => it.id === id);
+      if (!item) return;
+      const days = parseInt(document.getElementById(`rxDays_${id}`)?.value || item.days || '7', 10);
+      const dosage = document.getElementById(`rxDosage_${id}`)?.value || item.dosage || '';
+      let dailyDose = 0;
+      if (dosage.includes('1日3回') || dosage.includes('毎食後')) dailyDose = 3;
+      else if (dosage.includes('1日2回') || dosage.includes('朝夕')) dailyDose = 2;
+      else if (dosage.includes('1日1回') || dosage.includes('就寝前')) dailyDose = 1;
+
+      let unitDose = 1;
+      const unitMatch = dosage.match(/1回([0-9０-９]+)/);
+      if (unitMatch) unitDose = parseInt(unitMatch[1], 10) || 1;
+
+      if (dailyDose > 0 && days > 0) {
+        const total = dailyDose * unitDose * days;
+        const qEl = document.getElementById(`rxQuantity_${id}`);
+        if (qEl) {
+          const medName = document.getElementById(`rxMedicine_${id}`)?.value || '';
+          const unit = medName.includes('カプセル') ? 'Cap' : (medName.includes('散') || medName.includes('顆粒') ? '包' : (medName.includes('外用') || medName.includes('軟膏') ? '本' : '錠'));
+          qEl.value = `${total}${unit}`;
+          item.quantity = qEl.value;
+        }
+      }
+    }
+
+    function onRxItemInput(id, val) {
+      const suggestBox = document.getElementById(`rxMedicineSuggest_${id}`);
+      if (!suggestBox) return;
+      if (!val || val.trim().length === 0) {
+        suggestBox.style.display = 'none';
+        return;
+      }
+      const results = searchLocalMedicines(val, '内服・外用');
+      if (!results || results.length === 0) {
+        suggestBox.innerHTML = `<div style="padding:0.5rem 0.7rem; color:#94a3b8; font-size:0.75rem;">一致する薬品が見つかりません（手動入力可）</div>`;
+        suggestBox.style.display = 'block';
+        return;
+      }
+
+      suggestBox.innerHTML = results.map(m => `
+        <div class="med-suggest-item" onclick="selectMedicine('rx_${id}', '${m.id}')">
+          <div>
+            <div class="med-suggest-main">${escapeHtml(m.name)}</div>
+            <div class="med-suggest-sub">
+              <span>[${escapeHtml(m.id)}]</span>
+              <span style="margin-left:0.3rem;">成分: ${escapeHtml(m.genericName || '―')}</span>
+              ${m.dosage ? `<span style="margin-left:0.4rem; color:#0369a1;">用法: ${escapeHtml(m.dosage)}</span>` : ''}
+            </div>
+          </div>
+          <div class="med-suggest-badges">
+            <span class="med-tag ${m.brandType === '先発' ? 'med-tag-brand-orig' : 'med-tag-brand-gen'}">${escapeHtml(m.brandType || '後発')}</span>
+            <span class="med-tag" style="background:#f1f5f9; color:#475569;">${escapeHtml(m.category)}</span>
+            ${m.crushOk ? `<span class="med-tag ${m.crushOk === '〇' ? 'med-tag-ok' : (m.crushOk === '×' ? 'med-tag-ng' : 'med-tag-warn')}">粉砕:${escapeHtml(m.crushOk)}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+      suggestBox.style.display = 'block';
+    }
+
+    function hiraToKata(str) {
+      if (!str) return '';
+      return str.replace(/[\u3041-\u3096]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+    }
+    function zenToHan(str) {
+      if (!str) return '';
+      return str.replace(/[！-～]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)).replace(/　/g, ' ');
+    }
+    function normText(str) {
+      if (!str) return '';
+      return zenToHan(hiraToKata(String(str).toLowerCase().trim()));
+    }
+
+    function searchLocalMedicines(query, targetCategory) {
+      const qNorm = normText(query);
+      let list = allMedicines;
+      if (targetCategory === '内服・外用') {
+        list = list.filter(m => m.category === '内服薬' || m.category === '外用薬');
+      } else if (targetCategory) {
+        list = list.filter(m => m.category === targetCategory);
+      }
+      if (!qNorm) return list.slice(0, 30);
+
+      const parts = qNorm.split(/\s+/).filter(Boolean);
+      return list.filter(m => {
+        const target = normText(`${m.name} ${m.kana} ${m.genericName} ${m.id} ${m.therapeuticCategoryMajor} ${m.therapeuticCategoryMiddle}`);
+        return parts.every(p => target.includes(p));
+      }).slice(0, 30);
+    }
+
+    function onMedicineInput(target, val) {
+      const suggestBox = document.getElementById(`${target}MedicineSuggest`);
+      if (!suggestBox) return;
+      if (!val || val.trim().length === 0) {
+        suggestBox.style.display = 'none';
+        return;
+      }
+      const category = target === 'iv' ? '注射剤' : '内服・外用';
+      const results = searchLocalMedicines(val, category);
+
+      if (!results || results.length === 0) {
+        suggestBox.innerHTML = `<div style="padding:0.5rem 0.7rem; color:#94a3b8; font-size:0.75rem;">一致する薬品が見つかりません（手動入力可）</div>`;
+        suggestBox.style.display = 'block';
+        return;
+      }
+
+      suggestBox.innerHTML = results.map(m => `
+        <div class="med-suggest-item" onclick="selectMedicine('${target}', '${m.id}')">
+          <div>
+            <div class="med-suggest-main">${escapeHtml(m.name)}</div>
+            <div class="med-suggest-sub">
+              <span>[${escapeHtml(m.id)}]</span>
+              <span style="margin-left:0.3rem;">成分: ${escapeHtml(m.genericName || '―')}</span>
+              ${m.dosage ? `<span style="margin-left:0.4rem; color:#0369a1;">用法: ${escapeHtml(m.dosage)}</span>` : ''}
+            </div>
+          </div>
+          <div class="med-suggest-badges">
+            <span class="med-tag ${m.brandType === '先発' ? 'med-tag-brand-orig' : 'med-tag-brand-gen'}">${escapeHtml(m.brandType || '後発')}</span>
+            <span class="med-tag" style="background:#f1f5f9; color:#475569;">${escapeHtml(m.category)}</span>
+          </div>
+        </div>
+      `).join('');
+      suggestBox.style.display = 'block';
+    }
+
+    function selectMedicine(target, medId) {
+      const med = allMedicines.find(m => m.id === medId);
+      if (!med) return;
+
+      if (target.startsWith('rx_')) {
+        const rowId = target.replace('rx_', '');
+        const inp = document.getElementById(`rxMedicine_${rowId}`);
+        if (inp) inp.value = med.name;
+        const idInp = document.getElementById(`rxMedicineId_${rowId}`);
+        if (idInp) idInp.value = med.id;
+        const dosageInp = document.getElementById(`rxDosage_${rowId}`);
+        if (dosageInp && med.dosage) dosageInp.value = med.dosage;
+        const suggestBox = document.getElementById(`rxMedicineSuggest_${rowId}`);
+        if (suggestBox) suggestBox.style.display = 'none';
+
+        const item = rxItems.find(it => it.id === rowId);
+        if (item) {
+          item.medicine = med.name;
+          item.medicineId = med.id;
+          if (med.dosage) item.dosage = med.dosage;
+        }
+
+        const card = document.getElementById(`rxMedDetailCard_${rowId}`);
+        if (card) {
+          card.innerHTML = buildMedDetailCardHtml(med);
+          card.style.display = 'block';
+        }
+
+        autoCalcQuantity(rowId);
+
+        if (med.pharmacyComment) {
+          const remarksInput = document.getElementById('rxRemarks');
+          if (remarksInput && !remarksInput.value.includes(med.pharmacyComment)) {
+            const rpNum = rxItems.findIndex(it => it.id === rowId) + 1;
+            remarksInput.value = (remarksInput.value.trim() ? remarksInput.value.trim() + ' ' : '') + `[Rp.${rpNum}] ${med.pharmacyComment}`;
+          }
+        }
+      } else if (target === 'iv') {
+        const input = document.getElementById('ivMedicine');
+        const suggestBox = document.getElementById('ivMedicineSuggest');
+        if (input) input.value = med.name;
+        if (suggestBox) suggestBox.style.display = 'none';
+
+        const idInput = document.getElementById('ivMedicineId');
+        if (idInput) idInput.value = med.id;
+
+        if (med.dosage) {
+          const rateInput = document.getElementById('ivRate');
+          if (rateInput && !rateInput.value.includes(med.dosage)) {
+            rateInput.value = med.dosage;
+          }
+        }
+        if (med.pharmacyComment) {
+          const remarksInput = document.getElementById('ivRemarks');
+          if (remarksInput && !remarksInput.value.includes(med.pharmacyComment)) {
+            remarksInput.value = (remarksInput.value.trim() ? remarksInput.value.trim() + ' ' : '') + med.pharmacyComment;
+          }
+        }
+        renderMedDetailCard('iv', med);
+      }
+
+      showToast(`💊 薬品「${med.name}」を選択・自動補完しました`);
+    }
+
+    function renderMedDetailCard(target, med) {
+      const card = document.getElementById(`${target}MedDetailCard`);
+      if (!card) return;
+      card.innerHTML = buildMedDetailCardHtml(med);
+      card.style.display = 'block';
+    }
+
+    function openMedicineModal(target) {
+      activeLookupTarget = target;
+      document.getElementById('medModalTitle').textContent = target === 'iv' ? '💉 注射薬マスタ検索・選択' : '💊 薬品集マスタ検索・選択';
+      modalCategoryFilter = target === 'iv' ? '注射剤' : 'ALL';
+      document.querySelectorAll('#medModalCategoryFilters .filter-btn').forEach(btn => {
+        const text = btn.textContent;
+        if ((target === 'iv' && text.includes('注射剤')) || (!target.includes('iv') && text.includes('全部'))) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      document.getElementById('medModalSearchInput').value = '';
+      renderModalTable();
+      document.getElementById('medMasterModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('medModalSearchInput').focus(), 100);
+    }
+
+    function closeMedicineModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('medMasterModal').style.display = 'none';
+    }
+
+    function filterModalCategory(cat, btn) {
+      modalCategoryFilter = cat;
+      document.querySelectorAll('#medModalCategoryFilters .filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderModalTable();
+    }
+
+    function onModalSearchInput(val) {
+      renderModalTable();
+    }
+
+    function renderModalTable() {
+      const q = document.getElementById('medModalSearchInput').value.trim();
+      const targetCat = modalCategoryFilter === 'ALL' ? (activeLookupTarget === 'iv' ? '注射剤' : '') : modalCategoryFilter;
+      const results = searchLocalMedicines(q, targetCat);
+
+      document.getElementById('medModalCountBadge').textContent = `${results.length}品目該当`;
+
+      const tbody = document.getElementById('medModalTableBody');
+      if (results.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:#94a3b8;">条件に一致する薬品が見つかりませんでした</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = results.map(m => `
+        <tr style="border-bottom:1px solid #e2e8f0; transition:background-color 0.12s;" onmouseover="this.style.backgroundColor='#f0fdf4'" onmouseout="this.style.backgroundColor=''">
+          <td style="padding:0.45rem 0.6rem; font-family:monospace; font-weight:bold; color:#475569;">${escapeHtml(m.id)}</td>
+          <td style="padding:0.45rem 0.6rem;">
+            <span class="med-tag" style="background:#f1f5f9; color:#475569;">${escapeHtml(m.category)}</span>
+          </td>
+          <td style="padding:0.45rem 0.6rem;">
+            <div style="font-weight:bold; color:#0f172a; font-size:0.84rem;">${escapeHtml(m.name)}</div>
+            <div style="font-size:0.72rem; color:#64748b;">${escapeHtml(m.kana)} / 成分: ${escapeHtml(m.genericName || '―')}</div>
+            ${m.pharmacyComment ? `<div style="font-size:0.7rem; color:#be123c; font-weight:bold;">⚠️ ${escapeHtml(m.pharmacyComment)}</div>` : ''}
+          </td>
+          <td style="padding:0.45rem 0.6rem; font-size:0.74rem; color:#334155; line-height:1.3;">
+            ${escapeHtml(m.dosage || '規定量')}
+          </td>
+          <td style="padding:0.45rem 0.6rem; text-align:center;">
+            <div style="display:flex; gap:0.2rem; justify-content:center; flex-wrap:wrap;">
+              ${m.crushOk ? `<span class="med-tag ${m.crushOk === '〇' ? 'med-tag-ok' : (m.crushOk === '×' ? 'med-tag-ng' : 'med-tag-warn')}">粉砕:${escapeHtml(m.crushOk)}</span>` : ''}
+              ${m.suspensionOk ? `<span class="med-tag ${m.suspensionOk === '〇' ? 'med-tag-ok' : (m.suspensionOk === '×' ? 'med-tag-ng' : 'med-tag-warn')}">懸濁:${escapeHtml(m.suspensionOk)}</span>` : ''}
+            </div>
+          </td>
+          <td style="padding:0.45rem 0.6rem; text-align:center;">
+            <button type="button" onclick="selectMedicine('${activeLookupTarget}', '${m.id}'); closeMedicineModal();" style="background:#0284c7; color:white; border:none; padding:0.25rem 0.55rem; border-radius:4px; font-size:0.72rem; font-weight:bold; cursor:pointer;">
+              選択
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 画面外クリックでサジェスト非表示
+    document.addEventListener('click', (e) => {
+      const ivSuggest = document.getElementById('ivMedicineSuggest');
+      if (ivSuggest && !e.target.closest('#ivMedicine') && !e.target.closest('#ivMedicineSuggest')) {
+        ivSuggest.style.display = 'none';
+      }
+    });
+
+    // 左右ペインドラッグ調整の初期化
+    function initPaneResizing() {
+      const container = document.querySelector('.container');
+      const leftPane = document.querySelector('.form-card');
+      const resizer = document.getElementById('paneResizer');
+      if (!container || !leftPane || !resizer) return;
+
+      // 保存された幅比率の復元
+      try {
+        const savedPct = localStorage.getItem('ordering_sender_split_pct');
+        if (savedPct) {
+          const pct = parseFloat(savedPct);
+          if (pct >= 25 && pct <= 80) {
+            leftPane.style.flex = `0 0 ${pct}%`;
+          }
+        }
+      } catch (e) {}
+
+      resizer.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        leftPane.style.flex = '0 0 58%';
+        localStorage.removeItem('ordering_sender_split_pct');
+        showToast('↔️ 左右分割の境界幅を初期比率 (58% : 42%) にリセットしました');
+      });
+
+      function startResize(e) {
+        e.preventDefault();
+        resizer.classList.add('is-resizing');
+        document.body.classList.add('is-col-resizing');
+
+        const containerRect = container.getBoundingClientRect();
+
+        function onMove(ev) {
+          const clientX = ev.pageX || (ev.touches && ev.touches[0].pageX);
+          if (!clientX) return;
+          const offset = clientX - containerRect.left;
+          let pct = (offset / containerRect.width) * 100;
+          pct = Math.max(25, Math.min(80, pct));
+          leftPane.style.flex = `0 0 ${pct}%`;
+        }
+
+        function onUp() {
+          resizer.classList.remove('is-resizing');
+          document.body.classList.remove('is-col-resizing');
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.removeEventListener('touchmove', onMove);
+          document.removeEventListener('touchend', onUp);
+
+          const pctMatch = leftPane.style.flex.match(/0 0 ([\d.]+)%/);
+          if (pctMatch) {
+            localStorage.setItem('ordering_sender_split_pct', pctMatch[1]);
+          }
+        }
+
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+      }
+
+      resizer.addEventListener('pointerdown', startResize);
+      resizer.addEventListener('mousedown', startResize);
+    }
+
+    // 薬品マスタモーダル 列幅ドラッグ調整の初期化
+    function initMedModalColResizing() {
+      const table = document.getElementById('medModalTable');
+      const colgroup = document.getElementById('medModalColgroup');
+      const guide = document.getElementById('medColResizeGuide');
+      const container = document.getElementById('medModalTableContainer');
+      if (!table || !colgroup) return;
+
+      const ths = table.querySelectorAll('thead th');
+      const cols = colgroup.querySelectorAll('col');
+
+      // 保存された幅の復元
+      try {
+        const saved = JSON.parse(localStorage.getItem('ordering_sender_med_col_widths') || 'null');
+        if (saved && Array.isArray(saved)) {
+          saved.forEach((w, idx) => {
+            if (cols[idx] && w !== null && w !== undefined) {
+              cols[idx].style.width = (typeof w === 'number' || !isNaN(w)) ? (w + 'px') : w;
+            }
+          });
+        }
+      } catch (e) {}
+
+      ths.forEach((th, idx) => {
+        if (th.querySelector('.col-resizer')) return;
+
+        const resizer = document.createElement('div');
+        resizer.className = 'col-resizer';
+        resizer.title = '境界をドラッグして列幅を調整 (ダブルクリックで初期値に戻す)';
+        th.appendChild(resizer);
+
+        resizer.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (cols[idx]) {
+            const def = DEFAULT_MED_COL_WIDTHS[idx];
+            cols[idx].style.width = (def === 'auto') ? 'auto' : (def + 'px');
+            saveMedModalColWidths();
+          }
+        });
+
+        function startResize(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const startX = e.pageX;
+          const startWidth = th.offsetWidth;
+          const minW = MIN_MED_COL_WIDTHS[idx] || 50;
+
+          resizer.classList.add('is-resizing');
+          document.body.classList.add('is-col-resizing');
+
+          if (guide && container) {
+            guide.style.display = 'block';
+            guide.style.height = table.offsetHeight + 'px';
+            const containerRect = container.getBoundingClientRect();
+            guide.style.left = (e.pageX - containerRect.left + container.scrollLeft) + 'px';
+          }
+
+          function onPointerMove(ev) {
+            const currentX = ev.pageX;
+            const diff = currentX - startX;
+            const newWidth = Math.max(minW, startWidth + diff);
+
+            if (cols[idx]) {
+              cols[idx].style.width = newWidth + 'px';
+            }
+
+            if (guide && container) {
+              const containerRect = container.getBoundingClientRect();
+              const targetX = (th.getBoundingClientRect().left + newWidth - containerRect.left + container.scrollLeft);
+              guide.style.left = targetX + 'px';
+              guide.style.height = table.offsetHeight + 'px';
+            }
+          }
+
+          function onPointerUp() {
+            resizer.classList.remove('is-resizing');
+            document.body.classList.remove('is-col-resizing');
+            if (guide) guide.style.display = 'none';
+
+            document.removeEventListener('pointermove', onPointerMove);
+            document.removeEventListener('pointerup', onPointerUp);
+            document.removeEventListener('mousemove', onPointerMove);
+            document.removeEventListener('mouseup', onPointerUp);
+
+            saveMedModalColWidths();
+          }
+
+          document.addEventListener('pointermove', onPointerMove);
+          document.addEventListener('pointerup', onPointerUp);
+          document.addEventListener('mousemove', onPointerMove);
+          document.addEventListener('mouseup', onPointerUp);
+        }
+
+        resizer.addEventListener('pointerdown', startResize);
+        resizer.addEventListener('mousedown', startResize);
+      });
+    }
+
+    function saveMedModalColWidths() {
+      const colgroup = document.getElementById('medModalColgroup');
+      if (!colgroup) return;
+      const cols = colgroup.querySelectorAll('col');
+      const widths = Array.from(cols).map(c => {
+        const w = c.style.width;
+        if (w === 'auto' || !w) return 'auto';
+        return parseInt(w, 10) || 'auto';
+      });
+      localStorage.setItem('ordering_sender_med_col_widths', JSON.stringify(widths));
+    }
+
+    // 初期化実行
+    connectSSE();
+    startAutoSync();
+    initMedicineMaster();
+    initPaneResizing();
+    applyHistoryWrapUI();
+    setHistoryViewMode(historyViewMode);
+    initMedModalColResizing();
+  </script>
+</body>
+</html>

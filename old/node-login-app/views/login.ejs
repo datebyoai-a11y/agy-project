@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン</title>
+</head>
+<body>
+    <h2>ログインシステム</h2>
+
+    <% if (error) { %>
+        <p style="color: red;"><%= error %></p>
+    <% } %>
+
+    <form action="/login" method="POST">
+        <div>
+            <label>ユーザー名:</label>
+            <input type="text" name="username" required>
+        </div>
+        <br>
+        <div>
+            <label>パスワード:</label>
+            <input type="password" name="password" required>
+        </div>
+        <br>
+        <button type="submit">ログイン</button>
+    </form>
+  <a href="/register">登録画面へ</a>
+</body>
+</html>

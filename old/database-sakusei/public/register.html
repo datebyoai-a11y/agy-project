@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>新規ユーザー登録</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: #f5f5f5;
+    }
+    .container {
+      width: 300px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .link-btn {
+      background: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>新規ユーザー登録</h2>
+
+    <form action="/auth/register" method="POST">
+      <input type="text" id="username" name="username" placeholder="ユーザー名" required />
+      <input type="password" id="password" name="password" placeholder="パスワード" required />
+      <button type="submit">登録する</button>
+    </form>
+
+    <!-- ログイン画面へ戻る -->
+    <form action="/login" method="GET">
+      <button class="link-btn">ログイン画面へ戻る</button>
+    </form>
+  </div>
+</body>
+</html>

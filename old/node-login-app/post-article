@@ -1,0 +1,18 @@
+app.post('/post-article', requireLogin, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        const { content, targetId } = req.body;
+
+        await new Article({
+            username: user.username,
+            content,
+            targetId
+        }).save();
+
+        res.redirect('/dashboard');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('保存エラー');
+    }
+});
+

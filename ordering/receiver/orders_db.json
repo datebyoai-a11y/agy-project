@@ -1,0 +1,1407 @@
+[
+  {
+    "orderId": "RAD-20260918-7689",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "しおかぜ",
+      "kana": "アベ テルヨシ",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "1946-12-06",
+      "age": 70,
+      "height": 164,
+      "weight": 58,
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "infection": "無",
+      "mobility": "車椅子",
+      "examCategory": "入院時検査"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "XRAY",
+      "formName": "診療Ｘ線照射録",
+      "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+      "xraySites": "①胸部[正(立位)・側(R-L)]",
+      "sitesList": [
+        "①胸部[正(立位)・側(R-L)]"
+      ],
+      "portable": "一般撮影室",
+      "isPortable": false,
+      "technician": "放射線技師",
+      "media": "DVD作成:未 / 画像取込:未",
+      "dvdMedia": "未",
+      "imgImport": "未",
+      "conditions": "75kV / 100mA / 20msec",
+      "elecArchive": true,
+      "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+      "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+      "scheduledAt": "2026-09-18T16:00"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-18T06:50:15.166Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-18T06:50:15.166Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-18T06:50:46.931Z",
+        "actor": "部門モニター操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260918-6383",
+    "orderType": "PRESCRIPTION",
+    "title": "PRESCRIPTIONオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "同期確認医師",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "同期テスト薬"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-18T06:49:39.532Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-18T06:49:39.532Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-18T06:49:39.557Z",
+        "actor": "薬剤部",
+        "note": ""
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-18T06:49:40.400Z",
+        "actor": "薬剤部",
+        "note": "調剤完了"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260918-6967",
+    "orderType": "IV",
+    "title": "IVオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "しおかぜ"
+    },
+    "doctor": {
+      "name": "テスト医師",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "テスト輸液500ml",
+      "dose": "1本",
+      "rate": "60ml/h",
+      "route": "点滴静注",
+      "remarks": "自動同期テスト"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-18T06:48:44.281Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-18T06:48:44.281Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260918-5255",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: ユナシン錠375ｍｇ (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "しおかぜ",
+      "kana": "アベ テルヨシ",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "1946-12-06",
+      "age": 70,
+      "height": 164,
+      "weight": 58,
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "infection": "無",
+      "mobility": "車椅子",
+      "examCategory": "入院時検査"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "prescriptionType": "定期処方",
+      "deptType": "院内処方",
+      "days": "7",
+      "medicines": [
+        {
+          "rp": 1,
+          "medicine": "ユナシン錠375ｍｇ",
+          "medicineId": "DR0001",
+          "dosage": "1回1錠 1日2～3回 毎食後",
+          "days": "7",
+          "quantity": "21錠",
+          "instruction": ""
+        }
+      ],
+      "medicine": "ユナシン錠375ｍｇ",
+      "medicineId": "DR0001",
+      "dosage": "1回1錠 1日2～3回 毎食後",
+      "remarks": "定期処方 (アレルギー歴なし確認済)",
+      "scheduledAt": "2026-09-18T16:00"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-18T06:42:19.038Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-18T06:42:19.038Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-18T06:42:57.264Z",
+        "actor": "部門モニター操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-18T06:43:07.247Z",
+        "actor": "部門モニター操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260916-7439",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方: [定期処方] [院内処方] Rp1: カロナール錠300 300mg 1回1錠 毎食後 ×7日分 [21錠] (粉砕) / Rp2: ユナシン錠375mg 1回1錠 毎食後 ×7日分 [21錠] (嚥下困難時簡易懸濁可)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟",
+      "ward": "しおかぜ",
+      "room": "302号室"
+    },
+    "doctor": {
+      "name": "北島 先生",
+      "department": "内科"
+    },
+    "details": {
+      "prescriptionType": "定期処方",
+      "deptType": "院内処方",
+      "remarks": "嚥下状態に応じ簡易懸濁可、アレルギー歴なし確認済",
+      "medicines": [
+        {
+          "rp": 1,
+          "medicine": "カロナール錠300",
+          "dosage": "1回1錠 毎食後",
+          "days": 7,
+          "quantity": "21錠",
+          "instruction": "粉砕"
+        },
+        {
+          "rp": 2,
+          "medicine": "ユナシン錠375mg",
+          "dosage": "1回1錠 毎食後",
+          "days": 7,
+          "quantity": "21錠",
+          "instruction": "嚥下困難時簡易懸濁可"
+        }
+      ]
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-16T03:27:54.010Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-16T03:27:54.010Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "RADIOLOGY-20260915-5850",
+    "orderType": "RADIOLOGY",
+    "title": "RADIOLOGYオーダー",
+    "priority": "STAT",
+    "patient": {
+      "id": "P-100234",
+      "name": "山田 太郎",
+      "department": "整形外科",
+      "ward": "402号室"
+    },
+    "doctor": {
+      "name": "佐藤 健一"
+    },
+    "details": {
+      "formName": "診療Ｘ線照射録",
+      "subType": "XRAY",
+      "xraySites": "①胸部[正(立位)・側(R-L)]、③腰椎[正・側・斜位(両側)]、骨盤[正面]",
+      "portable": "一般撮影室",
+      "technician": "放射線技師 田中",
+      "conditions": "75kV 160mA 0.05s / 80kV 200mA 0.08s",
+      "media": "CR(IP取込) / PACS転送済",
+      "purpose": "術後経過確認および多発腰痛・歩行時疼痛の精査、骨折疑い",
+      "remarks": "起立時にふらつきがあるため介助者同伴にて撮影実施のこと。車椅子搬送。"
+    },
+    "status": "RECEIVED",
+    "senderHost": "localhost:5000",
+    "receivedAt": "2026-09-15T23:23:12.792Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T23:23:12.792Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "RAD-20260915-5609",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]、③腰椎[正・側] [ポータブル:302号室] (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "しおかぜ",
+      "kana": "アベ テルヨシ",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "1946-12-06",
+      "age": 70,
+      "height": 164,
+      "weight": 58,
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "infection": "無",
+      "mobility": "車椅子",
+      "examCategory": "入院時検査"
+    },
+    "doctor": {
+      "name": "北島 先生",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "XRAY",
+      "formName": "診療Ｘ線照射録",
+      "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]、③腰椎[正・側]]",
+      "xraySites": "①胸部[正(立位)・側(R-L)]、③腰椎[正・側]",
+      "sitesList": [
+        "①胸部[正(立位)・側(R-L)]",
+        "③腰椎[正・側]"
+      ],
+      "portable": "302号室",
+      "isPortable": true,
+      "technician": "放射線技師",
+      "media": "DVD作成:未 / 画像取込:未",
+      "dvdMedia": "未",
+      "imgImport": "未",
+      "conditions": "75kV / 100mA / 20msec",
+      "elecArchive": true,
+      "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可",
+      "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可",
+      "scheduledAt": "2026-09-15T09:30:34.862Z"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T09:30:34.958Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T09:30:34.958Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "REH-20260915-5321",
+    "orderType": "REHAB",
+    "title": "🏃 リハビリ指示書: PT・OT [運動機能改善、歩行] (高橋 五郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P005",
+      "name": "高橋 五郎",
+      "department": "一般病棟",
+      "kana": "タカハシ ゴロウ",
+      "gender": "男",
+      "age": 81,
+      "era": "昭20",
+      "birthDate": "1945-11-30",
+      "ward": "しおかぜ",
+      "room": "308号室",
+      "mobility": "ストレッチャー",
+      "infection": "無",
+      "height": 160,
+      "weight": 52
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "formName": "リハビリテーション指示書",
+      "location": "ベッドサイド、リハビリテーション室",
+      "admitDate": "2026-09-01",
+      "orderDate": "2026-09-15",
+      "diagnoses": [
+        {
+          "name": "脳梗塞後遺症 (右不全片麻痺)",
+          "onsetDate": "2026-08-15"
+        },
+        {
+          "name": "廃用症候群・誤嚥性肺炎後",
+          "onsetDate": "2026-08-28"
+        }
+      ],
+      "contraindications": "収縮期血圧180以上または脈拍110以上で中止、起立時ふらつき注意",
+      "therapyTypes": "PT (理学療法)、OT (作業療法)",
+      "goals": "ROM、バランス、筋力、基本動作、移乗、歩行、ADL自立度",
+      "physicals": "ホットパック(腰部)、メドマー(両下肢)",
+      "remarks": "病棟内での歩行器歩行自立、およびトイレ移乗動作の安定化を目指す"
+    },
+    "status": "ACCEPTED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T06:44:54.022Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T06:44:54.022Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-15T06:45:45.200Z",
+        "actor": "リハビリテーション科 担当PT",
+        "note": "指示確認、訓練予定組み込み"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260915-4594",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL (山田 太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P002",
+      "name": "山田 太郎",
+      "department": "一般病棟",
+      "kana": "ヤマダ タロウ",
+      "gender": "男",
+      "age": 45,
+      "era": "昭56",
+      "birthDate": "1981-05-12",
+      "ward": "うみかぜ",
+      "room": "205号室",
+      "mobility": "徒歩",
+      "infection": "無",
+      "height": 172,
+      "weight": 68
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+      "medicineId": "DR0010",
+      "rate": "80mL/h (約1時間15分で点滴静注)",
+      "scheduleDays": "1日2回 (朝・夕) 3日間",
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T06:44:54.009Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T06:44:54.009Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "LAB-20260915-8165",
+    "orderType": "LAB_EXAM",
+    "title": "🔬 生理検査依頼書: 標準12誘導心電図、エコー [腹部、心臓](ドプラ) (鈴木 一郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P004",
+      "name": "鈴木 一郎",
+      "department": "一般病棟",
+      "kana": "スズキ イチロウ",
+      "gender": "男",
+      "age": 62,
+      "era": "昭39",
+      "birthDate": "1964-02-17",
+      "ward": "外来",
+      "room": "外来処置室",
+      "mobility": "徒歩",
+      "infection": "無",
+      "height": 168,
+      "weight": 65
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "PHYSIO",
+      "formName": "生理検査依頼書",
+      "items": "標準12誘導心電図、エコー [腹部、心臓](ドプラ)",
+      "testName": "標準12誘導心電図、エコー [腹部、心臓](ドプラ)",
+      "purpose": "動悸精査および心窩部不快感の精査",
+      "remarks": "動悸精査および心窩部不快感の精査"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T06:44:53.997Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T06:44:53.997Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "RAD-20260915-8416",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 透視検査依頼書: PEG交換 (佐藤 花子)",
+    "priority": "URGENT",
+    "patient": {
+      "id": "P003",
+      "name": "佐藤 花子",
+      "department": "一般病棟",
+      "kana": "サトウ ハナコ",
+      "gender": "女",
+      "age": 89,
+      "era": "昭12",
+      "birthDate": "1937-08-23",
+      "ward": "一般病棟",
+      "room": "412号室",
+      "mobility": "ベッド",
+      "infection": "有(MRSA)",
+      "height": 148,
+      "weight": 42
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "FLUORO",
+      "formName": "透視検査依頼書",
+      "examType": "透視検査 [PEG交換]",
+      "items": "PEG交換",
+      "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+      "materials": "ガストロボタン 24Fr 3.5cm",
+      "purpose": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認",
+      "remarks": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T06:44:53.982Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T06:44:53.982Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "RAD-20260915-6037",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 胸部(肺・横隔)、腹部(肝・胆・膵・腎) [単純] (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟",
+      "kana": "アベ テルヨシ",
+      "gender": "男",
+      "age": 70,
+      "era": "昭21",
+      "birthDate": "1946-12-06",
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "mobility": "車椅子",
+      "infection": "無",
+      "height": 164,
+      "weight": 58
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [胸部(肺・横隔)、腹部(肝・胆・膵・腎)]",
+      "contrast": "単純",
+      "parts": "胸部(肺・横隔)、腹部(肝・胆・膵・腎)",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "remarks": "発熱・咳嗽持続のため肺炎疑い、胸部精査"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T06:44:53.953Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T06:44:53.953Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260915-3888",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: ユナシン錠375ｍｇ",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "PT003",
+      "name": "クライアント接続テスト患者",
+      "department": "内科",
+      "kana": "クライアント テスト",
+      "gender": "男",
+      "age": 50,
+      "birthDate": "1976-01-01",
+      "ward": "5階病棟"
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "prescriptionType": "定期処方",
+      "deptType": "院内処方",
+      "days": "7",
+      "medicines": [
+        {
+          "rp": 1,
+          "medicine": "ユナシン錠375ｍｇ",
+          "medicineId": "DR0001",
+          "dosage": "1回1錠 1日3回 毎食後",
+          "days": "7",
+          "quantity": "21錠",
+          "instruction": "192.168.0.3からのアクセス確認テスト"
+        }
+      ],
+      "remarks": "LAN内クライアント連携テスト"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T03:12:07.327Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T03:12:07.327Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260915-4822",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: ユナシン錠375ｍｇ、タケキャブ錠20mg (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "内科",
+      "kana": "アベ テルヨシ",
+      "age": "70",
+      "gender": "男",
+      "birthDate": "1946-12-06",
+      "ward": "東病棟4F"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "prescriptionType": "臨時処方",
+      "deptType": "院内処方",
+      "days": "7",
+      "medicines": [
+        {
+          "rp": 1,
+          "medicine": "ユナシン錠375ｍｇ",
+          "medicineId": "DR0001",
+          "dosage": "1回1錠 1日3回 毎食後",
+          "days": "7",
+          "quantity": "21錠",
+          "instruction": ""
+        },
+        {
+          "rp": 2,
+          "medicine": "タケキャブ錠20mg",
+          "medicineId": "DR0361",
+          "dosage": "1回1錠朝後",
+          "days": "7",
+          "quantity": "7錠",
+          "instruction": ""
+        }
+      ],
+      "medicine": "ユナシン錠375ｍｇ 他1品目",
+      "medicineId": "DR0001",
+      "dosage": "1回1錠 1日3回 毎食後 等",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T03:06:33.210Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T03:06:33.210Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260915-4455",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "PT002",
+      "name": "佐藤 花子",
+      "department": "外科",
+      "kana": "サトウ ハナコ",
+      "gender": "女",
+      "age": 38,
+      "birthDate": "1988-08-20",
+      "ward": "4階西病棟"
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": "5",
+      "remarks": "抜歯後感染予防"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T03:02:47.479Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T03:02:47.479Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260915-3789",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 定期処方: ユナシン錠375ｍｇ 他2品目 (山田 太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "PT001",
+      "name": "山田 太郎",
+      "department": "総合内科",
+      "kana": "ヤマダ タロウ",
+      "gender": "男",
+      "age": 45,
+      "birthDate": "1981-04-15",
+      "ward": "3階東病棟 302号室"
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "prescriptionType": "定期処方",
+      "deptType": "院内処方",
+      "days": "7",
+      "medicines": [
+        {
+          "rp": 1,
+          "medicine": "ユナシン錠375ｍｇ",
+          "medicineId": "DR0001",
+          "dosage": "1回1錠 1日3回 毎食後",
+          "days": "7",
+          "quantity": "21錠",
+          "instruction": "粉砕して一包化"
+        },
+        {
+          "rp": 2,
+          "medicine": "カロナール錠500mg",
+          "medicineId": "DR0042",
+          "dosage": "1回1錠 疼痛時 頓服",
+          "days": "5",
+          "quantity": "5回分",
+          "instruction": "発熱・頭痛時"
+        },
+        {
+          "rp": 3,
+          "medicine": "ビオフェルミン錠剤",
+          "medicineId": "DR0006",
+          "dosage": "1回1錠 1日3回 毎食後",
+          "days": "7",
+          "quantity": "21錠",
+          "instruction": "抗生剤と併用"
+        }
+      ],
+      "medicine": "ユナシン錠375ｍｇ 他2品目",
+      "remarks": "嚥下困難のためRp1は粉砕希望。相互作用に留意してください。"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T03:02:08.008Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T03:02:08.008Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260915-3140",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: ゲンタマイシン硫酸塩軟膏0.1％「F」 (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "ゲンタマイシン硫酸塩軟膏0.1％「F」",
+      "medicineId": "DR0022",
+      "dosage": "1日1～数回塗布又はガーゼにて貼付",
+      "days": "7",
+      "prescriptionType": "定期",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T02:51:47.977Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T02:51:47.977Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260915-6735",
+    "orderType": "IV",
+    "title": "💉 点滴指示: セフォセフ静注用1g (佐藤 花子)",
+    "priority": "URGENT",
+    "patient": {
+      "id": "P002",
+      "name": "佐藤 花子",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "セフォセフ静注用1g",
+      "medicineId": "DR0010",
+      "rate": "1日2回、1回1g点滴静注 (生食100mL溶解、30分投与)",
+      "route": "末梢点滴静注",
+      "remarks": "投与開始時にアレルギー歴（皮疹等）の有無を再確認のこと"
+    },
+    "status": "RECEIVED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T02:41:18.834Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T02:41:18.834Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260915-5489",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: ジスロマック錠250ｍｇ (山田 太郎)",
+    "priority": "STAT",
+    "patient": {
+      "id": "P001",
+      "name": "山田 太郎",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "ジスロマック錠250ｍｇ",
+      "medicineId": "DR0007",
+      "dosage": "1日1回500mg3日間",
+      "days": "3",
+      "prescriptionType": "臨時",
+      "remarks": "嚥下困難のため粉砕調剤の検討をお願いします"
+    },
+    "status": "ACCEPTED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-15T02:41:18.749Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-15T02:41:18.749Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-15T02:41:18.788Z",
+        "actor": "中央薬局 (薬剤師: 佐藤)",
+        "note": "処方鑑査完了。条件付き粉砕可能確認"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260914-5160",
+    "orderType": "IV",
+    "title": "💉 点滴指示: 生理食塩液 500mL + ビタメジン静注用 1V (山田 太郎)",
+    "priority": "STAT",
+    "patient": {
+      "id": "P002",
+      "name": "山田 太郎",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "生理食塩液 500mL + ビタメジン静注用 1V",
+      "rate": "80 mL/h (約6時間)",
+      "route": "静脈内注射 (IV)",
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "scheduledAt": "2026-09-14T23:59:08.243Z"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-14T23:59:08.286Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T23:59:08.286Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T23:59:15.861Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T23:59:24.922Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-3739",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": "7",
+      "prescriptionType": "定期",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-14T23:51:47.502Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T23:51:47.502Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T23:51:57.419Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T23:52:09.193Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-7886",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": "7",
+      "prescriptionType": "定期",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-14T08:14:33.408Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T08:14:33.408Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T08:14:40.767Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T08:15:05.768Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-8302",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg (山田 太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P002",
+      "name": "山田 太郎",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": "7",
+      "prescriptionType": "定期",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-14T08:03:40.704Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T08:03:40.704Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T08:03:48.880Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T08:12:46.067Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T08:13:58.324Z",
+        "actor": "薬剤部 最終鑑査担当",
+        "note": "調剤監査完了・配薬カートへ出庫"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-4374",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg (山田 太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P002",
+      "name": "山田 太郎",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": "7",
+      "prescriptionType": "定期",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-14T08:03:05.072Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T08:03:05.072Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T08:03:14.189Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T08:03:49.951Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-6925",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 【至急】ロキソプロフェンナトリウム錠60mg (安部 光良)",
+    "priority": "URGENT",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "ロキソプロフェンナトリウム錠60mg",
+      "dosage": "1回1錠 疼痛時頓服 (1日2回まで)",
+      "days": 5,
+      "remarks": "発熱・疼痛時"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-14T07:59:12.457Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T07:59:12.457Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T08:00:02.570Z",
+        "actor": "薬剤部 鑑査担当",
+        "note": "処方鑑査OK、調剤準備中"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T08:02:05.139Z",
+        "actor": "薬剤部 調剤担当",
+        "note": "調剤・ピッキング完了、病棟出庫済"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-3619",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg (山田 太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P002",
+      "name": "山田 太郎",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": "7",
+      "prescriptionType": "定期",
+      "remarks": "定期処方 (アレルギー歴なし確認済)"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-14T07:53:26.655Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T07:53:26.655Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T07:53:42.902Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T08:12:47.097Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "LAB-20260914-9741",
+    "orderType": "LAB_EXAM",
+    "title": "🔬 【至急】血液検査オーダー (HTTPS暗号化テスト)",
+    "priority": "STAT",
+    "patient": {
+      "id": "P002",
+      "name": "佐藤 健一",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "山田 医師",
+      "department": "外科"
+    },
+    "details": {
+      "examItems": "CBC, 生化学18項目, 凝固系, 血液型",
+      "purpose": "術前緊急採血",
+      "bloodCollection": "至急対応"
+    },
+    "status": "COMPLETED",
+    "senderHost": "https://localhost:4000",
+    "receivedAt": "2026-09-14T07:49:42.897Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T07:49:42.897Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-14T07:53:39.992Z",
+        "actor": "部門端末操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T07:54:14.889Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260914-7371",
+    "orderType": "IV",
+    "title": "💉 点滴指示: 生理食塩液 500mL + ビタメジン静注用 1V (安部 光良)",
+    "priority": "STAT",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "生理食塩液 500mL + ビタメジン静注用 1V",
+      "rate": "80 mL/h (約6時間)",
+      "route": "末梢点滴静注",
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "scheduledAt": "2026-09-14T07:14:58.641Z"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-14T07:14:58.647Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T07:14:58.647Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T07:15:08.427Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-TEST-001",
+    "orderType": "IV",
+    "title": "💉 点滴指示: マルトス輸液 500mL (山田 太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "T001",
+      "name": "山田 太郎",
+      "department": "外科病棟"
+    },
+    "doctor": {
+      "name": "外科担当医",
+      "department": "診療科"
+    },
+    "details": {
+      "medicine": "マルトス輸液 500mL",
+      "dose": "500mL",
+      "rate": "100mL/h",
+      "route": "末梢点滴静注",
+      "remarks": "術後補液",
+      "scheduledAt": "2026-09-14T06:34:59.928Z"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:3000",
+    "receivedAt": "2026-09-14T06:34:59.928Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T06:34:59.928Z",
+        "actor": "薬剤部 / 病棟受信端末",
+        "note": "点滴オーダーを受信しました"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T07:15:17.650Z",
+        "actor": "部門端末操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260914-5621",
+    "orderType": "PRESCRIPTION",
+    "title": "💊 処方指示: アモキシシリンカプセル250mg (安部 光良)",
+    "priority": "URGENT",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "北島 先生",
+      "department": "内科"
+    },
+    "details": {
+      "medicine": "アモキシシリンカプセル250mg",
+      "dosage": "1回1カプセル 1日3回 毎食後",
+      "days": 7,
+      "remarks": "【至急】術後抗生剤投与"
+    },
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-14T06:34:59.892Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-14T06:34:59.892Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-14T06:34:59.909Z",
+        "actor": "薬剤部 鑑査担当",
+        "note": "処方鑑査OK、調剤完了、病棟へ出庫"
+      }
+    ]
+  }
+]

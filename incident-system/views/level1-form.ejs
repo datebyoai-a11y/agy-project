@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レベル1以上 インシデントレポート入力</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], input[type="date"], input[type="datetime-local"], select, textarea { 
+            width: 100%; 
+            padding: 8px; 
+            box-sizing: border-box; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .alert-header { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+        .notice-text { font-size: 0.85em; color: #6c757d; margin-top: 10px; line-height: 1.4; }
+        button { padding: 10px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.1em; }
+        button:hover { background-color: #bd2130; }
+    </style>
+</head>
+<body>
+    <div class="alert-header">
+        <h1 style="margin: 0 0 10px 0;">🚨 レベル1以上 インシデントレポート入力</h1>
+        <p style="margin: 0;">患者に影響または実害が発生した事象の報告画面です。</p>
+    </div>
+    
+    <form action="/api/incident/level1" method="POST">
+        <!-- 1. 提出者情報エリア -->
+        <fieldset style="margin-bottom: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px;">提出者情報</legend>
+            <div class="form-row">
+<!-- views/level1-form.ejs（およびlevel0-form）の氏名入力箇所を修正 -->
+<div class="form-group" style="flex: 2;">
+    <label>氏名：</label>
+    <!-- 👇 valueの中に <%= defaultName %> をセットして初期表示させます -->
+    <input type="text" name="reporterName" value="<%= defaultName %>" required>
+</div>
+                <div class="form-group" style="flex: 1;">
+                    <label>経験年数：</label>
+                    <select name="reporterExperienceYears" required>
+                        <option value="">選択</option>
+                        <option value="1年未満">1年未満</option>
+                        <option value="1〜3年">1〜3年</option>
+                        <option value="3〜5年">3〜5年</option>
+                        <option value="5〜10年">5〜10年</option>
+                        <option value="10年以上">10年以上</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>職種：</label>
+                    <select name="reporterJobTitle" required>
+                        <option value="">選択してください</option>
+                        <option value="看護師">看護師</option>
+                        <option value="医師">医師</option>
+                        <option value="薬剤師">薬剤師</option>
+                        <option value="放射線技師">放射線技師</option>
+                        <option value="リハビリ">リハビリ</option>
+                        <option value="介護職">介護職</option>
+                        <option value="事務職">事務職</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>所属部署：</label>
+                    <input type="text" name="reporterDepartment" placeholder="例: 東病棟3階" required>
+                </div>
+            </div>
+            <!-- 👇 【追加】当事者チェックボックス -->
+            <div class="form-group" style="margin-top: 10px; background-color: #fff; padding: 5px; border-radius: 4px;">
+                <label style="display: flex; align-items: center; font-weight: normal; cursor: pointer;">
+                    <input type="checkbox" name="reporterIsInvolved" id="isInvolvedCheck" value="true" style="width: auto; margin-right: 8px;">
+                    私はこのインシデントの<strong>当事者</strong>です
+                </label>
+            </div>
+        </fieldset>
+        <!-- 👇 【追加】人為的要因（提出者＝当事者の時のみ自動出現） -->
+        <fieldset id="humanFactorSection" style="display: none; margin-bottom: 20px; border: 1px solid #f5c6cb; background-color: #fdf3f4; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #a94442;">↓ 提出者が当事者時のみ選択（人為的要因）</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>人為的主要因：</label>
+                    <select name="humanPrimary" id="humanPrimarySelect">
+                        <option value="">選択してください</option>
+                        <option value="確認不足・失念（思い込み、見落としなど）">確認不足・失念（思い込み、見落としなど）</option>
+                        <option value="技術・知識不足（経験不足、手順の誤解など）">技術・知識不足（経験不足、手順の誤解など）</option>
+                        <option value="連携・コミュニケーション不足（報告・連絡漏れなど）">連携・コミュニケーション不足（報告・連絡漏れなど）</option>
+                        <option value="心身の状態（疲労、焦り、体調不良など）">心身の状態（疲労、焦り、体調不良など）</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>人為的副要因：</label>
+                    <select name="humanSecondary">
+                        <option value="">なし（または選択してください）</option>
+                        <option value="確認不足・失念（思い込み、見落としなど）">確認不足・失念（思い込み、見落としなど）</option>
+                        <option value="技術・知識不足（経験不足、手順の誤解など）">技術・知識不足（経験不足、手順の誤解など）</option>
+                        <option value="連携・コミュニケーション不足（報告・連絡漏れなど）">連携・コミュニケーション不足（報告・連絡漏れなど）</option>
+                        <option value="心身の状態（疲労、焦り、体調不良など）">心身の状態（疲労、焦り、体調不良など）</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+        <!-- 2. 当該者情報エリア（任意入力） -->
+        <fieldset style="margin-bottom: 20px; border: 1px solid #ffeeba; background-color: #fffdf5; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #856404;">当該者情報</legend>
+            
+            <div class="form-group" style="margin-bottom: 12px; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                <label style="font-weight: bold; color: #2563eb;">🎯 対象者マスタより選択（任意）：</label>
+                <select name="targetPersonRef">
+                    <option value="">未選択 / 手入力</option>
+                    <% if (typeof targetPeople !== 'undefined' && targetPeople) { %>
+                        <% targetPeople.forEach(tp => { %>
+                            <option value="<%= tp._id %>">[<%= tp.customId %>] <%= tp.name %> (<%= tp.department %>)</option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="form-row" style="margin-bottom: 10px;">
+                <div class="form-group" style="flex: 2;">
+                    <label>当該者氏名（任意）：</label>
+                    <input type="text" name="patientName" placeholder="例: 医療 太郎">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>当該者ID・患者番号（任意）：</label>
+                    <input type="text" name="patientId" placeholder="例: 1234567">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>年齢（任意）：</label>
+                    <input type="number" name="patientAge" min="0" max="150" placeholder="例: 75">
+                </div>
+                <div class="form-group">
+                    <label>性別（任意）：</label>
+                    <select name="patientGender">
+                        <option value="">選択なし</option>
+                        <option value="男性">男性</option>
+                        <option value="女性">女性</option>
+                        <option value="その他">その他・不明</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="notice-text">
+                ※ 複数いる場合は他当該者を事象の状況・具体的な内容欄（経緯欄）へ入力してください。<br>
+                ※ 当該者情報がない場合は未記入のままで構いません。
+            </div>
+        </fieldset>
+
+        <!-- 3. インシデントレベルの選択 -->
+        <div class="form-group" style="background-color: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px;">
+            <label style="color: #856404;">確定インシデントレベル：</label>
+            <select name="level" required>
+                <option value="">選択してください</option>
+                <option value="1">レベル 1 （患者に実害なし・処置不要）</option>
+                <option value="2">レベル 2 （観察や簡単な処置・検査が必要）</option>
+                <option value="3a">レベル 3a （簡単な治療や処置が必要）</option>
+                <option value="3b">レベル 3b （濃厚な治療や処置が必要）</option>
+                <option value="4">レベル 4 （永続的な障害・後遺症の可能性）</option>
+                <option value="5">レベル 5 （死亡・重大な過失）</option>
+            </select>
+        </div>
+
+        <!-- 4. 提出年月日 -->
+        <div class="form-group">
+            <label>提出年月日：</label>
+            <input type="date" id="reportDate" name="reportDate" required>
+        </div>
+
+        <!-- ⭕ 修正後：発生日時を日付と時刻に分離 -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>発生年月日：</label>
+                <input type="date" name="occurrenceDateOnly" required>
+            </div>
+            <div class="form-group">
+                <label>発生時刻：</label>
+                <input type="time" name="occurrenceTimeOnly" required>
+            </div>
+            <div class="form-group">
+                <label>発生場所：</label>
+                <input type="text" name="location" placeholder="例: A病棟 2階" required>
+            </div>
+        </div>
+
+        <!-- 👇 【追加】出来事の領域・概要（プロセス分類） -->
+        <fieldset style="margin-bottom: 20px; border: 1px solid #d6e9c6; background-color: #fcf8e3; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #3c763d;">出来事の分類</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>出来事の領域（プロセス）：</label>
+                    <select name="eventCategory" required>
+                        <option value="">選択してください</option>
+                        <option value="与薬・注射・点滴">与薬・注射・点滴</option>
+                        <option value="ドレーン・チューブ類管理">ドレーン・チューブ類管理</option>
+                        <option value="療養上の世話（転倒・転落など）">療養上の世話（転倒・転落など）</option>
+                        <option value="検査・処置・手術">検査・処置・手術</option>
+                        <option value="ME機器・医療機器操作">ME機器・医療機器操作</option>
+                        <option value="事務手続き・転記ミス">事務手続き・転記ミス</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>出来事の概要（エラー種別）：</label>
+                    <select name="eventSummary" required>
+                        <option value="">選択してください</option>
+                        <option value="患者間違い">患者間違い</option>
+                        <option value="薬剤・物品間違い">薬剤・物品間違い</option>
+                        <option value="数量・用量・速度間違い">数量・用量・速度間違い</option>
+                        <option value="時間・タイミング間違い">時間・タイミング間違い</option>
+                        <option value="指示の確認不足・未実施">指示の確認不足・未実施</option>
+                        <option value="自己抜管・自己抜去">自己抜管・自己抜去</option>
+                        <option value="転倒・転落・滑落">転倒・転落・滑落</option>
+                        <option value="機器の操作ミス・破損">機器の操作ミス・破損</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- 👇 【追加】チューブ関連（初期状態は非表示） -->
+        <fieldset id="tubeSection" style="display: none; margin-bottom: 20px; border: 1px solid #ffc107; background-color: #fff9e6; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #856404;">※ チューブ関連の時のみ選択</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>チューブ種類：</label>
+                    <input type="text" name="tubeType" placeholder="例: 経鼻胃管、尿道カテーテル">
+                </div>
+                <div class="form-group">
+                    <label>原因：</label>
+                    <input type="text" name="tubeCause" placeholder="例: 自己抜管、固定の緩み">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- 👇 【追加】転倒転落関連（初期状態は非表示） -->
+        <fieldset id="fallSection" style="display: none; margin-bottom: 20px; border: 1px solid #17a2b8; background-color: #f0fafd; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #0c5460;">※ 転倒転落時のみ記入・選択</legend>
+            <div class="form-row" style="margin-bottom: 10px;">
+                <div class="form-group">
+                    <label>きっかけの行動：</label>
+                    <input type="text" name="fallTriggerAction" placeholder="例: ベッドから立ち上がろうとした">
+                </div>
+                <div class="form-group">
+                    <label>環境要因：</label>
+                    <input type="text" name="fallEnvFactor" placeholder="例: ベッド柵が下がっていた、床が滑った">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>ADL（日常生活動作）：</label>
+                    <select name="fallAdl">
+                        <option value="">選択してください</option>
+                        <option value="自立">自立</option>
+                        <option value="一部介助">一部介助</option>
+                        <option value="全介助">全介助</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>介護量：</label>
+                    <input type="text" name="fallCareLevel" placeholder="例: 要介護2、または見守り必要等">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- 7. 発生原因（環境的要因） -->
+        <fieldset style="margin-bottom: 20px; border: 1px solid #bce8f1; background-color: #d9edf7; padding: 15px; border-radius: 4px;">
+            <legend style="font-weight: bold; padding: 0 5px; color: #31708f;">発生原因（環境的要因）</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>環境的主要因（必須）：</label>
+                    <select name="environmentalPrimary" required>
+                        <option value="">選択してください</option>
+                        <option value="整理整頓・清掃不備（床の濡れ、障害物など）">整理整頓・清掃不備（床の濡れ、障害物など）</option>
+                        <option value="照明・視認性不良（暗さ、見えにくさなど）">照明・視認性不良（暗さ、見えにくさなど）</option>
+                        <option value="機器・設備の配置（動線の問題、狭さなど）">機器・設備の配置（動線の問題、狭さなど）</option>
+                        <option value="騒音・中断（アラーム音、他者からの割り込みなど）">騒音・中断（アラーム音、他者からの割り込みなど）</option>
+                        <option value="システム・ハードウェア異常（バグ、故障など）">システム・ハードウェア異常（バグ、故障など）</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>環境的副要因（任意）：</label>
+                    <select name="environmentalSecondary">
+                        <option value="">なし（または選択してください）</option>
+                        <option value="整理整頓・清掃不備（床の濡れ、障害物など）">整理整頓・清掃不備（床の濡れ、障害物など）</option>
+                        <option value="照明・視認性不良（暗さ、見えにくさなど）">照明・視認性不良（暗さ、見えにくさなど）</option>
+                        <option value="機器・設備の配置（動線の問題、狭さなど）">機器・設備の配置（動線の問題、狭さなど）</option>
+                        <option value="騒音・中断（アラーム音、他者からの割り込みなど）">騒音・中断（アラーム音、他者からの割り込みなど）</option>
+                        <option value="システム・ハードウェア異常（バグ、故障など）">システム・ハードウェア異常（バグ、故障など）</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+
+
+        <!-- 6. 状況・内容 -->
+        <div class="form-group">
+            <label>事象の状況・具体的な内容：</label>
+            <textarea name="description" rows="4" placeholder="発生した事象について客観的事実を記入してください。複数人に関わる場合はここに他当該者を入力してください。" required></textarea>
+        </div>
+
+        <!-- 👇 【追加】発見後の対応（自由記述） -->
+        <div class="form-group">
+            <label>発見後の対応：</label>
+            <textarea name="postDiscoveryAction" rows="3" placeholder="例: 直ちに主治医へ連絡し、バイタルサイン測定、傷部の処置を行った。ご家族へも状況を説明した。" required></textarea>
+        </div>
+
+        <!-- 👇 【追加】原因（自由記述） -->
+        <div class="form-group">
+            <label>原因（詳細）：</label>
+            <textarea name="detailedCauseDescription" rows="4" placeholder="例: 同時に複数のケアが重なり焦りがあった、声出し確認を怠った、夜間で周囲が暗く視認性が悪かった、等" required></textarea>
+        </div>
+
+
+
+
+
+        <!-- 8. 結果 -->
+        <div class="form-group">
+            <label>結果（処置・患者への影響）：</label>
+            <select name="resultStatus" required>
+                <option value="">選択してください</option>
+                <option value="処置や治療は不要だった">処置や治療は不要だった</option>
+                <option value="一時的な処置・治療が必要となった">一時的な処置・治療が必要となった</option>
+                <option value="高度な医療処置・手術が必要となった">高度な医療処置・手術が必要となった</option>
+            </select>
+        </div>
+
+        <!-- 9. 対策 -->
+        <div class="form-group">
+            <label>今後の対策・再発防止策：</label>
+            <textarea name="countermeasure" rows="4" placeholder="再発を防止するために、チームや個人でどのような対策を講じますか？" required></textarea>
+        </div>
+        <button type="submit">インシデントレポートを提出</button>
+    </form>
+
+    <br>
+    <p style="text-align: center;"><a href="/">メニュー画面に戻る</a></p>
+
+    <!-- カレンダーに自動で「今日の日付」をセットするスクリプト -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T');
+            document.getElementById('reportDate').value = today[0];
+        });
+
+    // 既存のDOMContentLoadedイベントの中に追記、または新しく配置してください
+    document.addEventListener('DOMContentLoaded', () => {
+        // 今日の方の処理（既存コード）
+        const today = new Date().toISOString().split('T');
+        if(document.getElementById('reportDate')) document.getElementById('reportDate').value = today[0];
+
+        // 👇 【追加】動的表示の制御ロジック
+        const categorySelect = document.querySelector('select[name="eventCategory"]');
+        const tubeSection = document.getElementById('tubeSection');
+        const fallSection = document.getElementById('fallSection');
+
+        if (categorySelect) {
+            categorySelect.addEventListener('change', (e) => {
+                const val = e.target.value;
+                
+                // 「ドレーン・チューブ類管理」が選ばれたらチューブ欄を表示
+                if (val === "ドレーン・チューブ類管理") {
+                    tubeSection.style.display = "block";
+                    fallSection.style.display = "none";
+                } 
+                // 「療養上の世話（転倒・転落など）」が選ばれたら転倒転落欄を表示
+                else if (val === "療養上の世話（転倒・転落など）") {
+                    tubeSection.style.display = "none";
+                    fallSection.style.display = "block";
+                } 
+                // それ以外は両方隠す
+                else {
+                    tubeSection.style.display = "none";
+                    fallSection.style.display = "none";
+                }
+            });
+        }
+    });
+        // 👇 【追加】当事者チェックによる人為的要因エリアの動的表示制御
+        const involvedCheck = document.getElementById('isInvolvedCheck');
+        const humanSection = document.getElementById('humanFactorSection');
+        const humanPrimarySelect = document.getElementById('humanPrimarySelect');
+
+        if (involvedCheck && humanSection) {
+            involvedCheck.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    humanSection.style.display = "block";
+                    humanPrimarySelect.required = true; // 表示されたら主要因を必須にする
+                } else {
+                    humanSection.style.display = "none";
+                    humanPrimarySelect.required = false; // 隠れたら必須を解除する
+                    humanPrimarySelect.value = "";       // 値をクリア
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
+
