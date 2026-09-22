@@ -1,5 +1,104 @@
 [
   {
+    "orderId": "IV-20260922-7643",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL 他2件 (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "しおかぜ",
+      "kana": "アベ テルヨシ",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "1946-12-06",
+      "age": 70,
+      "height": 164,
+      "weight": 58,
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "infection": "無",
+      "mobility": "車椅子",
+      "examCategory": "入院時検査"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL 他2件",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-22",
+      "endDate": "2026-09-24",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-22〜2026-09-24)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-24",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        },
+        {
+          "no": 2,
+          "medicine": "生理食塩液100ｍL「VTRS」",
+          "medicineId": "DR0202",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-24",
+          "days": 3,
+          "rate": "60mL/h",
+          "remarks": "セフォセフ希釈用"
+        },
+        {
+          "no": 3,
+          "medicine": "ファモチジン静注20mg「杏林」",
+          "medicineId": "DR0363",
+          "dosage": "1回1本",
+          "route": "iv",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-25",
+          "days": 4,
+          "rate": "60mL/h",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-22T16:51",
+      "scheduledAt": "2026-09-22T17:00"
+    },
+    "orderDate": "2026-09-22T16:51",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-22T07:52:45.003Z",
+    "status": "RECEIVED",
+    "elapsedMs": 8,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "IV-20260922-7643",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-22T07:52:45.009Z"
+    }
+  },
+  {
     "orderId": "RAD-20260918-7689",
     "orderType": "RADIOLOGY",
     "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (安部 光良)",

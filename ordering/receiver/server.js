@@ -227,6 +227,8 @@ app.post('/api/orders/receive', (req, res) => {
         department: data.senderDept || '診療科'
       },
       details: data.details || {},
+      orderDate: data.orderDate || data.details?.orderDate || data.createdAt || now.toISOString(),
+      createdAt: data.createdAt || now.toISOString(),
       status: 'RECEIVED',
       senderHost: data.senderHost || req.headers['host'] || req.ip,
       receivedAt: now.toISOString(),
@@ -511,6 +513,26 @@ app.post('/api/orders/:id/status', (req, res) => {
   }
 
   res.json({ success: true, message: 'ステータスを更新しました', order });
+});
+
+// 8-B. 💉 注射指示箋 編集・実施確認保存 API (POST /api/orders/:id/injection-sheet)
+app.post('/api/orders/:id/injection-sheet', (req, res) => {
+  const { sheetState, medicines, pharmacistChecked, remarks } = req.body;
+  const order = receivedOrders.find(o => o.orderId === req.params.id);
+
+  if (!order) {
+    return res.status(404).json({ success: false, error: 'オーダーが見つかりません' });
+  }
+
+  order.details = order.details || {};
+  if (sheetState) order.details.injectionSheetState = sheetState;
+  if (medicines) order.details.medicines = medicines;
+  if (typeof pharmacistChecked === 'boolean') order.details.pharmacistChecked = pharmacistChecked;
+  if (remarks !== undefined) order.details.remarks = remarks;
+
+  saveOrders(receivedOrders);
+  console.log(`\n💉 [Receiver] 注射指示箋の変更・実施確認を保存: [${order.orderId}]`);
+  res.json({ success: true, message: '注射指示箋の変更内容を保存しました', order });
 });
 
 // 9. 練習用データ全消去 API (POST /api/orders/clear)

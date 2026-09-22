@@ -1,5 +1,245 @@
 [
   {
+    "orderId": "IV-20260922-7643",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL 他2件 (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "department": "しおかぜ",
+      "kana": "アベ テルヨシ",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "1946-12-06",
+      "age": 70,
+      "height": 164,
+      "weight": 58,
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "infection": "無",
+      "mobility": "車椅子",
+      "examCategory": "入院時検査"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL 他2件",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-22",
+      "endDate": "2026-09-24",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-22〜2026-09-24)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-24",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        },
+        {
+          "no": 2,
+          "medicine": "生理食塩液100ｍL「VTRS」",
+          "medicineId": "DR0202",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-24",
+          "days": 3,
+          "rate": "60mL/h",
+          "remarks": "セフォセフ希釈用"
+        },
+        {
+          "no": 3,
+          "medicine": "ファモチジン静注20mg「杏林」",
+          "medicineId": "DR0363",
+          "dosage": "1回1本",
+          "route": "iv",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-25",
+          "days": 4,
+          "rate": "60mL/h",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-22T16:51",
+      "scheduledAt": "2026-09-22T17:00"
+    },
+    "orderDate": "2026-09-22T16:51",
+    "createdAt": "2026-09-22T07:52:45.003Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-22T07:52:45.009Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-22T07:52:45.009Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-TEST-2467",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] ソルデム3A 500mL + セフトリアキソンNa 1g (だて 太郎)",
+    "priority": "URGENT",
+    "patient": {
+      "id": "P999",
+      "name": "だて 太郎",
+      "kana": "ダテ タロウ",
+      "gender": "男",
+      "age": 68,
+      "birthDate": "1958-05-12",
+      "ward": "しおかぜ病棟",
+      "room": "401号室"
+    },
+    "doctor": {
+      "name": "交雄 医師",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "scheduleDays": "3日間",
+      "medicines": [
+        {
+          "medicine": "ソルデム3A 輸液 500mL",
+          "dosage": "1袋",
+          "route": "DIV",
+          "frequency": "1日1回 朝",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-24",
+          "days": 3,
+          "rate": "60mL/h",
+          "remarks": "末梢静脈より滴下"
+        },
+        {
+          "medicine": "セフトリアキソンNa静注用 1g",
+          "dosage": "1V",
+          "route": "DIV",
+          "frequency": "1日1回 朝",
+          "startDate": "2026-09-22",
+          "endDate": "2026-09-24",
+          "days": 3,
+          "rate": "生食100mLに溶解 30分投与",
+          "remarks": "アレルギー注意"
+        }
+      ],
+      "injectionSheetState": [
+        {
+          "no": 1,
+          "rxText": "ソルデム3A 輸液 500mL (編集テスト済)",
+          "route": "DIV",
+          "days": [
+            {
+              "top": "───▶",
+              "bottom": "✔済"
+            },
+            {
+              "top": "───▶",
+              "bottom": "看"
+            },
+            {
+              "top": "✕中止",
+              "bottom": ""
+            }
+          ]
+        },
+        {
+          "no": 2,
+          "rxText": "セフトリアキソンNa 1g",
+          "route": "DIV",
+          "days": [
+            {
+              "top": "───▶",
+              "bottom": "10:00"
+            },
+            {
+              "top": "───▶",
+              "bottom": ""
+            },
+            {
+              "top": "───▶",
+              "bottom": ""
+            }
+          ]
+        }
+      ],
+      "pharmacistChecked": true
+    },
+    "orderDate": "2026/09/22 16:30",
+    "createdAt": "2026-09-22T07:22:42.531Z",
+    "status": "RECEIVED",
+    "senderHost": "localhost:5000",
+    "receivedAt": "2026-09-22T07:22:42.531Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-22T07:22:42.531Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260922-9901",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] ソルデム3A 500mL + ビタメジン静注用 1V (安部 光良)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "安部 光良",
+      "kana": "アベ テルヨシ",
+      "age": 70,
+      "gender": "男",
+      "birthDate": "1946-12-06",
+      "era": "昭21",
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "department": "内科"
+    },
+    "doctor": {
+      "name": "田中 一郎",
+      "department": "総合診療科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "ソルデム3A輸液 500mL + ビタメジン静注用 1V",
+      "rate": "60mL/h (約8時間で点滴静注)",
+      "scheduleDays": "1日1回 3日間",
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと。滴下速度厳守。"
+    },
+    "status": "RECEIVED",
+    "senderHost": "localhost:5000",
+    "receivedAt": "2026-09-22T06:40:48.271Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-22T06:40:48.271Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
     "orderId": "RAD-20260918-7689",
     "orderType": "RADIOLOGY",
     "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (安部 光良)",

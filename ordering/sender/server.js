@@ -181,6 +181,7 @@ app.post('/api/orders/send', async (req, res) => {
       details,
       senderHost: dynamicSenderHost,
       senderUser: doctorName,
+      orderDate: req.body.orderDate || req.body.details?.orderDate || now.toISOString(),
       createdAt: now.toISOString()
     };
 
@@ -249,6 +250,7 @@ app.post('/api/orders/send', async (req, res) => {
       patient: orderPayload.patient,
       doctor: orderPayload.doctor,
       details,
+      orderDate: orderPayload.orderDate,
       targetUrl: finalUrl,
       sentAt: now.toISOString(),
       status: isSuccess ? (responseData.status || 'SENT') : 'FAILED',
@@ -345,6 +347,27 @@ app.post('/api/orders/:id/status-callback', (req, res) => {
   });
 
   res.json({ success: true, message: '送信側のステータスを更新しました', status: item.status });
+});
+
+// 5-B. 💉 注射指示箋 編集・実施状況保存 API (POST /api/orders/:id/injection-sheet)
+app.post('/api/orders/:id/injection-sheet', (req, res) => {
+  const orderId = req.params.id;
+  const { sheetState, medicines, pharmacistChecked, remarks } = req.body;
+  const item = sentOrders.find(o => o.orderId === orderId);
+
+  if (!item) {
+    return res.status(404).json({ success: false, error: 'オーダーが見つかりません' });
+  }
+
+  item.details = item.details || {};
+  if (sheetState) item.details.injectionSheetState = sheetState;
+  if (medicines) item.details.medicines = medicines;
+  if (typeof pharmacistChecked === 'boolean') item.details.pharmacistChecked = pharmacistChecked;
+  if (remarks !== undefined) item.details.remarks = remarks;
+
+  saveSentOrders(sentOrders);
+  console.log(`\n💉 [Sender] 注射指示箋の変更を保存: [${orderId}]`);
+  res.json({ success: true, message: '注射指示箋の変更を保存しました' });
 });
 
 // 6. 全未完了オーダーのステータス一括同期 API (GET /api/orders/sync-all)
