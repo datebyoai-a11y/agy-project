@@ -244,10 +244,9 @@
     /* 各ペイン基本構造 */
     .carte-pane-left {
       width: 290px;
-      min-width: 180px;
-      max-width: 650px;
-      flex-shrink: 0;
-      flex-grow: 0;
+      min-width: 150px;
+      max-width: 800px;
+      flex: 0 0 290px;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -258,8 +257,8 @@
     }
 
     .carte-pane-center {
-      flex: 1 1 0%;
-      min-width: 320px;
+      flex: 1 1 auto;
+      min-width: 200px;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -271,10 +270,9 @@
 
     .carte-pane-right {
       width: 350px;
-      min-width: 240px;
-      max-width: 750px;
-      flex-shrink: 0;
-      flex-grow: 0;
+      min-width: 200px;
+      max-width: 850px;
+      flex: 0 0 350px;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -286,38 +284,39 @@
 
     /* ↔️ 列境界リサイザー (スプリッター) */
     .carte-resizer {
-      width: 8px;
-      margin: 0 1px;
+      width: 10px;
+      margin: 0 -1px;
       cursor: col-resize;
-      background: #e2e8f0;
+      background: #cbd5e1;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      z-index: 20;
+      z-index: 30;
       user-select: none;
-      transition: background 0.15s ease, width 0.15s ease;
+      touch-action: none;
+      transition: background 0.15s ease;
       border-radius: 3px;
     }
     .carte-resizer::after {
       content: '';
       width: 2px;
-      height: 32px;
-      border-left: 1px dotted #64748b;
-      border-right: 1px dotted #64748b;
+      height: 36px;
+      border-left: 1px dotted #475569;
+      border-right: 1px dotted #475569;
       transition: all 0.15s ease;
+      pointer-events: none;
     }
     .carte-resizer:hover, .carte-resizer.resizing {
-      background: #0284c7;
-      width: 8px;
+      background: #0284c7 !important;
     }
     .carte-resizer:hover::after, .carte-resizer.resizing::after {
-      border-color: #ffffff;
-      height: 56px;
+      border-color: #ffffff !important;
+      height: 60px;
     }
 
-    @media (max-width: 992px) {
+    @media (max-width: 768px) {
       .carte-layout-3col {
         flex-direction: column;
         height: auto;
@@ -1106,65 +1105,57 @@
   </style>
 </head>
 <body>
-  <!-- 📌 電子カルテ トップリボン (メニューに戻るボタン、患者の基本情報、入力者情報のみ) -->
+  <!-- 📌 電子カルテ トップリボン (対象者、入力者、オーダリング移行、メニューのみ) -->
   <div class="sticky-top-header">
     <div class="carte-top-header">
-      <!-- 1. メニューに戻るボタン -->
-      <div style="display:flex; align-items:center;">
-        <a href="/" style="display:flex; align-items:center; gap:0.4rem; color:white; text-decoration:none; font-size:0.85rem; font-weight:bold; background:rgba(255,255,255,0.15); padding:0.35rem 0.85rem; border-radius:4px; border:1px solid rgba(255,255,255,0.25); transition:background 0.2s;" title="メインメニューへ戻る">
-          <span>🏠</span> メニューに戻る
-        </a>
-      </div>
+      <!-- 1. 対象者情報 -->
+      <% 
+        const activeTarget = (typeof selectedTargetPerson !== 'undefined' && selectedTargetPerson) 
+          ? selectedTargetPerson 
+          : ((targetPeople && targetPeople.length > 0) ? targetPeople[0] : null);
+      %>
+      <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:nowrap;">
+        <span style="font-weight:bold; font-size:0.85rem; color:#e0f2fe; display:flex; align-items:center; gap:0.25rem; white-space:nowrap;">
+          <span>🎯</span> 対象者:
+        </span>
+        <!-- セレクトボックスは非表示にしてJSの患者情報連携を維持 (ユーザーは選択不可・固定表示) -->
+        <select id="headerTargetFilter" class="target-filter-select" onchange="onCarteTargetSelect(this.value)" style="display:none;" title="カルテの対象患者">
+          <option value="ALL" <%= (!activeTarget) ? 'selected' : '' %>>🌐 全患者（すべての記事）</option>
+          <% if (targetPeople && targetPeople.length > 0) { %>
+            <% targetPeople.forEach(tp => { %>
+              <% const isSelected = activeTarget && (activeTarget._id.toString() === tp._id.toString() || activeTarget.customId === tp.customId); %>
+              <option value="<%= tp._id %>" data-custom-id="<%= tp.customId %>" data-name="<%= tp.name %>" data-dept="<%= tp.department || '' %>" <%= isSelected ? 'selected' : '' %>>[<%= tp.customId %>] <%= tp.name %></option>
+            <% }); %>
+          <% } %>
+        </select>
 
-      <!-- 2. 患者の基本情報 (患者切替セレクタ + ID、氏名、カナ、年齢、生年月日) -->
-      <div style="display:flex; align-items:center; gap:0.6rem;">
-        <div style="display:flex; align-items:center; gap:0.3rem; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.3); padding:0.25rem 0.5rem; border-radius:6px;">
-          <span style="font-size:0.85rem;">🔍</span>
-          <select id="headerTargetFilter" class="target-filter-select" onchange="onCarteTargetSelect(this.value)" style="background:transparent; border:none; color:#38bdf8; font-size:0.82rem; font-weight:bold; cursor:pointer;">
-            <option value="ALL">🌐 全患者（すべての記事）</option>
-            <% if (targetPeople && targetPeople.length > 0) { %>
-              <% targetPeople.forEach(tp => { %>
-                <option value="<%= tp._id %>" data-custom-id="<%= tp.customId %>" data-name="<%= tp.name %>" data-dept="<%= tp.department || '' %>">[<%= tp.customId %>] <%= tp.name %></option>
-              <% }); %>
-            <% } %>
-          </select>
-        </div>
-
-        <div class="patient-header-badge" id="cartePatientBadge">
-          <span style="font-size:1.3rem;">👤</span>
-          <div>
-            <div style="display:flex; align-items:center; gap:0.5rem;">
-              <span class="p-id" id="cartePatientId">
-                <% if (targetPeople && targetPeople.length > 0) { %>
-                  <%= targetPeople[0].customId %>
-                <% } else { %>
-                  0000000001
-                <% } %>
-              </span>
-              <span class="p-name" id="cartePatientName">
-                <% if (targetPeople && targetPeople.length > 0) { %>
-                  <%= targetPeople[0].name %>
-                <% } else { %>
-                  安部 光良
-                <% } %>
-              </span>
-              <span class="p-kana" id="cartePatientKana">アベ テルヨシ</span>
-              <span class="p-age" id="cartePatientAge">70</span>
-              <span class="p-birth" id="cartePatientBirth">1946(昭和21)/12/06</span>
-            </div>
+        <!-- 表示のみの固定対象者バッジ -->
+        <div class="patient-header-badge" id="cartePatientBadge" style="cursor:default; user-select:text;" title="カルテ対象患者 (固定表示)">
+          <span style="font-size:1.1rem;">👤</span>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span class="p-id" id="cartePatientId" style="font-family:monospace; font-weight:bold; color:#fef08a;">
+              <%= activeTarget ? (activeTarget.customId ? `[${activeTarget.customId}]` : '') : '' %>
+            </span>
+            <span class="p-name" id="cartePatientName" style="font-weight:bold;">
+              <%= activeTarget ? `${activeTarget.name} 様` : '全患者' %>
+            </span>
+            <span class="p-kana" id="cartePatientKana" style="font-size:0.75rem; color:#bae6fd;">
+              <%= (activeTarget && activeTarget.department) ? `(${activeTarget.department})` : '' %>
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- 3. 入力者情報 & 切り替えドロップダウン & 歯車メニュー -->
-      <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem;">
-        <div style="display:flex; align-items:center; gap:0.35rem; background:rgba(255,255,255,0.15); padding:0.25rem 0.6rem; border-radius:6px; border:1px solid rgba(255,255,255,0.28); box-shadow:0 1px 3px rgba(0,0,0,0.12);">
+      <!-- 2. 入力者、オーダリング移行、メニュー -->
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <!-- 🩺 入力者情報 -->
+        <div style="display:flex; align-items:center; gap:0.35rem; background:rgba(255,255,255,0.15); padding:0.22rem 0.6rem; border-radius:5px; border:1px solid rgba(255,255,255,0.25); box-shadow:0 1px 3px rgba(0,0,0,0.12);">
           <label for="headerAuthorSelect" style="color:#e0f2fe; font-size:0.82rem; font-weight:bold; white-space:nowrap; display:flex; align-items:center; gap:0.25rem; margin:0; cursor:pointer;" title="クリックして入力者を変更">
             <span>🩺</span> 入力者:
           </label>
           <select id="headerAuthorSelect" onchange="promptSwitchAuthor(this)" 
                   data-current-id="<%= (typeof currentUserDoc !== 'undefined' && currentUserDoc) ? currentUserDoc._id : '' %>" 
-                  style="background:#0f172a; color:#38bdf8; font-weight:bold; border:1px solid #38bdf8; border-radius:4px; padding:0.22rem 0.55rem; font-size:0.82rem; cursor:pointer; outline:none; max-width:200px; text-overflow:ellipsis;" title="カルテ・オーダーの入力者（記録者）を変更します（要パスワード認証）">
+                  style="background:#0f172a; color:#38bdf8; font-weight:bold; border:1px solid #38bdf8; border-radius:4px; padding:0.2rem 0.5rem; font-size:0.82rem; cursor:pointer; outline:none; max-width:180px; text-overflow:ellipsis;" title="カルテ・オーダーの入力者（記録者）を変更します（要パスワード認証）">
             <% if (typeof users !== 'undefined' && users && users.length > 0) { %>
               <% users.forEach(u => { %>
                 <option value="<%= u._id %>" 
@@ -1183,7 +1174,13 @@
           <span id="headerOverrideBadge" style="display:<%= (typeof isOverride !== 'undefined' && isOverride) ? 'inline-block' : 'none' %>; background:#f59e0b; color:white; font-size:0.7rem; font-weight:bold; padding:0.1rem 0.35rem; border-radius:3px; white-space:nowrap;" title="一時代行入力モード中">代行中</span>
         </div>
 
-        <!-- ⚙️ 右上の歯車印メニュー（その他のメニュー） -->
+        <!-- 🚀 オーダリング移行 (Port 4000) -->
+        <a id="btnOrderingTop" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面 (Port 4000) を現在選択中の患者を引き継いで開きます">
+          <span>🚀</span>
+          <span>オーダリング移行 (Port 4000)</span>
+        </a>
+
+        <!-- ⚙️ メニュー -->
         <div class="gear-menu-container">
           <button id="gearMenuBtn" class="btn-gear" type="button" title="メニューを開く" aria-expanded="false" aria-haspopup="true">
             <span class="gear-icon">⚙️</span>
@@ -1194,6 +1191,22 @@
               <span>システムメニュー</span>
               <button type="button" id="gearCloseBtn" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1rem;padding:0;line-height:1;">✕</button>
             </div>
+
+            <div class="gear-section-label">ナビゲーション</div>
+            <a href="/" class="gear-dropdown-item">
+              <span class="item-icon">🏠</span>
+              <div class="item-info">
+                <div class="item-title">メニュー画面に戻る</div>
+                <div class="item-desc">メインポータルへ戻る</div>
+              </div>
+            </a>
+            <a href="javascript:void(0)" onclick="testCarteBellSound()" class="gear-dropdown-item">
+              <span class="item-icon">🔔</span>
+              <div class="item-info">
+                <div class="item-title">着信ベル試聴</div>
+                <div class="item-desc">新着通知音のテスト再生</div>
+              </div>
+            </a>
 
             <div class="gear-section-label">診療記録・ナレッジ</div>
             <a href="/target-people" class="gear-dropdown-item">
@@ -1222,6 +1235,13 @@
               <div class="item-info">
                 <div class="item-title">点滴・注射オーダー</div>
                 <div class="item-desc">点滴・輸液・注射薬剤の投与指示</div>
+              </div>
+            </a>
+            <a id="btnOrderingGear" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" class="gear-dropdown-item" style="background:#f0f9ff; border-left:3px solid #0284c7; text-decoration:none;">
+              <span class="item-icon">🚀</span>
+              <div class="item-info">
+                <div class="item-title" style="color:#0284c7; font-weight:bold;">オーダリングシステム (Port 4000)</div>
+                <div class="item-desc">病棟用注射指示箋・処方・検査の専用送信画面へ移動</div>
               </div>
             </a>
 
@@ -1667,14 +1687,19 @@
             </select>
             <span style="color:#64748b; font-size:0.75rem;">保険診療</span>
           </div>
-          <div style="color:#334155; font-size:0.8rem;">
-            診察医：<strong><%= user %></strong> 様
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span id="carteTargetPersonIndicator" style="background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; font-size:0.75rem; font-weight:bold; padding:0.12rem 0.5rem; border-radius:3px;" title="現在このカルテ・診療記録を入力中の対象患者">
+              👤 対象患者: <strong id="carteTargetPersonIndicatorText"><%= activeTarget ? `[${activeTarget.customId}] ${activeTarget.name} 様` : '未選択' %></strong>
+            </span>
+            <div style="color:#334155; font-size:0.8rem;">
+              診察医：<strong><%= user %></strong> 様
+            </div>
           </div>
         </div>
 
         <form id="articlePostForm" action="/api/articles" method="POST" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
           <!-- 隠しフィールド (対象者ID、区分、タイトル、引用親記事IDなど) -->
-          <input type="hidden" name="targetPersonId" id="formTargetPersonSelect" value="<%= (targetPeople && targetPeople.length > 0) ? targetPeople[0]._id : '' %>">
+          <input type="hidden" name="targetPersonId" id="formTargetPersonSelect" value="<%= activeTarget ? activeTarget._id : '' %>">
           <input type="hidden" name="category" id="formCategorySelect" value="カルテ診療録">
           <input type="hidden" name="title" id="formTitleInput" value="電子カルテ診療記録">
           <input type="hidden" name="parentArticleId" id="formParentArticleId" value="">
@@ -1895,9 +1920,17 @@
 
         <!-- 💡 仮置きオーダーアクション設定バー -->
         <div style="padding:0.3rem 0.6rem; background:#ecfdf5; border-bottom:1px solid #a7f3d0; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
-          <span style="color:#065f46; font-weight:bold; display:flex; align-items:center; gap:0.25rem;">
-            <span>✨</span> 項目を選んで中央に仮置き
-          </span>
+          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+            <span style="color:#065f46; font-weight:bold; display:flex; align-items:center; gap:0.25rem;">
+              <span>✨</span> 項目を選んで仮置き
+            </span>
+            <span id="paletteTargetPersonBadge" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:0.72rem; font-weight:bold; padding:0.1rem 0.45rem; border-radius:3px;" title="現在この患者に対するオーダーを作成・仮置き中">
+              🎯 対象患者: <strong id="paletteTargetPersonText"><%= activeTarget ? `[${activeTarget.customId}] ${activeTarget.name} 様` : '未選択' %></strong>
+            </span>
+            <a id="btnOrderingPalette" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.15rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center;" title="オーダリングシステム送信画面 (Port 4000) を開く">
+              🚀 オーダリング画面 (Port 4000)
+            </a>
+          </div>
           <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:#166534; font-size:0.72rem; user-select:none;" title="チェック時は右メニュークリックで即座に中央の仮置きリストに追加されます">
             <input type="checkbox" id="directPostToggle" style="cursor:pointer;" checked>
             <span>⚡ ワンクリック仮置き</span>
@@ -3042,11 +3075,11 @@
 
       const DEFAULT_LEFT_WIDTH = 290;
       const DEFAULT_RIGHT_WIDTH = 350;
-      const MIN_LEFT_WIDTH = 180;
+      const MIN_LEFT_WIDTH = 150;
       const MAX_LEFT_WIDTH = 650;
-      const MIN_RIGHT_WIDTH = 240;
+      const MIN_RIGHT_WIDTH = 200;
       const MAX_RIGHT_WIDTH = 750;
-      const MIN_CENTER_WIDTH = 300;
+      const MIN_CENTER_WIDTH = 250;
 
       // 保存された幅の復元 (localStorage)
       try {
@@ -3055,6 +3088,7 @@
           const w = parseInt(savedLeft, 10);
           if (!isNaN(w) && w >= MIN_LEFT_WIDTH && w <= MAX_LEFT_WIDTH) {
             leftPane.style.width = `${w}px`;
+            leftPane.style.flex = `0 0 ${w}px`;
           }
         }
         const savedRight = localStorage.getItem('carte_pane_right_width');
@@ -3062,6 +3096,7 @@
           const w = parseInt(savedRight, 10);
           if (!isNaN(w) && w >= MIN_RIGHT_WIDTH && w <= MAX_RIGHT_WIDTH) {
             rightPane.style.width = `${w}px`;
+            rightPane.style.flex = `0 0 ${w}px`;
           }
         }
       } catch (e) {}
@@ -3076,9 +3111,9 @@
 
       // --- 左スプリッター (左ペインと中央ペインの境界) ---
       function onMouseDownLeft(e) {
-        if (window.innerWidth <= 992) return;
+        if (window.innerWidth <= 768) return;
         isDraggingLeft = true;
-        startXLeft = e.clientX || (e.touches && e.touches[0].clientX);
+        startXLeft = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
         startWidthLeft = leftPane.getBoundingClientRect().width;
         resizerLeft.classList.add('resizing');
         document.body.style.cursor = 'col-resize';
@@ -3088,9 +3123,9 @@
 
       // --- 右スプリッター (中央ペインと右ペインの境界) ---
       function onMouseDownRight(e) {
-        if (window.innerWidth <= 992) return;
+        if (window.innerWidth <= 768) return;
         isDraggingRight = true;
-        startXRight = e.clientX || (e.touches && e.touches[0].clientX);
+        startXRight = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
         startWidthRight = rightPane.getBoundingClientRect().width;
         resizerRight.classList.add('resizing');
         document.body.style.cursor = 'col-resize';
@@ -3101,11 +3136,11 @@
       function onMouseMove(e) {
         if (!isDraggingLeft && !isDraggingRight) return;
 
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientX = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
         if (clientX === undefined) return;
 
         const containerRect = container.getBoundingClientRect();
-        const resizersTotalWidth = 20; // 8px * 2 + margins
+        const resizersTotalWidth = 20; // 10px * 2
 
         if (isDraggingLeft) {
           const deltaX = clientX - startXLeft;
@@ -3118,7 +3153,9 @@
           if (newWidth < MIN_LEFT_WIDTH) newWidth = MIN_LEFT_WIDTH;
           if (newWidth > actualMax) newWidth = actualMax;
 
-          leftPane.style.width = `${Math.round(newWidth)}px`;
+          const rounded = Math.round(newWidth);
+          leftPane.style.width = `${rounded}px`;
+          leftPane.style.flex = `0 0 ${rounded}px`;
         } else if (isDraggingRight) {
           const deltaX = clientX - startXRight;
           let newWidth = startWidthRight - deltaX;
@@ -3130,7 +3167,9 @@
           if (newWidth < MIN_RIGHT_WIDTH) newWidth = MIN_RIGHT_WIDTH;
           if (newWidth > actualMax) newWidth = actualMax;
 
-          rightPane.style.width = `${Math.round(newWidth)}px`;
+          const rounded = Math.round(newWidth);
+          rightPane.style.width = `${rounded}px`;
+          rightPane.style.flex = `0 0 ${rounded}px`;
         }
       }
 
@@ -3158,11 +3197,13 @@
       // ダブルクリックでデフォルト幅にリセット
       resizerLeft.addEventListener('dblclick', () => {
         leftPane.style.width = `${DEFAULT_LEFT_WIDTH}px`;
+        leftPane.style.flex = `0 0 ${DEFAULT_LEFT_WIDTH}px`;
         try { localStorage.setItem('carte_pane_left_width', DEFAULT_LEFT_WIDTH); } catch (e) {}
       });
 
       resizerRight.addEventListener('dblclick', () => {
         rightPane.style.width = `${DEFAULT_RIGHT_WIDTH}px`;
+        rightPane.style.flex = `0 0 ${DEFAULT_RIGHT_WIDTH}px`;
         try { localStorage.setItem('carte_pane_right_width', DEFAULT_RIGHT_WIDTH); } catch (e) {}
       });
 
@@ -3180,7 +3221,20 @@
       window.addEventListener('touchend', onMouseUp);
     }
 
-    // 1. 患者選択切り替え時のヘッダー情報更新
+    // 🌐 全患者表示モード切り替え
+    function toggleAllPatientsView() {
+      const select = document.getElementById('headerTargetFilter');
+      if (!select) return;
+      if (currentSelectedTargetId === 'ALL') {
+        const prevId = window._lastSelectedSpecificTargetId || (select.options.length > 1 ? select.options[1].value : 'ALL');
+        onCarteTargetSelect(prevId);
+      } else {
+        window._lastSelectedSpecificTargetId = currentSelectedTargetId;
+        onCarteTargetSelect('ALL');
+      }
+    }
+
+    // 1. 患者選択切り替え時のヘッダー情報更新 & 全画面引き継ぎ
     async function onCarteTargetSelect(targetId) {
       const prevTargetId = currentSelectedTargetId;
 
@@ -3189,28 +3243,129 @@
         saveCarteDraft(false);
       }
 
-      currentSelectedTargetId = targetId;
       const select = document.getElementById('headerTargetFilter');
-      const selectedOption = select.options[select.selectedIndex];
-      
-      const formTarget = document.getElementById('formTargetPersonSelect');
-      if (formTarget) {
-        formTarget.value = (targetId === 'ALL' || targetId === 'NONE') ? '' : targetId;
+      let matchedOption = null;
+
+      // targetId が _id または customId のいずれでもマッチするように探索
+      if (select && targetId) {
+        for (let i = 0; i < select.options.length; i++) {
+          const opt = select.options[i];
+          const optCustomId = opt.getAttribute('data-custom-id') || '';
+          if (opt.value === targetId || (optCustomId && optCustomId.toLowerCase() === String(targetId).toLowerCase())) {
+            matchedOption = opt;
+            select.selectedIndex = i;
+            break;
+          }
+        }
       }
 
-      if (targetId !== 'ALL' && selectedOption) {
-        const customId = selectedOption.getAttribute('data-custom-id') || '0000000001';
-        const name = selectedOption.getAttribute('data-name') || '未選択';
-        
-        document.getElementById('cartePatientId').textContent = customId;
-        document.getElementById('cartePatientName').textContent = name;
-        document.getElementById('cartePatientKana').textContent = '';
+      if (!matchedOption && select && select.selectedIndex >= 0) {
+        matchedOption = select.options[select.selectedIndex];
       }
+
+      const effectiveTargetId = (matchedOption && matchedOption.value !== 'ALL') ? matchedOption.value : (targetId === 'ALL' ? 'ALL' : '');
+      currentSelectedTargetId = effectiveTargetId;
+
+      // 全患者切り替えボタンの外観を同期
+      const toggleBtn = document.getElementById('btnToggleAllPatients');
+      if (toggleBtn) {
+        if (effectiveTargetId === 'ALL') {
+          toggleBtn.style.background = '#0284c7';
+          toggleBtn.style.borderColor = '#38bdf8';
+          toggleBtn.innerHTML = '<span>🌐 全患者表示中</span>';
+        } else {
+          toggleBtn.style.background = 'rgba(255,255,255,0.15)';
+          toggleBtn.style.borderColor = 'rgba(255,255,255,0.3)';
+          toggleBtn.innerHTML = '<span>🌐 全患者表示</span>';
+        }
+      }
+
+      // 1. 入力画面フォーム（中央ペイン）の hidden input を更新
+      const formTarget = document.getElementById('formTargetPersonSelect');
+      if (formTarget) {
+        formTarget.value = (effectiveTargetId === 'ALL' || effectiveTargetId === 'NONE') ? '' : effectiveTargetId;
+      }
+
+      // 2. モーダル内セレクトボックスの対象患者も連動同期
+      const quickTargetSelect = document.getElementById('quickModalTargetPerson');
+      if (quickTargetSelect && effectiveTargetId && effectiveTargetId !== 'ALL') {
+        quickTargetSelect.value = effectiveTargetId;
+      }
+
+      // 3. 患者情報バッジ群（ヘッダー、入力画面、オーダーパレット）の表示更新
+      let patientCustomId = '';
+      let patientName = '全患者';
+      let patientDept = '';
+
+      if (matchedOption && matchedOption.value !== 'ALL') {
+        patientCustomId = matchedOption.getAttribute('data-custom-id') || '';
+        patientName = matchedOption.getAttribute('data-name') || matchedOption.textContent.replace(/^\[.*?\]\s*/, '').trim();
+        patientDept = matchedOption.getAttribute('data-dept') || '';
+
+        // トップヘッダーバッジ
+        document.getElementById('cartePatientId').textContent = patientCustomId ? `[${patientCustomId}]` : '';
+        document.getElementById('cartePatientName').textContent = patientName ? `${patientName} 様` : '全患者';
+        document.getElementById('cartePatientKana').textContent = patientDept ? `(${patientDept})` : '';
+
+        // 中央ペイン（入力画面）の対象患者インジケーター
+        const carteIndicator = document.getElementById('carteTargetPersonIndicatorText');
+        if (carteIndicator) {
+          carteIndicator.textContent = `[${patientCustomId}] ${patientName} 様${patientDept ? ` (${patientDept})` : ''}`;
+        }
+
+        // 右ペイン（オーダー画面）の対象患者インジケーター
+        const paletteIndicator = document.getElementById('paletteTargetPersonText');
+        if (paletteIndicator) {
+          paletteIndicator.textContent = `[${patientCustomId}] ${patientName} 様`;
+        }
+      } else {
+        document.getElementById('cartePatientId').textContent = '未選択';
+        document.getElementById('cartePatientName').textContent = '全患者（すべての記事）';
+        document.getElementById('cartePatientKana').textContent = '';
+
+        const carteIndicator = document.getElementById('carteTargetPersonIndicatorText');
+        if (carteIndicator) carteIndicator.textContent = '未選択 (全患者表示中)';
+
+        const paletteIndicator = document.getElementById('paletteTargetPersonText');
+        if (paletteIndicator) paletteIndicator.textContent = '未選択';
+      }
+
+      // 4. サーバー側セッションへ非同期同期（リロードや別画面遷移後も維持）
+      try {
+        fetch('/api/select-target-person', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ targetPersonId: effectiveTargetId })
+        }).catch(() => {});
+      } catch (e) {}
+
+      // 5. ブラウザの URL パラメータを更新（ブックマークや戻る進むで引き継ぐ）
+      if (window.history && window.history.replaceState) {
+        try {
+          const url = new URL(window.location.href);
+          if (patientCustomId) {
+            url.searchParams.set('targetId', patientCustomId);
+          } else if (effectiveTargetId && effectiveTargetId !== 'ALL') {
+            url.searchParams.set('targetId', effectiveTargetId);
+          } else {
+            url.searchParams.delete('targetId');
+          }
+          window.history.replaceState(null, '', url.toString());
+        } catch (e) {}
+      }
+
+      // 6. ローカルストレージに保存
+      try {
+        if (effectiveTargetId && effectiveTargetId !== 'ALL') {
+          localStorage.setItem('selected_target_person_id', effectiveTargetId);
+          if (patientCustomId) localStorage.setItem('selected_target_person_custom_id', patientCustomId);
+        }
+      } catch (e) {}
 
       // 🌟 患者切り替え時に一時的オーバーライドを自動終了
       const headerOverrideBadge = document.getElementById('headerOverrideBadge');
       const isOverriding = headerOverrideBadge && headerOverrideBadge.style.display !== 'none';
-      if (isOverriding && prevTargetId && prevTargetId !== targetId) {
+      if (isOverriding && prevTargetId && prevTargetId !== effectiveTargetId) {
         try {
           const res = await fetch('/api/revert-override', {
             method: 'POST',
@@ -3235,15 +3390,18 @@
       loadStagedOrdersFromStorage();
 
       // 🌟 切り替え先患者の下書きカルテを自動復帰
-      const restored = loadCarteDraftFromStorage(targetId);
+      const restored = loadCarteDraftFromStorage(effectiveTargetId);
       if (!restored) {
         const textarea = document.getElementById('articleContentInput');
-        if (textarea && prevTargetId && prevTargetId !== targetId) {
+        if (textarea && prevTargetId && prevTargetId !== effectiveTargetId) {
           textarea.value = '';
         }
         const banner = document.getElementById('draftNoticeBanner');
         if (banner) banner.style.display = 'none';
       }
+
+      // 🌟 オーダリング画面への遷移リンクに最新の患者情報を反映
+      updateOrderingLinks();
     }
 
     // 2. 左ペインタブ切り替え（過去カルテ / 患者サマリー）
@@ -3885,6 +4043,186 @@
       }
     }
 
+    // 🔗 現在選択中の患者情報を付与したオーダリングシステムのURLを動的に生成
+    function getOrderingSystemUrl(customOrderType = null) {
+      const headerFilter = document.getElementById('headerTargetFilter');
+      const formTarget = document.getElementById('formTargetPersonSelect');
+      let targetPersonId = (formTarget && formTarget.value) ? formTarget.value : '';
+      if (!targetPersonId && headerFilter && headerFilter.value !== 'ALL' && headerFilter.value !== 'NONE') {
+        targetPersonId = headerFilter.value;
+      }
+
+      let patientName = '';
+      let patientCustomId = '';
+      let patientDept = '';
+
+      if (targetPersonId) {
+        const opt = document.querySelector(`#headerTargetFilter option[value="${targetPersonId}"]`) ||
+                    document.querySelector(`#formTargetPersonSelect option[value="${targetPersonId}"]`);
+        if (opt) {
+          patientName = opt.getAttribute('data-name') || opt.textContent.split('(')[0].replace(/^\[.*?\]\s*/, '').trim();
+          patientCustomId = opt.getAttribute('data-custom-id') || targetPersonId;
+          patientDept = opt.getAttribute('data-dept') || '';
+        }
+      }
+
+      // フォールバック: ヘッダー表示から患者情報を直接取得
+      if (!patientCustomId) {
+        const idText = document.getElementById('cartePatientId')?.textContent?.trim();
+        const nameText = document.getElementById('cartePatientName')?.textContent?.trim();
+        if (idText && idText !== '未選択' && idText !== '0000000001') {
+          patientCustomId = idText;
+        }
+        if (nameText && nameText !== '未選択' && nameText !== '全患者（すべての記事）') {
+          patientName = nameText;
+        }
+      }
+
+      let orderType = customOrderType;
+      if (!orderType) {
+        const catSelect = document.getElementById('formCategorySelect');
+        const cat = catSelect ? catSelect.value : '';
+        if (cat.includes('点滴')) orderType = 'IV';
+        else if (cat.includes('処方')) orderType = 'PRESCRIPTION';
+        else if (cat.includes('放射線') || cat.includes('レントゲン') || cat.includes('CT')) orderType = 'RADIOLOGY';
+        else if (cat.includes('食事')) orderType = 'MEAL';
+        else if (cat.includes('検査')) orderType = 'LAB_EXAM';
+        else orderType = 'IV'; // デフォルトは病棟用注射指示
+      }
+
+      const isHttps = window.location.protocol === 'https:';
+      const senderPort = isHttps ? 4443 : 4000;
+      const protocol = isHttps ? 'https:' : 'http:';
+      const host = window.location.hostname || 'localhost';
+      const url = new URL(`${protocol}//${host}:${senderPort}/`);
+
+      if (patientCustomId) url.searchParams.set('patientId', patientCustomId);
+      if (patientName) url.searchParams.set('patientName', patientName);
+      if (patientDept) url.searchParams.set('patientDept', patientDept);
+      if (orderType) url.searchParams.set('orderType', orderType);
+
+      // 電子カルテ戻りURLもパラメータにセット
+      try {
+        const returnUrl = new URL(window.location.origin + '/articles');
+        if (patientCustomId) returnUrl.searchParams.set('targetId', patientCustomId);
+        url.searchParams.set('returnUrl', returnUrl.toString());
+      } catch (_) {}
+
+      return url.toString();
+    }
+
+    // 🚀 オーダリングシステム送信画面 (Port 4000) を現在選択中の患者情報を引き継いで開く
+    function openOrderingSystem(customOrderType = null) {
+      const targetUrl = getOrderingSystemUrl(customOrderType);
+      try {
+        const win = window.open(targetUrl, '_blank');
+        // ポップアップブロッカー等で新しいタブが開けなかった場合のフォールバック
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          window.location.href = targetUrl;
+        }
+      } catch (e) {
+        window.location.href = targetUrl;
+      }
+    }
+
+    // リンククリック時のハンドラ (ポップアップブロックを防止しつつ確実に開く)
+    function handleOrderingClick(event, elem, customOrderType = null) {
+      const targetUrl = getOrderingSystemUrl(customOrderType);
+      if (elem) elem.href = targetUrl;
+      // 通常クリックの場合
+      if (event && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        event.preventDefault();
+        openOrderingSystem(customOrderType);
+        return false;
+      }
+      return true;
+    }
+
+    // 画面上の全オーダリングボタン・リンクの href を最新状態に同期
+    function updateOrderingLinks() {
+      try {
+        const targetUrl = getOrderingSystemUrl();
+        const topBtn = document.getElementById('btnOrderingTop');
+        if (topBtn) topBtn.href = targetUrl;
+        const paletteBtn = document.getElementById('btnOrderingPalette');
+        if (paletteBtn) paletteBtn.href = targetUrl;
+        const gearLink = document.getElementById('btnOrderingGear');
+        if (gearLink) gearLink.href = targetUrl;
+      } catch (_) {}
+    }
+
+    // 📡 オーダリング受信側 (Port 5000: 部門モニター) へ即座にオーダーを送信（飛ばす）
+    async function sendOrderToOrderingReceiver(orderData, targetPersonId, authorName) {
+      try {
+        const cat = orderData.category || '';
+        const title = orderData.title || '';
+        let orderType = 'GENERAL';
+        if (cat.includes('点滴') || title.includes('点滴')) orderType = 'IV';
+        else if (cat.includes('処方') || title.includes('処方')) orderType = 'PRESCRIPTION';
+        else if (cat.includes('放射線') || cat.includes('レントゲン') || cat.includes('CT') || title.includes('放射線')) orderType = 'RADIOLOGY';
+        else if (cat.includes('検査') || title.includes('検査')) orderType = 'LAB_EXAM';
+        else if (cat.includes('食事') || title.includes('食事')) orderType = 'MEAL';
+        else if (cat.includes('リハビリ') || title.includes('リハビリ')) orderType = 'REHAB';
+
+        const opt = document.querySelector(`#headerTargetFilter option[value="${targetPersonId}"]`) ||
+                    document.querySelector(`#formTargetPersonSelect option[value="${targetPersonId}"]`);
+        const pName = opt ? (opt.getAttribute('data-name') || opt.textContent.split('(')[0].replace(/^\[.*?\]\s*/, '').trim()) : '患者';
+        const pCustomId = opt ? (opt.getAttribute('data-custom-id') || targetPersonId) : (targetPersonId || 'P000');
+        const pDept = opt ? (opt.getAttribute('data-dept') || '一般病棟') : '一般病棟';
+
+        const host = window.location.hostname || 'localhost';
+        const receiverUrl = `http://${host}:5000/api/orders/receive`;
+
+        const orderId = 'ORD-' + orderType.substring(0, 3) + '-' + Date.now().toString().slice(-6);
+
+        const payload = {
+          orderId: orderId,
+          orderType: orderType,
+          title: orderData.title || `${orderType}指示`,
+          priority: 'ROUTINE',
+          patient: {
+            id: pCustomId,
+            name: pName,
+            department: pDept
+          },
+          doctor: {
+            name: authorName || '<%= user %>',
+            department: '<%= currentUserDept %>'
+          },
+          details: {
+            medicine: orderData.medicine || orderData.title || '',
+            dose: orderData.dose || '',
+            rate: orderData.rate || '',
+            route: orderData.route || '点滴静注',
+            examType: orderData.examType || '',
+            portable: orderData.portable || '放射線科撮影室',
+            mealType: orderData.mealType || '',
+            allergies: orderData.allergies || '',
+            remarks: orderData.detail || orderData.remarks || '',
+            content: orderData.content || ''
+          },
+          senderHost: window.location.origin,
+          senderUser: authorName || '<%= user %>',
+          orderDate: new Date().toISOString()
+        };
+
+        console.log(`🚀 [オーダリング送信] 部門モニター (Port 5000) へオーダー送信: [${orderId}]`);
+        const res = await fetch(receiverUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(4000)
+        });
+        if (res.ok) {
+          console.log(`✅ [オーダリング送信完了] 受信側 (Port 5000) で受付されました: ${orderId}`);
+          return true;
+        }
+      } catch (e) {
+        console.warn('⚠️ オーダリング受信側への直接送信通知 (バックエンド側で送信済み):', e.message);
+      }
+      return false;
+    }
+
     // （後方互換用）
     function changeCurrentAuthor(authorId) {
       const selectEl = document.getElementById('headerAuthorSelect');
@@ -3933,12 +4271,15 @@
       if (submitBtn) submitBtn.disabled = true;
       if (submitBtnText) submitBtnText.textContent = '⏳ カルテとオーダーを一括確定中...';
 
-      showToastNotification('⏳ カルテ診療記録と仮置きオーダーを確定・保存しています...');
+      showToastNotification('⏳ カルテ診療記録と仮置きオーダーを確定・オーダリング送信中...');
 
       try {
         // 4. まずメインの診療記録 (SOAP) を親記事として保存
         const parentArticleId = document.getElementById('formParentArticleId')?.value || '';
         const selectedAuthorId = document.getElementById('formAuthorId')?.value || document.getElementById('headerAuthorSelect')?.value || '';
+        const authorOpt = document.querySelector(`#headerAuthorSelect option[value="${selectedAuthorId}"]`);
+        const currentAuthorName = authorOpt ? authorOpt.getAttribute('data-name') : '<%= user %>';
+
         const mainPayload = {
           targetPersonId: targetPersonId,
           category: 'カルテ診療録',
@@ -3965,7 +4306,7 @@
         const mainData = await mainRes.json();
         const createdParentId = mainData.article ? mainData.article._id : null;
 
-        // 5. 仮置きされているオーダー群を、作成した診療記録を親として一括確定保存
+        // 5. 仮置きされているオーダー群を、作成した診療記録を親として一括確定保存 ＆ オーダリング受信側へ飛ばす
         if (stagedOrders.length > 0 && createdParentId) {
           for (let i = 0; i < stagedOrders.length; i++) {
             const order = stagedOrders[i];
@@ -3984,6 +4325,7 @@
               allergies: order.allergies || ''
             };
 
+            // カルテ記事として保存 (バックエンド側でも Port 5000 オーダリングへ自動転送されます)
             const orderRes = await fetch('/api/articles', {
               method: 'POST',
               headers: {
@@ -3995,6 +4337,9 @@
 
             if (!orderRes.ok) {
               console.error(`オーダー #${i + 1} (${order.title}) の保存エラー`);
+            } else {
+              // フロントエンドからも念のためオーダリング受信側 (Port 5000) へダイレクト通知
+              sendOrderToOrderingReceiver(orderPayload, targetPersonId, currentAuthorName);
             }
           }
         }
@@ -4015,7 +4360,7 @@
 
         renderStagedOrders();
 
-        showToastNotification(`✅ カルテ診療記録およびオーダー (${savedOrderCount}件) を確定・保存しました！`);
+        showToastNotification(`✅ カルテ診療記録およびオーダー (${savedOrderCount}件) を確定保存し、オーダリング受信側 (Port 5000) へ送信しました！`);
 
         // 7. 画面を更新して最新タイムラインを表示
         setTimeout(() => {
@@ -4462,7 +4807,17 @@
 
         const data = await res.json();
         if (data.success && data.article) {
-          showToastNotification(`✅ 独自記事を作成しました: <strong>${data.article.title || payload.title}</strong>`);
+          const cat = payload.category || '';
+          const title = payload.title || '';
+          const isOrder = cat.includes('オーダー') || cat.includes('指示') || cat.includes('処方') || title.includes('オーダー') || title.includes('指示');
+          if (isOrder) {
+            const authorOpt = document.querySelector(`#headerAuthorSelect option[value="${selectedAuthorId}"]`);
+            const authorName = authorOpt ? authorOpt.getAttribute('data-name') : '<%= user %>';
+            sendOrderToOrderingReceiver(payload, payload.targetPersonId, authorName);
+            showToastNotification(`✅ カルテ記事保存 ＆ オーダリング送信完了: <strong>${data.article.title || payload.title}</strong>`);
+          } else {
+            showToastNotification(`✅ 独自記事を作成しました: <strong>${data.article.title || payload.title}</strong>`);
+          }
           appendArticleToTimeline(data.article);
         } else {
           showToastNotification(`✅ 独自記事を作成しました`);
@@ -5680,14 +6035,6 @@
       const leftActiveDate = document.getElementById('leftActiveCarteDate');
       if (leftActiveDate) leftActiveDate.textContent = dateStr;
 
-      // 初期の患者情報同期
-      const targetFilter = document.getElementById('headerTargetFilter');
-      if (targetFilter && targetFilter.options.length > 1) {
-        // 先頭の患者を選択初期値にする
-        targetFilter.selectedIndex = 1;
-        onCarteTargetSelect(targetFilter.value);
-      }
-
       const defaultNow = getCurrentDateTimeLocal();
       const ivSchedInput = document.getElementById('scheduledAtIv');
       const mealSchedInput = document.getElementById('scheduledAtMeal');
@@ -5716,7 +6063,7 @@
       applyArticleFilters();
 
       const urlParams = new URLSearchParams(window.location.search);
-      const targetId = urlParams.get('targetId');
+      const urlTargetId = urlParams.get('targetId') || urlParams.get('targetPerson') || urlParams.get('patientId');
       const orderParam = urlParams.get('order');
 
       // オーダー種別パラメータに応じた自動スイッチ
@@ -5737,26 +6084,158 @@
         }
       }
 
-      if (targetId) {
+      if (urlTargetId) {
+        onCarteTargetSelect(urlTargetId);
+      } else {
+        // URLパラメータがない場合でも、SSRで選択された患者をJS状態に初期同期
         const filterSelect = document.getElementById('headerTargetFilter');
-        if (filterSelect) {
-          filterSelect.value = targetId;
-          filterArticlesByTarget(targetId);
+        if (filterSelect && filterSelect.value && filterSelect.value !== 'ALL') {
+          onCarteTargetSelect(filterSelect.value);
         }
-        
-        // 最下部の入力欄にスクロールしてフォーカスを当てる
-        setTimeout(() => {
-          const input = document.getElementById('articleContentInput');
-          if (input) {
-            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            input.focus();
-          }
-        }, 150);
       }
       
+      // 🚀 オーダリング画面への遷移リンクに初期患者情報を反映
+      updateOrderingLinks();
+
       // ページ読み込み完了時に左側タイムラインを一番下（最新記事）へ自動スクロール
       scrollToLatestArticle();
+
+      // 🔔 定期ポーリング開始（3.5秒ごと）＆ タブ復帰時（focus）に即座に新着チェック
+      setInterval(checkNewArticles, 3500);
+      window.addEventListener('focus', checkNewArticles);
     });
+
+    // 🔔 ベル・チャイム音再生エンジン (Web Audio API)
+    let carteAudioCtx = null;
+    function getCarteAudioContext() {
+      if (!carteAudioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) carteAudioCtx = new AudioContextClass();
+      }
+      if (carteAudioCtx && carteAudioCtx.state === 'suspended') {
+        carteAudioCtx.resume();
+      }
+      return carteAudioCtx;
+    }
+
+    document.addEventListener('click', () => {
+      if (carteAudioCtx && carteAudioCtx.state === 'suspended') {
+        carteAudioCtx.resume();
+      }
+    }, { once: false, passive: true });
+
+    function playCarteBellSound(type = 'normal') {
+      try {
+        const ctx = getCarteAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        if (type === 'urgent') {
+          // 🚨 至急用アラート
+          [0, 0.15].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, now + delay);
+            gain.gain.setValueAtTime(0.25, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.12);
+          });
+        } else {
+          // 🔔 通常チャイム音 (ソ: 784Hz -> ド: 1046.5Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(783.99, now);
+          gain1.gain.setValueAtTime(0.28, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.45);
+
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1046.50, now + 0.22);
+          gain2.gain.setValueAtTime(0.32, now + 0.22);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.22);
+          osc2.stop(now + 0.85);
+        }
+      } catch (e) {
+        console.warn('カルテベル再生エラー:', e);
+      }
+    }
+
+    function testCarteBellSound() {
+      getCarteAudioContext();
+      playCarteBellSound('normal');
+      showToastNotification('🔔 ベル通知音を試聴しました（ピンポーン♪）');
+    }
+
+    // 🔔 リアルタイム新着記事・オーダー自動同期システム
+    let lastArticleTimestamp = '<%= (articles && articles.length > 0) ? articles[articles.length - 1].createdAt.toISOString() : new Date().toISOString() %>';
+    let isPollingArticles = false;
+
+    async function checkNewArticles() {
+      if (isPollingArticles) return;
+      isPollingArticles = true;
+
+      try {
+        const url = `/api/articles?since=${encodeURIComponent(lastArticleTimestamp)}`;
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) return;
+
+        const newArticles = await res.json();
+        if (Array.isArray(newArticles) && newArticles.length > 0) {
+          let hasCurrentTargetNew = false;
+          let otherTargetNewNames = [];
+
+          for (const art of newArticles) {
+            // 既にDOMに存在しているか重複確認
+            const existing = document.querySelector(`.article-item[data-article-id="${art._id}"]`);
+            if (existing) continue;
+
+            appendArticleToTimeline(art);
+
+            if (art.createdAt && new Date(art.createdAt) > new Date(lastArticleTimestamp)) {
+              lastArticleTimestamp = art.createdAt;
+            }
+
+            const artTargetId = art.targetPerson ? (art.targetPerson._id || art.targetPerson) : 'NONE';
+            const artTargetCustomId = art.targetPerson ? (art.targetPerson.customId || '') : '';
+            const artTargetName = art.targetPerson ? (art.targetPerson.name || '患者') : '全体';
+
+            if (currentSelectedTargetId === 'ALL' || currentSelectedTargetId === artTargetId || (artTargetCustomId && currentSelectedTargetId === artTargetCustomId)) {
+              hasCurrentTargetNew = true;
+            } else {
+              otherTargetNewNames.push({ id: artTargetId, customId: artTargetCustomId, name: artTargetName, title: art.title });
+            }
+          }
+
+          if (hasCurrentTargetNew) {
+            scrollToLatestArticle(true);
+            playCarteBellSound('normal');
+            showToastNotification('🔔 <strong>新着オーダー／記事を受信しました！</strong> タイムラインに自動反映されました。');
+          } else if (otherTargetNewNames.length > 0) {
+            playCarteBellSound('normal');
+            const first = otherTargetNewNames[0];
+            const notifMsg = `🔔 <strong>${escapeHtml(first.name)} 様</strong> 宛ての新着オーダーを受信しました <button type="button" onclick="onCarteTargetSelect('${first.id}')" style="background:#0284c7; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer; margin-left:6px;">表示する ↗</button>`;
+            showToastNotification(notifMsg);
+          }
+        }
+      } catch (err) {
+        console.warn('新着記事ポーリング通信エラー:', err.message);
+      } finally {
+        isPollingArticles = false;
+      }
+    }
 
     function focusInput(e) {
       e.preventDefault();

@@ -1353,7 +1353,9 @@
     </div>
     <div class="header-links">
       <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 5443 : 5000 %>" target="_blank">📥 受信側モニター</a>
-      <a href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles" target="_blank">📋 電子カルテ</a>
+      <% const initPId = (typeof initialPatientId !== 'undefined' && initialPatientId) ? initialPatientId : ''; %>
+      <% const initPName = (typeof initialPatientName !== 'undefined' && initialPatientName) ? initialPatientName : ''; %>
+      <a id="headerCarteLink" href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles<%= initPId ? `?targetId=${encodeURIComponent(initPId)}` : '' %>" target="_blank" style="background:#0284c7; color:white; border-color:#0284c7; font-weight:bold;" title="電子カルテを開く (選択中の患者を引き継ぎます)">📋 電子カルテ <%= initPName ? `[${initPName}]` : '(Port 3000)' %></a>
       <button type="button" onclick="clearHistory()" style="background:rgba(255,255,255,0.18); color:white; border:none; padding:0.25rem 0.55rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
         履歴クリア
       </button>
@@ -1410,170 +1412,128 @@
         </div>
       </details>
 
-      <!-- 2. だて病院 共通患者情報セクション (写真様式準拠) -->
-      <div class="patient-master-card">
-        <div class="patient-master-header">
-          <div class="patient-master-title">
-            <span>👤 患者情報 & 指示医 (交雄会 だて病院 共通書式)</span>
+      <!-- 2. だて病院 共通患者情報セクション (表示のみ・コンパクト集約) -->
+      <div class="patient-master-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #0284c7; border-radius:6px; padding:0.5rem 0.75rem; display:flex; flex-direction:column; gap:0.35rem;">
+        <div class="patient-master-header" style="margin-bottom:0.15rem; padding-bottom:0.25rem; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+          <div class="patient-master-title" style="font-size:0.85rem; font-weight:bold; color:#0369a1; display:flex; align-items:center; gap:0.35rem;">
+            <span>👤 対象患者情報</span>
+            <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">(引き継ぎ対象者・固定表示)</span>
           </div>
-          <span class="hospital-stamp-label">だて病院 診療録・指示票様式</span>
+          <span class="hospital-stamp-label" style="font-size:0.7rem; color:#0284c7; background:#e0f2fe; padding:0.1rem 0.4rem; border-radius:3px; font-weight:bold;">だて病院 診療録・指示票様式</span>
         </div>
 
-        <!-- 行1: プリセット選択 / ID番号 / 氏名 / カナ -->
-        <div class="form-row" style="grid-template-columns: 1.4fr 0.9fr 1.1fr 1.1fr;">
-          <div class="form-group">
-            <label class="form-label" for="patientSelect">📋 患者プリセット:</label>
-            <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)">
-              <% patients.forEach(p => { %>
-                <option value="<%= p.id %>"
-                        data-id="<%= p.id %>"
-                        data-name="<%= p.name %>"
-                        data-kana="<%= p.kana || '' %>"
-                        data-age="<%= p.age || '' %>"
-                        data-gender="<%= p.gender || '男' %>"
-                        data-birthdate="<%= p.birthDate || '' %>"
-                        data-era="<%= p.era || '昭' %>"
-                        data-ward="<%= p.ward || 'しおかぜ' %>"
-                        data-room="<%= p.room || '' %>"
-                        data-dept="<%= p.department || '内科' %>"
-                        data-infection="<%= p.infection || '無' %>"
-                        data-mobility="<%= p.mobility || '徒歩' %>"
-                        data-height="<%= p.height || '' %>"
-                        data-weight="<%= p.weight || '' %>"
-                        data-examcategory="<%= p.examCategory || '一般診療' %>">[<%= p.id %>] <%= p.name %> (<%= p.ward || p.department %> / <%= p.gender %> <%= p.age %>歳)</option>
-              <% }); %>
-              <option value="CUSTOM">✏️ 手動入力 (新規患者)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientIdInput">ID番号 (カルテ):</label>
-            <input type="text" id="patientIdInput" class="form-control" value="<%= patients[0].id %>" style="font-family:monospace; font-weight:bold;">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientNameInput">氏名 (漢字):</label>
-            <input type="text" id="patientNameInput" class="form-control" value="<%= patients[0].name %>" style="font-weight:bold;">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientKanaInput">フリガナ (カナ):</label>
-            <input type="text" id="patientKanaInput" class="form-control" value="<%= patients[0].kana || '' %>">
-          </div>
+        <!-- 1行目: ID、氏名、カナ、属性(性別/年齢/生年月日/身体計測) 表示のみ -->
+        <div style="display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap; font-size:0.85rem; line-height:1.4;">
+          <span style="background:#0f172a; color:#fef08a; font-family:monospace; font-weight:bold; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.85rem;" id="dispPatientId">
+            [<%= patients[0].id %>]
+          </span>
+          <span style="font-size:1.02rem; font-weight:bold; color:#0f172a;" id="dispPatientName">
+            <%= patients[0].name %> 様
+          </span>
+          <span style="font-size:0.78rem; color:#64748b;" id="dispPatientKana">
+            (<%= patients[0].kana || '' %>)
+          </span>
+          <span style="background:#e0f2fe; color:#0369a1; font-weight:bold; font-size:0.78rem; padding:0.1rem 0.45rem; border-radius:3px;" id="dispPatientMeta">
+            <%= patients[0].gender || '男' %> / <%= patients[0].age || '' %>才 (<%= patients[0].era || '昭' %><%= patients[0].birthDate ? ` / ${patients[0].birthDate}` : '' %>)
+          </span>
+          <span style="font-size:0.78rem; color:#475569;" id="dispPatientBody">
+            <% if (patients[0].height || patients[0].weight) { %>
+              📏 <%= patients[0].height ? `${patients[0].height}cm` : '' %> <%= patients[0].weight ? `${patients[0].weight}kg` : '' %>
+            <% } %>
+          </span>
         </div>
 
-        <!-- 行2: 性別 / 生年月日(和暦・西暦) / 年齢 / 身体計測(身長・体重) -->
-        <div class="form-row" style="grid-template-columns: 0.8fr 1.6fr 0.8fr 1fr;">
-          <div class="form-group">
-            <label class="form-label" for="patientGenderInput">性別:</label>
-            <select id="patientGenderInput" class="form-control">
-              <option value="男" <%= patients[0].gender === '男' ? 'selected' : '' %>>男 (M)</option>
-              <option value="女" <%= patients[0].gender === '女' ? 'selected' : '' %>>女 (F)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientBirthDateInput">生年月日 (和暦/西暦):</label>
-            <div style="display:flex; gap:0.25rem; align-items:center;">
-              <select id="patientEraInput" class="form-control" style="width:65px; padding:0.35rem 0.25rem;">
-                <option value="昭" selected>昭和</option>
-                <option value="平">平成</option>
-                <option value="令">令和</option>
-                <option value="大">大正</option>
-              </select>
-              <input type="text" id="patientEraYearInput" class="form-control" style="width:45px; text-align:center;" value="21" title="元号年">
-              <span style="font-size:0.75rem;">年</span>
-              <input type="date" id="patientBirthDateInput" class="form-control" style="flex:1;" value="<%= patients[0].birthDate || '' %>" onchange="updateAgeAndEraFromBirthDate(this.value)">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientAgeInput">年齢:</label>
-            <div style="display:flex; align-items:center; gap:0.2rem;">
-              <input type="number" id="patientAgeInput" class="form-control" value="<%= patients[0].age || '' %>" style="width:60px;">
-              <span style="font-size:0.75rem;">才</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">身体計測:</label>
-            <div style="display:flex; gap:0.25rem; align-items:center;">
-              <input type="number" id="patientHeightInput" class="form-control" placeholder="身長" value="<%= patients[0].height || '' %>" style="width:55px;">
-              <span style="font-size:0.72rem;">cm</span>
-              <input type="number" id="patientWeightInput" class="form-control" placeholder="体重" value="<%= patients[0].weight || '' %>" style="width:55px;">
-              <span style="font-size:0.72rem;">kg</span>
-            </div>
-          </div>
+        <!-- 2行目: 病棟・病室・区分・感染症・移動方法 表示のみ -->
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; font-size:0.78rem; color:#334155; margin-top:0.15rem; padding-top:0.25rem; border-top:1px dashed #e2e8f0;">
+          <span>🏥 病棟: <strong id="dispPatientWard" style="color:#0284c7;"><%= patients[0].ward || 'しおかぜ' %></strong> (<span id="dispPatientRoom"><%= patients[0].room || '302号室' %></span>)</span>
+          <span>📋 区分: <strong id="dispPatientExamCat"><%= patients[0].examCategory || '一般診療' %></strong></span>
+          <span>🦠 感染症: <strong id="dispPatientInfection" style="<%= (patients[0].infection && patients[0].infection !== '無') ? 'color:#dc2626;' : 'color:#16a34a;' %>"><%= patients[0].infection || '無' %></strong></span>
+          <span>🦽 移動: <strong id="dispPatientMobility"><%= patients[0].mobility || '車椅子' %></strong></span>
         </div>
 
-        <!-- 行3: 所属・病棟 / 病室 / 区分 / 感染症 / 移動方法 (写真6様式忠実準拠) -->
-        <div class="form-row" style="grid-template-columns: 1.1fr 0.9fr 1fr 1.2fr 1.1fr;">
-          <div class="form-group">
-            <label class="form-label" for="patientWardInput">所属・病棟 (写真様式):</label>
-            <select id="patientWardInput" class="form-control">
-              <option value="しおかぜ" selected>しおかぜ (療養)</option>
-              <option value="うみかぜ">うみかぜ (介護院)</option>
-              <option value="医療">医療 (療養病棟)</option>
-              <option value="外来">外来処置室</option>
-              <option value="プライム">プライム病棟</option>
-              <option value="一般病棟">一般病棟</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientRoomInput">病室:</label>
-            <input type="text" id="patientRoomInput" class="form-control" value="<%= patients[0].room || '302号室' %>" placeholder="例: 302号室">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientExamCategoryInput">区分 (写真6様式):</label>
-            <select id="patientExamCategoryInput" class="form-control">
-              <option value="入院時検査" <%= (patients[0].examCategory === '入院時検査') ? 'selected' : '' %>>入院時検査</option>
-              <option value="一般診療" <%= (patients[0].examCategory === '一般診療') ? 'selected' : '' %>>一般診療</option>
-              <option value="プライム" <%= (patients[0].examCategory === 'プライム') ? 'selected' : '' %>>プライム</option>
-              <option value="健診" <%= (patients[0].examCategory === '健診') ? 'selected' : '' %>>健診</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientInfectionInput">感染症:</label>
-            <div style="display:flex; gap:0.3rem;">
-              <select id="patientInfectionInput" class="form-control" style="width:65px;" onchange="toggleInfectionDetail(this.value)">
-                <option value="無" selected>無</option>
-                <option value="有">有</option>
-              </select>
-              <input type="text" id="patientInfectionDetailInput" class="form-control" style="flex:1; display:none;" placeholder="詳細 (MRSA等)" value="">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="patientMobilityInput">移動方法:</label>
-            <select id="patientMobilityInput" class="form-control">
-              <option value="車椅子" selected>車椅子</option>
-              <option value="徒歩">徒歩</option>
-              <option value="ベッド">ベッド</option>
-              <option value="ストレッチャー">ストレッチャー</option>
-            </select>
-          </div>
+        <!-- 内部保持用の隠しフォーム群 (submitOrderやJS連携用・非表示) -->
+        <div style="display:none;" aria-hidden="true">
+          <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)">
+            <% patients.forEach(p => { %>
+              <option value="<%= p.id %>"
+                      data-id="<%= p.id %>"
+                      data-name="<%= p.name %>"
+                      data-kana="<%= p.kana || '' %>"
+                      data-age="<%= p.age || '' %>"
+                      data-gender="<%= p.gender || '男' %>"
+                      data-birthdate="<%= p.birthDate || '' %>"
+                      data-era="<%= p.era || '昭' %>"
+                      data-ward="<%= p.ward || 'しおかぜ' %>"
+                      data-room="<%= p.room || '' %>"
+                      data-dept="<%= p.department || '内科' %>"
+                      data-infection="<%= p.infection || '無' %>"
+                      data-mobility="<%= p.mobility || '徒歩' %>"
+                      data-height="<%= p.height || '' %>"
+                      data-weight="<%= p.weight || '' %>"
+                      data-examcategory="<%= p.examCategory || '一般診療' %>">[<%= p.id %>] <%= p.name %></option>
+            <% }); %>
+            <option value="CUSTOM">✏️ 手動入力</option>
+          </select>
+          <input type="text" id="patientIdInput" value="<%= patients[0].id %>">
+          <input type="text" id="patientNameInput" value="<%= patients[0].name %>">
+          <input type="text" id="patientKanaInput" value="<%= patients[0].kana || '' %>">
+          <select id="patientGenderInput">
+            <option value="男" <%= patients[0].gender === '男' ? 'selected' : '' %>>男</option>
+            <option value="女" <%= patients[0].gender === '女' ? 'selected' : '' %>>女</option>
+          </select>
+          <select id="patientEraInput"><option value="昭" selected>昭</option><option value="平">平</option><option value="令">令</option><option value="大">大</option></select>
+          <input type="text" id="patientEraYearInput" value="21">
+          <input type="date" id="patientBirthDateInput" value="<%= patients[0].birthDate || '' %>">
+          <input type="number" id="patientAgeInput" value="<%= patients[0].age || '' %>">
+          <input type="number" id="patientHeightInput" value="<%= patients[0].height || '' %>">
+          <input type="number" id="patientWeightInput" value="<%= patients[0].weight || '' %>">
+          <select id="patientWardInput">
+            <option value="しおかぜ" selected>しおかぜ</option>
+            <option value="うみかぜ">うみかぜ</option>
+            <option value="医療">医療</option>
+            <option value="外来">外来</option>
+            <option value="プライム">プライム</option>
+            <option value="一般病棟">一般病棟</option>
+          </select>
+          <input type="text" id="patientRoomInput" value="<%= patients[0].room || '302号室' %>">
+          <select id="patientExamCategoryInput">
+            <option value="入院時検査" <%= (patients[0].examCategory === '入院時検査') ? 'selected' : '' %>>入院時検査</option>
+            <option value="一般診療" <%= (patients[0].examCategory === '一般診療') ? 'selected' : '' %>>一般診療</option>
+            <option value="プライム" <%= (patients[0].examCategory === 'プライム') ? 'selected' : '' %>>プライム</option>
+            <option value="健診" <%= (patients[0].examCategory === '健診') ? 'selected' : '' %>>健診</option>
+          </select>
+          <select id="patientInfectionInput"><option value="無" selected>無</option><option value="有">有</option></select>
+          <input type="text" id="patientInfectionDetailInput" value="">
+          <select id="patientMobilityInput"><option value="車椅子" selected>車椅子</option><option value="徒歩">徒歩</option><option value="ベッド">ベッド</option><option value="ストレッチャー">ストレッチャー</option></select>
         </div>
 
-        <!-- 行4: 指示医 / 優先度 / オーダー入力日時 / 実施予定日時 -->
-        <div class="form-row" style="grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr;">
+        <!-- 行4: 指示医 / 優先度 / オーダー入力日時 / 実施予定日時 (1行にスッキリ統合) -->
+        <div class="form-row" style="grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr; margin-top:0.35rem; padding-top:0.35rem; border-top:1px solid #e2e8f0;">
           <div class="form-group">
-            <label class="form-label" for="doctorNameInput">🩺 指示医師 (処方医師):</label>
-            <input type="text" id="doctorNameInput" class="form-control" value="北島 先生 (内科)">
+            <label class="form-label" for="doctorNameInput" style="font-size:0.76rem;">🩺 指示医師 (処方医師):</label>
+            <input type="text" id="doctorNameInput" class="form-control" value="北島 先生 (内科)" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
           </div>
           <div class="form-group">
-            <label class="form-label">⚡ 優先度区分:</label>
-            <div class="priority-group">
-              <label class="priority-label routine">
+            <label class="form-label" style="font-size:0.76rem;">⚡ 優先度区分:</label>
+            <div class="priority-group" style="padding:0.12rem 0.2rem;">
+              <label class="priority-label routine" style="padding:0.2rem 0.4rem; font-size:0.75rem;">
                 <input type="radio" name="orderPriority" value="ROUTINE" checked> 通常
               </label>
-              <label class="priority-label urgent">
+              <label class="priority-label urgent" style="padding:0.2rem 0.4rem; font-size:0.75rem;">
                 <input type="radio" name="orderPriority" value="URGENT"> 至急
               </label>
-              <label class="priority-label stat">
+              <label class="priority-label stat" style="padding:0.2rem 0.4rem; font-size:0.75rem;">
                 <input type="radio" name="orderPriority" value="STAT"> 緊急
               </label>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="orderInputDate">📝 オーダー指示日時 (発行日):</label>
-            <input type="datetime-local" id="orderInputDate" class="form-control">
+            <label class="form-label" for="orderInputDate" style="font-size:0.76rem;">📝 指示日時 (発行日):</label>
+            <input type="datetime-local" id="orderInputDate" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
           </div>
           <div class="form-group">
-            <label class="form-label" for="orderScheduleTime">📅 実施・撮影予定日時:</label>
-            <input type="datetime-local" id="orderScheduleTime" class="form-control">
+            <label class="form-label" for="orderScheduleTime" style="font-size:0.76rem;">📅 実施予定日時:</label>
+            <input type="datetime-local" id="orderScheduleTime" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
           </div>
         </div>
       </div>
@@ -2868,7 +2828,93 @@
           toggleInfectionDetail('無');
         }
       }
+      syncPatientCompactDisplay();
+      updateHeaderCarteLink();
       showToast(`👤 患者「${document.getElementById('patientNameInput').value || '未設定'}」に切り替えました`);
+    }
+
+    // 👤 対象患者のコンパクト表示（固定ビュー）をフォーム内部値と同期
+    function syncPatientCompactDisplay() {
+      const pId = document.getElementById('patientIdInput')?.value || '';
+      const pName = document.getElementById('patientNameInput')?.value || '';
+      const pKana = document.getElementById('patientKanaInput')?.value || '';
+      const pGender = document.getElementById('patientGenderInput')?.value || '男';
+      const pAge = document.getElementById('patientAgeInput')?.value || '';
+      const pEra = document.getElementById('patientEraInput')?.value || '昭';
+      const pBirth = document.getElementById('patientBirthDateInput')?.value || '';
+      const pHeight = document.getElementById('patientHeightInput')?.value || '';
+      const pWeight = document.getElementById('patientWeightInput')?.value || '';
+      const pWard = document.getElementById('patientWardInput')?.value || 'しおかぜ';
+      const pRoom = document.getElementById('patientRoomInput')?.value || '';
+      const pCat = document.getElementById('patientExamCategoryInput')?.value || '一般診療';
+      const pInf = document.getElementById('patientInfectionInput')?.value || '無';
+      const pInfDetail = document.getElementById('patientInfectionDetailInput')?.value || '';
+      const pMob = document.getElementById('patientMobilityInput')?.value || '車椅子';
+
+      const elId = document.getElementById('dispPatientId');
+      if (elId) elId.textContent = pId ? `[${pId}]` : '';
+
+      const elName = document.getElementById('dispPatientName');
+      if (elName) elName.textContent = pName ? `${pName} 様` : '未指定患者';
+
+      const elKana = document.getElementById('dispPatientKana');
+      if (elKana) elKana.textContent = pKana ? `(${pKana})` : '';
+
+      const elMeta = document.getElementById('dispPatientMeta');
+      if (elMeta) {
+        let metaParts = [pGender];
+        if (pAge) metaParts.push(`${pAge}才`);
+        const eraPart = (pEra || pBirth) ? `(${pEra}${pBirth ? ` / ${pBirth}` : ''})` : '';
+        if (eraPart) metaParts.push(eraPart);
+        elMeta.textContent = metaParts.join(' / ');
+      }
+
+      const elBody = document.getElementById('dispPatientBody');
+      if (elBody) {
+        const parts = [];
+        if (pHeight) parts.push(`${pHeight}cm`);
+        if (pWeight) parts.push(`${pWeight}kg`);
+        elBody.textContent = parts.length > 0 ? `📏 ${parts.join(' ')}` : '';
+      }
+
+      const elWard = document.getElementById('dispPatientWard');
+      if (elWard) elWard.textContent = pWard;
+
+      const elRoom = document.getElementById('dispPatientRoom');
+      if (elRoom) elRoom.textContent = pRoom;
+
+      const elCat = document.getElementById('dispPatientExamCat');
+      if (elCat) elCat.textContent = pCat;
+
+      const elInf = document.getElementById('dispPatientInfection');
+      if (elInf) {
+        if (pInf === '有') {
+          elInf.textContent = `有${pInfDetail ? ` (${pInfDetail})` : ''}`;
+          elInf.style.color = '#dc2626';
+        } else {
+          elInf.textContent = '無';
+          elInf.style.color = '#16a34a';
+        }
+      }
+
+      const elMob = document.getElementById('dispPatientMobility');
+      if (elMob) elMob.textContent = pMob;
+    }
+
+    function updateHeaderCarteLink() {
+      const link = document.getElementById('headerCarteLink');
+      if (!link) return;
+      const pId = document.getElementById('patientIdInput')?.value?.trim();
+      const pName = document.getElementById('patientNameInput')?.value?.trim();
+      const baseUrl = `http://${window.location.hostname || 'localhost'}:3000/articles`;
+      if (pId) {
+        link.href = `${baseUrl}?targetId=${encodeURIComponent(pId)}`;
+        link.title = `患者「${pName || pId}」の電子カルテ記事一覧を開く (Port 3000)`;
+        link.innerHTML = `📋 電子カルテ [${escapeHtml(pName || pId)}]`;
+      } else {
+        link.href = baseUrl;
+        link.innerHTML = `📋 電子カルテ (Port 3000)`;
+      }
     }
 
     function showToast(message, isError = false) {
@@ -3444,17 +3490,137 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
-          showToast(`✅ [${data.order.orderId}] 送信成功！ (${data.order.elapsedMs}ms)`);
+          const sentOrderId = data.order.orderId;
+          const sentPatientId = patientId;
+          const sentPatientName = patientName;
+
+          // 1. 送信ボタンを完了状態にして連打・二重送信を防止
+          btn.disabled = true;
+          btn.style.background = '#059669';
+          btn.innerHTML = `<span>✅ 送信完了（部門＆カルテへ送信済: ${sentOrderId}）</span>`;
+
+          // 2. フォームの入力内容をクリア・初期化（消えずに何度も送信されるのを防止）
+          resetOrderFormAfterSubmit(currentOrderType);
+
+          // 3. 送信完了通知 ＆ カルテ直通確認ボタンを表示
+          showOrderSentSuccessDialog(sentOrderId, sentPatientId, sentPatientName);
+
           pollHistory();
+
+          // 3.5秒後にボタンを元に戻す（新規オーダー受付可能に）
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.style.background = '';
+            btn.innerHTML = `<span>🚀 受信側サーバーへ指示票を送信</span>`;
+          }, 3500);
+
         } else {
           showToast(`❌ 送信エラー: ${data.error || '失敗'}`, true);
           pollHistory();
+          btn.disabled = false;
+          btn.innerHTML = `<span>🚀 受信側サーバーへ指示票を送信</span>`;
         }
       } catch (err) {
         showToast(`❌ 通信エラー: ${err.message}`, true);
-      } finally {
         btn.disabled = false;
         btn.innerHTML = `<span>🚀 受信側サーバーへ指示票を送信</span>`;
+      }
+    }
+
+    // 🧹 送信完了後のフォーム初期化（リセット）
+    function resetOrderFormAfterSubmit(orderType) {
+      if (orderType === 'PRESCRIPTION') {
+        rxItems = [{
+          id: 'med_' + Date.now() + '_1',
+          medicine: '',
+          medicineId: '',
+          dosage: '',
+          days: 7,
+          quantity: '',
+          instruction: ''
+        }];
+        const remarksEl = document.getElementById('rxRemarks');
+        if (remarksEl) remarksEl.value = '';
+        renderRxMedicinesList();
+      } else if (orderType === 'IV') {
+        const todayStr = getTodayYmd();
+        ivItems = [{
+          id: 'iv_' + Date.now() + '_1',
+          medicine: '',
+          medicineId: '',
+          dosage: '1回1袋',
+          route: 'DIV',
+          frequency: '1日1回',
+          startDate: todayStr,
+          endDate: todayStr,
+          days: 1,
+          rate: '60mL/h',
+          remarks: ''
+        }];
+        const remarksEl = document.getElementById('ivRemarks');
+        if (remarksEl) remarksEl.value = '';
+        renderIvOrdersList();
+      } else if (orderType === 'RADIOLOGY') {
+        document.querySelectorAll('#formRadiology input[type="checkbox"]').forEach(c => c.checked = false);
+        const ctPurpose = document.getElementById('ctPurpose');
+        if (ctPurpose) ctPurpose.value = '';
+        const xrayRemarks = document.getElementById('xrayRemarks');
+        if (xrayRemarks) xrayRemarks.value = '';
+        const fluoroRemarks = document.getElementById('fluoroRemarks');
+        if (fluoroRemarks) fluoroRemarks.value = '';
+      } else if (orderType === 'LAB_EXAM') {
+        document.querySelectorAll('#formLabExam input[type="checkbox"]').forEach(c => c.checked = false);
+        const labItems = document.getElementById('labItems');
+        if (labItems) labItems.value = '';
+        const labRemarks = document.getElementById('labRemarks');
+        if (labRemarks) labRemarks.value = '';
+        const physioRemarks = document.getElementById('physioRemarks');
+        if (physioRemarks) physioRemarks.value = '';
+      } else if (orderType === 'MEAL') {
+        const mealAllergies = document.getElementById('mealAllergies');
+        if (mealAllergies) mealAllergies.value = '';
+        const mealRemarks = document.getElementById('mealRemarks');
+        if (mealRemarks) mealRemarks.value = '';
+      } else if (orderType === 'REHAB') {
+        document.querySelectorAll('#formRehab input[type="checkbox"]').forEach(c => c.checked = false);
+        const rehabRemarks = document.getElementById('rehabRemarks');
+        if (rehabRemarks) rehabRemarks.value = '';
+      }
+
+      if (typeof updateOrderPreview === 'function') {
+        updateOrderPreview();
+      }
+    }
+
+    // 📋 送信成功時のカルテジャンプ付きダイアログ
+    function showOrderSentSuccessDialog(orderId, patientId, patientName) {
+      const carteUrl = `http://${window.location.hostname || 'localhost'}:3000/articles?targetId=${encodeURIComponent(patientId)}`;
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:0.4rem; padding:0.2rem; min-width:280px;">
+            <div style="font-weight:bold; font-size:0.85rem; color:#86efac; display:flex; align-items:center; gap:0.3rem;">
+              <span>✅</span> オーダー [${escapeHtml(orderId)}] 送信完了！
+            </div>
+            <div style="font-size:0.75rem; color:#cbd5e1; line-height:1.4;">
+              部門モニターへ送信され、<strong>患者「${escapeHtml(patientName)}」の電子カルテ記事にも自動保存</strong>されました。<br>入力欄をクリアしました。
+            </div>
+            <div style="display:flex; gap:0.4rem; margin-top:0.25rem;">
+              <a href="${carteUrl}" target="_blank" style="background:#0284c7; color:white; padding:0.35rem 0.75rem; border-radius:4px; font-weight:bold; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
+                📋 電子カルテで確認する ↗
+              </a>
+              <button type="button" onclick="document.getElementById('toast').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:0.35rem 0.6rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
+                閉じる
+              </button>
+            </div>
+          </div>
+        `;
+        toast.style.background = '#0f172a';
+        toast.style.border = '2px solid #10b981';
+        toast.style.display = 'flex';
+        setTimeout(() => {
+          if (toast.style.display !== 'none') toast.style.display = 'none';
+        }, 8000);
       }
     }
 
@@ -3600,7 +3766,10 @@
           <div class="history-item status-${item.status} ${animationClass}" id="history-${item.orderId}">
             <div class="history-header">
               <strong style="color:#0f172a; font-family:monospace;">${escapeHtml(item.orderId)}</strong>
-              ${getStatusBadgeHtml(item.status)}
+              <div style="display:flex; align-items:center; gap:0.25rem;">
+                ${getStatusBadgeHtml(item.status)}
+                ${(item.carteSync && item.carteSync.success) ? '<span title="電子カルテ記事として同時保存済み" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.68rem; font-weight:bold; padding:0.1rem 0.35rem; border-radius:3px;">📋 カルテ済</span>' : ''}
+              </div>
             </div>
             <div class="history-meta">
               <span>患者: <strong>${escapeHtml(item.patient ? item.patient.name : '')}</strong></span>
@@ -3651,7 +3820,10 @@
 
         return `
           <tr class="history-row" id="row-${item.orderId}">
-            <td style="text-align:center;">${getStatusBadgeHtml(item.status)}</td>
+            <td style="text-align:center;">
+              ${getStatusBadgeHtml(item.status)}
+              ${(item.carteSync && item.carteSync.success) ? '<div style="margin-top:2px;"><span title="カルテ記事保存済" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.25rem; border-radius:2px;">📋 カルテ済</span></div>' : ''}
+            </td>
             <td style="font-size:0.72rem; color:#475569; white-space:nowrap;">
               ${orderDateStr ? `<div style="color:#0369a1; font-weight:bold;">${orderDateStr}</div>` : ''}
               <div style="font-size:0.68rem; color:#64748b;">送: ${timeStr}</div>
@@ -5401,6 +5573,68 @@
       }
     }
 
+    // 🌐 URLクエリパラメータによる患者・オーダー種別初期化連動
+    function applyUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const pId = params.get('patientId') || params.get('targetId') || params.get('id');
+      const pName = params.get('patientName') || params.get('name');
+      const pDept = params.get('patientDept') || params.get('dept');
+      const oType = params.get('orderType') || params.get('order');
+
+      if (pId || pName) {
+        const select = document.getElementById('patientSelect');
+        if (select) {
+          let matched = false;
+          for (let i = 0; i < select.options.length; i++) {
+            const opt = select.options[i];
+            const optId = opt.getAttribute('data-id') || opt.value;
+            const optName = opt.getAttribute('data-name');
+            if ((pId && (optId === pId || opt.value === pId)) || (pName && optName === pName)) {
+              select.selectedIndex = i;
+              onPatientSelectChange(select);
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            select.value = 'CUSTOM';
+            onPatientSelectChange(select);
+            if (pId) document.getElementById('patientIdInput').value = pId;
+            if (pName) document.getElementById('patientNameInput').value = pName;
+            if (pDept && document.getElementById('patientDeptInput')) document.getElementById('patientDeptInput').value = pDept;
+            updateHeaderCarteLink();
+            if (typeof updateOrderPreview === 'function') updateOrderPreview();
+          }
+        }
+      }
+
+      if (oType) {
+        const upper = oType.toUpperCase();
+        if (upper === 'IV' || upper === 'INJECTION') {
+          const btn = document.querySelector('.tab-iv');
+          if (btn) switchOrderType('IV', btn);
+        } else if (upper === 'PRESCRIPTION' || upper === 'RX') {
+          const btn = document.querySelector('.tab-rx');
+          if (btn) switchOrderType('PRESCRIPTION', btn);
+        } else if (upper === 'RADIOLOGY' || upper === 'RAD') {
+          const btn = document.querySelector('.tab-rad');
+          if (btn) switchOrderType('RADIOLOGY', btn);
+        } else if (upper === 'LAB_EXAM' || upper === 'LAB') {
+          const btn = document.querySelector('.tab-lab');
+          if (btn) switchOrderType('LAB_EXAM', btn);
+        } else if (upper === 'MEAL') {
+          const btn = document.querySelector('.tab-meal');
+          if (btn) switchOrderType('MEAL', btn);
+        } else if (upper === 'REHAB') {
+          const btn = document.querySelector('.tab-rehab');
+          if (btn) switchOrderType('REHAB', btn);
+        }
+      }
+
+      updateHeaderCarteLink();
+      syncPatientCompactDisplay();
+    }
+
     // 初期化実行
     connectSSE();
     startAutoSync();
@@ -5409,6 +5643,8 @@
     applyHistoryWrapUI();
     setHistoryViewMode(historyViewMode);
     initMedModalColResizing();
+    applyUrlParams();
+    syncPatientCompactDisplay();
   </script>
 </body>
 </html>

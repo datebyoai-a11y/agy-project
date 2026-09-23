@@ -87,15 +87,57 @@ app.get('/', (req, res) => {
   const isEncrypted = req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
   const currentProto = isEncrypted ? 'https' : 'http';
   const receiverPort = isEncrypted ? (process.env.HTTPS_RECEIVER_PORT || 5443) : 5000;
+
+  const queryPatientId = String(req.query.patientId || req.query.targetId || req.query.id || '').trim();
+  const queryPatientName = String(req.query.patientName || req.query.name || '').trim();
+  const queryPatientDept = String(req.query.patientDept || req.query.dept || '').trim();
+  const queryOrderType = String(req.query.orderType || req.query.order || '').trim();
+
+  let patientList = [...SamplePatients];
+  if (queryPatientId || queryPatientName) {
+    const existingIndex = patientList.findIndex(p => 
+      (queryPatientId && p.id.toLowerCase() === queryPatientId.toLowerCase()) ||
+      (queryPatientName && p.name === queryPatientName)
+    );
+    if (existingIndex === -1 && (queryPatientId || queryPatientName)) {
+      // カルテから引き継がれた外部患者を先頭プリセットとして追加
+      patientList.unshift({
+        id: queryPatientId || 'EXT001',
+        name: queryPatientName || 'カルテ連携患者',
+        kana: '',
+        age: 65,
+        gender: '男',
+        birthDate: '',
+        era: '昭',
+        ward: queryPatientDept || '一般病棟',
+        room: '',
+        department: queryPatientDept || '内科',
+        infection: '無',
+        mobility: '徒歩',
+        height: 165,
+        weight: 60,
+        examCategory: '一般診療'
+      });
+    } else if (existingIndex > 0) {
+      // 一致した患者を先頭に昇格
+      const matched = patientList.splice(existingIndex, 1)[0];
+      patientList.unshift(matched);
+    }
+  }
+
   res.render('index', {
-    patients: SamplePatients,
+    patients: patientList,
     sentOrders: sentOrders,
     port: req.socket.localPort || PORT,
     isHttps: isEncrypted,
     protocol: currentProto,
     serverHostname: hostname,
     defaultReceiverUrl: `${currentProto}://${hostname}:${receiverPort}`,
-    medicineStats: medicineMaster.getMedicineStats()
+    medicineStats: medicineMaster.getMedicineStats(),
+    initialPatientId: queryPatientId,
+    initialPatientName: queryPatientName,
+    initialPatientDept: queryPatientDept,
+    initialOrderType: queryOrderType
   });
 });
 
@@ -196,7 +238,14 @@ app.post('/api/orders/send', async (req, res) => {
       else if (orderType === 'MEAL') targetEndpoint = '/api/meal-orders/receive';
     }
 
-    const cleanBaseUrl = receiverUrl.replace(/\/+$/, '');
+    let cleanBaseUrl = (req.body.receiverUrl || '').trim();
+    if (!cleanBaseUrl) {
+      cleanBaseUrl = reqProto === 'https' ? `${reqProto}://localhost:5443` : `http://localhost:5000`;
+    }
+    if (cleanBaseUrl.startsWith('https://') && cleanBaseUrl.includes(':5000')) {
+      cleanBaseUrl = cleanBaseUrl.replace(':5000', ':5443');
+    }
+    cleanBaseUrl = cleanBaseUrl.replace(/\/+$/, '');
     const finalUrl = cleanBaseUrl.endsWith('/receive') ? cleanBaseUrl : `${cleanBaseUrl}${targetEndpoint}`;
 
     console.log(`\n🚀 [Sender] オーダー送信開始: [${orderId}] -> ${finalUrl}`);
@@ -241,6 +290,37 @@ app.post('/api/orders/send', async (req, res) => {
 
     const elapsedMs = Date.now() - startTime;
 
+    // 🏥 電子カルテ（incident-system: Port 3000）へも同時にカルテ記事として自動保存
+    let carteSyncResult = null;
+    const clientHost = reqHost.split(':')[0] || 'localhost';
+    const incidentSystemHost = process.env.INCIDENT_SYSTEM_URL || `http://${clientHost}:3000`;
+    const incidentApiUrl = `${incidentSystemHost.replace(/\/+$/, '')}/api/orders/receive`;
+
+    if (!finalUrl.includes(':3000')) {
+      try {
+        console.log(`📝 [Sender] 電子カルテ記事として同時に保存開始: -> ${incidentApiUrl}`);
+        const carteRes = await fetch(incidentApiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload),
+          signal: AbortSignal.timeout(4000)
+        });
+        if (carteRes.ok) {
+          const carteData = await carteRes.json();
+          carteSyncResult = { success: true, articleId: carteData.articleId, message: carteData.message };
+          console.log(`✅ [Sender] カルテ記事保存成功: [記事ID: ${carteData.articleId}]`);
+        } else {
+          carteSyncResult = { success: false, status: carteRes.status, error: carteRes.statusText };
+          console.warn(`⚠️ [Sender] カルテ記事保存失敗 HTTP ${carteRes.status}`);
+        }
+      } catch (cErr) {
+        carteSyncResult = { success: false, error: cErr.message };
+        console.warn(`⚠️ [Sender] カルテシステム接続エラー: ${cErr.message}`);
+      }
+    } else {
+      carteSyncResult = { success: isSuccess, message: '送信先が直接カルテシステムのため同期完了' };
+    }
+
     // 送信履歴レコードの作成
     const historyItem = {
       orderId,
@@ -258,7 +338,8 @@ app.post('/api/orders/send', async (req, res) => {
       statusCode,
       success: isSuccess,
       errorMessage,
-      receiverResponse: responseData
+      receiverResponse: responseData,
+      carteSync: carteSyncResult
     };
 
     sentOrders.unshift(historyItem);

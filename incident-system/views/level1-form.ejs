@@ -114,24 +114,34 @@
             
             <div class="form-group" style="margin-bottom: 12px; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
                 <label style="font-weight: bold; color: #2563eb;">🎯 対象者マスタより選択（任意）：</label>
-                <select name="targetPersonRef">
+                <select name="targetPersonRef" id="targetPersonSelect" style="width: 100%; padding: 8px; box-sizing: border-box;" onchange="onTargetPersonChange()">
                     <option value="">未選択 / 手入力</option>
                     <% if (typeof targetPeople !== 'undefined' && targetPeople) { %>
                         <% targetPeople.forEach(tp => { %>
-                            <option value="<%= tp._id %>">[<%= tp.customId %>] <%= tp.name %> (<%= tp.department %>)</option>
+                            <option value="<%= tp._id %>" data-custom-id="<%= tp.customId %>" data-name="<%= tp.name %>" data-dept="<%= tp.department || '' %>">[<%= tp.customId %>] <%= tp.name %> (<%= tp.department %>)</option>
                         <% }); %>
                     <% } %>
                 </select>
             </div>
 
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; padding: 8px 12px; background: #e0f2fe; border-radius: 4px; border: 1px solid #bae6fd;">
+                <span id="selectedPatientBadge" style="font-size: 0.85rem; color: #0369a1; font-weight: bold;">
+                    🎯 引き継ぎ患者: <span id="selectedPatientName">未選択</span>
+                </span>
+                <a id="btnOpenOrdering" href="http://localhost:4000/" target="_blank" onclick="return launchOrderingSystem(event);" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" title="当該者（患者情報）を引き継いでオーダリングシステム (Port 4000) を開きます">
+                    <span>🚀</span>
+                    <span>オーダリング呼出 (Port 4000)</span>
+                </a>
+            </div>
+
             <div class="form-row" style="margin-bottom: 10px;">
                 <div class="form-group" style="flex: 2;">
                     <label>当該者氏名（任意）：</label>
-                    <input type="text" name="patientName" placeholder="例: 医療 太郎">
+                    <input type="text" name="patientName" id="patientNameInput" placeholder="例: 医療 太郎" oninput="updateOrderingButtonState()">
                 </div>
                 <div class="form-group" style="flex: 1;">
                     <label>当該者ID・患者番号（任意）：</label>
-                    <input type="text" name="patientId" placeholder="例: 1234567">
+                    <input type="text" name="patientId" id="patientIdInput" placeholder="例: 1234567" oninput="updateOrderingButtonState()">
                 </div>
             </div>
 
@@ -408,6 +418,104 @@
             });
         }
 
+        // 🚀 オーダリングシステム連携 & 対象者連動
+        function onTargetPersonChange() {
+            const select = document.getElementById('targetPersonSelect');
+            const selectedOpt = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+            const nameInput = document.getElementById('patientNameInput');
+            const idInput = document.getElementById('patientIdInput');
+
+            if (selectedOpt && selectedOpt.value) {
+                const customId = selectedOpt.getAttribute('data-custom-id') || '';
+                const name = selectedOpt.getAttribute('data-name') || '';
+                if (idInput && customId) idInput.value = customId;
+                if (nameInput && name) nameInput.value = name;
+            }
+            updateOrderingButtonState();
+        }
+
+        function getOrderingUrl() {
+            const idInput = document.getElementById('patientIdInput');
+            const nameInput = document.getElementById('patientNameInput');
+            const select = document.getElementById('targetPersonSelect');
+            const selectedOpt = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+
+            let customId = (idInput && idInput.value) ? idInput.value.trim() : '';
+            let name = (nameInput && nameInput.value) ? nameInput.value.trim() : '';
+            let dept = '';
+
+            if (selectedOpt && selectedOpt.value) {
+                if (!customId) customId = selectedOpt.getAttribute('data-custom-id') || '';
+                if (!name) name = selectedOpt.getAttribute('data-name') || '';
+                dept = selectedOpt.getAttribute('data-dept') || '';
+            }
+
+            const isHttps = window.location.protocol === 'https:';
+            const port = isHttps ? 4443 : 4000;
+            const protocol = isHttps ? 'https:' : 'http:';
+            const host = window.location.hostname || 'localhost';
+            const url = new URL(`${protocol}//${host}:${port}/`);
+
+            if (customId) url.searchParams.set('patientId', customId);
+            if (name) url.searchParams.set('patientName', name);
+            if (dept) url.searchParams.set('patientDept', dept);
+
+            return url.toString();
+        }
+
+        function updateOrderingButtonState() {
+            const idInput = document.getElementById('patientIdInput');
+            const nameInput = document.getElementById('patientNameInput');
+            const select = document.getElementById('targetPersonSelect');
+            const selectedOpt = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+            const badge = document.getElementById('selectedPatientName');
+            const btn = document.getElementById('btnOpenOrdering');
+
+            let customId = (idInput && idInput.value) ? idInput.value.trim() : '';
+            let name = (nameInput && nameInput.value) ? nameInput.value.trim() : '';
+
+            if (selectedOpt && selectedOpt.value) {
+                if (!customId) customId = selectedOpt.getAttribute('data-custom-id') || '';
+                if (!name) name = selectedOpt.getAttribute('data-name') || '';
+            }
+
+            if (badge) {
+                if (customId || name) {
+                    badge.textContent = `[${customId || 'ID未指定'}] ${name || '氏名未指定'} 様`;
+                } else {
+                    badge.textContent = '未選択';
+                }
+            }
+
+            if (btn) {
+                btn.href = getOrderingUrl();
+            }
+        }
+
+        function launchOrderingSystem(event) {
+            const url = getOrderingUrl();
+            const btn = document.getElementById('btnOpenOrdering');
+            if (btn) btn.href = url;
+
+            if (event && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                event.preventDefault();
+                try {
+                    const win = window.open(url, '_blank');
+                    if (!win || win.closed || typeof win.closed === 'undefined') {
+                        window.location.href = url;
+                    }
+                } catch (e) {
+                    window.location.href = url;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        // 初期ロード時にボタン状態を更新
+        window.addEventListener('DOMContentLoaded', () => {
+            updateOrderingButtonState();
+        });
     </script>
 </body>
 </html>

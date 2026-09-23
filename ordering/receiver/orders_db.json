@@ -1,5 +1,285 @@
 [
   {
+    "orderId": "IV-20260923-5511",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] ソルデム3号輸液500ｍL (asfsad)",
+    "priority": "STAT",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "ソルデム3号輸液500ｍL",
+      "medicineId": "DR0217",
+      "dosage": "1回1袋",
+      "rate": "60mL/h",
+      "frequency": "1日1回",
+      "startDate": "2026-09-23",
+      "endDate": "2026-09-23",
+      "days": 1,
+      "scheduleDays": "1日1回 1日間 (2026-09-23〜2026-09-23)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "ソルデム3号輸液500ｍL",
+          "medicineId": "DR0217",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日1回",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-23",
+          "days": 1,
+          "rate": "60mL/h",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "",
+      "orderDate": "2026-09-23T18:04",
+      "scheduledAt": "2026-09-23T19:00"
+    },
+    "orderDate": "2026-09-23T18:04",
+    "createdAt": "2026-09-23T09:11:17.032Z",
+    "status": "ACCEPTED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T09:11:17.036Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T09:11:17.036Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-23T09:12:13.778Z",
+        "actor": "部門モニター操作者",
+        "note": "受付済"
+      }
+    ]
+  },
+  {
+    "orderId": "RAD-20260923-8607",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 頸部、胸部(肺・横隔) [単純] (asfsad)",
+    "priority": "STAT",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [頸部、胸部(肺・横隔)]",
+      "contrast": "単純",
+      "dynamic": "",
+      "parts": "頸部、胸部(肺・横隔)",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "remarks": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "scheduledAt": "2026-09-23T19:00"
+    },
+    "orderDate": "2026-09-23T18:04",
+    "createdAt": "2026-09-23T09:05:53.922Z",
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T09:05:53.924Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T09:05:53.924Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-23T09:06:15.226Z",
+        "actor": "部門モニター操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-23T09:06:23.643Z",
+        "actor": "部門モニター操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260923-2161",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-23",
+      "endDate": "2026-09-25",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-23〜2026-09-25)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-25",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-23T18:04",
+      "scheduledAt": "2026-09-23T19:00"
+    },
+    "orderDate": "2026-09-23T18:04",
+    "createdAt": "2026-09-23T09:04:16.442Z",
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T09:04:16.453Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T09:04:16.453Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-23T09:04:40.437Z",
+        "actor": "部門モニター操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-23T09:05:05.222Z",
+        "actor": "部門モニター操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
+    "orderId": "RAD-20260923-2198",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 頭部、胸部(肺・横隔) [造影] (高橋 五郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P005",
+      "name": "高橋 五郎",
+      "department": "プライム",
+      "kana": "タカハシ ゴロウ",
+      "gender": "男",
+      "era": "昭20",
+      "birthDate": "1945-11-30",
+      "age": 80,
+      "height": 160,
+      "weight": 52,
+      "ward": "プライム",
+      "room": "501号室",
+      "infection": "無",
+      "mobility": "ストレッチャー",
+      "examCategory": "入院時検査"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [頭部、胸部(肺・横隔)]",
+      "contrast": "造影",
+      "dynamic": "",
+      "parts": "頭部、胸部(肺・横隔)",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "remarks": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "scheduledAt": "2026-09-23T18:00"
+    },
+    "orderDate": "2026-09-23T17:26",
+    "createdAt": "2026-09-23T08:27:10.890Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T08:27:10.901Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T08:27:10.901Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
     "orderId": "IV-20260922-7643",
     "orderType": "IV",
     "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL 他2件 (安部 光良)",

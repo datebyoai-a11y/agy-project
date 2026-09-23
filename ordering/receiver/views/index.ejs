@@ -1146,6 +1146,13 @@
       </div>
 
       <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.78rem; color:#64748b;">
+        <label style="display:flex; align-items:center; gap:0.25rem; cursor:pointer; color:#047857; font-weight:bold;" title="新着オーダー受信時に通知ベル・チャイム音を鳴らします">
+          <input type="checkbox" id="soundAlertToggle" checked onchange="toggleSoundAlert(this.checked)">
+          <span>🔔 ベル通知ON</span>
+        </label>
+        <button type="button" onclick="testNotificationSound()" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; padding:0.22rem 0.55rem; border-radius:4px; font-size:0.76rem; font-weight:bold; cursor:pointer;" title="着信チャイム音をテスト再生し、ブラウザの音声再生を有効化します">
+          🔊 ベル試聴
+        </button>
         <label style="display:flex; align-items:center; gap:0.25rem; cursor:pointer;">
           <input type="checkbox" id="autoPollToggle" checked>
           <span>🔄 3秒自動更新</span>
@@ -2349,13 +2356,128 @@
     }
 
     // =========================================================
-    // ポーリング再取得
+    // 🔔 ベル・着信チャイム音通知エンジン (Web Audio API)
+    // =========================================================
+    let audioCtx = null;
+    let isSoundEnabled = localStorage.getItem('ordering_receiver_sound_enabled') !== 'false';
+    let knownOrderIds = new Set((currentOrders || []).map(o => o.orderId));
+    let isInitialLoad = true;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // ユーザー操作でブラウザの自動再生ブロックを確実にアンロック
+    document.addEventListener('click', () => {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }, { once: false, passive: true });
+
+    function toggleSoundAlert(enabled) {
+      isSoundEnabled = enabled;
+      try {
+        localStorage.setItem('ordering_receiver_sound_enabled', enabled ? 'true' : 'false');
+      } catch (_) {}
+      if (enabled) {
+        getAudioContext();
+        showToast('🔔 ベル通知を有効にしました');
+      } else {
+        showToast('🔕 ベル通知をオフにしました');
+      }
+    }
+
+    // 院内ベル・チャイム音再生 (Web Audio API)
+    function playNotificationSound(type = 'normal') {
+      if (!isSoundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+
+        if (type === 'urgent') {
+          // 🚨 至急オーダー用: 注意を喚起する高めの2連アラート音
+          [0, 0.15].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, now + delay);
+            gain.gain.setValueAtTime(0.28, now + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + delay);
+            osc.stop(now + delay + 0.12);
+          });
+        } else {
+          // 🔔 通常オーダー用: 澄んだ心地よい2音チャイム（ソ: 784Hz -> ド: 1046.5Hz）
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(783.99, now);
+          gain1.gain.setValueAtTime(0.3, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.45);
+
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1046.50, now + 0.22);
+          gain2.gain.setValueAtTime(0.35, now + 0.22);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.22);
+          osc2.stop(now + 0.85);
+        }
+      } catch (err) {
+        console.warn('ベル音声再生エラー:', err);
+      }
+    }
+
+    function testNotificationSound() {
+      getAudioContext();
+      playNotificationSound('normal');
+      showToast('🔊 ベル通知音を再生しました（ピンポーン♪）');
+    }
+
+    // =========================================================
+    // ポーリング再取得 & 新着ベル検知
     // =========================================================
     async function loadOrdersList() {
       try {
         const res = await fetch('/api/orders?_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (data.success && data.orders) {
+          const newOrders = data.orders.filter(o => !knownOrderIds.has(o.orderId));
+
+          if (!isInitialLoad && newOrders.length > 0) {
+            // 🔔 新着オーダーを検知！ベルを鳴らす
+            const hasUrgent = newOrders.some(o => o.priority === 'STAT' || o.priority === 'URGENT');
+            playNotificationSound(hasUrgent ? 'urgent' : 'normal');
+
+            const first = newOrders[0];
+            const pName = (first.patient && first.patient.name) ? first.patient.name : '患者';
+            showToast(`🔔 新着オーダー受信 [${newOrders.length}件]: ${escapeHtml(pName)} 様 (${escapeHtml(first.title || first.orderType)})`);
+          }
+
+          // 既知IDリストを更新
+          data.orders.forEach(o => knownOrderIds.add(o.orderId));
+          isInitialLoad = false;
+
           currentOrders = data.orders;
           renderOrdersTable(currentOrders);
         }
@@ -3034,6 +3156,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       renderOrdersTable(currentOrders);
       initSplitResizer();
+      const soundCheck = document.getElementById('soundAlertToggle');
+      if (soundCheck) soundCheck.checked = isSoundEnabled;
     });
     renderOrdersTable(currentOrders);
     initSplitResizer();

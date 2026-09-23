@@ -33,10 +33,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', require('./routes/authRoutes'));
 
 // 認証チェック：未ログインユーザーがアクセスした場合、最初にまず /login へ遷移させる
-// 外部からの点滴・食事・放射線オーダー受信用API も除外対象に設定
+// 外部からの点滴・食事・放射線・総合オーダー受信用API も除外対象に設定
 const publicPaths = [
   '/login',
   '/register',
+  '/api/orders/receive',
   '/api/iv-orders/receive',
   '/api/meal-orders/receive',
   '/api/radiology-orders/receive'
@@ -51,7 +52,8 @@ const requireAuth = (req, res, next) => {
 
 app.use(requireAuth);
 
-// 認証が必要なAPI
+// 認証が必要なAPI（一部公開エンドポイント含む）
+app.use('/api', require('./routes/orderRoutes'));
 app.use('/api', require('./routes/targetPersonRoutes'));
 app.use('/api', require('./routes/articleRoutes'));
 app.use('/api', require('./routes/reportRoutes'));

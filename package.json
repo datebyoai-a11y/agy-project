@@ -1,0 +1,21 @@
+{
+  "name": "hospital-integrated-systems",
+  "version": "1.0.0",
+  "description": "交雄会だて病院 医療統合システム（インシデント管理・電子カルテ & オーダリング 送信・受信システム）",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "start:daemon": "./start.sh start",
+    "stop": "./start.sh stop",
+    "status": "./start.sh status",
+    "restart": "./start.sh restart"
+  },
+  "keywords": [
+    "hospital",
+    "medical",
+    "incident",
+    "ordering"
+  ],
+  "author": "",
+  "license": "ISC"
+}

@@ -15,3 +15,8 @@ Thumbs.db
 
 # MongoDB runtime data
 mongodb/data/
+
+# Temporary and agent files
+*.pid
+.launcher.pid
+.agents/
