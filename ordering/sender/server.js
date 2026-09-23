@@ -146,6 +146,96 @@ app.get('/', (req, res) => {
   });
 });
 
+// 1-2. 注射指示箋（紙様式忠実再現・入力画面案） (GET /injection-sheet-form)
+app.get('/injection-sheet-form', (req, res) => {
+  const hostHeader = req.headers.host || `localhost:${PORT}`;
+  const hostname = hostHeader.split(':')[0] || 'localhost';
+  const isEncrypted = req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
+  const currentProto = isEncrypted ? 'https' : 'http';
+  const receiverPort = isEncrypted ? (process.env.HTTPS_RECEIVER_PORT || 5443) : 5000;
+
+  const queryPatientId = String(req.query.patientId || req.query.targetId || req.query.id || '').trim();
+  const queryPatientName = String(req.query.patientName || req.query.name || '').trim();
+  const queryPatientDept = String(req.query.patientDept || req.query.dept || '').trim();
+  const orderId = String(req.query.orderId || '').trim();
+
+  let patientList = [...SamplePatients];
+  let selectedPatient = patientList[0];
+
+  if (queryPatientId || queryPatientName) {
+    const existingIndex = patientList.findIndex(p => 
+      (queryPatientId && p.id.toLowerCase() === queryPatientId.toLowerCase()) ||
+      (queryPatientName && p.name === queryPatientName)
+    );
+    if (existingIndex !== -1) {
+      selectedPatient = patientList[existingIndex];
+    } else {
+      selectedPatient = {
+        id: queryPatientId || 'EXT001',
+        name: queryPatientName || 'カルテ連携患者',
+        kana: '',
+        age: 65,
+        gender: '男',
+        birthDate: '1961-05-15',
+        era: '昭',
+        ward: queryPatientDept || 'しおかぜ',
+        room: '302号室',
+        department: queryPatientDept || '内科',
+        infection: '無',
+        mobility: '徒歩',
+        height: 165,
+        weight: 60,
+        examCategory: '一般診療'
+      };
+      patientList.unshift(selectedPatient);
+    }
+  }
+
+  // 既存オーダーの引き継ぎ
+  let targetOrder = null;
+  if (orderId) {
+    targetOrder = sentOrders.find(o => o.orderId === orderId);
+    if (targetOrder && targetOrder.patient) {
+      selectedPatient = targetOrder.patient;
+    }
+  }
+
+  res.render('injection_sheet_form', {
+    patients: patientList,
+    selectedPatient: selectedPatient,
+    targetOrder: targetOrder,
+    orderId: orderId,
+    port: req.socket.localPort || PORT,
+    isHttps: isEncrypted,
+    protocol: currentProto,
+    serverHostname: hostname,
+    defaultReceiverUrl: `${currentProto}://${hostname}:${receiverPort}`,
+  });
+});
+
+// 1-3. 採用薬一覧（検索機能付き） (GET /medicines-list)
+app.get('/medicines-list', (req, res) => {
+  const hostHeader = req.headers.host || `localhost:${PORT}`;
+  const hostname = hostHeader.split(':')[0] || 'localhost';
+  const isEncrypted = req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
+  const currentProto = isEncrypted ? 'https' : 'http';
+
+  const initialCategory = String(req.query.category || req.query.cat || '').trim();
+  const initialKeyword = String(req.query.q || '').trim();
+
+  res.render('medicines_list', {
+    port: req.socket.localPort || PORT,
+    isHttps: isEncrypted,
+    protocol: currentProto,
+    serverHostname: hostname,
+    medicineStats: medicineMaster.getMedicineStats(),
+    initialCategory: initialCategory,
+    initialKeyword: initialKeyword
+  });
+});
+
+
+
 // 2. 薬剤マスタ検索 API (GET /api/medicines)
 app.get('/api/medicines', (req, res) => {
   const { q = '', category = '', adoptType = '', limit = 50 } = req.query;
@@ -175,6 +265,31 @@ app.get('/api/medicines/:id', (req, res) => {
 app.get('/api/medicines-stats', (req, res) => {
   res.json({ success: true, stats: medicineMaster.getMedicineStats() });
 });
+
+// 2-4. エクセルファイル (薬品集マスタ.xlsx) から薬品マスタ再取込 API
+app.post('/api/medicines/reload-from-excel', (req, res) => {
+  try {
+    const { execSync } = require('child_process');
+    const scriptPath = path.join(__dirname, '..', 'scripts', 'import-medicines.py');
+    console.log('[MedicineMaster] エクセルファイルからの再取り込みを実行中...');
+    const output = execSync(`python3 "${scriptPath}"`, { encoding: 'utf8' });
+    console.log(output);
+
+    // メモリ上のマスタを再読込
+    medicineMaster.loadMedicines();
+
+    res.json({
+      success: true,
+      message: 'エクセルファイル (薬品集マスタ.xlsx) からの再取り込みが完了しました',
+      stats: medicineMaster.getMedicineStats(),
+      count: medicineMaster.getAllMedicines().length
+    });
+  } catch (err) {
+    console.error('[MedicineMaster] エクセル取込エラー:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // 3. 送信履歴取得 API
 app.get('/api/orders/history', (req, res) => {

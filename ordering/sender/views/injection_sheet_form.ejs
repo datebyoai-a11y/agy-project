@@ -1,0 +1,2991 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注射指示箋 入力画面案 (原本様式忠実再現) - だて病院</title>
+  <script>window.name = 'app_injection_sheet';</script>
+  <style>
+    /* 全体リセット & 画面表示用ベーススタイル */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #e2e8f0;
+      color: #000000;
+      font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", "MS P明朝", serif;
+      padding: 1rem 0.5rem 52px 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* 上部操作ツールバー (画面操作用・印刷時は非表示) */
+    .screen-toolbar {
+      width: 100%;
+      max-width: 1180px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .screen-toolbar .title-area {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .screen-toolbar .title-area h2 {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #f8fafc;
+    }
+    .screen-toolbar .badge {
+      background: #0284c7;
+      color: white;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .screen-toolbar .actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-action {
+      background: #334155;
+      color: white;
+      border: 1px solid #475569;
+      padding: 0.4rem 0.8rem;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    .btn-action:hover {
+      background: #475569;
+    }
+    .btn-action.btn-primary {
+      background: #0284c7;
+      border-color: #0284c7;
+    }
+    .btn-action.btn-primary:hover {
+      background: #0369a1;
+    }
+    .btn-action.btn-success {
+      background: #059669;
+      border-color: #059669;
+    }
+    .btn-action.btn-success:hover {
+      background: #047857;
+    }
+
+    /* 用紙コンテナ (A4横サイズを忠実に模倣) */
+    .paper-container {
+      width: 1140px;
+      background: #ffffff;
+      padding: 24px 28px 20px 28px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    /* パンチ穴 (上部4穴の再現) */
+    .punch-holes-bar {
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-evenly;
+      pointer-events: none;
+    }
+    .punch-hole {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      border: 1px solid #94a3b8;
+    }
+
+    /* ヘッダー全体 */
+    .inj-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    /* ヘッダー左側: 表題「注射指示」 & 年月 */
+    .inj-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .inj-main-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #000000;
+      line-height: 1;
+    }
+    .inj-year-month-area {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-left: 110px; /* 原本の右寄り配置に忠実 */
+    }
+    .inj-year-month-area input {
+      border: none;
+      border-bottom: 1px solid #000;
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      font-family: inherit;
+      outline: none;
+      background: transparent;
+    }
+
+    /* ヘッダー右側: 担当医・患者情報テーブル (原本忠実) */
+    .inj-meta-table {
+      border-collapse: collapse;
+      border: 1.5px solid #000000;
+      font-size: 13px;
+    }
+    .inj-meta-table td, .inj-meta-table th {
+      border: 1px solid #000000;
+      padding: 3px 6px;
+      vertical-align: middle;
+    }
+    .inj-meta-table th {
+      font-weight: normal;
+      background: transparent;
+      text-align: center;
+    }
+
+    /* 担当医枠 */
+    .meta-doctor-cell {
+      width: 80px;
+      height: 52px;
+      text-align: left;
+      vertical-align: top !important;
+      position: relative;
+    }
+    .meta-doctor-label {
+      font-size: 12px;
+    }
+    .doctor-stamp-box {
+      position: absolute;
+      bottom: 4px;
+      right: 12px;
+      width: 38px;
+      height: 38px;
+      border: 1.5px solid #dc2626;
+      border-radius: 50%;
+      color: #dc2626;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      background: rgba(254, 242, 242, 0.3);
+    }
+    .doctor-stamp-box span.stamp-name {
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 1px;
+    }
+
+    /* 病棟・号室 */
+    .meta-ward-room-cell {
+      width: 90px;
+      text-align: center;
+    }
+    .meta-input-inline {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ID・氏名 */
+    .meta-id-name-cell {
+      width: 320px;
+      padding: 2px 8px !important;
+    }
+    .meta-id-row {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #71717a;
+      padding-bottom: 2px;
+      margin-bottom: 2px;
+    }
+    .meta-name-row {
+      display: flex;
+      align-items: center;
+    }
+    .underline-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: bold;
+      flex: 1;
+      padding-left: 6px;
+    }
+
+    /* 生年月日・性別 */
+    .meta-birth-sex-cell {
+      width: 160px;
+      font-size: 12px;
+    }
+    .era-circle, .gender-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid #dc2626;
+      border-radius: 50%;
+      color: #dc2626;
+      font-weight: bold;
+    }
+    .clickable-option {
+      cursor: pointer;
+      user-select: none;
+      padding: 0 1px;
+    }
+
+    /* メイン指示グリッドテーブル (原本忠実再現) */
+    .main-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #000000;
+      table-layout: fixed;
+    }
+    .main-grid-table th, .main-grid-table td {
+      border: 1px solid #000000;
+      padding: 0;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    /* ヘッダー行 */
+    .grid-header-row th {
+      height: 26px;
+      font-weight: normal;
+      font-size: 13px;
+      background: transparent;
+    }
+    .col-no {
+      width: 28px;
+    }
+    .col-rx {
+      width: 440px;
+    }
+    th.col-rx {
+      font-size: 15px !important;
+      letter-spacing: 2em; /* 「処　　方」の原本忠実な字間 */
+      text-indent: 2em;
+    }
+    td.col-rx {
+      font-size: 12.5px;
+      letter-spacing: normal !important;
+      text-indent: 0 !important;
+    }
+    .col-route {
+      width: 82px;
+    }
+    .col-date-title {
+      width: 48px;
+      font-size: 13px !important;
+    }
+    .col-day-cell {
+      width: 36px;
+    }
+
+    /* ヘッダーの日付入力欄 */
+    .header-day-input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      outline: none;
+      text-align: center;
+      font-size: 12px;
+      font-family: inherit;
+      background: transparent;
+    }
+
+    /* 処方行 (全10行) */
+    .grid-data-row {
+      height: 52px;
+    }
+    .cell-no {
+      font-size: 11px;
+      color: #475569;
+      font-family: -apple-system, BlinkMacSystemFont, monospace;
+    }
+    .cell-rx {
+      text-align: left !important;
+      padding: 3px 6px !important;
+      vertical-align: top !important;
+      position: relative;
+      letter-spacing: normal !important;
+      text-indent: 0 !important;
+    }
+    .rx-textarea {
+      width: 100%;
+      height: 46px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: "游明朝", "Yu Mincho", serif;
+      font-size: 12.5px;
+      line-height: 1.35;
+      background: transparent;
+      letter-spacing: normal !important;
+      text-indent: 0 !important;
+    }
+    .rx-quick-btn {
+      position: absolute;
+      right: 4px;
+      bottom: 3px;
+      font-size: 11px;
+      background: #e0f2fe;
+      border: 1px solid #7dd3fc;
+      border-radius: 4px;
+      padding: 1px 6px;
+      cursor: pointer;
+      color: #0369a1;
+      font-weight: bold;
+      opacity: 0.85;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.15s ease;
+    }
+    .rx-quick-btn:hover {
+      opacity: 1;
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+    }
+
+    /* 💊 処方枠インクリメンタル検索 フローティングパネル (入力時に自動発動) */
+    .sheet-floating-search {
+      position: fixed;
+      width: 520px;
+      max-height: 300px;
+      background: #ffffff;
+      border: 2px solid #0284c7;
+      border-radius: 8px;
+      box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.35), 0 8px 16px rgba(0, 0, 0, 0.15);
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      text-align: left;
+    }
+    .sfs-header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #0284c7;
+    }
+    .sfs-guide {
+      font-size: 10.5px;
+      color: #94a3b8;
+    }
+    .sfs-list-container {
+      overflow-y: auto;
+      max-height: 255px;
+      background: #ffffff;
+    }
+    .sfs-item {
+      padding: 7px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.1s ease;
+    }
+    .sfs-item:hover, .sfs-item.active {
+      background: #e0f2fe;
+    }
+    .sfs-item.active {
+      border-left: 4px solid #0284c7;
+      background: #e0f2fe;
+    }
+    .sfs-name {
+      font-weight: bold;
+      font-size: 12.5px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sfs-spec {
+      color: #0369a1;
+      font-weight: bold;
+      font-size: 11.5px;
+      margin-left: 4px;
+    }
+    .sfs-sub {
+      color: #64748b;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .sfs-action-btn {
+      background: #0284c7;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* 投与経路セル (is, im, iv / DIV, IVH, ( )) 原本忠実配置 */
+    .cell-route {
+      font-size: 11px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 2px !important;
+      user-select: none;
+    }
+    .route-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      row-gap: 2px;
+      align-items: center;
+      text-align: center;
+      line-height: 1.15;
+    }
+    .route-item {
+      cursor: pointer;
+      padding: 1px 0;
+      position: relative;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .route-item:hover {
+      color: #0284c7;
+    }
+    .route-selected {
+      border: 1.5px solid #dc2626;
+      border-radius: 50%;
+      color: #dc2626;
+      font-weight: bold;
+      padding: 0 2px;
+    }
+
+    /* 日付列 (指示 / 実施) */
+    .cell-date-label {
+      font-size: 11px;
+    }
+    .split-top-bottom {
+      display: flex;
+      flex-direction: column;
+      height: 52px;
+    }
+    .split-top {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px dashed #000000; /* 原本の破線 */
+      font-size: 11px;
+    }
+    .split-bottom {
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    /* 15日グリッドの各セル (上段:指示サイン/下段:実施印) */
+    .day-matrix-cell {
+      border-right: 1px solid #000000 !important;
+    }
+    /* 日付列との境界縦線 (原本通り少し太め) */
+    .border-thick-left {
+      border-left: 1.5px solid #000000 !important;
+    }
+    .cell-interactive {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s ease;
+    }
+    .cell-interactive:hover {
+      background: #f8fafc;
+    }
+
+    /* フッター部 (病棟枠 / 薬剤師枠 / だて病院ロゴ) */
+    .inj-footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    /* 病棟枠 (左下独立枠) */
+    .ward-stamp-box {
+      border: 1px solid #000000;
+      width: 75px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      letter-spacing: 0.5em;
+      text-indent: 0.5em;
+      cursor: pointer;
+      user-select: none;
+      background: transparent;
+    }
+    .ward-stamp-box.stamped {
+      border-color: #dc2626;
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    /* 薬剤師テーブル (メインテーブル直下に連動配置) */
+    .pharmacist-container {
+      display: flex;
+      position: absolute;
+      right: 0;
+      top: -9px; /* メインテーブル底辺にピッタリ接合 */
+    }
+    .pharmacist-table {
+      border-collapse: collapse;
+      border: 1.5px solid #000000;
+      table-layout: fixed;
+    }
+    .pharmacist-table th, .pharmacist-table td {
+      border: 1px solid #000000;
+      height: 28px;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0;
+    }
+    .pharmacist-th {
+      width: 130px; /* 投与経路＋日付列と直結 */
+      font-size: 13px;
+      font-weight: normal;
+      letter-spacing: 0.3em;
+      text-indent: 0.3em;
+    }
+    .pharmacist-cell {
+      width: 36px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pharmacist-cell:hover {
+      background: #f8fafc;
+    }
+
+    /* 右下欄外の病院・様式表示 */
+    .footer-hospital-stamp {
+      position: absolute;
+      right: 0;
+      bottom: -22px;
+      font-size: 11px;
+      color: #1e293b;
+      letter-spacing: 0.05em;
+    }
+
+    /* 💊 薬剤マスタ インクリメンタル検索モーダル */
+    .med-search-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .med-search-box {
+      background: #ffffff;
+      width: 860px;
+      max-width: 95vw;
+      height: 82vh;
+      border-radius: 10px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+    }
+    .med-search-header {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0284c7;
+    }
+    .med-search-body {
+      padding: 1rem 1.25rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+    .med-search-tabs .tab-btn {
+      padding: 0.35rem 0.75rem;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .med-search-tabs .tab-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .med-search-tabs .tab-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3);
+    }
+    .med-search-input {
+      width: 100%;
+      padding: 0.65rem 2.2rem 0.65rem 0.85rem;
+      border: 2px solid #94a3b8;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .med-search-input:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+    }
+    .med-search-list-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+    .med-modal-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      text-align: left;
+    }
+    .med-modal-table th {
+      position: sticky;
+      top: 0;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 0.55rem 0.7rem;
+      border-bottom: 2px solid #cbd5e1;
+      font-weight: bold;
+      z-index: 5;
+    }
+    .med-modal-table td {
+      padding: 0.55rem 0.7rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .med-modal-tr {
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+    .med-modal-tr:hover {
+      background: #f0fdf4;
+    }
+    .med-modal-tr.active-row {
+      background: #e0f2fe !important;
+      outline: 2px solid #0284c7;
+    }
+    .badge-cat {
+      display: inline-block;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .badge-iv {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .badge-oral {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-ext {
+      background: #f3e8ff;
+      color: #7e22ce;
+      border: 1px solid #e9d5ff;
+    }
+    .med-btn-insert {
+      background: #0284c7;
+      color: #ffffff;
+      border: 1px solid #0369a1;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+    .med-btn-insert:hover {
+      background: #0369a1;
+    }
+
+    /* 印刷用スタイル (A4横サイズ1枚にピッタリ収める最適化) */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 4mm 6mm;
+      }
+      *, *::before, *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+      html, body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .paper-container {
+        box-shadow: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+      }
+      .punch-holes-bar {
+        display: none !important;
+      }
+      .rx-quick-btn {
+        display: none !important;
+      }
+      .sheet-floating-search, .med-search-overlay, .sheet-med-hover-card, .rx-cell-header, .rx-med-info-badge, .sheet-status-bar, .status-history-modal {
+        display: none !important;
+      }
+      /* 入力欄の印刷時表示 */
+      input, textarea {
+        border: none !important;
+        background: transparent !important;
+        outline: none !important;
+        resize: none !important;
+        color: #000000 !important;
+        font-family: inherit !important;
+      }
+      .rx-textarea {
+        height: auto !important;
+        min-height: 40px !important;
+        overflow: hidden !important;
+      }
+      /* テーブルの改ページ防止 */
+      .matrix-table {
+        page-break-inside: avoid !important;
+        width: 100% !important;
+      }
+      tr {
+        page-break-inside: avoid !important;
+      }
+    }
+
+    /* 💡 処方枠ヘッダー & 薬品名ホバー表示 (背景に溶け込む単純な黒文字) */
+    .rx-cell-header {
+      position: absolute;
+      top: 3px;
+      right: 6px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      pointer-events: auto;
+    }
+    .rx-med-info-badge {
+      display: none;
+      align-items: center;
+      gap: 2px;
+      background: transparent;
+      color: #000000;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: normal !important;
+      text-indent: 0 !important;
+      cursor: pointer;
+      box-shadow: none;
+      transition: color 0.15s ease;
+      font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", serif;
+      user-select: none;
+    }
+    .rx-med-info-badge:hover {
+      background: transparent;
+      color: #000000;
+      text-decoration: underline;
+      border: none;
+      box-shadow: none;
+    }
+
+    /* 💡 薬品詳細・注意書き ホバーフローティングウィンドウ */
+    .sheet-med-hover-card {
+      position: fixed;
+      z-index: 2147483000;
+      background: #ffffff;
+      color: #1e293b;
+      border-radius: 12px;
+      box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(2, 132, 199, 0.18);
+      border: 1.5px solid #0284c7;
+      padding: 14px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      width: 380px;
+      max-width: 90vw;
+      max-height: 480px;
+      overflow-y: auto;
+      pointer-events: auto;
+      transition: opacity 0.15s ease;
+      box-sizing: border-box;
+    }
+    .smhc-med-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .smhc-multi-idx {
+      font-size: 10px;
+      font-weight: 800;
+      color: #0284c7;
+      background: #f0f9ff;
+      border-radius: 3px;
+      padding: 1px 6px;
+      align-self: flex-start;
+      margin-bottom: 2px;
+    }
+    .smhc-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 10px 0;
+    }
+    .smhc-header {
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 6px;
+    }
+    .smhc-tag-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .smhc-tag-cat {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #86efac;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .smhc-tag-brand {
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .smhc-tag-spec {
+      background: #f8fafc;
+      color: #0369a1;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .smhc-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 3px;
+    }
+    .smhc-generic {
+      font-size: 11px;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+    .smhc-category {
+      font-size: 10px;
+      color: #64748b;
+    }
+    .smhc-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .smhc-section {
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .smhc-usage-sec {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .smhc-sec-label {
+      font-weight: 800;
+      color: #0369a1;
+      font-size: 11px;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .smhc-usage-text {
+      color: #1e293b;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .smhc-warning-sec {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+    .smhc-sec-label.warning {
+      color: #b45309;
+    }
+    .smhc-sec-text.warning {
+      color: #92400e;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    /* 最下段固定ステータスバー (画面操作専用) */
+    .sheet-status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 38px;
+      background: #0f172a;
+      border-top: 1.5px solid #1e293b;
+      color: #cbd5e1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.78rem;
+      z-index: 9999;
+      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      user-select: none;
+    }
+    .status-bar-container {
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .status-section {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .status-left {
+      flex: 1 1 45%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .status-center {
+      flex: 1 1 45%;
+      min-width: 0;
+      overflow: hidden;
+      border-left: 1px solid #334155;
+      padding-left: 0.75rem;
+    }
+    .status-right {
+      flex: 0 0 auto;
+      gap: 0.5rem;
+      border-left: 1px solid #334155;
+      padding-left: 0.75rem;
+    }
+    .status-indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      flex-shrink: 0;
+    }
+    .status-label {
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+    .status-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+      min-width: 0;
+      transition: color 0.2s ease;
+    }
+    .status-action-text {
+      color: #38bdf8;
+    }
+    .status-notice-text {
+      color: #a7f3d0;
+    }
+    .status-time {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.7rem;
+      color: #64748b;
+      flex-shrink: 0;
+      margin-left: 0.25rem;
+    }
+    .status-badge-connection {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #0284c7;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    .status-log-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
+    }
+    .status-log-btn:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: #64748b;
+    }
+
+    /* アニメーション用 (操作や通知が変わった瞬間の視覚的フィードバック) */
+    @keyframes statusPulseAction {
+      0% { background: rgba(56, 189, 248, 0.35); border-radius: 4px; }
+      100% { background: transparent; }
+    }
+    @keyframes statusPulseNotice {
+      0% { background: rgba(52, 211, 153, 0.35); border-radius: 4px; }
+      100% { background: transparent; }
+    }
+    .status-pulse-action {
+      animation: statusPulseAction 0.9s ease-out;
+    }
+    .status-pulse-notice {
+      animation: statusPulseNotice 0.9s ease-out;
+    }
+
+    /* 操作・通知 履歴ポップアップモーダル */
+    .status-history-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0 1.5rem 48px 0;
+      z-index: 10001;
+    }
+    .status-history-dialog {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      width: 540px;
+      max-width: 92vw;
+      max-height: 420px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .status-history-header {
+      padding: 0.6rem 0.85rem;
+      background: #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    .status-history-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+    }
+    .status-history-close-btn:hover {
+      color: #ffffff;
+      background: #334155;
+    }
+    .status-history-body {
+      padding: 0.6rem;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      background: #0b1120;
+    }
+    .status-history-item {
+      padding: 0.4rem 0.6rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .status-history-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #64748b;
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      margin-top: 1px;
+    }
+    .status-history-type {
+      font-weight: bold;
+      font-size: 0.68rem;
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .type-action { background: #0369a1; color: #e0f2fe; }
+    .type-notice { background: #065f46; color: #d1fae5; }
+    .type-warning { background: #92400e; color: #fef3c7; }
+    .type-error { background: #991b1b; color: #fee2e2; }
+    .status-history-msg {
+      color: #f1f5f9;
+      word-break: break-all;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .status-history-footer {
+      padding: 0.45rem 0.85rem;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-history-clear-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .status-history-clear-btn:hover {
+      color: #f87171;
+    }
+    .status-history-ok-btn {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 0.28rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .status-history-ok-btn:hover {
+      background: #0369a1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 上部操作ツールバー (画面操作専用・印刷時は非表示) -->
+  <div class="screen-toolbar no-print">
+    <div class="title-area">
+      <span style="font-size: 1.3rem;">💉</span>
+      <div>
+        <h2>注射指示箋 入力画面（原本用紙レイアウト再現 案）</h2>
+        <div style="font-size: 0.75rem; color: #94a3b8;">
+          だて病院 様式(2026.5 1.0)忠実再現 / 処方・日付・経路・指示実施サインを直接入力可能
+        </div>
+      </div>
+      <span class="badge">A4横様式案</span>
+    </div>
+    <div class="actions">
+      <!-- 戻るボタン: オーダリング画面へ戻る（既存タブへ移行） -->
+      <a href="http://<%= serverHostname %>:<%= port %>/?orderType=IV&patientId=<%= encodeURIComponent(selectedPatient.id) %>" target="app_ordering_sender" onclick="return returnToOrdering(this.href);" class="btn-action">
+        <span>◀</span> <span>オーダリング画面へ戻る</span>
+      </a>
+      <!-- 薬品検索モーダルを開くボタン (インクリメンタル検索) -->
+      <button type="button" class="btn-action" onclick="openMedSearchModal()" style="background:#0284c7; border-color:#38bdf8;" title="薬品マスタからインクリメンタル検索して指示箋に入力">
+        <span>🔍</span> <span>薬品検索 (インクリメンタル)</span>
+      </button>
+      <!-- 採用薬一覧へ飛ぶボタン -->
+      <a href="/medicines-list?cat=注射剤" target="app_medicines_list" class="btn-action" style="background:#334155; border-color:#475569;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
+        <span>📚</span> <span>採用薬一覧 ↗</span>
+      </a>
+      <!-- 対象患者バッジ (表示のみ / 選択不可) -->
+      <div style="background:#0f172a; color:#fef08a; border:1px solid #334155; padding:0.3rem 0.65rem; border-radius:4px; font-size:0.8rem; display:flex; align-items:center; gap:0.4rem; white-space:nowrap;" title="対象患者（カルテ引き継ぎ・表示専用）">
+        <span style="color:#94a3b8; font-size:0.75rem;">👤 対象患者:</span>
+        <strong style="color:white;">[<%= selectedPatient.id %>] <%= selectedPatient.name %> 様</strong>
+        <span style="font-size:0.75rem; color:#7dd3fc;">(<%= selectedPatient.ward || 'しおかぜ' %>)</span>
+      </div>
+      <input type="hidden" id="quickPatientSelect" value="<%= selectedPatient.id %>">
+      <!-- 保存ボタン -->
+      <button type="button" class="btn-action btn-success" onclick="saveSheetData()">
+        <span>💾</span> <span>指示内容を保存</span>
+      </button>
+      <!-- 送信ボタン: 受信部門(Port 5000) & 電子カルテへ反映 -->
+      <button type="button" class="btn-action btn-primary" onclick="submitToOrderingAndCarte()">
+        <span>🚀</span> <span>オーダー確定送信</span>
+      </button>
+      <!-- A4指示箋印刷ボタン -->
+      <button type="button" class="btn-action" onclick="triggerPrintSheet()" style="background:#0284c7; border-color:#38bdf8; font-size:0.85rem;" title="原本様式のままA4横1枚で印刷します">
+        <span>🖨️</span> <span>A4指示箋印刷</span>
+      </button>
+      <!-- クリアボタン -->
+      <button type="button" class="btn-action" onclick="clearSheetForm()" style="background:#ef4444; border-color:#dc2626;">
+        <span>🧹</span> <span>クリア</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- A4横 用紙コンテナ (原本レイアウトを忠実に再現) -->
+  <div class="paper-container" id="printablePaper">
+    
+    <!-- 上部パンチ穴 (原本の4つ穴を忠実に再現) -->
+    <div class="punch-holes-bar">
+      <div class="punch-hole" style="margin-left: 40px;"></div>
+      <div class="punch-hole"></div>
+      <div class="punch-hole"></div>
+      <div class="punch-hole" style="margin-right: 40px;"></div>
+    </div>
+
+    <!-- ヘッダー部 -->
+    <div class="inj-header">
+      <!-- 左側: 注射指示 & 年月 -->
+      <div class="inj-title-area">
+        <h1 class="inj-main-title">注射指示</h1>
+        <div class="inj-year-month-area">
+          <input type="text" id="sheetYear" value="<%= new Date().getFullYear() %>" style="width: 50px;">
+          <span>年</span>
+          <input type="text" id="sheetMonth" value="<%= new Date().getMonth() + 1 %>" style="width: 32px;">
+          <span>月</span>
+        </div>
+      </div>
+
+      <!-- 右側: 担当医・患者情報テーブル (原本忠実) -->
+      <table class="inj-meta-table">
+        <tr>
+          <!-- 担当医 (2行結合) -->
+          <td rowspan="2" class="meta-doctor-cell">
+            <div class="meta-doctor-label">担当医</div>
+            <div class="doctor-stamp-box" id="doctorStamp" onclick="toggleDoctorStamp()" title="クリックで印鑑切替">
+              <span style="font-size:7px;">担当医</span>
+              <span class="stamp-name" id="docStampName">北島</span>
+            </div>
+          </td>
+          <!-- 病棟 -->
+          <th style="width: 44px;">病棟</th>
+          <td class="meta-ward-room-cell">
+            <input type="text" class="meta-input-inline" id="metaWard" value="<%= selectedPatient.ward || 'しおかぜ' %>" readonly tabindex="-1" style="cursor:default;">
+          </td>
+          <!-- ID -->
+          <td class="meta-id-name-cell">
+            <div class="meta-id-row">
+              <span style="width: 32px; font-weight: normal;">ID</span>
+              <input type="text" class="underline-input" id="metaPatientId" value="<%= selectedPatient.id %>" readonly tabindex="-1" style="cursor:default; font-family:monospace; font-weight:bold;">
+            </div>
+          </td>
+          <!-- 生年月日 -->
+          <th style="width: 60px;">生年月日</th>
+          <td class="meta-birth-sex-cell" style="user-select:none;">
+            <span class="clickable-option" id="eraM" style="cursor:default;">M</span>・<span class="clickable-option" id="eraT" style="cursor:default;">T</span>・<span class="clickable-option era-circle" id="eraS" style="cursor:default;">S</span>
+            <input type="text" id="metaBirthYear" value="<%= selectedPatient.birthDate ? selectedPatient.birthDate.split('-')[0].slice(2) : '21' %>" readonly tabindex="-1" style="width: 24px; text-align: center; border: none; border-bottom: 1px solid #000; font-family: inherit; font-size: 12px; outline: none; cursor:default;"> 年
+            <input type="text" id="metaBirthMonth" value="<%= selectedPatient.birthDate ? selectedPatient.birthDate.split('-')[1] : '12' %>" readonly tabindex="-1" style="width: 20px; text-align: center; border: none; border-bottom: 1px solid #000; font-family: inherit; font-size: 12px; outline: none; cursor:default;"> 月
+            <input type="text" id="metaBirthDay" value="<%= selectedPatient.birthDate ? selectedPatient.birthDate.split('-')[2] : '06' %>" readonly tabindex="-1" style="width: 20px; text-align: center; border: none; border-bottom: 1px solid #000; font-family: inherit; font-size: 12px; outline: none; cursor:default;"> 日
+          </td>
+        </tr>
+        <tr>
+          <!-- 号室 -->
+          <th>号室</th>
+          <td class="meta-ward-room-cell">
+            <input type="text" class="meta-input-inline" id="metaRoom" value="<%= selectedPatient.room || '302号室' %>" readonly tabindex="-1" style="cursor:default;">
+          </td>
+          <!-- 氏名 -->
+          <td class="meta-id-name-cell">
+            <div class="meta-name-row">
+              <span style="width: 32px; font-weight: normal;">氏名</span>
+              <input type="text" class="underline-input" id="metaPatientName" value="<%= selectedPatient.name %>" readonly tabindex="-1" style="cursor:default; font-weight:bold; font-size:13px;">
+              <span style="font-size: 13px; font-weight: bold; margin-left: 4px;">様</span>
+            </div>
+          </td>
+          <!-- 性別 -->
+          <th>性別</th>
+          <td class="meta-birth-sex-cell" style="user-select:none;">
+            <span class="clickable-option <%= selectedPatient.gender === '男' ? 'gender-circle' : '' %>" id="genderMale" style="cursor:default;">男</span>
+            &nbsp;
+            <span class="clickable-option <%= selectedPatient.gender === '女' ? 'gender-circle' : '' %>" id="genderFemale" style="cursor:default;">女</span>
+            &nbsp;&nbsp;
+            <input type="text" id="metaAge" value="<%= selectedPatient.age || '70' %>" readonly tabindex="-1" style="width: 28px; text-align: center; border: none; border-bottom: 1px solid #000; font-family: inherit; font-size: 12px; outline: none; cursor:default;"> 才
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- メイン指示テーブル (全10行 × 15日グリッド: 原本完全再現) -->
+    <table class="main-grid-table">
+      <thead>
+        <tr class="grid-header-row">
+          <th class="col-no"></th>
+          <th class="col-rx">処　　方</th>
+          <th class="col-route"></th>
+          <th class="col-date-title">日付</th>
+          <!-- 15日分カレンダーヘッダー -->
+          <% for(let d = 1; d <= 15; d++) { %>
+            <th class="col-day-cell <%= d === 1 ? 'border-thick-left' : '' %>">
+              <input type="text" class="header-day-input" id="headerDay_<%= d %>" value="<%= d %>">
+            </th>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody id="sheetTbody">
+        <% 
+          // 既存オーダーの薬品リストを引き継ぐ（もしあれば）
+          const existingMeds = (targetOrder && targetOrder.details && targetOrder.details.medicines) ? targetOrder.details.medicines : [];
+        %>
+        <!-- 1行目〜10行目 (原本に忠実な10行構成) -->
+        <% for(let r = 1; r <= 10; r++) { 
+             const currentMed = existingMeds[r - 1] || null;
+             let defaultRxText = '';
+             let defaultRoute = 'DIV';
+             if (currentMed) {
+               defaultRxText = `${currentMed.medicine || ''} ${currentMed.dosage || ''}\n${currentMed.rate ? '速度: ' + currentMed.rate : ''} ${currentMed.remarks || ''}`.trim();
+               defaultRoute = currentMed.route || 'DIV';
+             } else if (r === 1 && !targetOrder) {
+               defaultRxText = 'ソルデム3号輸液 200mL 1袋\nファモチジン静注 20mg 1管 (側管注 80mL/h)';
+               defaultRoute = 'DIV';
+             } else if (r === 2 && !targetOrder) {
+               defaultRxText = 'ブドウ糖注射液 5% 500mL 1袋\n(末梢静脈点滴 60mL/h)';
+               defaultRoute = 'DIV';
+             }
+        %>
+          <tr class="grid-data-row" data-row="<%= r %>">
+            <!-- 左端 細列 (行番号) -->
+            <td class="col-no cell-no"><%= r %></td>
+
+            <!-- 処方欄 (キー入力で自動インクリメンタル検索発動) -->
+            <td class="col-rx cell-rx" onmouseenter="onCellRxMouseEnter(this, <%= r %>)" onmouseleave="onCellRxMouseLeave(this, <%= r %>)">
+              <div style="position:relative; width:100%; height:100%;">
+                <div class="rx-cell-header no-print">
+                  <span class="rx-med-info-badge" id="rxInfoBadge_<%= r %>"
+                        onmouseenter="onInfoBadgeMouseEnter(this, <%= r %>)"
+                        onmouseleave="onInfoBadgeMouseLeave()"
+                        title="ホバーで薬品詳細・用法を表示"></span>
+                </div>
+                <textarea class="rx-textarea" id="rxText_<%= r %>"
+                          placeholder="薬品名・規格・速度を入力（キー入力で自動インクリメンタル検索）"
+                          autocomplete="off"
+                          oninput="onSheetRxInput(<%= r %>, this, event)"
+                          onkeydown="onSheetRxKeydown(<%= r %>, this, event)"
+                          onfocus="onSheetRxFocus(<%= r %>, this, event)"
+                          ondblclick="openMedSearchModal(<%= r %>)"><%= defaultRxText %></textarea>
+              </div>
+              <button type="button" class="rx-quick-btn no-print" onclick="openMedSearchModal(<%= r %>)" title="薬品マスタから検索して入力">🔍 検索</button>
+            </td>
+
+            <!-- 投与経路欄 (is, DIV / im, IVH / iv, ( )) 原本配置再現 -->
+            <td class="col-route cell-route">
+              <div class="route-grid" id="routeGrid_<%= r %>">
+                <div class="route-item" onclick="selectRoute(<%= r %>, 'is')">
+                  <span class="<%= defaultRoute === 'is' ? 'route-selected' : '' %>" id="route_<%= r %>_is">is</span>
+                </div>
+                <div class="route-item" onclick="selectRoute(<%= r %>, 'DIV')">
+                  <span class="<%= defaultRoute === 'DIV' ? 'route-selected' : '' %>" id="route_<%= r %>_DIV">DIV</span>
+                </div>
+                <div class="route-item" onclick="selectRoute(<%= r %>, 'im')">
+                  <span class="<%= defaultRoute === 'im' ? 'route-selected' : '' %>" id="route_<%= r %>_im">im</span>
+                </div>
+                <div class="route-item" onclick="selectRoute(<%= r %>, 'IVH')">
+                  <span class="<%= defaultRoute === 'IVH' ? 'route-selected' : '' %>" id="route_<%= r %>_IVH">IVH</span>
+                </div>
+                <div class="route-item" onclick="selectRoute(<%= r %>, 'iv')">
+                  <span class="<%= defaultRoute === 'iv' ? 'route-selected' : '' %>" id="route_<%= r %>_iv">iv</span>
+                </div>
+                <div class="route-item" onclick="selectRoute(<%= r %>, 'OTHER')">
+                  <span class="<%= (defaultRoute !== 'is' && defaultRoute !== 'DIV' && defaultRoute !== 'im' && defaultRoute !== 'IVH' && defaultRoute !== 'iv') ? 'route-selected' : '' %>" id="route_<%= r %>_OTHER">( &nbsp; )</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- 日付列ラベル (指示 / 実施 原本破線再現) -->
+            <td class="col-date-title cell-date-label">
+              <div class="split-top-bottom">
+                <div class="split-top">指示</div>
+                <div class="split-bottom">実施</div>
+              </div>
+            </td>
+
+            <!-- 15日分 グリッドセル (破線区切り) -->
+            <% for(let d = 1; d <= 15; d++) { 
+                 let topContent = '';
+                 let bottomContent = '';
+                 // デフォルトで1〜3日目に指示・実施例を少し配置（雰囲気確認用）
+                 if ((r === 1 || r === 2) && d <= 3 && !targetOrder) {
+                   topContent = '<span style="color:#0284c7; font-weight:bold;">──▶</span>';
+                   bottomContent = '<span style="color:#16a34a; font-weight:bold;">✔ 看</span>';
+                 }
+            %>
+              <td class="col-day-cell day-matrix-cell <%= d === 1 ? 'border-thick-left' : '' %>">
+                <div class="split-top-bottom">
+                  <!-- 上段: 指示 (クリックで ──▶ / ✕中止 / サイン / 空 切替) -->
+                  <div class="split-top cell-interactive" onclick="toggleCellTop(this, <%= r %>, <%= d %>)" title="クリックで指示内容を切替" id="cell_top_<%= r %>_<%= d %>"><%- topContent %></div>
+                  <!-- 下段: 実施 (クリックで ✔ / 看 / 時刻 / 空 切替) -->
+                  <div class="split-bottom cell-interactive" onclick="toggleCellBottom(this, <%= r %>, <%= d %>)" title="クリックで実施確認を切替" id="cell_bottom_<%= r %>_<%= d %>"><%- bottomContent %></div>
+                </div>
+              </td>
+            <% } %>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+
+    <!-- フッター部 (病棟枠 / 薬剤師枠 / だて病院ロゴ) -->
+    <div class="inj-footer">
+      <!-- 左下: 独立枠「病　棟」 (原本忠実) -->
+      <div>
+        <div class="ward-stamp-box" id="wardStampBox" onclick="toggleWardStamp()" title="クリックで病棟受領印切替">
+          病　棟
+        </div>
+      </div>
+
+      <!-- 中央〜右: テーブル底辺直結の「薬剤師」枠 ＋ 15日鑑査枠 (原本忠実) -->
+      <div class="pharmacist-container">
+        <table class="pharmacist-table">
+          <tr>
+            <th class="pharmacist-th" onclick="togglePharmacistAll()" title="クリックで全日鑑査印" style="cursor:pointer;">薬剤師</th>
+            <% for(let d = 1; d <= 15; d++) { %>
+              <td class="pharmacist-cell" onclick="togglePharmacistCell(this, <%= d %>)" id="pharma_cell_<%= d %>" title="薬剤師確認印">
+                <% if (d <= 3 && !targetOrder) { %>
+                  <span style="color:#2563eb; font-size:10px; font-weight:bold;">調</span>
+                <% } %>
+              </td>
+            <% } %>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 右下欄外: 発行元・様式番号 (原本忠実) -->
+      <div class="footer-hospital-stamp">
+        交雄会だて病院　2026.5　1.0
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 💊 処方枠インクリメンタル検索 フローティングパネル (キー入力で自動発動) -->
+  <div id="sheetFloatingSearch" class="sheet-floating-search no-print" style="display:none;">
+    <div class="sfs-header">
+      <span class="sfs-title">🔍 薬品インクリメンタル検索 (No.<span id="sfsTargetNo">1</span>)</span>
+      <span class="sfs-guide">↑↓移動 / Enter確定 / Esc閉じる</span>
+    </div>
+    <div class="sfs-list-container" id="sfsListContainer">
+      <!-- 候補リスト動的レンダリング -->
+    </div>
+  </div>
+
+  <!-- 💡 薬品詳細・注意書き ホバーフローティングウィンドウ -->
+  <div id="sheetMedHoverCard" class="sheet-med-hover-card no-print" style="display:none;" onmouseenter="cancelHoverHide()" onmouseleave="scheduleHoverHide()">
+    <div id="smhcContainer"></div>
+  </div>
+
+  <!-- 💊 薬剤マスタ インクリメンタル検索モーダル -->
+  <div class="med-search-overlay no-print" id="medSearchModal" onclick="closeMedSearchModal(event)">
+    <div class="med-search-box" onclick="event.stopPropagation()">
+      <!-- モーダルヘッダー -->
+      <div class="med-search-header">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <span style="font-weight:bold; font-size:1.05rem;">🔍 薬品検索 (インクリメンタルサーチ)</span>
+          <div style="display:flex; align-items:center; gap:0.4rem; background:rgba(255,255,255,0.15); padding:0.2rem 0.5rem; border-radius:4px; font-size:0.8rem;">
+            <span>反映先処方枠:</span>
+            <select id="modalTargetRowSelect" onchange="onModalTargetRowChange(this.value)" style="background:#1e293b; color:white; border:1px solid #64748b; border-radius:3px; padding:1px 4px; font-weight:bold; font-size:0.82rem;">
+              <% for(let r = 1; r <= 10; r++) { %>
+                <option value="<%= r %>">No. <%= r %></option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <a href="/medicines-list?cat=注射剤" target="app_medicines_list" style="background:#0284c7; color:white; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:0.25rem;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
+            <span>📚 採用薬一覧 ↗</span>
+          </a>
+          <button type="button" onclick="closeMedSearchModal()" style="background:none; border:none; color:#cbd5e1; font-size:1.3rem; line-height:1; cursor:pointer;" title="閉じる (Esc)">✕</button>
+        </div>
+      </div>
+
+      <!-- モーダルボディ -->
+      <div class="med-search-body">
+        <!-- 上部：カテゴリ切替タブ ＆ 反映モード -->
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.65rem;">
+          <div class="med-search-tabs" style="display:flex; align-items:center; gap:0.4rem;">
+            <button type="button" id="modalCatIvBtn" class="tab-btn active" style="cursor:default;">
+              💉 注射薬限定 (<span id="modalCountIv">--</span>品目)
+            </button>
+            <span style="font-size:0.75rem; color:#64748b; background:#f1f5f9; padding:2px 8px; border-radius:4px;">※注射指示箋専用（注射薬のみ表示）</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.78rem; color:#475569;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:0.25rem;" title="既存の記載を残して末尾に追記します（複数薬剤の混注に便利）">
+              <input type="radio" name="modalInsertMode" value="append" checked>
+              <span>追記（混注・追加）</span>
+            </label>
+            <label style="cursor:pointer; display:flex; align-items:center; gap:0.25rem;" title="既存の記載を置き換えます">
+              <input type="radio" name="modalInsertMode" value="overwrite">
+              <span>上書き</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 検索入力バー -->
+        <div style="position:relative; margin-bottom:0.75rem;">
+          <input type="text"
+                 class="med-search-input"
+                 id="medSearchKeyword"
+                 placeholder="🔍 薬品名・一般名・ひらがな・英数字でインクリメンタル検索 (例: そるでむ, セフトリアキソン, 生食, ファモチジン)..."
+                 autocomplete="off"
+                 oninput="onModalKeywordInput(this.value)"
+                 onkeydown="onModalInputKeydown(event)">
+          <button type="button" onclick="clearModalKeyword()" id="modalKeywordClearBtn" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer; display:none;" title="クリア">✕</button>
+        </div>
+
+        <!-- 検索結果情報バー -->
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:#64748b; margin-bottom:0.4rem; padding:0 2px;">
+          <span id="modalResultCountText">読み込み中...</span>
+          <span style="font-size:0.72rem; color:#94a3b8;">※ 行クリックまたは「反映」で指定処方枠に転記 / [↑][↓]キーで選択 [Enter]で反映確定</span>
+        </div>
+
+        <!-- 検索結果テーブルリスト -->
+        <div class="med-search-list-wrapper" id="medSearchResultWrapper">
+          <table class="med-modal-table">
+            <thead>
+              <tr>
+                <th style="width:75px;">区分</th>
+                <th style="width:230px;">薬品名 (商品名)</th>
+                <th style="width:115px;">規格・単位</th>
+                <th style="width:145px;">一般名 (成分名)</th>
+                <th>標準用法・速度</th>
+                <th style="width:85px; text-align:center;">反映</th>
+              </tr>
+            </thead>
+            <tbody id="medSearchResultList">
+              <!-- JSで動的レンダリング -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 最下段固定ステータスバー (画面操作専用・印刷時は非表示) -->
+  <footer id="sheetStatusBar" class="sheet-status-bar no-print" role="status" aria-live="polite">
+    <div class="status-bar-container">
+      <!-- 左側: システム稼働状態 & 最後の操作 -->
+      <div class="status-section status-left" id="statusActionSection">
+        <span class="status-indicator-dot" title="システム正常稼働中"></span>
+        <span class="status-label">最後の操作:</span>
+        <span id="statusBarLastAction" class="status-value status-action-text" title="直近のユーザー操作">画面を読み込みました</span>
+        <span id="statusBarActionTime" class="status-time">--:--:--</span>
+      </div>
+
+      <!-- 中央: 最新の通知 -->
+      <div class="status-section status-center" id="statusNoticeSection">
+        <span id="statusBarNoticeIcon" style="font-size:0.85rem; flex-shrink:0;">📢</span>
+        <span class="status-label">通知:</span>
+        <span id="statusBarLatestNotice" class="status-value status-notice-text" title="最新のシステム通知・案内">準備完了（処方枠の入力で薬品候補が自動補完されます）</span>
+        <span id="statusBarNoticeTime" class="status-time">--:--:--</span>
+      </div>
+
+      <!-- 右側: 連動状態 & 履歴ログ表示ボタン -->
+      <div class="status-section status-right">
+        <span class="status-badge-connection" title="電子カルテ(3000) / オーダリング(4000) / 受信部門(5000) 連動稼働中">🟢 連携稼働中</span>
+        <button type="button" class="status-log-btn" onclick="toggleStatusHistoryModal()" title="直近の操作・通知履歴を表示">
+          <span>📜</span> <span>履歴 (<span id="statusHistoryCount">0</span>)</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 操作・通知 履歴ポップアップモーダル (画面操作専用) -->
+  <div id="statusHistoryModal" class="status-history-modal no-print" style="display:none;" onclick="closeStatusHistoryModal(event)">
+    <div class="status-history-dialog" onclick="event.stopPropagation()">
+      <div class="status-history-header">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.1rem;">📜</span>
+          <h4 style="margin:0; font-size:0.92rem; font-weight:bold; color:#f8fafc;">操作＆通知 履歴ログ</h4>
+          <span style="font-size:0.72rem; color:#94a3b8;">（直近30件）</span>
+        </div>
+        <button type="button" onclick="closeStatusHistoryModal()" class="status-history-close-btn" title="閉じる">✕</button>
+      </div>
+      <div class="status-history-body" id="statusHistoryList">
+        <!-- JSで動的に追加 -->
+      </div>
+      <div class="status-history-footer">
+        <button type="button" onclick="clearStatusHistory()" class="status-history-clear-btn">履歴消去</button>
+        <button type="button" onclick="closeStatusHistoryModal()" class="status-history-ok-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 画面識別名
+    window.name = 'app_injection_sheet';
+
+    // =========================================================
+    // 💡 最下段ステータスバー (最後の操作 & 通知) 管理システム
+    // =========================================================
+    const statusHistory = [];
+    const MAX_STATUS_HISTORY = 30;
+
+    function formatCurrentTime() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    // 最後の操作を記録 & ステータスバー更新
+    function setLastAction(actionText) {
+      const timeStr = formatCurrentTime();
+      const el = document.getElementById('statusBarLastAction');
+      const elTime = document.getElementById('statusBarActionTime');
+      const sec = document.getElementById('statusActionSection');
+      if (el) {
+        el.textContent = actionText;
+        el.title = `[${timeStr}] ${actionText}`;
+      }
+      if (elTime) elTime.textContent = timeStr;
+      if (sec) {
+        sec.classList.remove('status-pulse-action');
+        void sec.offsetWidth;
+        sec.classList.add('status-pulse-action');
+      }
+      addStatusHistory('action', actionText, timeStr);
+    }
+
+    // 最新の通知を記録 & ステータスバー更新
+    function setLatestNotice(noticeText, type = 'info') {
+      const timeStr = formatCurrentTime();
+      const el = document.getElementById('statusBarLatestNotice');
+      const elTime = document.getElementById('statusBarNoticeTime');
+      const elIcon = document.getElementById('statusBarNoticeIcon');
+      const sec = document.getElementById('statusNoticeSection');
+
+      let icon = '📢';
+      let color = '#a7f3d0';
+      if (type === 'success') {
+        icon = '✅';
+        color = '#4ade80';
+      } else if (type === 'warning') {
+        icon = '⚠️';
+        color = '#fbbf24';
+      } else if (type === 'error') {
+        icon = '❌';
+        color = '#f87171';
+      } else if (type === 'info') {
+        icon = 'ℹ️';
+        color = '#38bdf8';
+      }
+
+      if (elIcon) elIcon.textContent = icon;
+      if (el) {
+        el.textContent = noticeText;
+        el.style.color = color;
+        el.title = `[${timeStr}] ${noticeText}`;
+      }
+      if (elTime) elTime.textContent = timeStr;
+      if (sec) {
+        sec.classList.remove('status-pulse-notice');
+        void sec.offsetWidth;
+        sec.classList.add('status-pulse-notice');
+      }
+      addStatusHistory(type, noticeText, timeStr);
+    }
+
+    // 操作と通知を両方一度に更新する
+    function updateStatusBar(actionText, noticeText, type = 'info') {
+      if (actionText) setLastAction(actionText);
+      if (noticeText) setLatestNotice(noticeText, type);
+    }
+
+    function addStatusHistory(type, message, timeStr) {
+      statusHistory.unshift({ type, message, time: timeStr });
+      if (statusHistory.length > MAX_STATUS_HISTORY) {
+        statusHistory.pop();
+      }
+      const countEl = document.getElementById('statusHistoryCount');
+      if (countEl) countEl.textContent = statusHistory.length;
+    }
+
+    function toggleStatusHistoryModal() {
+      const modal = document.getElementById('statusHistoryModal');
+      if (!modal) return;
+      if (modal.style.display === 'none' || !modal.style.display) {
+        renderStatusHistoryList();
+        modal.style.display = 'flex';
+      } else {
+        modal.style.display = 'none';
+      }
+    }
+
+    function closeStatusHistoryModal(e) {
+      if (!e || e.target === document.getElementById('statusHistoryModal') || 
+          e.target.classList.contains('status-history-close-btn') || 
+          e.target.classList.contains('status-history-ok-btn')) {
+        const modal = document.getElementById('statusHistoryModal');
+        if (modal) modal.style.display = 'none';
+      }
+    }
+
+    function clearStatusHistory() {
+      statusHistory.length = 0;
+      const countEl = document.getElementById('statusHistoryCount');
+      if (countEl) countEl.textContent = '0';
+      renderStatusHistoryList();
+    }
+
+    function renderStatusHistoryList() {
+      const container = document.getElementById('statusHistoryList');
+      if (!container) return;
+      if (statusHistory.length === 0) {
+        container.innerHTML = '<div style="color:#64748b; text-align:center; padding:1.5rem 0; font-size:0.8rem;">操作・通知履歴はありません</div>';
+        return;
+      }
+      let html = '';
+      statusHistory.forEach(item => {
+        let typeClass = 'type-action';
+        let typeLabel = '操作';
+        if (item.type === 'success') { typeClass = 'type-notice'; typeLabel = '成功'; }
+        else if (item.type === 'notice' || item.type === 'info') { typeClass = 'type-notice'; typeLabel = '通知'; }
+        else if (item.type === 'warning') { typeClass = 'type-warning'; typeLabel = '注意'; }
+        else if (item.type === 'error') { typeClass = 'type-error'; typeLabel = 'エラー'; }
+
+        html += `
+          <div class="status-history-item">
+            <span class="status-history-time">${escapeHtml(item.time)}</span>
+            <span class="status-history-type ${typeClass}">${typeLabel}</span>
+            <span class="status-history-msg">${escapeHtml(item.message)}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // A4指示箋印刷実行
+    function triggerPrintSheet() {
+      setLastAction('A4指示箋印刷を実行');
+      setLatestNotice('A4指示箋印刷ダイアログを起動しました', 'info');
+      window.print();
+    }
+
+    // 0. オーダリング画面へ戻る（既存のオーダリングタブがあればそちらに移行し、このタブを閉じる）
+    function returnToOrdering(url) {
+      setLastAction('オーダリング画面への遷移を実行');
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.location.href = url;
+          window.opener.focus();
+          window.close();
+          return false;
+        } catch (_) {}
+      }
+      try {
+        const win = window.open(url, 'app_ordering_sender');
+        if (win && !win.closed) {
+          try { win.focus(); } catch (_) {}
+        } else {
+          window.location.href = url;
+        }
+      } catch (e) {
+        window.location.href = url;
+      }
+      return false;
+    }
+
+    // 状態管理
+    let activeRowIndex = 1;
+    const selectedRoutes = {};
+    for (let r = 1; r <= 10; r++) {
+      selectedRoutes[r] = (r === 1 || r === 2) ? 'DIV' : '';
+    }
+
+    // 1. 患者切替連動
+    function onQuickPatientChange(select) {
+      const pId = select.value;
+      const pText = select.options[select.selectedIndex]?.text || pId;
+      setLastAction(`患者を [${pText.trim()}] に切替`);
+      setLatestNotice(`患者「${pText.trim()}」の注射指示箋を読み込んでいます...`, 'info');
+      if (pId) {
+        window.location.href = `/injection-sheet-form?patientId=${encodeURIComponent(pId)}`;
+      }
+    }
+
+    // 2. 元号切替 (M・T・S)
+    function toggleEra(era) {
+      ['M', 'T', 'S'].forEach(e => {
+        const el = document.getElementById('era' + e);
+        if (el) el.classList.remove('era-circle');
+      });
+      const target = document.getElementById('era' + era);
+      if (target) target.classList.add('era-circle');
+      const eraMap = { 'M': '明治', 'T': '大正', 'S': '昭和' };
+      setLastAction(`患者生年月日の元号を [${eraMap[era] || era}] に選択`);
+    }
+
+    // 3. 性別切替 (男・女)
+    function toggleGender(gender) {
+      document.getElementById('genderMale').classList.remove('gender-circle');
+      document.getElementById('genderFemale').classList.remove('gender-circle');
+      if (gender === '男') {
+        document.getElementById('genderMale').classList.add('gender-circle');
+      } else {
+        document.getElementById('genderFemale').classList.add('gender-circle');
+      }
+      setLastAction(`患者性別を [${gender}] に変更`);
+    }
+
+    // 4. 担当医印切替
+    function toggleDoctorStamp() {
+      const docBox = document.getElementById('doctorStamp');
+      const docName = document.getElementById('docStampName')?.textContent || '北島';
+      if (docBox.style.opacity === '0.3') {
+        docBox.style.opacity = '1';
+        setLastAction(`担当医印「${docName}」を押印`);
+        setLatestNotice(`担当医印（${docName} 医師）が押印されました`, 'info');
+      } else {
+        docBox.style.opacity = '0.3';
+        setLastAction(`担当医印「${docName}」を非表示に切替`);
+      }
+    }
+
+    // 5. 投与経路選択 (is, DIV, im, IVH, iv, OTHER)
+    function selectRoute(rowIdx, route) {
+      selectedRoutes[rowIdx] = route;
+      const grid = document.getElementById(`routeGrid_${rowIdx}`);
+      if (!grid) return;
+      grid.querySelectorAll('.route-selected').forEach(el => el.classList.remove('route-selected'));
+      
+      const target = document.getElementById(`route_${rowIdx}_${route}`);
+      if (target) {
+        target.classList.add('route-selected');
+      }
+      const routeLabels = {
+        'is': '皮下注 (is)',
+        'DIV': '点滴静注 (DIV)',
+        'im': '筋肉注 (im)',
+        'IVH': '中心静脈 (IVH)',
+        'iv': '静脈注射 (iv)',
+        'OTHER': 'その他'
+      };
+      if (route === 'OTHER') {
+        const custom = prompt('投与経路を入力してください（例: 経管, 局麻 など）:', 'その他');
+        if (custom && target) {
+          target.textContent = `(${custom})`;
+          setLastAction(`No.${rowIdx} の投与経路を [その他: ${custom}] に設定`);
+          return;
+        }
+      }
+      setLastAction(`No.${rowIdx} の投与経路を [${routeLabels[route] || route}] に設定`);
+    }
+
+    // 6. 指示セル切替 (上段)
+    function toggleCellTop(el, rowIdx, dayIdx) {
+      const cur = el.innerHTML.trim();
+      let stateDesc = '指示なし (消去)';
+      if (!cur) {
+        el.innerHTML = '<span style="color:#0284c7; font-weight:bold;">──▶</span>';
+        stateDesc = '継続指示 (──▶)';
+      } else if (cur.includes('──▶') || cur.includes('arrow')) {
+        el.innerHTML = '<span style="color:#dc2626; font-size:10px; font-weight:bold;">✕中止</span>';
+        stateDesc = '中止指示 (✕中止)';
+      } else if (cur.includes('✕')) {
+        const docName = document.getElementById('docStampName')?.textContent || '北島';
+        el.innerHTML = `<span style="color:#dc2626; font-size:9px; font-weight:bold; border:1px solid #dc2626; border-radius:3px; padding:0 1px;">${docName}</span>`;
+        stateDesc = `医師確認印 (${docName})`;
+      } else {
+        el.innerHTML = '';
+      }
+      setLastAction(`${dayIdx}日目 No.${rowIdx} の指示サインを [${stateDesc}] に更新`);
+    }
+
+    // 7. 実施セル切替 (下段)
+    function toggleCellBottom(el, rowIdx, dayIdx) {
+      const cur = el.innerHTML.trim();
+      let stateDesc = '未実施 (消去)';
+      if (!cur) {
+        el.innerHTML = '<span style="color:#16a34a; font-weight:bold;">✔ 看</span>';
+        stateDesc = '実施済 (✔看)';
+      } else if (cur.includes('✔')) {
+        el.innerHTML = '<span style="color:#2563eb; font-size:9.5px; font-weight:bold;">10:00</span>';
+        stateDesc = '実施時刻 (10:00)';
+      } else if (cur.includes(':')) {
+        el.innerHTML = '<span style="color:#d97706; font-size:9.5px; font-weight:bold;">看①</span>';
+        stateDesc = '担当看護師 (看①)';
+      } else {
+        el.innerHTML = '';
+      }
+      setLastAction(`${dayIdx}日目 No.${rowIdx} の実施サインを [${stateDesc}] に更新`);
+    }
+
+    // 8. 病棟受領印切替
+    function toggleWardStamp() {
+      const box = document.getElementById('wardStampBox');
+      if (box.classList.contains('stamped')) {
+        box.classList.remove('stamped');
+        box.textContent = '病　棟';
+        setLastAction('病棟受領印を [未受領] に解除');
+      } else {
+        box.classList.add('stamped');
+        box.textContent = '受領済✔';
+        setLastAction('病棟受領印を [受領済✔] に押印');
+        setLatestNotice('病棟での受領印が確認されました', 'success');
+      }
+    }
+
+    // 9. 薬剤師鑑査印切替
+    function togglePharmacistCell(el, dayIdx) {
+      const cur = el.innerHTML.trim();
+      let stateDesc = '鑑査印解除';
+      if (!cur) {
+        el.innerHTML = '<span style="color:#2563eb; font-size:10px; font-weight:bold;">調</span>';
+        stateDesc = '調剤済 (調)';
+      } else if (cur.includes('調')) {
+        el.innerHTML = '<span style="color:#059669; font-size:10px; font-weight:bold;">鑑</span>';
+        stateDesc = '鑑査済 (鑑)';
+      } else {
+        el.innerHTML = '';
+      }
+      setLastAction(`${dayIdx}日目の薬剤部鑑査印を [${stateDesc}] に更新`);
+    }
+
+    function togglePharmacistAll() {
+      const hasAny = document.querySelector('.pharmacist-cell span');
+      for (let d = 1; d <= 15; d++) {
+        const cell = document.getElementById(`pharma_cell_${d}`);
+        if (cell) {
+          cell.innerHTML = hasAny ? '' : '<span style="color:#2563eb; font-size:10px; font-weight:bold;">調</span>';
+        }
+      }
+      const act = hasAny ? '全日の薬剤部鑑査印を一括消去' : '全15日分の薬剤部鑑査印を一括押印 (調)';
+      setLastAction(act);
+      setLatestNotice(hasAny ? '薬剤師鑑査印を一括解除しました' : '全日分の鑑査印を一括押印しました', 'info');
+    }
+
+    // =========================================================
+    // 10. 薬品マスタ インクリメンタル検索モーダルシステム
+    // =========================================================
+    let modalSearchCategory = '注射剤'; // デフォルトは注射剤
+    let cachedMedicines = [];
+    let modalFilteredMedicines = [];
+    let modalActiveIndex = -1;
+
+    // 起動時に全薬品データを取得＆キャッシュ（超高速検索のため）
+    async function initMedicinesData() {
+      try {
+        const res = await fetch('/api/medicines?limit=1000');
+        const data = await res.json();
+        if (data.medicines && Array.isArray(data.medicines)) {
+          cachedMedicines = data.medicines;
+          updateModalCounts();
+          // 初期表示されている処方行の薬品を検出してホバーバッジを準備
+          for (let r = 1; r <= 10; r++) {
+            detectMedicinesInTextarea(r);
+          }
+          const ivCount = cachedMedicines.filter(m => m.category === '注射剤' || (m.category && m.category.includes('注射'))).length;
+          setLatestNotice(`薬品マスタ (${ivCount}品の注射薬) をロード完了。処方枠で自動補完可能です。`, 'info');
+        }
+      } catch (e) {
+        console.error('Failed to load medicines for incremental search:', e);
+        setLatestNotice('薬品マスタのロードに失敗しました: ' + e.message, 'warning');
+      }
+    }
+    initMedicinesData();
+
+    function updateModalCounts() {
+      const ivCount = cachedMedicines.filter(m => m.category === '注射剤' || (m.category && m.category.includes('注射'))).length;
+      const cIv = document.getElementById('modalCountIv');
+      if (cIv) cIv.textContent = ivCount;
+    }
+
+    function setModalSearchCategory(cat, btn) {
+      modalSearchCategory = '注射剤';
+      const kw = document.getElementById('medSearchKeyword')?.value || '';
+      performModalSearch(kw);
+    }
+
+    function onModalTargetRowChange(val) {
+      activeRowIndex = parseInt(val, 10) || 1;
+    }
+
+    function openMedSearchModal(rowIdx) {
+      if (typeof rowIdx === 'number' && rowIdx >= 1 && rowIdx <= 10) {
+        activeRowIndex = rowIdx;
+      }
+      const select = document.getElementById('modalTargetRowSelect');
+      if (select) select.value = String(activeRowIndex || 1);
+
+      setLastAction(`薬品検索モーダルを開く (反映先: No.${activeRowIndex || 1})`);
+
+      const modal = document.getElementById('medSearchModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        const input = document.getElementById('medSearchKeyword');
+        if (input) {
+          input.value = '';
+          const clearBtn = document.getElementById('modalKeywordClearBtn');
+          if (clearBtn) clearBtn.style.display = 'none';
+          setTimeout(() => input.focus(), 60);
+        }
+        performModalSearch('');
+      }
+    }
+
+    function closeMedSearchModal(e) {
+      if (!e || e.target === document.getElementById('medSearchModal')) {
+        const modal = document.getElementById('medSearchModal');
+        if (modal) {
+          modal.style.display = 'none';
+          setLastAction('薬品検索モーダルを閉じました');
+        }
+      }
+    }
+
+    // Escキーでモーダルを閉じる
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('medSearchModal');
+        if (modal && modal.style.display === 'flex') {
+          modal.style.display = 'none';
+        }
+      }
+    });
+
+    function clearModalKeyword() {
+      const input = document.getElementById('medSearchKeyword');
+      if (input) {
+        input.value = '';
+        const clearBtn = document.getElementById('modalKeywordClearBtn');
+        if (clearBtn) clearBtn.style.display = 'none';
+        input.focus();
+        performModalSearch('');
+      }
+    }
+
+    function onModalKeywordInput(val) {
+      const clearBtn = document.getElementById('modalKeywordClearBtn');
+      if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+      performModalSearch(val);
+    }
+
+    function normSearchText(str) {
+      if (!str) return '';
+      return String(str)
+        .toLowerCase()
+        .replace(/[ぁ-ん]/g, s => String.fromCharCode(s.charCodeAt(0) + 0x60))
+        .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+        .replace(/[\s　・－ー]/g, '');
+    }
+
+    // 超高速インクリメンタル検索処理 (メモリ上キャッシュからミリ秒検索)
+    function performModalSearch(keyword) {
+      const q = normSearchText(keyword.trim());
+      modalActiveIndex = -1;
+
+      // 注射指示箋なので注射薬のみに限定
+      let list = cachedMedicines.filter(m => m.category === '注射剤' || (m.category && m.category.includes('注射')));
+
+      if (q) {
+        const matches = [];
+        for (const m of list) {
+          const nameNorm = normSearchText(m.name);
+          const kanaNorm = normSearchText(m.kana);
+          const genNorm = normSearchText(m.genericName);
+          const idNorm = normSearchText(m.id);
+          const specNorm = normSearchText(m.spec);
+
+          let score = 0;
+          if (nameNorm.startsWith(q) || kanaNorm.startsWith(q)) {
+            score += 100;
+          } else if (nameNorm.includes(q) || kanaNorm.includes(q)) {
+            score += 60;
+          } else if (genNorm.includes(q)) {
+            score += 40;
+          } else if (specNorm.includes(q) || idNorm.includes(q)) {
+            score += 20;
+          }
+
+          if (score > 0) {
+            matches.push({ medicine: m, score });
+          }
+        }
+        matches.sort((a, b) => b.score - a.score);
+        modalFilteredMedicines = matches.map(x => x.medicine);
+      } else {
+        // キーワードが空の場合は注射薬全件
+        modalFilteredMedicines = list.slice();
+      }
+
+      renderModalSearchResults();
+    }
+
+    function renderModalSearchResults() {
+      const tbody = document.getElementById('medSearchResultList');
+      const countEl = document.getElementById('modalResultCountText');
+      if (!tbody) return;
+
+      const total = modalFilteredMedicines.length;
+      if (countEl) {
+        countEl.textContent = `該当: ${total}品目 (注射薬限定)`;
+      }
+
+      if (total === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; padding:2.5rem; color:#64748b;">
+              該当する注射薬が見つかりませんでした。別のキーワードをお試しください。
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // 上位100件まで描画（DOM軽量化）
+      const displayItems = modalFilteredMedicines.slice(0, 100);
+      tbody.innerHTML = displayItems.map((m, idx) => {
+        const rowId = `modal_tr_${idx}`;
+        const escapedId = escapeHtml(m.id);
+
+        return `
+          <tr id="${rowId}" class="med-modal-tr ${idx === modalActiveIndex ? 'active-row' : ''}"
+              onmouseenter="onModalTrMouseEnter(this, '${escapedId}')"
+              onmouseleave="onModalTrMouseLeave()"
+              onclick="insertMedicineToTargetRow('${escapedId}')"
+              title="クリックして No.${activeRowIndex} に反映（ホバーで用法・詳細確認）">
+            <td><span class="badge-cat badge-iv">💉 注射</span></td>
+            <td>
+              <div style="font-weight:bold; color:#0f172a; font-size:0.88rem;">${escapeHtml(m.name)}</div>
+              ${m.kana ? `<div style="font-size:0.72rem; color:#64748b;">${escapeHtml(m.kana)}</div>` : ''}
+            </td>
+            <td style="color:#0369a1; font-weight:bold;">${escapeHtml(m.spec || m.unit || '―')}</td>
+            <td style="color:#334155; font-size:0.78rem;">${escapeHtml(m.genericName || '―')}</td>
+            <td style="color:#475569; font-size:0.78rem;">
+              <span style="color:#0284c7; font-weight:bold;">ℹ️ ホバーで用法表示</span>
+            </td>
+            <td style="text-align:center;">
+              <button type="button" class="med-btn-insert" onclick="event.stopPropagation(); insertMedicineToTargetRow('${escapedId}')">
+                反映 ＋
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 上下キー＆Enterキーでの操作
+    function onModalInputKeydown(e) {
+      if (modalFilteredMedicines.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const max = Math.min(modalFilteredMedicines.length, 100) - 1;
+        modalActiveIndex = Math.min(modalActiveIndex + 1, max);
+        updateActiveModalRow();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        modalActiveIndex = Math.max(modalActiveIndex - 1, 0);
+        updateActiveModalRow();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const targetIdx = modalActiveIndex >= 0 ? modalActiveIndex : 0;
+        if (modalFilteredMedicines[targetIdx]) {
+          insertMedicineToTargetRow(modalFilteredMedicines[targetIdx].id);
+        }
+      }
+    }
+
+    function updateActiveModalRow() {
+      document.querySelectorAll('.med-modal-tr').forEach((tr, i) => {
+        if (i === modalActiveIndex) {
+          tr.classList.add('active-row');
+          tr.scrollIntoView({ block: 'nearest' });
+        } else {
+          tr.classList.remove('active-row');
+        }
+      });
+    }
+
+    // 薬品を指示箋の対象行に反映（注意書き・用法は含めず薬品名と規格・単位のみ）
+    function insertMedicineToTargetRow(medId) {
+      const med = cachedMedicines.find(m => m.id === medId);
+      if (!med) return;
+
+      const targetRow = parseInt(document.getElementById('modalTargetRowSelect')?.value, 10) || activeRowIndex || 1;
+      const textarea = document.getElementById(`rxText_${targetRow}`);
+      if (!textarea) return;
+
+      const insertMode = document.querySelector('input[name="modalInsertMode"]:checked')?.value || 'append';
+
+      // 補完文字列の構築（注意書きは含めず薬品名と規格・単位のみ）
+      const cleanSpec = (med.spec && !med.name.includes(med.spec)) ? ` ${med.spec}` : '';
+      const cleanUnit = med.unit ? ` 1${med.unit}` : '';
+      let insertText = `${med.name}${cleanSpec}${cleanUnit}`.trim();
+
+      if (insertMode === 'append' && textarea.value.trim().length > 0) {
+        textarea.value = textarea.value.trim() + '\n' + insertText;
+      } else {
+        textarea.value = insertText;
+      }
+
+      // 投与経路の自動判定・自動選択
+      const medInfo = (med.name || '') + (med.dosage || '') + (med.standardUsage || '');
+      if (medInfo.includes('輸液') || medInfo.includes('点滴') || medInfo.includes('DIV') || medInfo.includes('ブドウ糖') || medInfo.includes('ソルデム') || medInfo.includes('生食') || medInfo.includes('リンゲル')) {
+        selectRoute(targetRow, 'DIV');
+      } else if (medInfo.includes('静注') || medInfo.includes('iv') || medInfo.includes('ワンショット')) {
+        selectRoute(targetRow, 'iv');
+      } else if (medInfo.includes('皮下') || medInfo.includes('is')) {
+        selectRoute(targetRow, 'is');
+      } else if (medInfo.includes('筋注') || medInfo.includes('im')) {
+        selectRoute(targetRow, 'im');
+      } else if (!selectedRoutes[targetRow]) {
+        selectRoute(targetRow, 'DIV'); // デフォルトDIV
+      }
+
+      // 行の薬品データ登録とホバーバッジ表示
+      setRowMedicineData(targetRow, med);
+
+      setLastAction(`薬品検索から No.${targetRow} に「${med.name}」を反映`);
+
+      // トースト通知 & ステータスバー通知
+      showToastNotice(`No.${targetRow} に「${med.name}」を反映しました`);
+
+      // モーダルを閉じる
+      closeMedSearchModal();
+      hideHoverCard();
+      textarea.focus();
+    }
+
+    function showToastNotice(msg) {
+      setLatestNotice(msg, 'success');
+      let toast = document.getElementById('sheetToastNotice');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'sheetToastNotice';
+        toast.style.cssText = 'position:fixed; bottom:46px; right:24px; background:#0f172a; color:#38bdf8; border:1.5px solid #0284c7; padding:0.65rem 1.25rem; border-radius:6px; font-size:0.85rem; font-weight:bold; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3); z-index:10000; transition:opacity 0.2s;';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.style.display = 'none', 200);
+      }, 2000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // =========================================================
+    // 10-B. 処方入力枠（キー入力）で自動発動するインクリメンタル検索
+    // =========================================================
+    let sfsActiveRow = null;
+    let sfsResults = [];
+    let sfsSelectedIndex = -1;
+
+    function onSheetRxFocus(rowIdx, textarea, event) {
+      activeRowIndex = rowIdx;
+      hideHoverCard();
+    }
+
+    function onSheetRxInput(rowIdx, textarea, event) {
+      activeRowIndex = rowIdx;
+      sfsActiveRow = rowIdx;
+      detectMedicinesInTextarea(rowIdx);
+
+      const val = textarea.value;
+      const cursorPos = textarea.selectionStart || val.length;
+      const textBefore = val.slice(0, cursorPos);
+      const lines = textBefore.split('\n');
+      const currentLine = lines[lines.length - 1].trim();
+
+      // 空文字の場合はパネルを閉じる
+      if (!currentLine) {
+        hideFloatingSearch();
+        return;
+      }
+
+      // キャッシュデータからインクリメンタル検索（注射薬のみ抽出）
+      const matches = searchFloatingMedicines(currentLine);
+      if (matches.length === 0) {
+        hideFloatingSearch();
+        return;
+      }
+
+      showFloatingSearch(rowIdx, textarea, matches, currentLine);
+    }
+
+    function searchFloatingMedicines(keyword) {
+      const q = normSearchText(keyword.trim());
+      if (!q) return [];
+
+      const matches = [];
+      for (const m of cachedMedicines) {
+        // 注射箋には候補は注射薬しか出さない
+        const isIv = (m.category === '注射剤' || (m.category && m.category.includes('注射')));
+        if (!isIv) continue;
+
+        const nameNorm = normSearchText(m.name);
+        const kanaNorm = normSearchText(m.kana);
+        const genNorm = normSearchText(m.genericName);
+        const specNorm = normSearchText(m.spec);
+
+        let score = 0;
+        if (nameNorm.startsWith(q) || kanaNorm.startsWith(q)) {
+          score += 100;
+        } else if (nameNorm.includes(q) || kanaNorm.includes(q)) {
+          score += 60;
+        } else if (genNorm.includes(q) || specNorm.includes(q)) {
+          score += 30;
+        }
+
+        if (score > 0) {
+          matches.push({ medicine: m, score });
+        }
+      }
+
+      matches.sort((a, b) => b.score - a.score);
+      return matches.slice(0, 8).map(x => x.medicine);
+    }
+
+    function showFloatingSearch(rowIdx, textarea, results, keyword) {
+      const panel = document.getElementById('sheetFloatingSearch');
+      const listEl = document.getElementById('sfsListContainer');
+      const targetNoEl = document.getElementById('sfsTargetNo');
+      if (!panel || !listEl) return;
+
+      sfsResults = results;
+      sfsSelectedIndex = 0;
+      if (targetNoEl) targetNoEl.textContent = String(rowIdx);
+
+      // 候補リストをレンダリング（見やすいクリアなゴシックデザイン & ホバー対応）
+      listEl.innerHTML = results.map((m, idx) => {
+        const specText = (m.spec && !m.name.includes(m.spec)) ? `<span class="sfs-spec">${escapeHtml(m.spec)}</span>` : '';
+        const unitText = m.unit ? `<span class="sfs-spec">[1${escapeHtml(m.unit)}]</span>` : '';
+
+        return `
+          <div class="sfs-item ${idx === 0 ? 'active' : ''}"
+               data-idx="${idx}"
+               data-med-id="${escapeHtml(m.id)}"
+               onmouseenter="onSfsItemMouseEnter(this, '${escapeHtml(m.id)}')"
+               onmouseleave="onSfsItemMouseLeave()"
+               onmousedown="applyFloatingMedicine(${rowIdx}, '${escapeHtml(m.id)}'); event.preventDefault();">
+            <div>
+              <div class="sfs-name">
+                <span class="badge-cat badge-iv">💉 注射</span>
+                <span>${escapeHtml(m.name)}</span>
+                ${specText}
+                ${unitText}
+              </div>
+              <div class="sfs-sub">
+                ${m.genericName ? `成分: ${escapeHtml(m.genericName)} ` : ''}
+                ${(m.standardUsage || m.dosage) ? `<span style="color:#0284c7; font-weight:600;">ℹ️ ホバーで用法表示</span>` : ''}
+              </div>
+            </div>
+            <div class="sfs-action-btn">反映 ＋</div>
+          </div>
+        `;
+      }).join('');
+
+      // テキストエリアの位置から最適な配置座標を計算（画面外はみ出し防止）
+      const rect = textarea.getBoundingClientRect();
+      const panelWidth = 520;
+      let left = rect.left;
+      if (left + panelWidth > window.innerWidth - 10) {
+        left = Math.max(10, window.innerWidth - panelWidth - 10);
+      }
+
+      const panelHeight = Math.min(results.length * 52 + 35, 300);
+      let top = rect.bottom + 4;
+      // 画面下端をはみ出す場合は上側に表示
+      if (top + panelHeight > window.innerHeight - 10) {
+        top = Math.max(10, rect.top - panelHeight - 4);
+      }
+
+      panel.style.left = `${left}px`;
+      panel.style.top = `${top}px`;
+      panel.style.display = 'flex';
+    }
+
+    function hideFloatingSearch() {
+      const panel = document.getElementById('sheetFloatingSearch');
+      if (panel) panel.style.display = 'none';
+      sfsResults = [];
+      sfsSelectedIndex = -1;
+      hideHoverCard();
+    }
+
+    function onSheetRxKeydown(rowIdx, textarea, event) {
+      const panel = document.getElementById('sheetFloatingSearch');
+      if (!panel || panel.style.display === 'none' || sfsResults.length === 0) {
+        return;
+      }
+
+      const items = panel.querySelectorAll('.sfs-item');
+      if (items.length === 0) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        items[sfsSelectedIndex]?.classList.remove('active');
+        sfsSelectedIndex = (sfsSelectedIndex + 1) % items.length;
+        items[sfsSelectedIndex]?.classList.add('active');
+        items[sfsSelectedIndex]?.scrollIntoView({ block: 'nearest' });
+        if (sfsResults[sfsSelectedIndex] && items[sfsSelectedIndex]) {
+          showHoverCardForElement(items[sfsSelectedIndex], sfsResults[sfsSelectedIndex]);
+        }
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        items[sfsSelectedIndex]?.classList.remove('active');
+        sfsSelectedIndex = (sfsSelectedIndex - 1 + items.length) % items.length;
+        items[sfsSelectedIndex]?.classList.add('active');
+        items[sfsSelectedIndex]?.scrollIntoView({ block: 'nearest' });
+        if (sfsResults[sfsSelectedIndex] && items[sfsSelectedIndex]) {
+          showHoverCardForElement(items[sfsSelectedIndex], sfsResults[sfsSelectedIndex]);
+        }
+      } else if (event.key === 'Enter' || event.key === 'Tab') {
+        if (sfsSelectedIndex >= 0 && sfsResults[sfsSelectedIndex]) {
+          event.preventDefault();
+          applyFloatingMedicine(rowIdx, sfsResults[sfsSelectedIndex].id);
+        }
+      } else if (event.key === 'Escape') {
+        hideFloatingSearch();
+      }
+    }
+
+    function applyFloatingMedicine(rowIdx, medId) {
+      const med = cachedMedicines.find(m => m.id === medId);
+      if (!med) return;
+
+      const textarea = document.getElementById(`rxText_${rowIdx}`);
+      hideFloatingSearch();
+      hideHoverCard();
+
+      if (textarea) {
+        const val = textarea.value;
+        const cursorPos = textarea.selectionStart || val.length;
+        const textBefore = val.slice(0, cursorPos);
+        const textAfter = val.slice(cursorPos);
+        const lines = textBefore.split('\n');
+
+        // 直前行の入力中キーワードをクリアして補完テキストに置換
+        lines[lines.length - 1] = '';
+
+        // 注意書き（standardUsage, dosage 等）は含めず、薬品名と規格・単位のみ挿入
+        const cleanSpec = (med.spec && !med.name.includes(med.spec)) ? ` ${med.spec}` : '';
+        const cleanUnit = med.unit ? ` 1${med.unit}` : '';
+        let complementText = `${med.name}${cleanSpec}${cleanUnit}`.trim();
+
+        const prefix = lines.join('\n');
+        const newText = (prefix.trim() ? prefix.trim() + '\n' : '') + complementText + (textAfter.trim() ? '\n' + textAfter.trim() : '');
+        textarea.value = newText;
+        textarea.focus();
+      }
+
+      // 投与経路の自動推奨判定・自動選択
+      if (!selectedRoutes[rowIdx]) {
+        const medInfo = (med.name || '') + (med.dosage || '') + (med.standardUsage || '');
+        if (medInfo.includes('輸液') || medInfo.includes('点滴') || medInfo.includes('DIV') || medInfo.includes('ブドウ糖') || medInfo.includes('ソルデム') || medInfo.includes('生食') || medInfo.includes('リンゲル')) {
+          selectRoute(rowIdx, 'DIV');
+        } else if (medInfo.includes('静注') || medInfo.includes('iv') || medInfo.includes('ワンショット')) {
+          selectRoute(rowIdx, 'iv');
+        } else if (medInfo.includes('皮下') || medInfo.includes('is')) {
+          selectRoute(rowIdx, 'is');
+        } else if (medInfo.includes('筋注') || medInfo.includes('im')) {
+          selectRoute(rowIdx, 'im');
+        } else {
+          selectRoute(rowIdx, 'DIV');
+        }
+      }
+
+      // 行の薬品データを保存＆ホバーバッジ表示
+      setRowMedicineData(rowIdx, med);
+
+      setLastAction(`インクリメンタル候補から No.${rowIdx} に「${med.name}」を反映`);
+
+      showToastNotice(`No.${rowIdx} に「${med.name}」を反映しました`);
+    }
+
+    // パネル外クリックで閉じる
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('sheetFloatingSearch');
+      if (panel && panel.style.display !== 'none') {
+        if (!e.target.closest('.rx-textarea') && !e.target.closest('#sheetFloatingSearch')) {
+          hideFloatingSearch();
+        }
+      }
+    });
+
+    // =========================================================
+    // 💡 薬品詳細・注意書き ホバーフローティングウィンドウ管理
+    // =========================================================
+    const rowMedicinesMap = {}; // rowIdx -> array of medicines
+    let hoverHideTimer = null;
+
+    function setRowMedicineData(rowIdx, med) {
+      if (!rowMedicinesMap[rowIdx]) {
+        rowMedicinesMap[rowIdx] = [];
+      }
+      if (!rowMedicinesMap[rowIdx].some(m => m.id === med.id)) {
+        rowMedicinesMap[rowIdx].push(med);
+      }
+      updateRowInfoBadge(rowIdx);
+    }
+
+    function updateRowInfoBadge(rowIdx) {
+      const badge = document.getElementById(`rxInfoBadge_${rowIdx}`);
+      const list = rowMedicinesMap[rowIdx] || [];
+      if (!badge) return;
+      if (list.length > 0) {
+        let displayName = '';
+        if (list.length === 1) {
+          const name = list[0].name;
+          displayName = name.length > 18 ? name.slice(0, 18) + '…' : name;
+        } else {
+          displayName = list.map(m => m.name.length > 8 ? m.name.slice(0, 8) + '…' : m.name).join(' / ');
+          if (displayName.length > 24) displayName = displayName.slice(0, 24) + '…';
+        }
+        badge.textContent = displayName;
+        badge.title = `${list.map(m => m.name).join(' / ')}（ホバーで用法・詳細を表示）`;
+        badge.style.display = 'inline-flex';
+      } else {
+        badge.style.display = 'none';
+        badge.textContent = '';
+      }
+    }
+
+    function detectMedicinesInTextarea(rowIdx) {
+      const textarea = document.getElementById(`rxText_${rowIdx}`);
+      if (!textarea || cachedMedicines.length === 0) return;
+      const text = textarea.value;
+      if (!text.trim()) {
+        rowMedicinesMap[rowIdx] = [];
+        updateRowInfoBadge(rowIdx);
+        return;
+      }
+      const found = [];
+      const lines = text.split('\n');
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        const normLine = normSearchText(trimmed);
+        const match = cachedMedicines.find(m => {
+          const isIv = (m.category === '注射剤' || (m.category && m.category.includes('注射')));
+          if (!isIv) return false;
+          const n = normSearchText(m.name);
+          return n && (normLine.includes(n) || n.includes(normLine));
+        });
+        if (match && !found.some(x => x.id === match.id)) {
+          found.push(match);
+        }
+      });
+      if (found.length > 0) {
+        rowMedicinesMap[rowIdx] = found;
+      }
+      updateRowInfoBadge(rowIdx);
+    }
+
+    function renderMedHoverContent(meds) {
+      if (!Array.isArray(meds)) meds = [meds];
+      if (meds.length === 0) return '';
+
+      return meds.map((med, idx) => {
+        const isMulti = meds.length > 1;
+        const cleanSpec = (med.spec && !med.name.includes(med.spec)) ? med.spec : '';
+        const unitStr = med.unit ? `1${med.unit}` : '';
+        const badgeText = [cleanSpec, unitStr].filter(Boolean).join(' / ');
+
+        const usageText = med.dosage || med.standardUsage || '添付文書の用法・用量をご確認ください。';
+        const hasRemarks = Boolean(med.remarks || med.pharmacyComment);
+
+        return `
+          <div class="smhc-med-block ${isMulti ? 'smhc-multi' : ''}">
+            ${isMulti ? `<div class="smhc-multi-idx">薬品 ${idx + 1} / ${meds.length}</div>` : ''}
+            <div class="smhc-header">
+              <div class="smhc-tag-row">
+                <span class="smhc-tag-cat">💉 注射薬</span>
+                ${med.brandType ? `<span class="smhc-tag-brand">${escapeHtml(med.brandType)}</span>` : ''}
+                ${badgeText ? `<span class="smhc-tag-spec">${escapeHtml(badgeText)}</span>` : ''}
+              </div>
+              <div class="smhc-title">${escapeHtml(med.name)}</div>
+              ${med.genericName ? `<div class="smhc-generic">一般名 (成分): <strong>${escapeHtml(med.genericName)}</strong></div>` : ''}
+              ${(med.therapeuticCategoryMajor || med.therapeuticCategoryMiddle) ? `
+                <div class="smhc-category">${escapeHtml([med.therapeuticCategoryMajor, med.therapeuticCategoryMiddle].filter(Boolean).join(' › '))}</div>
+              ` : ''}
+            </div>
+
+            <div class="smhc-body">
+              <div class="smhc-section smhc-usage-sec">
+                <div class="smhc-sec-label">📋 用法・用量 (使用上の注意書き):</div>
+                <div class="smhc-usage-text">${escapeHtml(usageText)}</div>
+              </div>
+
+              ${hasRemarks ? `
+                <div class="smhc-section smhc-warning-sec">
+                  <div class="smhc-sec-label warning">⚠️ 備考・薬剤科コメント:</div>
+                  <div class="smhc-sec-text warning">
+                    ${med.remarks ? `<div style="margin-bottom:2px;">• 備考: ${escapeHtml(med.remarks)}</div>` : ''}
+                    ${med.pharmacyComment ? `<div>• 薬剤科連絡: ${escapeHtml(med.pharmacyComment)}</div>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('<div class="smhc-divider"></div>');
+    }
+
+    function positionHoverCard(anchorEl) {
+      const card = document.getElementById('sheetMedHoverCard');
+      if (!card || !anchorEl) return;
+
+      const rect = anchorEl.getBoundingClientRect();
+      const cardWidth = 380;
+      card.style.display = 'block';
+      card.style.visibility = 'hidden';
+      card.style.width = `${cardWidth}px`;
+
+      const cardHeight = card.offsetHeight || 220;
+
+      let left = rect.right + 10;
+      if (left + cardWidth > window.innerWidth - 10) {
+        left = Math.max(10, rect.left - cardWidth - 10);
+      }
+
+      let top = rect.top;
+      if (top + cardHeight > window.innerHeight - 10) {
+        top = Math.max(10, window.innerHeight - cardHeight - 10);
+      }
+
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+      card.style.visibility = 'visible';
+    }
+
+    function showHoverCardForElement(anchorEl, meds) {
+      cancelHoverHide();
+      const card = document.getElementById('sheetMedHoverCard');
+      const container = document.getElementById('smhcContainer');
+      if (!card || !container) return;
+
+      const html = renderMedHoverContent(meds);
+      if (!html) {
+        card.style.display = 'none';
+        return;
+      }
+
+      container.innerHTML = html;
+      positionHoverCard(anchorEl);
+    }
+
+    function scheduleHoverHide() {
+      if (hoverHideTimer) clearTimeout(hoverHideTimer);
+      hoverHideTimer = setTimeout(() => {
+        const card = document.getElementById('sheetMedHoverCard');
+        if (card) card.style.display = 'none';
+      }, 180);
+    }
+
+    function cancelHoverHide() {
+      if (hoverHideTimer) {
+        clearTimeout(hoverHideTimer);
+        hoverHideTimer = null;
+      }
+    }
+
+    function hideHoverCard() {
+      cancelHoverHide();
+      const card = document.getElementById('sheetMedHoverCard');
+      if (card) card.style.display = 'none';
+    }
+
+    function onInfoBadgeMouseEnter(el, rowIdx) {
+      const meds = rowMedicinesMap[rowIdx] || [];
+      if (meds.length > 0) {
+        showHoverCardForElement(el, meds);
+      } else {
+        detectMedicinesInTextarea(rowIdx);
+        const updated = rowMedicinesMap[rowIdx] || [];
+        if (updated.length > 0) {
+          showHoverCardForElement(el, updated);
+        }
+      }
+    }
+
+    function onInfoBadgeMouseLeave() {
+      scheduleHoverHide();
+    }
+
+    function onCellRxMouseEnter(el, rowIdx) {
+      const textarea = document.getElementById(`rxText_${rowIdx}`);
+      if (document.activeElement === textarea) return;
+      const badge = document.getElementById(`rxInfoBadge_${rowIdx}`);
+      const meds = rowMedicinesMap[rowIdx] || [];
+      if (meds.length > 0) {
+        showHoverCardForElement(badge || el, meds);
+      }
+    }
+
+    function onCellRxMouseLeave(el, rowIdx) {
+      scheduleHoverHide();
+    }
+
+    function onSfsItemMouseEnter(el, medId) {
+      const med = cachedMedicines.find(m => m.id === medId);
+      if (med) {
+        showHoverCardForElement(el, med);
+      }
+    }
+
+    function onSfsItemMouseLeave() {
+      scheduleHoverHide();
+    }
+
+    function onModalTrMouseEnter(el, medId) {
+      const med = cachedMedicines.find(m => m.id === medId);
+      if (med) {
+        showHoverCardForElement(el, med);
+      }
+    }
+
+    function onModalTrMouseLeave() {
+      scheduleHoverHide();
+    }
+
+    // 11. 全クリア
+    function clearSheetForm() {
+      if (!confirm('用紙の入力内容をすべてクリアしますか？')) return;
+      hideHoverCard();
+      for (let r = 1; r <= 10; r++) {
+        rowMedicinesMap[r] = [];
+        updateRowInfoBadge(r);
+        const tx = document.getElementById(`rxText_${r}`);
+        if (tx) tx.value = '';
+        selectedRoutes[r] = '';
+        const grid = document.getElementById(`routeGrid_${r}`);
+        if (grid) grid.querySelectorAll('.route-selected').forEach(el => el.classList.remove('route-selected'));
+        for (let d = 1; d <= 15; d++) {
+          const t = document.getElementById(`cell_top_${r}_${d}`);
+          const b = document.getElementById(`cell_bottom_${r}_${d}`);
+          if (t) t.innerHTML = '';
+          if (b) b.innerHTML = '';
+        }
+      }
+      setLastAction('指示箋の全入力内容をクリア');
+      setLatestNotice('指示箋の入力内容を初期状態にリセットしました', 'info');
+    }
+
+    // 12. データの収集
+    function collectSheetData() {
+      const year = document.getElementById('sheetYear')?.value || '';
+      const month = document.getElementById('sheetMonth')?.value || '';
+      const patientId = document.getElementById('metaPatientId')?.value || '';
+      const patientName = document.getElementById('metaPatientName')?.value || '';
+      const ward = document.getElementById('metaWard')?.value || '';
+      const room = document.getElementById('metaRoom')?.value || '';
+      const age = document.getElementById('metaAge')?.value || '';
+      const gender = document.getElementById('genderMale')?.classList.contains('gender-circle') ? '男' : '女';
+      const doctorName = document.getElementById('docStampName')?.textContent || '北島';
+
+      const medicines = [];
+      for (let r = 1; r <= 10; r++) {
+        const rx = document.getElementById(`rxText_${r}`)?.value.trim() || '';
+        if (rx) {
+          const route = selectedRoutes[r] || 'DIV';
+          medicines.push({
+            no: r,
+            medicine: rx.split('\n')[0],
+            dosage: rx.split('\n')[1] || '',
+            route: route,
+            remarks: rx.split('\n').slice(2).join(' ')
+          });
+        }
+      }
+
+      return {
+        year, month, patientId, patientName, ward, room, age, gender, doctorName, medicines
+      };
+    }
+
+    // 13. 保存処理
+    function saveSheetData() {
+      const data = collectSheetData();
+      try {
+        localStorage.setItem(`injection_sheet_${data.patientId || 'common'}`, JSON.stringify(data));
+        setLastAction(`指示箋データを一時保存 (患者: ${data.patientName || data.patientId})`);
+        setLatestNotice('指示箋の入力内容をローカルに一時保存しました', 'success');
+        alert('✅ 注射指示箋の入力内容を一時保存しました');
+      } catch (e) {
+        setLatestNotice('一時保存エラー: ' + e.message, 'error');
+        alert('保存エラー: ' + e.message);
+      }
+    }
+
+    // 14. オーダリング送信 & 電子カルテ連携
+    async function submitToOrderingAndCarte() {
+      const data = collectSheetData();
+      if (!data.medicines || data.medicines.length === 0) {
+        setLatestNotice('処方内容が入力されていません (1行以上必要)', 'warning');
+        alert('処方内容が入力されていません。1行以上入力してください。');
+        return;
+      }
+
+      setLastAction(`オーダー送信を開始 (患者: ${data.patientName || data.patientId} / ${data.medicines.length}品目)`);
+
+      if (!confirm(`患者 [${data.patientId}] ${data.patientName} 様の注射指示(${data.medicines.length}件) を確定し、部門モニターおよび電子カルテへ送信しますか？`)) {
+        setLastAction('オーダー送信の確認でキャンセルを選択');
+        return;
+      }
+
+      const orderPayload = {
+        orderType: 'IV',
+        priority: 'ROUTINE',
+        patient: {
+          id: data.patientId,
+          name: data.patientName,
+          ward: data.ward,
+          room: data.room,
+          gender: data.gender,
+          age: parseInt(data.age, 10) || 65
+        },
+        doctor: {
+          name: data.doctorName,
+          department: data.ward
+        },
+        details: {
+          route: data.medicines[0].route || 'DIV',
+          medicine: data.medicines.map(m => m.medicine).join(' + '),
+          medicines: data.medicines,
+          pharmacistChecked: true,
+          remarks: '原本様式入力画面より一括送信'
+        }
+      };
+
+      try {
+        setLatestNotice('オーダリングサーバーへ送信中...', 'info');
+        // Port 4000 のオーダー送信 API
+        const res = await fetch('/api/orders/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderPayload)
+        });
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+          setLastAction(`オーダー送信完了 [${resData.order.orderId}]`);
+          setLatestNotice(`オーダー送信完了！ [${resData.order.orderId}] 部門モニターおよび電子カルテ記事に反映されました`, 'success');
+          alert(`✅ オーダー送信完了！ [${resData.order.orderId}]\n部門モニターおよび電子カルテ記事に反映されました。`);
+          window.location.href = `http://${window.location.hostname || 'localhost'}:4000/?orderType=IV&patientId=${encodeURIComponent(data.patientId)}`;
+        } else {
+          setLatestNotice('送信失敗: ' + (resData.error || '不明なエラー'), 'error');
+          alert('❌ 送信失敗: ' + (resData.error || '不明なエラー'));
+        }
+      } catch (err) {
+        setLatestNotice('通信エラー: ' + err.message, 'error');
+        alert('❌ 通信エラー: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

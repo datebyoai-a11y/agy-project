@@ -4,6 +4,280 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>医療法人 社団 交雄会 だて病院 - オーダリング指示発行システム</title>
+  <!-- 🔒 多重起動防止・単一タブ排他制御 (1枚のみ起動可能) -->
+  <script>
+  (function() {
+    window.name = 'app_ordering_sender';
+    const SYSTEM_KEY = 'ordering_sender';
+    const SYSTEM_TITLE = 'オーダリング指示発行システム (Port 4000)';
+    const ACCENT_COLOR = '#0284c7';
+
+    const myInstanceId = 'inst_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+    const LOCK_KEY = '__single_tab_lock_' + SYSTEM_KEY;
+    const CHANNEL_NAME = '__single_tab_channel_' + SYSTEM_KEY;
+
+    let isLeader = false;
+    let heartbeatTimer = null;
+    let channel = null;
+    let leaderResponded = false;
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        channel = new BroadcastChannel(CHANNEL_NAME);
+      }
+    } catch (e) {
+      console.warn('BroadcastChannel not supported', e);
+    }
+
+    function getStoredLeader() {
+      try {
+        const val = localStorage.getItem(LOCK_KEY);
+        return val ? JSON.parse(val) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setStoredLeader(id) {
+      try {
+        localStorage.setItem(LOCK_KEY, JSON.stringify({ id: id, time: Date.now() }));
+      } catch (e) {}
+    }
+
+    function clearStoredLeader() {
+      try {
+        const cur = getStoredLeader();
+        if (cur && cur.id === myInstanceId) {
+          localStorage.removeItem(LOCK_KEY);
+        }
+      } catch (e) {}
+    }
+
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      setStoredLeader(myInstanceId);
+      heartbeatTimer = setInterval(function() {
+        if (isLeader) {
+          setStoredLeader(myInstanceId);
+        } else {
+          clearInterval(heartbeatTimer);
+        }
+      }, 1000);
+    }
+
+    function claimLeadership() {
+      isLeader = true;
+      leaderResponded = true;
+      startHeartbeat();
+      hideDuplicateModal();
+      if (channel) {
+        channel.postMessage({ type: 'NEW_LEADER_ELECTED', leaderId: myInstanceId });
+      }
+    }
+
+    function createOrUpdateModal(reason) {
+      if (!document.body) {
+        document.addEventListener('DOMContentLoaded', function() {
+          createOrUpdateModal(reason);
+        });
+        return;
+      }
+
+      let modal = document.getElementById('singleTabEnforceModal_' + SYSTEM_KEY);
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'singleTabEnforceModal_' + SYSTEM_KEY;
+        modal.style.cssText = [
+          'position: fixed',
+          'inset: 0',
+          'z-index: 2147483647',
+          'background: rgba(15, 23, 42, 0.88)',
+          'backdrop-filter: blur(8px)',
+          '-webkit-backdrop-filter: blur(8px)',
+          'display: flex',
+          'align-items: center',
+          'justify-content: center',
+          'padding: 20px',
+          'box-sizing: border-box',
+          'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif'
+        ].join(';');
+
+        const card = document.createElement('div');
+        card.style.cssText = [
+          'background: #ffffff',
+          'color: #1e293b',
+          'border-radius: 16px',
+          'max-width: 520px',
+          'width: 100%',
+          'padding: 30px 24px',
+          'box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6)',
+          'border: 1px solid #e2e8f0',
+          'text-align: center',
+          'box-sizing: border-box'
+        ].join(';');
+
+        card.innerHTML = `
+          <div style="font-size: 3rem; margin-bottom: 10px; line-height: 1;">⚠️</div>
+          <div style="display: inline-block; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-bottom: 12px; letter-spacing: 0.05em;">
+            単一画面排他保護・多重起動防止
+          </div>
+          <h2 id="singleTabTitle_${SYSTEM_KEY}" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 12px; line-height: 1.4;">
+            「${SYSTEM_TITLE}」は既に別のタブで開かれています
+          </h2>
+          <p id="singleTabMsg_${SYSTEM_KEY}" style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 18px; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+            オーダリング指示発行システムにおける入力内容の二重送信や重複登録を防止するため、当システムは<strong>同時に1枚（1つのタブ）のみ</strong>起動できるよう制御されています。
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+            <button id="singleTabBtnClose_${SYSTEM_KEY}" type="button" style="background: #ef4444; color: white; border: none; padding: 12px 20px; font-size: 0.98rem; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 4px rgba(239,68,68,0.3); transition: background 0.15s;">
+              <span>✕</span> この重複タブを閉じる（推奨）
+            </button>
+            <button id="singleTabBtnTakeover_${SYSTEM_KEY}" type="button" style="background: ${ACCENT_COLOR}; color: white; border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s;">
+              <span>🔄</span> このタブで開き直す（既存のタブを休止）
+            </button>
+          </div>
+          <div id="singleTabCloseHelp_${SYSTEM_KEY}" style="font-size: 0.78rem; color: #94a3b8; margin-top: 12px; display: none; line-height: 1.4;">
+            ※ブラウザ制限により自動で閉じられない場合は、ブラウザ上部の［×］ボタンで直接閉じてください。
+          </div>
+        `;
+
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+
+        const btnClose = modal.querySelector('#singleTabBtnClose_' + SYSTEM_KEY);
+        const btnTakeover = modal.querySelector('#singleTabBtnTakeover_' + SYSTEM_KEY);
+        const closeHelp = modal.querySelector('#singleTabCloseHelp_' + SYSTEM_KEY);
+
+        btnClose.addEventListener('click', function() {
+          window.close();
+          setTimeout(function() {
+            if (!window.closed && closeHelp) {
+              closeHelp.style.display = 'block';
+            }
+          }, 300);
+        });
+
+        btnTakeover.addEventListener('click', function() {
+          if (channel) {
+            channel.postMessage({ type: 'FORCE_TAKEOVER', newLeaderId: myInstanceId });
+          }
+          claimLeadership();
+        });
+      }
+
+      if (reason === 'takeover') {
+        const titleEl = modal.querySelector('#singleTabTitle_' + SYSTEM_KEY);
+        const msgEl = modal.querySelector('#singleTabMsg_' + SYSTEM_KEY);
+        if (titleEl) titleEl.textContent = `「${SYSTEM_TITLE}」は別のタブで新しく開かれました`;
+        if (msgEl) msgEl.innerHTML = `別のタブで新しく画面が開かれたため、二重入力防止のためこのタブの操作は<strong>安全に休止</strong>されました。<br>このタブで再び作業を続けたい場合は、下記の「このタブで開き直す」を押してください。`;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function showDuplicateModal(reason) {
+      isLeader = false;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      createOrUpdateModal(reason);
+    }
+
+    function hideDuplicateModal() {
+      const modal = document.getElementById('singleTabEnforceModal_' + SYSTEM_KEY);
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    if (channel) {
+      channel.onmessage = function(e) {
+        const data = e.data;
+        if (!data) return;
+
+        if (data.type === 'PING') {
+          if (isLeader) {
+            channel.postMessage({ type: 'PONG', leaderId: myInstanceId });
+            setStoredLeader(myInstanceId);
+          }
+        } else if (data.type === 'PONG') {
+          if (!isLeader && data.leaderId !== myInstanceId) {
+            leaderResponded = true;
+            showDuplicateModal('duplicate');
+          }
+        } else if (data.type === 'FORCE_TAKEOVER') {
+          if (isLeader && data.newLeaderId !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        } else if (data.type === 'NEW_LEADER_ELECTED') {
+          if (isLeader && data.leaderId !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        }
+      };
+    }
+
+    window.addEventListener('storage', function(e) {
+      if (e.key === LOCK_KEY && e.newValue) {
+        try {
+          const l = JSON.parse(e.newValue);
+          if (isLeader && l.id !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        } catch (err) {}
+      }
+    });
+
+    window.addEventListener('beforeunload', function() {
+      if (isLeader) {
+        sessionStorage.setItem('__single_tab_reloading_' + SYSTEM_KEY, Date.now().toString());
+        clearStoredLeader();
+        if (channel) {
+          channel.postMessage({ type: 'LEADER_UNLOAD', leaderId: myInstanceId });
+        }
+      }
+    });
+
+    window.addEventListener('pagehide', function() {
+      if (isLeader) {
+        clearStoredLeader();
+        if (channel) {
+          channel.postMessage({ type: 'LEADER_UNLOAD', leaderId: myInstanceId });
+        }
+      }
+    });
+
+    function initSingleTab() {
+      const reloadTime = sessionStorage.getItem('__single_tab_reloading_' + SYSTEM_KEY);
+      sessionStorage.removeItem('__single_tab_reloading_' + SYSTEM_KEY);
+      const isQuickReload = reloadTime && (Date.now() - parseInt(reloadTime, 10) < 3000);
+
+      const existing = getStoredLeader();
+      const now = Date.now();
+
+      if (!isQuickReload && existing && existing.id && existing.id !== myInstanceId && (now - existing.time) < 2500) {
+        if (channel) {
+          channel.postMessage({ type: 'PING', senderId: myInstanceId });
+        }
+        showDuplicateModal('duplicate');
+
+        setTimeout(function() {
+          if (!leaderResponded) {
+            const check = getStoredLeader();
+            if (!check || (Date.now() - check.time) > 2500) {
+              claimLeadership();
+            }
+          }
+        }, 350);
+      } else {
+        claimLeadership();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSingleTab);
+    } else {
+      initSingleTab();
+    }
+  })();
+  </script>
   <style>
     :root {
       --primary: #0284c7;
@@ -110,9 +384,9 @@
       flex: 1;
       max-width: 100%;
       width: 100%;
-      height: calc(100vh - 54px);
+      height: calc(100vh - 54px - 36px);
       margin: 0;
-      padding: 0.6rem 0.85rem;
+      padding: 0.5rem 0.75rem;
       display: flex;
       flex-direction: row;
       gap: 0;
@@ -123,28 +397,29 @@
       overflow: hidden;
     }
 
-    /* 左ペイン: 入力フォーム (独立縦スクロール) */
+    /* 左列: 患者情報・オーダー入力・送信ボタン画面 (縦2列の左側) */
     .form-card {
       background: white;
       border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 1rem 1.15rem;
+      border-radius: 8px 0 0 8px;
+      padding: 0.85rem 1.1rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
-      flex: 0 0 58%;
-      min-width: 320px;
-      max-width: calc(100% - 280px);
+      gap: 0.75rem;
+      flex: 0 0 52%;
+      min-width: 380px;
+      max-width: calc(100% - 320px);
       box-sizing: border-box;
       overflow-y: auto;
       overflow-x: hidden;
       height: 100%;
+      position: relative;
     }
 
     /* 左右分割スプリッター (Pane Resizer) */
     .pane-resizer {
-      width: 14px;
+      width: 12px;
       cursor: col-resize;
       user-select: none;
       touch-action: none;
@@ -154,7 +429,10 @@
       justify-content: center;
       flex-shrink: 0;
       z-index: 50;
-      margin: 0 -2px;
+      margin: 0 -1px;
+      background: #f1f5f9;
+      border-left: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
     }
     .pane-resizer::after {
       content: '';
@@ -168,29 +446,29 @@
     .pane-resizer.is-resizing::after {
       background: #0284c7;
       height: 100%;
-      width: 5px;
+      width: 6px;
     }
     .pane-resizer:hover,
     .pane-resizer.is-resizing {
-      background: rgba(2, 132, 199, 0.12);
+      background: rgba(2, 132, 199, 0.15);
     }
 
     @media (max-width: 900px) {
       .container {
-        flex-direction: column;
-        gap: 0.85rem;
+        /* 縦二列（2カラム構成）を維持 */
+        flex-direction: row;
+        overflow-x: auto;
       }
       .form-card {
-        flex: none;
-        width: 100%;
-        max-width: 100%;
+        min-width: 380px;
+        flex: 0 0 52%;
       }
       .pane-resizer {
-        display: none;
+        display: flex;
       }
       .history-card {
-        flex: none;
-        width: 100%;
+        min-width: 320px;
+        flex: 1 1 0;
       }
     }
 
@@ -487,20 +765,21 @@
       transform: translateY(1px);
     }
 
-    /* 右ペイン: 送信履歴 */
+    /* 右列: 送信履歴・ステータス画面 (縦2列の右側) */
     .history-card {
       background: white;
       border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+      padding: 0.85rem 1rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
       flex: 1 1 0;
-      min-width: 280px;
+      min-width: 320px;
       box-sizing: border-box;
       overflow-x: hidden;
+      overflow-y: auto;
       height: 100%;
     }
     .history-mode-btn {
@@ -729,7 +1008,7 @@
     /* トースト通知 */
     #toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 46px;
       right: 24px;
       background: #0f172a;
       color: white;
@@ -741,7 +1020,260 @@
       align-items: center;
       gap: 0.5rem;
       box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-      z-index: 9999;
+      z-index: 10000;
+    }
+
+    /* 最下段固定ステータスバー */
+    .app-status-bar {
+      height: 36px;
+      background: #0f172a;
+      border-top: 1.5px solid #1e293b;
+      color: #cbd5e1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.78rem;
+      z-index: 9990;
+      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .status-bar-container {
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .status-section {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .status-left {
+      flex: 1 1 45%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .status-center {
+      flex: 1 1 45%;
+      min-width: 0;
+      overflow: hidden;
+      border-left: 1px solid #334155;
+      padding-left: 0.75rem;
+    }
+    .status-right {
+      flex: 0 0 auto;
+      gap: 0.5rem;
+      border-left: 1px solid #334155;
+      padding-left: 0.75rem;
+    }
+    .status-indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      flex-shrink: 0;
+    }
+    .status-label {
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+    .status-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+      min-width: 0;
+      transition: color 0.2s ease;
+    }
+    .status-action-text {
+      color: #38bdf8;
+    }
+    .status-notice-text {
+      color: #a7f3d0;
+    }
+    .status-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 0.7rem;
+      color: #64748b;
+      flex-shrink: 0;
+      margin-left: 0.25rem;
+    }
+    .status-badge-connection {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #0284c7;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    .status-log-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
+    }
+    .status-log-btn:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: #64748b;
+    }
+
+    @keyframes statusPulseAction {
+      0% { background: rgba(56, 189, 248, 0.35); border-radius: 4px; }
+      100% { background: transparent; }
+    }
+    @keyframes statusPulseNotice {
+      0% { background: rgba(52, 211, 153, 0.35); border-radius: 4px; }
+      100% { background: transparent; }
+    }
+    .status-pulse-action {
+      animation: statusPulseAction 0.9s ease-out;
+    }
+    .status-pulse-notice {
+      animation: statusPulseNotice 0.9s ease-out;
+    }
+
+    /* 操作・通知 履歴ポップアップモーダル */
+    .status-history-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0 1.5rem 44px 0;
+      z-index: 10001;
+    }
+    .status-history-dialog {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      width: 540px;
+      max-width: 92vw;
+      max-height: 420px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .status-history-header {
+      padding: 0.6rem 0.85rem;
+      background: #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    .status-history-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+    }
+    .status-history-close-btn:hover {
+      color: #ffffff;
+      background: #334155;
+    }
+    .status-history-body {
+      padding: 0.6rem;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      background: #0b1120;
+    }
+    .status-history-item {
+      padding: 0.4rem 0.6rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .status-history-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #64748b;
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      margin-top: 1px;
+    }
+    .status-history-type {
+      font-weight: bold;
+      font-size: 0.68rem;
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .type-action { background: #0369a1; color: #e0f2fe; }
+    .type-notice { background: #065f46; color: #d1fae5; }
+    .type-warning { background: #92400e; color: #fef3c7; }
+    .type-error { background: #991b1b; color: #fee2e2; }
+    .status-history-msg {
+      color: #f1f5f9;
+      word-break: break-all;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .status-history-footer {
+      padding: 0.45rem 0.85rem;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-history-clear-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .status-history-clear-btn:hover {
+      color: #f87171;
+    }
+    .status-history-ok-btn {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 0.28rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .status-history-ok-btn:hover {
+      background: #0369a1;
     }
 
     /* 薬品サジェスト ドロップダウン & 詳細バッジ */
@@ -1384,10 +1916,10 @@
       </div>
     </div>
     <div class="header-links">
-      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 5443 : 5000 %>" target="_blank">📥 受信側モニター</a>
+      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 5443 : 5000 %>" target="app_ordering_receiver">📥 受信側モニター</a>
       <% const initPId = (typeof initialPatientId !== 'undefined' && initialPatientId) ? initialPatientId : ''; %>
       <% const initPName = (typeof initialPatientName !== 'undefined' && initialPatientName) ? initialPatientName : ''; %>
-      <a id="headerCarteLink" href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles<%= initPId ? `?targetId=${encodeURIComponent(initPId)}` : '' %>" target="_blank" style="background:#0284c7; color:white; border-color:#0284c7; font-weight:bold;" title="電子カルテを開く (選択中の患者を引き継ぎます)">📋 電子カルテ <%= initPName ? `[${initPName}]` : '(Port 3000)' %></a>
+      <a id="headerCarteLink" href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles<%= initPId ? `?targetId=${encodeURIComponent(initPId)}` : '' %>" target="app_carte_articles" style="background:#0284c7; color:white; border-color:#0284c7; font-weight:bold;" title="電子カルテを開く (選択中の患者を引き継ぎます)">📋 電子カルテ <%= initPName ? `[${initPName}]` : '(Port 3000)' %></a>
       <button type="button" onclick="clearHistory()" style="background:rgba(255,255,255,0.18); color:white; border:none; padding:0.25rem 0.55rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
         履歴クリア
       </button>
@@ -1395,8 +1927,19 @@
   </header>
 
   <div class="container">
-    <!-- 左ペイン: 入力フォーム (最上部にタブバー常時固定) -->
-    <div class="form-card">
+    <!-- 左列: 患者情報と各種指示入力・送信ボタン画面 (縦2列の左側) -->
+    <div class="form-card" id="formCard">
+      <!-- 左列ヘッダー: 画面の役割を明確化 & クイック送信ボタン -->
+      <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:0.4rem; border-bottom:2px solid #0284c7; flex-shrink:0;">
+        <div style="font-weight:900; font-size:0.92rem; color:#0369a1; display:flex; align-items:center; gap:0.4rem;">
+          <span>📝 オーダー指示入力・発行</span>
+          <span style="font-size:0.75rem; color:#64748b; font-weight:normal;">(患者情報・指示作成・送信画面)</span>
+        </div>
+        <button type="button" onclick="submitOrder()" style="background:#0284c7; color:white; border:none; padding:0.28rem 0.75rem; border-radius:4px; font-weight:bold; font-size:0.78rem; cursor:pointer; display:flex; align-items:center; gap:0.3rem; box-shadow:0 1px 3px rgba(2,132,199,0.3);" title="入力内容を受信側サーバーへ送信">
+          <span>🚀</span> <span>指示票を送信</span>
+        </button>
+      </div>
+
       <!-- ★最上部固定: オーダー種別タブナビゲーション (画面を開いて即座に見える位置に配置)★ -->
       <div class="tabs-nav-sticky-wrapper">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
@@ -1444,8 +1987,45 @@
         </div>
       </details>
 
-      <!-- 2. オーダー属性（指示医 / 優先度 / 日時） ※患者情報はカルテ上部リボンで一元管理（右列には非表示） -->
-      <div class="patient-master-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.65rem; margin-bottom:0.4rem;">
+      <!-- 2. だて病院 共通患者情報セクション (表示のみ・選択不可) -->
+      <div class="patient-master-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #0284c7; border-radius:6px; padding:0.5rem 0.75rem; display:flex; flex-direction:column; gap:0.35rem;">
+        <div class="patient-master-header" style="margin-bottom:0.15rem; padding-bottom:0.25rem; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+          <div class="patient-master-title" style="font-size:0.85rem; font-weight:bold; color:#0369a1; display:flex; align-items:center; gap:0.35rem;">
+            <span>👤 対象患者情報</span>
+            <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">(引き継ぎ対象者・表示のみ / 選択不可)</span>
+          </div>
+          <span class="hospital-stamp-label" style="font-size:0.7rem; color:#0284c7; background:#e0f2fe; padding:0.1rem 0.4rem; border-radius:3px; font-weight:bold;">だて病院 診療録・指示票様式</span>
+        </div>
+
+        <!-- 1行目: ID、氏名、カナ、属性(性別/年齢/生年月日/身体計測) 表示のみ -->
+        <div style="display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap; font-size:0.85rem; line-height:1.4;">
+          <span style="background:#0f172a; color:#fef08a; font-family:monospace; font-weight:bold; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.85rem;" id="dispPatientId">
+            [<%= patients[0].id %>]
+          </span>
+          <span style="font-size:1.02rem; font-weight:bold; color:#0f172a;" id="dispPatientName">
+            <%= patients[0].name %> 様
+          </span>
+          <span style="font-size:0.78rem; color:#64748b;" id="dispPatientKana">
+            (<%= patients[0].kana || '' %>)
+          </span>
+          <span style="background:#e0f2fe; color:#0369a1; font-weight:bold; font-size:0.78rem; padding:0.1rem 0.45rem; border-radius:3px;" id="dispPatientMeta">
+            <%= patients[0].gender || '男' %> / <%= patients[0].age || '' %>才 (<%= patients[0].era || '昭' %><%= patients[0].birthDate ? ` / ${patients[0].birthDate}` : '' %>)
+          </span>
+          <span style="font-size:0.78rem; color:#475569;" id="dispPatientBody">
+            <% if (patients[0].height || patients[0].weight) { %>
+              📏 <%= patients[0].height ? `${patients[0].height}cm` : '' %> <%= patients[0].weight ? `${patients[0].weight}kg` : '' %>
+            <% } %>
+          </span>
+        </div>
+
+        <!-- 2行目: 病棟・病室・区分・感染症・移動方法 表示のみ -->
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; font-size:0.78rem; color:#334155; margin-top:0.15rem; padding-top:0.25rem; border-top:1px dashed #e2e8f0;">
+          <span>🏥 病棟: <strong id="dispPatientWard" style="color:#0284c7;"><%= patients[0].ward || 'しおかぜ' %></strong> (<span id="dispPatientRoom"><%= patients[0].room || '302号室' %></span>)</span>
+          <span>📋 区分: <strong id="dispPatientExamCat"><%= patients[0].examCategory || '一般診療' %></strong></span>
+          <span>🦠 感染症: <strong id="dispPatientInfection" style="<%= (patients[0].infection && patients[0].infection !== '無') ? 'color:#dc2626;' : 'color:#16a34a;' %>"><%= patients[0].infection || '無' %></strong></span>
+          <span>🦽 移動: <strong id="dispPatientMobility"><%= patients[0].mobility || '車椅子' %></strong></span>
+        </div>
+
         <!-- 内部保持用の隠しフォーム群 (submitOrderやJS連携用・非表示) -->
         <div style="display:none;" aria-hidden="true">
           <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)">
@@ -1501,6 +2081,7 @@
           <input type="text" id="patientInfectionDetailInput" value="">
           <select id="patientMobilityInput"><option value="車椅子" selected>車椅子</option><option value="徒歩">徒歩</option><option value="ベッド">ベッド</option><option value="ストレッチャー">ストレッチャー</option></select>
         </div>
+      </div>
 
         <!-- 指示医 / 優先度 / オーダー入力日時 / 実施予定日時 (1行にスッキリ統合) -->
         <div class="form-row" style="grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr;">
@@ -1531,7 +2112,6 @@
             <input type="datetime-local" id="orderScheduleTime" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
           </div>
         </div>
-      </div>
 
 
       <!-- ========================================================= -->
@@ -1542,7 +2122,15 @@
           <div class="photo-form-title">
             <span>💊 処方箋指示書 (院内処方 / 院外処方)</span>
           </div>
-          <span class="photo-form-badge">薬品集マスタ(607品目)連動</span>
+          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" onclick="executeDoPrescription()" style="background:#0284c7; color:white; border:none; padding:0.25rem 0.65rem; border-radius:4px; font-weight:bold; font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem; box-shadow:0 1px 2px rgba(0,0,0,0.15);" title="この患者の前回処方内容をワンクリックで複製・反映">
+              <span>🔁</span> <span>Do処方 (前回処方を反映)</span>
+            </button>
+            <a href="/medicines-list?cat=内服薬" target="app_medicines_list" style="background:white; color:#0284c7; border:1px solid #7dd3fc; padding:0.25rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
+              <span>📚</span> <span>採用薬一覧 ↗</span>
+            </a>
+            <span class="photo-form-badge">薬品集マスタ(607品目)連動</span>
+          </div>
         </div>
 
         <div class="form-row" style="margin-bottom:0.65rem; background:#f8fafc; padding:0.5rem 0.65rem; border-radius:6px; border:1px solid #e2e8f0;">
@@ -1577,10 +2165,15 @@
         </div>
 
         <!-- 薬剤追加バー -->
-        <div style="margin-top:0.6rem; display:flex; justify-content:space-between; align-items:center; background:#f0fdf4; padding:0.45rem 0.75rem; border-radius:6px; border:1px dashed #86efac;">
-          <button type="button" class="btn-lookup" style="padding:0.35rem 0.8rem; font-size:0.8rem; background:#059669; color:white; border:none;" onclick="addNewRxMedicineRow()">
-            ➕ 処方薬剤を追加 (Rp追加)
-          </button>
+        <div style="margin-top:0.6rem; display:flex; justify-content:space-between; align-items:center; background:#f0fdf4; padding:0.45rem 0.75rem; border-radius:6px; border:1px dashed #86efac; flex-wrap:wrap; gap:0.4rem;">
+          <div style="display:flex; gap:0.4rem; align-items:center;">
+            <button type="button" class="btn-lookup" style="padding:0.35rem 0.8rem; font-size:0.8rem; background:#059669; color:white; border:none;" onclick="addNewRxMedicineRow()">
+              ➕ 処方薬剤を追加 (Rp追加)
+            </button>
+            <button type="button" onclick="executeDoPrescription()" style="padding:0.35rem 0.75rem; font-size:0.8rem; background:#0284c7; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem;" title="前回の処方内容をそのまま複製して入力欄にセット">
+              🔁 Do処方
+            </button>
+          </div>
           <span style="font-size:0.75rem; font-weight:bold; color:#166534;" id="rxTotalMedCountText">登録薬剤: 1品目</span>
         </div>
 
@@ -1599,10 +2192,16 @@
           <div class="photo-form-title">
             <span>💉 注射指示書 (医療法人 交雄会 だて病院)</span>
           </div>
-          <div style="display:flex; align-items:center; gap:0.5rem;">
-            <button type="button" class="btn-inj-print" onclick="openSenderInjectionModal()" style="padding:0.25rem 0.6rem; border-radius:4px; font-weight:bold; font-size:0.75rem; cursor:pointer; background:white; border:1px solid #7dd3fc; color:#0284c7;">
-              🖨️ 注射指示箋 プレビュー・編集(A4)
+          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+            <button type="button" class="btn-inj-print" onclick="openSenderInjectionModal()" style="padding:0.3rem 0.7rem; border-radius:4px; font-weight:bold; font-size:0.78rem; cursor:pointer; background:white; border:1px solid #7dd3fc; color:#0284c7; display:inline-flex; align-items:center; gap:0.25rem; box-shadow:0 1px 2px rgba(0,0,0,0.05);" title="画面内で注射指示箋を直接プレビュー・編集・印刷します">
+              <span>🖨️</span> <span>注射指示箋 プレビュー・編集(A4)</span>
             </button>
+            <button type="button" class="btn-paper-form" onclick="openPaperInjectionForm()" style="padding:0.3rem 0.65rem; border-radius:4px; font-weight:bold; font-size:0.76rem; cursor:pointer; background:#0284c7; border:1px solid #0369a1; color:white; display:inline-flex; align-items:center; gap:0.25rem; box-shadow:0 1px 2px rgba(0,0,0,0.1);" title="原本用紙レイアウト専用画面を開きます">
+              <span>📄</span> <span>原本様式画面 ↗</span>
+            </button>
+            <a href="/medicines-list?cat=注射剤" target="app_medicines_list" style="padding:0.26rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.74rem; text-decoration:none; background:white; border:1px solid #7dd3fc; color:#0284c7; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く">
+              <span>📚</span> <span>採用薬一覧 ↗</span>
+            </a>
             <span class="photo-form-badge">用紙10行様式準拠 (DIV/iv/im/is/IVH)</span>
           </div>
         </div>
@@ -2356,20 +2955,23 @@
         </div>
       </div>
 
-      <!-- 送信ボタン -->
-      <button type="button" id="submitOrderBtn" class="btn-submit" onclick="submitOrder()">
-        <span>🚀 受信側サーバーへ指示票を送信</span>
-      </button>
+      <!-- 送信ボタン (スティッキーフッターバー: 常に画面下に常駐し即座に送信可能) -->
+      <div style="position:sticky; bottom:-0.85rem; margin-top:0.75rem; margin-left:-1.1rem; margin-right:-1.1rem; margin-bottom:-0.85rem; padding:0.6rem 1.1rem; background:rgba(255,255,255,0.96); backdrop-filter:blur(4px); border-top:1.5px solid #cbd5e1; box-shadow:0 -4px 12px rgba(0,0,0,0.06); z-index:30;">
+        <button type="button" id="submitOrderBtn" class="btn-submit" onclick="submitOrder()" style="margin:0; width:100%;">
+          <span>🚀 受信側サーバーへ指示票を送信</span>
+        </button>
+      </div>
     </div>
 
     <!-- 左右分割リサイザー境界線 (ドラッグで入力画面と履歴の幅を調整可能) -->
-    <div id="paneResizer" class="pane-resizer" title="左右の境界線をドラッグして幅を調整 (ダブルクリックで初期比率 58%:42% にリセット)"></div>
+    <div id="paneResizer" class="pane-resizer" title="左右の境界線をドラッグして幅を調整 (ダブルクリックで初期比率 52%:48% にリセット)"></div>
 
-    <!-- 右ペイン: 送信履歴 & 状況追跡 -->
+    <!-- 右列: 送信履歴・ステータス画面 (縦2列の右側) -->
     <div class="history-card wrap-mode" id="historyCard">
-      <div class="section-title" style="justify-content:space-between; flex-wrap:wrap; gap:0.4rem;">
+      <div class="section-title" style="justify-content:space-between; flex-wrap:wrap; gap:0.4rem; padding-bottom:0.4rem; border-bottom:2px solid #059669;">
         <div style="display:flex; align-items:center; gap:0.4rem;">
-          <span>📋 送信履歴・ステータス</span>
+          <span style="font-weight:900; font-size:0.92rem; color:#065f46;">📋 送信履歴・ステータス</span>
+          <span style="font-size:0.75rem; color:#64748b; font-weight:normal;">(状況追跡画面)</span>
           <span id="sseStatusBadge" style="font-size:0.68rem; padding:0.15rem 0.45rem; border-radius:9999px; background:#dcfce7; color:#15803d; font-weight:bold; border:1px solid #bbf7d0;">
             ⚡ リアルタイム接続中
           </span>
@@ -2527,9 +3129,9 @@
                   </div>
                 </td>
                 <th style="width:36px; text-align:center; font-weight:bold;">病棟</th>
-                <td style="width:75px; font-weight:bold; text-align:center;" id="injPrintWard" contenteditable="true" class="inj-editable-meta" title="直接編集可能">しおかぜ</td>
+                <td style="width:75px; font-weight:bold; text-align:center;" id="injPrintWard">しおかぜ</td>
                 <td style="width:32px; text-align:center; font-weight:bold; border-right:none;">ID</td>
-                <td style="width:135px; border-left:none; font-family:monospace; font-weight:bold; font-size:12.5px;" id="injPrintPatientId" contenteditable="true" class="inj-editable-meta" title="直接編集可能">P001</td>
+                <td style="width:135px; border-left:none; font-family:monospace; font-weight:bold; font-size:12.5px;" id="injPrintPatientId">P001</td>
                 <th style="width:58px; text-align:center; font-weight:bold;">生年月日</th>
                 <td style="width:175px; padding:2px 6px;">
                   <span id="injEraM" class="era-option">M</span>・<span id="injEraT" class="era-option">T</span>・<span id="injEraS" class="era-option">S</span>・<span id="injEraH" class="era-option">H</span>・<span id="injEraR" class="era-option">R</span>
@@ -2538,17 +3140,17 @@
               </tr>
               <tr>
                 <th style="text-align:center; font-weight:bold;">号室</th>
-                <td style="font-weight:bold; text-align:center;" id="injPrintRoom" contenteditable="true" class="inj-editable-meta" title="直接編集可能">302号室</td>
+                <td style="font-weight:bold; text-align:center;" id="injPrintRoom">302号室</td>
                 <th style="text-align:center; font-weight:bold; border-right:none;">氏名</th>
                 <td style="border-left:none; padding:2px 6px;">
-                  <span id="injPrintPatientName" style="font-size:13px; font-weight:bold;" contenteditable="true" class="inj-editable-meta" title="直接編集可能">安部 光良</span>
+                  <span id="injPrintPatientName" style="font-size:13px; font-weight:bold;">安部 光良</span>
                   <span style="font-size:11px; margin-left:8px;">様</span>
                 </td>
                 <th style="text-align:center; font-weight:bold;">性別</th>
                 <td style="padding:2px 6px;">
                   <span id="injGenderMale" class="gender-option">男</span>　
                   <span id="injGenderFemale" class="gender-option">女</span>　
-                  <span id="injPrintPatientAge" style="font-weight:bold; margin-left:14px;" contenteditable="true" class="inj-editable-meta" title="直接編集可能">70</span> 才
+                  <span id="injPrintPatientAge" style="font-weight:bold; margin-left:14px;">70</span> 才
                 </td>
               </tr>
             </table>
@@ -2640,7 +3242,196 @@
   <!-- トースト通知 -->
   <div id="toast"></div>
 
+  <!-- 最下段固定ステータスバー (画面操作専用・最後の操作と通知を表示) -->
+  <footer id="appStatusBar" class="app-status-bar no-print" role="status" aria-live="polite">
+    <div class="status-bar-container">
+      <!-- 左側: システム稼働状態 & 最後の操作 -->
+      <div class="status-section status-left" id="statusActionSection">
+        <span class="status-indicator-dot" title="オーダリングシステム正常稼働中"></span>
+        <span class="status-label">最後の操作:</span>
+        <span id="statusBarLastAction" class="status-value status-action-text" title="直近のユーザー操作">システム初期化完了</span>
+        <span id="statusBarActionTime" class="status-time">--:--:--</span>
+      </div>
+
+      <!-- 中央: 最新の通知 -->
+      <div class="status-section status-center" id="statusNoticeSection">
+        <span id="statusBarNoticeIcon" style="font-size:0.85rem; flex-shrink:0;">📢</span>
+        <span class="status-label">通知:</span>
+        <span id="statusBarLatestNotice" class="status-value status-notice-text" title="最新のシステム通知・案内">準備完了（オーダー指示の発行・照会が可能です）</span>
+        <span id="statusBarNoticeTime" class="status-time">--:--:--</span>
+      </div>
+
+      <!-- 右側: 連動状態 & 履歴ログ表示ボタン -->
+      <div class="status-section status-right">
+        <span class="status-badge-connection" title="電子カルテ(Port 3000) / 受信部門(Port 5000) リアルタイム連動中">🟢 連携稼働中</span>
+        <button type="button" class="status-log-btn" onclick="toggleStatusHistoryModal()" title="直近の操作・通知履歴を表示">
+          <span>📜</span> <span>履歴 (<span id="statusHistoryCount">0</span>)</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 操作・通知 履歴ポップアップモーダル -->
+  <div id="statusHistoryModal" class="status-history-modal no-print" style="display:none;" onclick="closeStatusHistoryModal(event)">
+    <div class="status-history-dialog" onclick="event.stopPropagation()">
+      <div class="status-history-header">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.1rem;">📜</span>
+          <h4 style="margin:0; font-size:0.92rem; font-weight:bold; color:#f8fafc;">オーダリング操作＆通知 履歴ログ</h4>
+          <span style="font-size:0.72rem; color:#94a3b8;">（直近30件）</span>
+        </div>
+        <button type="button" onclick="closeStatusHistoryModal()" class="status-history-close-btn" title="閉じる">✕</button>
+      </div>
+      <div class="status-history-body" id="statusHistoryList">
+        <!-- JSで動的に追加 -->
+      </div>
+      <div class="status-history-footer">
+        <button type="button" onclick="clearStatusHistory()" class="status-history-clear-btn">履歴消去</button>
+        <button type="button" onclick="closeStatusHistoryModal()" class="status-history-ok-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // =========================================================
+    // 💡 最下段ステータスバー (最後の操作 & 通知) 管理システム
+    // =========================================================
+    const statusHistory = [];
+    const MAX_STATUS_HISTORY = 30;
+
+    function formatCurrentTime() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    // 最後の操作を記録 & ステータスバー更新
+    function setLastAction(actionText) {
+      const timeStr = formatCurrentTime();
+      const el = document.getElementById('statusBarLastAction');
+      const elTime = document.getElementById('statusBarActionTime');
+      const sec = document.getElementById('statusActionSection');
+      if (el) {
+        el.textContent = actionText;
+        el.title = `[${timeStr}] ${actionText}`;
+      }
+      if (elTime) elTime.textContent = timeStr;
+      if (sec) {
+        sec.classList.remove('status-pulse-action');
+        void sec.offsetWidth;
+        sec.classList.add('status-pulse-action');
+      }
+      addStatusHistory('action', actionText, timeStr);
+    }
+
+    // 最新の通知を記録 & ステータスバー更新
+    function setLatestNotice(noticeText, type = 'info') {
+      const timeStr = formatCurrentTime();
+      const el = document.getElementById('statusBarLatestNotice');
+      const elTime = document.getElementById('statusBarNoticeTime');
+      const elIcon = document.getElementById('statusBarNoticeIcon');
+      const sec = document.getElementById('statusNoticeSection');
+
+      let icon = '📢';
+      let color = '#a7f3d0';
+      if (type === 'success') {
+        icon = '✅';
+        color = '#4ade80';
+      } else if (type === 'warning') {
+        icon = '⚠️';
+        color = '#fbbf24';
+      } else if (type === 'error') {
+        icon = '❌';
+        color = '#f87171';
+      } else if (type === 'info') {
+        icon = 'ℹ️';
+        color = '#38bdf8';
+      }
+
+      if (elIcon) elIcon.textContent = icon;
+      if (el) {
+        el.textContent = noticeText;
+        el.style.color = color;
+        el.title = `[${timeStr}] ${noticeText}`;
+      }
+      if (elTime) elTime.textContent = timeStr;
+      if (sec) {
+        sec.classList.remove('status-pulse-notice');
+        void sec.offsetWidth;
+        sec.classList.add('status-pulse-notice');
+      }
+      addStatusHistory(type, noticeText, timeStr);
+    }
+
+    // 操作と通知を両方一度に更新する
+    function updateStatusBar(actionText, noticeText, type = 'info') {
+      if (actionText) setLastAction(actionText);
+      if (noticeText) setLatestNotice(noticeText, type);
+    }
+
+    function addStatusHistory(type, message, timeStr) {
+      statusHistory.unshift({ type, message, time: timeStr });
+      if (statusHistory.length > MAX_STATUS_HISTORY) {
+        statusHistory.pop();
+      }
+      const countEl = document.getElementById('statusHistoryCount');
+      if (countEl) countEl.textContent = statusHistory.length;
+    }
+
+    function toggleStatusHistoryModal() {
+      const modal = document.getElementById('statusHistoryModal');
+      if (!modal) return;
+      if (modal.style.display === 'none' || !modal.style.display) {
+        renderStatusHistoryList();
+        modal.style.display = 'flex';
+      } else {
+        modal.style.display = 'none';
+      }
+    }
+
+    function closeStatusHistoryModal(e) {
+      if (!e || e.target === document.getElementById('statusHistoryModal') || 
+          e.target.classList.contains('status-history-close-btn') || 
+          e.target.classList.contains('status-history-ok-btn')) {
+        const modal = document.getElementById('statusHistoryModal');
+        if (modal) modal.style.display = 'none';
+      }
+    }
+
+    function clearStatusHistory() {
+      statusHistory.length = 0;
+      const countEl = document.getElementById('statusHistoryCount');
+      if (countEl) countEl.textContent = '0';
+      renderStatusHistoryList();
+    }
+
+    function renderStatusHistoryList() {
+      const container = document.getElementById('statusHistoryList');
+      if (!container) return;
+      if (statusHistory.length === 0) {
+        container.innerHTML = '<div style="color:#64748b; text-align:center; padding:1.5rem 0; font-size:0.8rem;">操作・通知履歴はありません</div>';
+        return;
+      }
+      let html = '';
+      statusHistory.forEach(item => {
+        let typeClass = 'type-action';
+        let typeLabel = '操作';
+        if (item.type === 'success') { typeClass = 'type-notice'; typeLabel = '成功'; }
+        else if (item.type === 'notice' || item.type === 'info') { typeClass = 'type-notice'; typeLabel = '通知'; }
+        else if (item.type === 'warning') { typeClass = 'type-warning'; typeLabel = '注意'; }
+        else if (item.type === 'error') { typeClass = 'type-error'; typeLabel = 'エラー'; }
+
+        html += `
+          <div class="status-history-item">
+            <span class="status-history-time">${escapeHtml(item.time)}</span>
+            <span class="status-history-type ${typeClass}">${typeLabel}</span>
+            <span class="status-history-msg">${escapeHtml(item.message)}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
     let currentOrderType = 'PRESCRIPTION';
     let currentRadSubTab = 'CT';
     let currentLabSubTab = 'PHYSIO';
@@ -2669,6 +3460,16 @@
       document.querySelectorAll('.order-pane').forEach(p => p.style.display = 'none');
       const targetPane = document.getElementById(`pane-${type}`);
       if (targetPane) targetPane.style.display = 'block';
+
+      const typeLabels = {
+        'PRESCRIPTION': '処方オーダー (内服・外用)',
+        'IV': '注射指示オーダー (点滴・静注)',
+        'RADIOLOGY': '放射線検査オーダー (CT・透視・一般撮影)',
+        'LAB_EXAM': '検査オーダー (生理・検体)',
+        'MEAL': '食事箋オーダー',
+        'REHAB': 'リハビリテーション指示'
+      };
+      setLastAction(`指示種別タブを [${typeLabels[type] || type}] に切替`);
     }
 
     // 放射線サブタブ切替 (CT / 透視 / 一般撮影)
@@ -2682,6 +3483,9 @@
       document.querySelectorAll('#pane-RADIOLOGY .rad-subpane').forEach(p => p.style.display = 'none');
       const target = document.getElementById(`rad-subpane-${sub}`);
       if (target) target.style.display = 'block';
+
+      const radLabels = { 'CT': 'CT検査', 'FLUORO': '透視検査', 'XRAY': '一般撮影' };
+      setLastAction(`放射線検査サブタブを [${radLabels[sub] || sub}] に切替`);
     }
 
     // 検査サブタブ切替 (生理検査 / 検体検査)
@@ -2695,6 +3499,9 @@
       document.querySelectorAll('#pane-LAB_EXAM .lab-subpane').forEach(p => p.style.display = 'none');
       const target = document.getElementById(`lab-subpane-${sub}`);
       if (target) target.style.display = 'block';
+
+      const labLabels = { 'PHYSIO': '生理検査 (心電図等)', 'SAMPLE': '検体検査 (血液・尿等)' };
+      setLastAction(`検査サブタブを [${labLabels[sub] || sub}] に切替`);
     }
 
     // 注射投与経路切替
@@ -2702,6 +3509,7 @@
       document.getElementById('ivSelectedRoute').value = routeVal;
       document.querySelectorAll('.route-pill').forEach(p => p.classList.remove('active'));
       if (pillEl) pillEl.classList.add('active');
+      setLastAction(`注射投与経路を [${routeVal}] に選択`);
     }
 
     // 感染症詳細トグル
@@ -2825,7 +3633,9 @@
       }
       syncPatientCompactDisplay();
       updateHeaderCarteLink();
-      showToast(`👤 患者「${document.getElementById('patientNameInput').value || '未設定'}」に切り替えました`);
+      const selPatientName = document.getElementById('patientNameInput').value || '未設定';
+      setLastAction(`患者を [${selPatientName}] 様に切替`);
+      showToast(`👤 患者「${selPatientName}」に切り替えました`);
     }
 
     // 👤 対象患者のコンパクト表示（固定ビュー）をフォーム内部値と同期
@@ -2913,13 +3723,16 @@
     }
 
     function showToast(message, isError = false) {
+      setLatestNotice(message, isError ? 'error' : 'success');
       const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.style.background = isError ? '#b91c1c' : '#0f172a';
-      toast.style.display = 'flex';
-      setTimeout(() => {
-        toast.style.display = 'none';
-      }, 3500);
+      if (toast) {
+        toast.textContent = message;
+        toast.style.background = isError ? '#b91c1c' : '#0f172a';
+        toast.style.display = 'flex';
+        setTimeout(() => {
+          toast.style.display = 'none';
+        }, 3500);
+      }
     }
 
     // =================================================================
@@ -2932,6 +3745,7 @@
       // 患者データの収集 (だて病院様式の14項目)
       const patientId = document.getElementById('patientIdInput').value.trim() || 'P001';
       const patientName = document.getElementById('patientNameInput').value.trim() || '未指定患者';
+      setLastAction(`オーダー指示送信を開始 (${currentOrderType} / 患者: ${patientName})`);
       const kana = document.getElementById('patientKanaInput').value.trim() || '';
       const gender = document.getElementById('patientGenderInput').value || '男';
       const era = document.getElementById('patientEraInput').value || '昭';
@@ -2988,6 +3802,10 @@
               rp: index + 1,
               medicine: med,
               medicineId,
+              dailyDose: item.dailyDose || 3,
+              unit: item.unit || '錠',
+              dailyTimes: item.dailyTimes || 3,
+              timing: item.timing || '毎食後',
               dosage,
               days,
               quantity,
@@ -3497,7 +4315,9 @@
           // 2. フォームの入力内容をクリア・初期化（消えずに何度も送信されるのを防止）
           resetOrderFormAfterSubmit(currentOrderType);
 
-          // 3. 送信完了通知（ポップアップなし・ボタンおよび履歴で確認可能）
+          // 3. 送信完了通知（ステータスバーおよびボタンで確認可能）
+          setLastAction(`オーダー送信完了 [${sentOrderId}] (${currentOrderType})`);
+          setLatestNotice(`✅ オーダー送信完了 [${sentOrderId}] 受信側部門および電子カルテへ反映されました`, 'success');
 
 
           // 4. 親ウィンドウ（電子カルテ等）へオーダー完了を通知
@@ -3773,8 +4593,11 @@
               </div>
               <div style="display:flex; gap:0.3rem;">
                 ${item.orderType === 'IV' ? `
-                  <button type="button" onclick="openSenderInjectionModal('${item.orderId}')" class="btn-inj-print" style="padding:0.15rem 0.45rem; border-radius:3px; cursor:pointer; font-size:0.7rem; font-weight:bold;">
+                  <button type="button" onclick="openSenderInjectionModal('${item.orderId}')" class="btn-inj-print" style="padding:0.18rem 0.5rem; border-radius:3px; cursor:pointer; font-size:0.72rem; font-weight:bold; background:#0284c7; color:white; border-color:#0284c7;" title="注射指示箋プレビュー・編集・印刷モーダルを開く">
                     🖨️ 注射指示箋
+                  </button>
+                  <button type="button" onclick="openPaperInjectionForm('${item.orderId}')" class="btn-inj-print" style="padding:0.18rem 0.4rem; border-radius:3px; cursor:pointer; font-size:0.7rem; background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd;" title="原本様式フル画面で開く">
+                    原本 ↗
                   </button>
                 ` : ''}
                 <button type="button" onclick="checkRemoteStatus('${item.orderId}')" style="background:#ffffff; border:1px solid #cbd5e1; padding:0.15rem 0.45rem; border-radius:3px; cursor:pointer; font-size:0.7rem;">
@@ -3820,8 +4643,11 @@
             <td style="text-align:center; white-space:nowrap;">
               <div style="display:inline-flex; gap:0.25rem;">
                 ${item.orderType === 'IV' ? `
-                  <button type="button" onclick="openSenderInjectionModal('${item.orderId}')" class="btn-inj-print" style="padding:0.15rem 0.35rem; border-radius:3px; cursor:pointer; font-size:0.68rem; font-weight:bold;">
-                    🖨️ 指示箋
+                  <button type="button" onclick="openSenderInjectionModal('${item.orderId}')" class="btn-inj-print" style="padding:0.18rem 0.45rem; border-radius:3px; cursor:pointer; font-size:0.7rem; font-weight:bold; background:#0284c7; color:white; border-color:#0284c7;" title="注射指示箋プレビュー・編集・印刷モーダルを開く">
+                    🖨️ 注射指示箋
+                  </button>
+                  <button type="button" onclick="openPaperInjectionForm('${item.orderId}')" class="btn-inj-print" style="padding:0.18rem 0.35rem; border-radius:3px; cursor:pointer; font-size:0.68rem; background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd;" title="原本様式フル画面で開く">
+                    原本 ↗
                   </button>
                 ` : ''}
                 <button type="button" onclick="checkRemoteStatus('${item.orderId}')" style="background:#ffffff; border:1px solid #cbd5e1; padding:0.15rem 0.4rem; border-radius:3px; cursor:pointer; font-size:0.7rem; white-space:nowrap;">
@@ -4164,12 +4990,163 @@
       }
     }
 
+    // 💊 薬剤の用法用量文字列から「一日量(数字)」「1日回数(数字)」「服用時期」「単位」を分解
+    function parseDosageDetails(dosageStr, med) {
+      let unit = (med && med.unit) ? med.unit : '錠';
+      if ((!med || !med.unit) && dosageStr) {
+        if (dosageStr.includes('カプセル') || dosageStr.includes('Cap')) unit = 'Cap';
+        else if (dosageStr.includes('包') || dosageStr.includes('散') || dosageStr.includes('顆粒')) unit = '包';
+        else if (dosageStr.includes('枚')) unit = '枚';
+        else if (dosageStr.includes('袋')) unit = '袋';
+        else if (dosageStr.includes('本')) unit = '本';
+        else if (dosageStr.includes('管')) unit = '管';
+      }
+
+      let dailyDose = 3;
+      let dailyTimes = 3;
+      let timing = '毎食後';
+
+      if (dosageStr) {
+        // 1日回数の抽出
+        const dtMatch = dosageStr.match(/1日([0-9０-９]+)回/);
+        if (dtMatch) {
+          dailyTimes = parseInt(dtMatch[1], 10) || 1;
+        } else if (dosageStr.includes('1日3回') || dosageStr.includes('毎食後')) {
+          dailyTimes = 3;
+        } else if (dosageStr.includes('1日2回') || dosageStr.includes('朝夕')) {
+          dailyTimes = 2;
+        } else if (dosageStr.includes('1日1回') || dosageStr.includes('就寝前')) {
+          dailyTimes = 1;
+        } else if (dosageStr.includes('1日4回')) {
+          dailyTimes = 4;
+        }
+
+        // 不均等分割または服用時期の判定
+        if (dosageStr.includes('不均等')) timing = '不均等分割';
+        else if (dosageStr.includes('毎食後')) timing = '毎食後';
+        else if (dosageStr.includes('朝夕食後') || dosageStr.includes('朝夕')) timing = '朝夕食後';
+        else if (dosageStr.includes('朝食後')) timing = '朝食後';
+        else if (dosageStr.includes('夕食後')) timing = '夕食後';
+        else if (dosageStr.includes('就寝前')) timing = '就寝前';
+        else if (dosageStr.includes('毎食前')) timing = '毎食前';
+        else if (dosageStr.includes('食間')) timing = '食間';
+        else if (dosageStr.includes('頓') || dosageStr.includes('疼痛時')) timing = '疼痛時(頓用)';
+        else if (dosageStr.includes('発熱')) timing = '発熱時(頓用)';
+        else if (dosageStr.includes('必要時')) timing = '必要時';
+
+        // 一日量（dailyDose: 数字のみ）の判定
+        // 1. 「1日○錠」「1日○Cap」「1日○包」の直接指定があるか
+        const dailyMatch = dosageStr.match(/1日([0-9０-９.]+)\s*(?:錠|Cap|カプセル|包|袋|枚|本|管)/i);
+        if (dailyMatch) {
+          dailyDose = parseFloat(dailyMatch[1]) || 1;
+        } else {
+          // 2. 「1回○錠」がある場合: 一日量 ＝ 1回量 × 1日回数
+          const udUnitMatch = dosageStr.match(/1回([0-9０-９.]+)\s*(?:錠|Cap|カプセル|包|袋|枚|本|管)/i);
+          if (udUnitMatch) {
+            const oneDose = parseFloat(udUnitMatch[1]) || 1;
+            dailyDose = Math.round(oneDose * dailyTimes * 10) / 10;
+          } else {
+            // 3. 「1回○」がある場合
+            const udAnyMatch = dosageStr.match(/1回([0-9０-９.]+)/);
+            if (udAnyMatch) {
+              const val = parseFloat(udAnyMatch[1]);
+              if (val > 10 && med && (med.spec || med.name).includes(String(val))) {
+                dailyDose = 1 * dailyTimes;
+              } else if (val > 10 && !dosageStr.match(/(?:錠|Cap|カプセル|包)/)) {
+                dailyDose = 1 * dailyTimes;
+              } else {
+                dailyDose = Math.round((val || 1) * dailyTimes * 10) / 10;
+              }
+            } else if (dosageStr.includes('1錠') || dosageStr.includes('1Cap') || dosageStr.includes('1包')) {
+              dailyDose = 1 * dailyTimes;
+            } else if (dosageStr.includes('2錠') || dosageStr.includes('2Cap') || dosageStr.includes('2包')) {
+              dailyDose = 2 * dailyTimes;
+            } else {
+              dailyDose = dailyTimes;
+            }
+          }
+        }
+      }
+
+      return { dailyDose, dailyTimes, timing, unit };
+    }
+
+    // 🔄 用量(一日量)・用法を結合して dosage テキスト（処方指示表記）を生成
+    function syncRxItemDosage(id) {
+      const item = rxItems.find(it => it.id === id);
+      if (!item) return;
+
+      const dailyDose = document.getElementById(`rxDailyDose_${id}`)?.value ?? item.dailyDose ?? 3;
+      const unit = item.unit || '錠';
+      const dailyTimes = document.getElementById(`rxDailyTimes_${id}`)?.value ?? item.dailyTimes ?? 3;
+      const timing = document.getElementById(`rxTiming_${id}`)?.value ?? item.timing ?? '毎食後';
+      const instruction = document.getElementById(`rxInstruction_${id}`)?.value.trim() ?? item.instruction ?? '';
+
+      let text = '';
+      if (dailyDose !== '') text += `1日${dailyDose}${unit} `;
+
+      if (timing === '不均等分割') {
+        text += '不均等分割';
+        if (instruction) text += ` (${instruction})`;
+      } else {
+        if (dailyTimes !== '') text += `1日${dailyTimes}回 `;
+        if (timing) text += timing;
+      }
+      text = text.trim();
+
+      item.dosage = text;
+      const dosageInp = document.getElementById(`rxDosage_${id}`);
+      if (dosageInp) dosageInp.value = text;
+      const displaySpan = document.getElementById(`rxDosageDisplay_${id}`);
+      if (displaySpan) displaySpan.textContent = text;
+    }
+
+    // ⚡ 用法セレクト切り替えイベント（不均等分割時のUI連動）
+    function onRxTimingChange(id, timingVal) {
+      updateRxItemField(id, 'timing', timingVal);
+      const timesContainer = document.getElementById(`rxTimesContainer_${id}`);
+      const instructionInp = document.getElementById(`rxInstruction_${id}`);
+      const instructionLbl = document.getElementById(`rxInstructionLabel_${id}`);
+
+      if (timingVal === '不均等分割') {
+        if (timesContainer) timesContainer.style.display = 'none';
+        if (instructionLbl) {
+          instructionLbl.innerHTML = '⚠️ 用法備考 (不均等内訳):';
+          instructionLbl.style.color = '#d97706';
+          instructionLbl.style.fontWeight = 'bold';
+        }
+        if (instructionInp) {
+          instructionInp.placeholder = '例: 朝2錠 昼1錠 夕なし';
+          instructionInp.style.border = '1px solid #f59e0b';
+          instructionInp.style.background = '#fffbeb';
+          instructionInp.focus();
+        }
+      } else {
+        if (timesContainer) timesContainer.style.display = 'flex';
+        if (instructionLbl) {
+          instructionLbl.innerHTML = '調剤指示・備考:';
+          instructionLbl.style.color = '#475569';
+          instructionLbl.style.fontWeight = 'normal';
+        }
+        if (instructionInp) {
+          instructionInp.placeholder = '例: 粉砕、一包化';
+          instructionInp.style.border = '';
+          instructionInp.style.background = '';
+        }
+      }
+      autoCalcQuantity(id);
+    }
+
     let rxItems = [
       {
         id: 'med_' + Date.now() + '_1',
         medicine: 'ユナシン錠375ｍｇ',
         medicineId: 'DR0001',
-        dosage: '1回1錠 1日2～3回 毎食後',
+        dailyDose: 3,
+        unit: '錠',
+        dailyTimes: 3,
+        timing: '毎食後',
+        dosage: '1日3錠 1日3回 毎食後',
         days: 7,
         quantity: '21錠',
         instruction: ''
@@ -4187,6 +5164,7 @@
           <div style="display:flex; gap:0.2rem;">
             <span class="med-tag ${med.brandType === '先発' ? 'med-tag-brand-orig' : 'med-tag-brand-gen'}">${escapeHtml(med.brandType || '後発')}</span>
             <span class="med-tag" style="background:#e0f2fe; color:#0369a1;">${escapeHtml(med.category)}</span>
+            <span class="med-tag" style="background:#fef3c7; color:#92400e; font-weight:bold;">単位: ${escapeHtml(med.unit || '錠')}</span>
           </div>
         </div>
         <div style="color:#475569; font-size:0.7rem;">
@@ -4216,6 +5194,10 @@
         const med = allMedicines.find(m => m.id === item.medicineId) || allMedicines.find(m => m.name === item.medicine);
         let detailCardHtml = '';
         if (med) detailCardHtml = buildMedDetailCardHtml(med);
+        const itemUnit = (med && med.unit) ? med.unit : (item.unit || '錠');
+        item.unit = itemUnit;
+
+        const isIrregular = item.timing === '不均等分割';
 
         return `
           <div class="rx-item-card" id="rxCard_${item.id}">
@@ -4244,34 +5226,103 @@
                 ${detailCardHtml}
               </div>
             </div>
-            <div class="form-row" style="margin-top:0.35rem; gap:0.45rem;">
-              <div class="form-group" style="flex:2;">
-                <label class="form-label" style="font-size:0.73rem;">用法・用量 (服用時期):</label>
-                <input type="text" id="rxDosage_${item.id}" class="form-control"
-                       value="${escapeHtml(item.dosage || '')}"
-                       placeholder="例: 1回1錠 1日3回 毎食後"
-                       onchange="updateRxItemField('${item.id}', 'dosage', this.value)">
+
+            <!-- 用量(一日量:数字)・用法(回数+時期)・日数・調剤総量の入力行 -->
+            <div class="form-row" style="margin-top:0.35rem; gap:0.5rem; align-items:flex-end; flex-wrap:wrap;">
+              <!-- 用量（一日量: 数字のみ入力） -->
+              <div class="form-group" style="flex:1.2; min-width:140px;">
+                <label class="form-label" style="font-size:0.73rem; font-weight:bold; color:#1e293b;">
+                  用量 (一日量 / 数字のみ):
+                </label>
+                <div style="display:flex; align-items:center; gap:0.25rem;">
+                  <span style="font-size:0.78rem; color:#64748b; white-space:nowrap;">1日</span>
+                  <input type="number" step="any" min="0.1" max="100" id="rxDailyDose_${item.id}" class="form-control"
+                         value="${item.dailyDose ?? 3}"
+                         style="text-align:right; font-weight:bold; font-size:0.88rem; width:65px;"
+                         placeholder="3"
+                         oninput="updateRxItemField('${item.id}', 'dailyDose', this.value); autoCalcQuantity('${item.id}');"
+                         onchange="updateRxItemField('${item.id}', 'dailyDose', this.value); autoCalcQuantity('${item.id}');">
+                  <span id="rxUnitLabel_${item.id}" style="background:#e2e8f0; color:#1e293b; padding:0.25rem 0.5rem; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap; border:1px solid #cbd5e1;" title="薬剤マスタの単位">
+                    ${escapeHtml(item.unit || '錠')}
+                  </span>
+                </div>
               </div>
-              <div class="form-group" style="flex:1;">
-                <label class="form-label" style="font-size:0.73rem;">日数/回数:</label>
-                <input type="number" id="rxDays_${item.id}" class="form-control"
-                       value="${item.days || 7}" min="1" max="90"
-                       onchange="updateRxItemField('${item.id}', 'days', this.value); autoCalcQuantity('${item.id}');">
+
+              <!-- 用法（1日あたりの回数: 数字のみ入力 ＋ 服用時期） -->
+              <div class="form-group" style="flex:2; min-width:220px;">
+                <label class="form-label" style="font-size:0.73rem; font-weight:bold; color:#1e293b;">
+                  用法 (回数 ＋ 服用時期):
+                </label>
+                <div style="display:flex; align-items:center; gap:0.25rem;">
+                  <div id="rxTimesContainer_${item.id}" style="display:${isIrregular ? 'none' : 'flex'}; align-items:center; gap:0.25rem;">
+                    <span style="font-size:0.78rem; color:#64748b; white-space:nowrap;">1日</span>
+                    <input type="number" min="1" max="10" id="rxDailyTimes_${item.id}" class="form-control"
+                           value="${item.dailyTimes ?? 3}"
+                           style="text-align:right; font-weight:bold; font-size:0.88rem; width:50px;"
+                           placeholder="3"
+                           oninput="updateRxItemField('${item.id}', 'dailyTimes', this.value); autoCalcQuantity('${item.id}');"
+                           onchange="updateRxItemField('${item.id}', 'dailyTimes', this.value); autoCalcQuantity('${item.id}');">
+                    <span style="font-size:0.78rem; color:#64748b; white-space:nowrap;">回</span>
+                  </div>
+                  <select id="rxTiming_${item.id}" class="form-control" style="font-size:0.78rem; padding:0.25rem 0.35rem; flex:1;"
+                          onchange="onRxTimingChange('${item.id}', this.value)">
+                    <option value="毎食後" ${item.timing === '毎食後' ? 'selected' : ''}>毎食後</option>
+                    <option value="朝夕食後" ${item.timing === '朝夕食後' ? 'selected' : ''}>朝夕食後</option>
+                    <option value="朝食後" ${item.timing === '朝食後' ? 'selected' : ''}>朝食後</option>
+                    <option value="夕食後" ${item.timing === '夕食後' ? 'selected' : ''}>夕食後</option>
+                    <option value="就寝前" ${item.timing === '就寝前' ? 'selected' : ''}>就寝前</option>
+                    <option value="毎食前" ${item.timing === '毎食前' ? 'selected' : ''}>毎食前</option>
+                    <option value="食間" ${item.timing === '食間' ? 'selected' : ''}>食間</option>
+                    <option value="疼痛時(頓用)" ${item.timing === '疼痛時(頓用)' ? 'selected' : ''}>疼痛時(頓用)</option>
+                    <option value="発熱時(頓用)" ${item.timing === '発熱時(頓用)' ? 'selected' : ''}>発熱時(頓用)</option>
+                    <option value="必要時" ${item.timing === '必要時' ? 'selected' : ''}>必要時</option>
+                    <option value="不均等分割" ${isIrregular ? 'selected' : ''} style="color:#d97706; font-weight:bold;">⚡ 不均等分割 (備考欄に入力)</option>
+                  </select>
+                </div>
               </div>
-              <div class="form-group" style="flex:1;">
-                <label class="form-label" style="font-size:0.73rem;">調剤総量:</label>
+
+              <!-- 日数 -->
+              <div class="form-group" style="flex:0.8; min-width:85px;">
+                <label class="form-label" style="font-size:0.73rem; font-weight:bold; color:#1e293b;">日数:</label>
+                <div style="display:flex; align-items:center; gap:0.25rem;">
+                  <input type="number" id="rxDays_${item.id}" class="form-control"
+                         value="${item.days || 7}" min="1" max="90"
+                         style="text-align:right; font-weight:bold; font-size:0.88rem; width:55px;"
+                         oninput="updateRxItemField('${item.id}', 'days', this.value); autoCalcQuantity('${item.id}');"
+                         onchange="updateRxItemField('${item.id}', 'days', this.value); autoCalcQuantity('${item.id}');">
+                  <span style="font-size:0.78rem; color:#64748b; white-space:nowrap;">日分</span>
+                </div>
+              </div>
+
+              <!-- 調剤総量 (一日量 × 日数 で自動計算) -->
+              <div class="form-group" style="flex:1.1; min-width:105px;">
+                <label class="form-label" style="font-size:0.73rem; font-weight:bold; color:#0369a1;">調剤総量 (自動):</label>
                 <input type="text" id="rxQuantity_${item.id}" class="form-control"
                        value="${escapeHtml(item.quantity || '')}"
-                       placeholder="例: 21錠"
-                       onchange="updateRxItemField('${item.id}', 'quantity', this.value)">
+                       readonly
+                       style="background:#f0fdf4; border:1px solid #86efac; color:#166534; font-weight:bold; font-size:0.88rem; text-align:right;"
+                       title="一日量 × 日数で自動計算されます">
               </div>
-              <div class="form-group" style="flex:1;">
-                <label class="form-label" style="font-size:0.73rem;">調剤指示:</label>
+
+              <!-- 調剤指示 / 備考欄 (不均等分割時は用法入力欄に) -->
+              <div class="form-group" style="flex:1.4; min-width:140px;">
+                <label class="form-label" style="font-size:0.73rem; color:${isIrregular ? '#d97706' : '#475569'}; font-weight:${isIrregular ? 'bold' : 'normal'};" id="rxInstructionLabel_${item.id}">
+                  ${isIrregular ? '⚠️ 用法備考 (不均等内訳):' : '調剤指示・備考:'}
+                </label>
                 <input type="text" id="rxInstruction_${item.id}" class="form-control"
                        value="${escapeHtml(item.instruction || '')}"
-                       placeholder="例: 粉砕、一包化"
-                       onchange="updateRxItemField('${item.id}', 'instruction', this.value)">
+                       placeholder="${isIrregular ? '例: 朝2錠 昼1錠 夕なし' : '例: 粉砕、一包化'}"
+                       style="${isIrregular ? 'border:1px solid #f59e0b; background:#fffbeb;' : ''}"
+                       oninput="updateRxItemField('${item.id}', 'instruction', this.value); syncRxItemDosage('${item.id}');"
+                       onchange="updateRxItemField('${item.id}', 'instruction', this.value); syncRxItemDosage('${item.id}');">
               </div>
+            </div>
+
+            <!-- 用法用量の合成プレビュー & 互換hidden input -->
+            <input type="hidden" id="rxDosage_${item.id}" value="${escapeHtml(item.dosage || '')}">
+            <div style="font-size:0.72rem; color:#0369a1; margin-top:0.25rem; display:flex; align-items:center; gap:0.35rem;">
+              <span style="background:#e0f2fe; color:#0284c7; padding:0.05rem 0.35rem; border-radius:3px; font-weight:bold;">処方指示表記</span>
+              <span id="rxDosageDisplay_${item.id}" style="font-weight:600;">${escapeHtml(item.dosage || '')}</span>
             </div>
           </div>
         `;
@@ -4285,7 +5336,11 @@
         id: newId,
         medicine: '',
         medicineId: '',
-        dosage: '1回1錠 1日3回 毎食後',
+        dailyDose: 3,
+        unit: '錠',
+        dailyTimes: 3,
+        timing: '毎食後',
+        dosage: '1日3錠 1日3回 毎食後',
         days: commonDays,
         quantity: '',
         instruction: ''
@@ -4324,25 +5379,160 @@
     function autoCalcQuantity(id) {
       const item = rxItems.find(it => it.id === id);
       if (!item) return;
-      const days = parseInt(document.getElementById(`rxDays_${id}`)?.value || item.days || '7', 10);
-      const dosage = document.getElementById(`rxDosage_${id}`)?.value || item.dosage || '';
-      let dailyDose = 0;
-      if (dosage.includes('1日3回') || dosage.includes('毎食後')) dailyDose = 3;
-      else if (dosage.includes('1日2回') || dosage.includes('朝夕')) dailyDose = 2;
-      else if (dosage.includes('1日1回') || dosage.includes('就寝前')) dailyDose = 1;
 
-      let unitDose = 1;
-      const unitMatch = dosage.match(/1回([0-9０-９]+)/);
-      if (unitMatch) unitDose = parseInt(unitMatch[1], 10) || 1;
+      const dailyDoseInput = document.getElementById(`rxDailyDose_${id}`);
+      const daysInput = document.getElementById(`rxDays_${id}`);
+
+      const dailyDose = parseFloat(dailyDoseInput ? dailyDoseInput.value : item.dailyDose) || 0;
+      const days = parseInt(daysInput ? daysInput.value : item.days, 10) || 0;
+
+      // 単位は薬剤マスタに従う（未設定時は '錠'）
+      const unit = item.unit || '錠';
+
+      syncRxItemDosage(id);
 
       if (dailyDose > 0 && days > 0) {
-        const total = dailyDose * unitDose * days;
+        let total = dailyDose * days;
+        if (total % 1 !== 0) {
+          total = Math.round(total * 100) / 100;
+        }
+        const totalStr = `${total}${unit}`;
         const qEl = document.getElementById(`rxQuantity_${id}`);
-        if (qEl) {
-          const medName = document.getElementById(`rxMedicine_${id}`)?.value || '';
-          const unit = medName.includes('カプセル') ? 'Cap' : (medName.includes('散') || medName.includes('顆粒') ? '包' : (medName.includes('外用') || medName.includes('軟膏') ? '本' : '錠'));
-          qEl.value = `${total}${unit}`;
-          item.quantity = qEl.value;
+        if (qEl) qEl.value = totalStr;
+        item.quantity = totalStr;
+      }
+    }
+
+    // 🔁 内服処方: Do処方実行（前回の処方内容を自動反映）
+    function executeDoPrescription() {
+      const pId = document.getElementById('patientSelect')?.value || document.getElementById('patientIdInput')?.value || '';
+      const pName = document.getElementById('patientNameInput')?.value || '';
+
+      // 1. この患者の前回処方オーダーを検索 (latestHistoryOrders から)
+      let pastRxOrder = null;
+      if (typeof latestHistoryOrders !== 'undefined' && Array.isArray(latestHistoryOrders)) {
+        // 同一患者の直近の処方オーダーを優先検索
+        pastRxOrder = latestHistoryOrders.find(o => 
+          (o.orderType === 'PRESCRIPTION' || o.orderType === 'RX') &&
+          ((pId && o.patient && o.patient.id === pId) || (pName && o.patient && o.patient.name === pName))
+        );
+        // 見つからなければ直近の処方オーダーをフォールバック
+        if (!pastRxOrder) {
+          pastRxOrder = latestHistoryOrders.find(o => o.orderType === 'PRESCRIPTION' || o.orderType === 'RX');
+        }
+      }
+
+      if (pastRxOrder && pastRxOrder.details) {
+        const details = pastRxOrder.details;
+        let importedCount = 0;
+
+        if (Array.isArray(details.medicines) && details.medicines.length > 0) {
+          rxItems = details.medicines.map((m, idx) => {
+            const med = allMedicines.find(x => (m.medicineId && x.id === m.medicineId) || x.name === (m.medicine || m.name));
+            const parsed = parseDosageDetails(m.dosage, med);
+            const unit = (med && med.unit) ? med.unit : (m.unit || parsed.unit || '錠');
+            const dailyDose = m.dailyDose || parsed.dailyDose || (m.unitDose ? m.unitDose * (m.dailyTimes || 3) : 3);
+            const dailyTimes = m.dailyTimes || parsed.dailyTimes || 3;
+            const timing = m.timing || parsed.timing || '毎食後';
+            const days = parseInt(m.days, 10) || 7;
+            const calcTotal = Math.round(dailyDose * days * 100) / 100;
+            const quantity = m.quantity || `${calcTotal}${unit}`;
+
+            let dosageStr = m.dosage;
+            if (!dosageStr) {
+              dosageStr = (timing === '不均等分割') ? `1日${dailyDose}${unit} 不均等分割` : `1日${dailyDose}${unit} 1日${dailyTimes}回 ${timing}`;
+            }
+
+            return {
+              id: 'med_' + Date.now() + '_' + (idx + 1),
+              medicine: m.medicine || m.name || '',
+              medicineId: m.medicineId || m.id || '',
+              dailyDose,
+              unit,
+              dailyTimes,
+              timing,
+              dosage: dosageStr,
+              days,
+              quantity,
+              instruction: m.instruction || m.remarks || ''
+            };
+          });
+          importedCount = rxItems.length;
+        } else if (details.medicine) {
+          const med = allMedicines.find(x => (details.medicineId && x.id === details.medicineId) || x.name === details.medicine);
+          const parsed = parseDosageDetails(details.dosage, med);
+          const unit = (med && med.unit) ? med.unit : (parsed.unit || '錠');
+          const dailyDose = details.dailyDose || parsed.dailyDose || 3;
+          const dailyTimes = details.dailyTimes || parsed.dailyTimes || 3;
+          const timing = details.timing || parsed.timing || '毎食後';
+          const days = parseInt(details.days, 10) || 7;
+          const calcTotal = Math.round(dailyDose * days * 100) / 100;
+
+          let dosageStr = details.dosage;
+          if (!dosageStr) {
+            dosageStr = (timing === '不均等分割') ? `1日${dailyDose}${unit} 不均等分割` : `1日${dailyDose}${unit} 1日${dailyTimes}回 ${timing}`;
+          }
+
+          rxItems = [{
+            id: 'med_' + Date.now() + '_1',
+            medicine: details.medicine,
+            medicineId: details.medicineId || '',
+            dailyDose,
+            unit,
+            dailyTimes,
+            timing,
+            dosage: dosageStr,
+            days,
+            quantity: details.quantity || `${calcTotal}${unit}`,
+            instruction: details.remarks || ''
+          }];
+          importedCount = 1;
+        }
+
+        if (details.prescriptionType) {
+          const typeSelect = document.getElementById('rxPrescriptionType');
+          if (typeSelect) typeSelect.value = details.prescriptionType;
+        }
+        if (details.remarks) {
+          const remText = document.getElementById('rxRemarks');
+          if (remText) remText.value = details.remarks;
+        }
+
+        renderRxMedicinesList();
+        showToast(`🔁 [Do処方] ${pastRxOrder.patient ? pastRxOrder.patient.name : ''}様の前回処方 (${importedCount}品目) を反映しました！`);
+      } else {
+        // 過去処方がない場合は標準的な定期処方セットを提示
+        if (confirm('この患者の処方履歴が見つかりませんでした。\n院内標準の定期処方セット（ユナシン＋カロナール）を初期反映しますか？')) {
+          rxItems = [
+            {
+              id: 'med_' + Date.now() + '_1',
+              medicine: 'ユナシン錠375ｍｇ',
+              medicineId: 'DR0001',
+              dailyDose: 3,
+              unit: '錠',
+              dailyTimes: 3,
+              timing: '毎食後',
+              dosage: '1日3錠 1日3回 毎食後',
+              days: 7,
+              quantity: '21錠',
+              instruction: '食後服用'
+            },
+            {
+              id: 'med_' + Date.now() + '_2',
+              medicine: 'カロナール錠300 300ｍｇ',
+              medicineId: 'DR0043',
+              dailyDose: 1,
+              unit: '錠',
+              dailyTimes: 1,
+              timing: '疼痛時(頓用)',
+              dosage: '1日1錠 疼痛時頓用',
+              days: 10,
+              quantity: '10錠',
+              instruction: '発熱・疼痛時 (頓服)'
+            }
+          ];
+          renderRxMedicinesList();
+          showToast('✅ 標準処方セットを反映しました');
         }
       }
     }
@@ -4747,17 +5937,33 @@
         if (inp) inp.value = med.name;
         const idInp = document.getElementById(`rxMedicineId_${rowId}`);
         if (idInp) idInp.value = med.id;
-        const dosageInp = document.getElementById(`rxDosage_${rowId}`);
-        if (dosageInp && med.dosage) dosageInp.value = med.dosage;
+
         const suggestBox = document.getElementById(`rxMedicineSuggest_${rowId}`);
         if (suggestBox) suggestBox.style.display = 'none';
+
+        const parsed = parseDosageDetails(med.dosage, med);
 
         const item = rxItems.find(it => it.id === rowId);
         if (item) {
           item.medicine = med.name;
           item.medicineId = med.id;
-          if (med.dosage) item.dosage = med.dosage;
+          item.unit = med.unit || parsed.unit || '錠';
+          item.dailyDose = parsed.dailyDose;
+          item.dailyTimes = parsed.dailyTimes;
+          item.timing = parsed.timing;
         }
+
+        const ddInp = document.getElementById(`rxDailyDose_${rowId}`);
+        if (ddInp) ddInp.value = parsed.dailyDose;
+        const dtInp = document.getElementById(`rxDailyTimes_${rowId}`);
+        if (dtInp) dtInp.value = parsed.dailyTimes;
+        const tmInp = document.getElementById(`rxTiming_${rowId}`);
+        if (tmInp) {
+          tmInp.value = parsed.timing;
+          onRxTimingChange(rowId, parsed.timing);
+        }
+        const unitLbl = document.getElementById(`rxUnitLabel_${rowId}`);
+        if (unitLbl) unitLbl.textContent = item ? item.unit : '錠';
 
         const card = document.getElementById(`rxMedDetailCard_${rowId}`);
         if (card) {
@@ -4941,9 +6147,9 @@
 
       resizer.addEventListener('dblclick', (e) => {
         e.preventDefault();
-        leftPane.style.flex = '0 0 58%';
+        leftPane.style.flex = '0 0 52%';
         localStorage.removeItem('ordering_sender_split_pct');
-        showToast('↔️ 左右分割の境界幅を初期比率 (58% : 42%) にリセットしました');
+        showToast('↔️ 左右分割の境界幅を初期比率 (52% : 48%) にリセットしました');
       });
 
       function startResize(e) {
@@ -5137,6 +6343,25 @@
         month: String(m),
         day: String(day).padStart(2, '0')
       };
+    }
+
+    // 📋 原本用紙レイアウトの注射指示入力画面（案）を開く（既存タブがあれば再利用・移行）
+    function openPaperInjectionForm(orderId) {
+      const pId = document.getElementById('patientSelect')?.value || document.getElementById('patientIdInput')?.value || '';
+      const pName = document.getElementById('patientNameInput')?.value || '';
+      const pWard = document.getElementById('patientWardInput')?.value || '';
+      let url = `/injection-sheet-form?patientId=${encodeURIComponent(pId)}&patientName=${encodeURIComponent(pName)}&patientDept=${encodeURIComponent(pWard)}`;
+      if (orderId) {
+        url += `&orderId=${encodeURIComponent(orderId)}`;
+      }
+      try {
+        const win = window.open(url, 'app_injection_sheet');
+        if (win && !win.closed) {
+          try { win.focus(); } catch (_) {}
+        }
+      } catch (e) {
+        window.location.href = url;
+      }
     }
 
     // =========================================================

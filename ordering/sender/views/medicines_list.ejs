@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>採用薬一覧 (検索機能付き) - 医療法人交雄会 だて病院</title>
+  <script>window.name = 'app_medicines_list';</script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 1rem;
+      min-height: 100vh;
+    }
+    .header-bar {
+      max-width: 1280px;
+      margin: 0 auto 1rem auto;
+      background: #0f172a;
+      color: white;
+      padding: 0.85rem 1.25rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .header-bar h1 {
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .btn-nav {
+      background: #334155;
+      color: white;
+      border: 1px solid #475569;
+      padding: 0.4rem 0.8rem;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-weight: bold;
+    }
+    .btn-nav:hover {
+      background: #475569;
+    }
+
+    .main-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+      padding: 1.25rem;
+    }
+
+    /* 検索 & フィルターバー */
+    .filter-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .search-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.65rem 1rem 0.65rem 2.2rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .search-input:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+
+    /* カテゴリータブ */
+    .tabs-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .category-tabs {
+      display: flex;
+      gap: 0.35rem;
+    }
+    .tab-btn {
+      padding: 0.4rem 0.9rem;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: bold;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      background: #e2e8f0;
+    }
+    .tab-btn.active {
+      background: #0284c7;
+      color: white;
+      border-color: #0284c7;
+    }
+    .count-indicator {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: bold;
+    }
+
+    /* 薬品リストテーブル */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+    .med-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .med-table th, .med-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .med-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: bold;
+      border-top: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .med-table tbody tr:hover {
+      background: #f0fdf4;
+    }
+
+    .badge-cat {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: bold;
+    }
+    .badge-iv {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .badge-oral {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-ext {
+      background: #f3e8ff;
+      color: #7e22ce;
+      border: 1px solid #e9d5ff;
+    }
+
+    .badge-brand {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+    }
+    .badge-brand-orig {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    .badge-brand-gen {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+
+    .btn-copy {
+      padding: 0.25rem 0.55rem;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #0284c7;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .btn-copy:hover {
+      background: #0284c7;
+      color: white;
+      border-color: #0284c7;
+    }
+
+    .toast-popup {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: #86efac;
+      border: 1.5px solid #10b981;
+      padding: 0.65rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 上部バー -->
+  <div class="header-bar">
+    <h1>
+      <span>📚</span>
+      <span>医療法人交雄会 だて病院 採用薬一覧 (検索機能付き)</span>
+    </h1>
+    <div class="header-actions">
+      <button type="button" onclick="reloadFromExcel()" class="btn-nav" style="background:#059669; border-color:#059669;" title="薬品集マスタ.xlsx から最新データを取り込み">
+        <span>🔄</span> <span>エクセルから再取込</span>
+      </button>
+      <a href="javascript:void(0)" onclick="window.close()" class="btn-nav">
+        ✕ ウィンドウを閉じる
+      </a>
+      <a href="/injection-sheet-form" class="btn-nav" style="background:#0284c7; border-color:#0284c7;">
+        <span>📝</span> <span>注射指示箋 (原本様式案) へ</span>
+      </a>
+      <a href="/" class="btn-nav">
+        <span>🚀</span> <span>オーダリング画面へ</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="main-container">
+    <div class="filter-section">
+      <!-- 検索バー -->
+      <div class="search-row">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="薬品名（例: ソルデム、セフォセフ、ユナシン）、成分名、規格、フリガナ、薬効でリアルタイム検索..." value="<%= initialKeyword %>" oninput="onSearchChange(this.value)">
+        </div>
+        <button type="button" class="btn-nav" onclick="clearSearch()" style="background:#ef4444; border-color:#dc2626; padding:0.6rem 0.9rem;">
+          🧹 クリア
+        </button>
+      </div>
+
+      <!-- カテゴリー切替タブ -->
+      <div class="tabs-row">
+        <div class="category-tabs">
+          <button type="button" class="tab-btn <%= (initialCategory === '' || initialCategory === 'ALL') ? 'active' : '' %>" onclick="setCategoryFilter('ALL', this)">
+            <span>🌐</span> <span>すべて表示 (<span id="countAll">--</span>)</span>
+          </button>
+          <button type="button" class="tab-btn <%= initialCategory === '注射剤' ? 'active' : '' %>" onclick="setCategoryFilter('注射剤', this)" style="border-color:#38bdf8;">
+            <span>💉</span> <span>注射剤 (<span id="countIv">--</span>)</span>
+          </button>
+          <button type="button" class="tab-btn <%= initialCategory === '内服薬' ? 'active' : '' %>" onclick="setCategoryFilter('内服薬', this)">
+            <span>💊</span> <span>内服薬 (<span id="countOral">--</span>)</span>
+          </button>
+          <button type="button" class="tab-btn <%= initialCategory === '外用薬' ? 'active' : '' %>" onclick="setCategoryFilter('外用薬', this)">
+            <span>🧴</span> <span>外用薬 (<span id="countExt">--</span>)</span>
+          </button>
+        </div>
+        <div class="count-indicator" id="resultCountBadge">
+          検索中...
+        </div>
+      </div>
+    </div>
+
+    <!-- テーブル表示 -->
+    <div class="table-wrapper">
+      <table class="med-table">
+        <thead>
+          <tr>
+            <th style="width:75px;">コード</th>
+            <th style="width:90px;">区分</th>
+            <th style="width:240px;">薬品名 (商品名)</th>
+            <th style="width:160px;">成分名 (一般名)</th>
+            <th style="width:110px;">規格・単位</th>
+            <th style="width:150px;">薬効分類</th>
+            <th style="width:170px;">標準用法・経路</th>
+            <th style="width:130px;">粉砕/懸濁等</th>
+            <th style="width:110px; text-align:center;">アクション</th>
+          </tr>
+        </thead>
+        <tbody id="medTableBody">
+          <tr>
+            <td colspan="9" style="text-align:center; padding:2rem; color:#64748b;">薬品データを読み込み中...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="toast-popup" id="toast"></div>
+
+  <script>
+    let allMedicines = [];
+    let currentCategory = '<%= initialCategory || "ALL" %>';
+    let currentKeyword = '<%= initialKeyword || "" %>';
+
+    async function loadMedicines() {
+      try {
+        const res = await fetch('/api/medicines?limit=1000');
+        const data = await res.json();
+        if (data.success && data.medicines) {
+          allMedicines = data.medicines;
+          updateCounts();
+          renderTable();
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('medTableBody').innerHTML = '<tr><td colspan="9" style="color:red; text-align:center;">読み込み失敗: ' + err.message + '</td></tr>';
+      }
+    }
+
+    function updateCounts() {
+      const allCount = allMedicines.length;
+      const ivCount = allMedicines.filter(m => m.category === '注射剤').length;
+      const oralCount = allMedicines.filter(m => m.category === '内服薬').length;
+      const extCount = allMedicines.filter(m => m.category === '外用薬').length;
+
+      document.getElementById('countAll').textContent = allCount;
+      document.getElementById('countIv').textContent = ivCount;
+      document.getElementById('countOral').textContent = oralCount;
+      document.getElementById('countExt').textContent = extCount;
+    }
+
+    function setCategoryFilter(cat, btn) {
+      currentCategory = cat;
+      document.querySelectorAll('.category-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderTable();
+    }
+
+    function onSearchChange(val) {
+      currentKeyword = val.trim();
+      renderTable();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      currentKeyword = '';
+      renderTable();
+    }
+
+    function renderTable() {
+      const q = currentKeyword.toLowerCase();
+      let filtered = allMedicines.filter(m => {
+        if (currentCategory !== 'ALL' && m.category !== currentCategory) {
+          return false;
+        }
+        if (!q) return true;
+        return (
+          (m.name && m.name.toLowerCase().includes(q)) ||
+          (m.genericName && m.genericName.toLowerCase().includes(q)) ||
+          (m.kana && m.kana.toLowerCase().includes(q)) ||
+          (m.id && m.id.toLowerCase().includes(q)) ||
+          (m.therapeuticCategoryMajor && m.therapeuticCategoryMajor.toLowerCase().includes(q)) ||
+          (m.spec && m.spec.toLowerCase().includes(q))
+        );
+      });
+
+      document.getElementById('resultCountBadge').textContent = `該当: ${filtered.length}品目 / 全${allMedicines.length}品目`;
+
+      const tbody = document.getElementById('medTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:2rem; color:#64748b;">該当する採用薬が見つかりません。検索条件を変更してください。</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(m => {
+        let catBadge = '';
+        if (m.category === '注射剤') catBadge = '<span class="badge-cat badge-iv">💉 注射剤</span>';
+        else if (m.category === '内服薬') catBadge = '<span class="badge-cat badge-oral">💊 内服薬</span>';
+        else catBadge = '<span class="badge-cat badge-ext">🧴 外用薬</span>';
+
+        const brandBadge = m.brandType === '先発' ? '<span class="badge-brand badge-brand-orig">先発</span>' : '<span class="badge-brand badge-brand-gen">後発</span>';
+
+        const crushInfo = [];
+        if (m.crushOk) crushInfo.push(`粉砕:${m.crushOk}`);
+        if (m.suspensionOk) crushInfo.push(`懸濁:${m.suspensionOk}`);
+        if (m.uncapsuleOk) crushInfo.push(`脱カプ:${m.uncapsuleOk}`);
+        const crushStr = crushInfo.length > 0 ? crushInfo.join(' / ') : '―';
+
+        return `
+          <tr>
+            <td style="font-family:monospace; font-weight:bold; color:#475569;">${escapeHtml(m.id)}</td>
+            <td>${catBadge}</td>
+            <td>
+              <div style="font-weight:bold; color:#0f172a; font-size:0.9rem;">${escapeHtml(m.name)}</div>
+              <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
+                ${escapeHtml(m.kana || '')} ${brandBadge}
+              </div>
+            </td>
+            <td style="color:#334155;">${escapeHtml(m.genericName || '―')}</td>
+            <td style="color:#0369a1; font-weight:bold;">${escapeHtml(m.spec || m.unit || '―')}</td>
+            <td style="color:#475569; font-size:0.78rem;">${escapeHtml(m.therapeuticCategoryMajor || '―')}</td>
+            <td style="color:#475569; font-size:0.78rem;">${escapeHtml(m.standardUsage || '―')}</td>
+            <td style="font-size:0.75rem; color:#64748b;">${escapeHtml(crushStr)}</td>
+            <td style="text-align:center;">
+              <button type="button" class="btn-copy" onclick="copyMedToClipboard('${escapeHtml(m.name)}', '${escapeHtml(m.spec || '')}', '${escapeHtml(m.standardUsage || '')}')" title="品名をコピー">
+                📋 コピー
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function copyMedToClipboard(name, spec, usage) {
+      const text = `${name} ${spec || ''}`.trim() + (usage ? ` (${usage})` : '');
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`✅ [${name}] をクリップボードにコピーしました！`);
+      }).catch(() => {
+        prompt('以下のテキストをコピーしてください:', text);
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => {
+        t.style.display = 'none';
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    async function reloadFromExcel() {
+      if (!confirm('「薬品集マスタ.xlsx」から最新データを再取り込みしますか？')) return;
+      showToast('⏳ エクセルファイルから薬品データを再取り込み中...');
+      try {
+        const res = await fetch('/api/medicines/reload-from-excel', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✅ ${data.message} (${data.count}件)`);
+          await loadMedicines();
+        } else {
+          alert('❌ 取り込みエラー: ' + (data.error || '失敗'));
+        }
+      } catch (err) {
+        alert('❌ 通信エラー: ' + err.message);
+      }
+    }
+
+    loadMedicines();
+  </script>
+</body>
+</html>

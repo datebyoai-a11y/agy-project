@@ -115,7 +115,7 @@ router.get('/articles', async (req, res) => {
           { path: 'originalAuthor', select: 'userName loginId department' }
         ]
       })
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: -1 });
 
     // 既存記事で未署名データがあれば自動署名マイグレーション
     for (const art of articles) {
@@ -305,7 +305,7 @@ router.get('/articles', async (req, res) => {
 
       if (node.children && node.children.length > 0) {
         const visibleChildren = node.children.filter(c => !c.isOriginalHidden && !addedIds.has(c._id.toString()));
-        visibleChildren.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        visibleChildren.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         const count = visibleChildren.length;
         visibleChildren.forEach((child, idx) => {
           traverseTree(child, depth + 1, idx === count - 1);
@@ -313,8 +313,8 @@ router.get('/articles', async (req, res) => {
       }
     }
 
-    // ルート記事を作成日時順（古い順）に並べ、各親の直下に追記ツリーを展開
-    rootArticles.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    // ルート記事を作成日時順（最新順・上が最新）に並べ、各親の直下に追記ツリーを展開
+    rootArticles.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     rootArticles.forEach(root => traverseTree(root, 0, false));
 
     const user = req.session ? req.session.user : null;

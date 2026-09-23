@@ -1,5 +1,557 @@
 [
   {
+    "orderId": "IV-20260923-8325",
+    "orderType": "IV",
+    "title": "IVオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "一般病棟",
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "gender": "男",
+      "age": 65
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "ソルデム3号輸液200ｍL 1袋 + メロペネム静注用0.25g「NP」 1管",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "ソルデム3号輸液200ｍL 1袋",
+          "dosage": "ファモチジン静注20mg「杏林」 1管",
+          "route": "DIV",
+          "remarks": ""
+        },
+        {
+          "no": 2,
+          "medicine": "メロペネム静注用0.25g「NP」 1管",
+          "dosage": "生理食塩液100ｍL「VTRS」 1袋",
+          "route": "DIV",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "原本様式入力画面より一括送信"
+    },
+    "orderDate": "2026-09-23T21:58:21.390Z",
+    "createdAt": "2026-09-23T21:58:21.390Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T21:58:21.396Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T21:58:21.396Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "PRE-20260923-1252",
+    "orderType": "PRESCRIPTION",
+    "title": "PRESCRIPTIONオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P001",
+      "name": "患者",
+      "department": "一般病棟"
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {},
+    "orderDate": "2026-09-23T21:31:31.556Z",
+    "createdAt": "2026-09-23T21:31:31.556Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T21:31:31.568Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T21:31:31.568Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260923-5205",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-24",
+      "endDate": "2026-09-26",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-24〜2026-09-26)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-24",
+          "endDate": "2026-09-26",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-24T06:11",
+      "scheduledAt": "2026-09-24T07:00"
+    },
+    "orderDate": "2026-09-24T06:11",
+    "createdAt": "2026-09-23T21:12:49.590Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T21:12:49.601Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T21:12:49.601Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260923-8322",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-24",
+      "endDate": "2026-09-26",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-24〜2026-09-26)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-24",
+          "endDate": "2026-09-26",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-24T05:56",
+      "scheduledAt": "2026-09-24T06:00"
+    },
+    "orderDate": "2026-09-24T05:56",
+    "createdAt": "2026-09-23T20:58:04.550Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T20:58:04.555Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T20:58:04.555Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260923-7499",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] セフォセフ静注用1g + 大塚生食注100ｍL (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-24",
+      "endDate": "2026-09-26",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-24〜2026-09-26)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "セフォセフ静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-24",
+          "endDate": "2026-09-26",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-24T05:55",
+      "scheduledAt": "2026-09-24T06:00"
+    },
+    "orderDate": "2026-09-24T05:55",
+    "createdAt": "2026-09-23T20:55:04.375Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T20:55:04.411Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T20:55:04.411Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "MEA-20260923-1720",
+    "orderType": "MEAL",
+    "title": "🍱 食事指示: 全粥食 [夕食より開始] (かきくけこ)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "34127",
+      "name": "かきくけこ",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "mealType": "全粥食",
+      "timing": "夕食より開始",
+      "allergies": "甲殻類アレルギー (エビ・カニ禁止)",
+      "remarks": "スプーン・フォーク提供希望、お茶にとろみ中度付加",
+      "scheduledAt": "2026-09-24T01:00"
+    },
+    "orderDate": "2026-09-24T00:05",
+    "createdAt": "2026-09-23T15:06:51.118Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T15:06:51.123Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T15:06:51.123Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "RAD-20260923-5622",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 透視検査依頼書: PEG交換、消化管造影検査 (カルテ連携患者)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "カルテ連携患者",
+      "department": "一般病棟",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "一般病棟",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "FLUORO",
+      "formName": "透視検査依頼書",
+      "examType": "透視検査 [PEG交換、消化管造影検査]",
+      "items": "PEG交換、消化管造影検査",
+      "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+      "materials": "ガストロボタン 24Fr 3.5cm",
+      "purpose": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認",
+      "remarks": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認",
+      "scheduledAt": "2026-09-24T01:00"
+    },
+    "orderDate": "2026-09-24T00:02",
+    "createdAt": "2026-09-23T15:02:47.873Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T15:02:47.888Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T15:02:47.888Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "LAB-20260923-4836",
+    "orderType": "LAB_EXAM",
+    "title": "🔬 生理検査依頼書: 標準12誘導心電図、エコー [腹部] (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "PHYSIO",
+      "formName": "生理検査依頼書",
+      "items": "標準12誘導心電図、エコー [腹部]",
+      "testName": "標準12誘導心電図、エコー [腹部]",
+      "purpose": "心窩部不快感および肝機能値軽度上昇のため腹部エコー精査",
+      "remarks": "心窩部不快感および肝機能値軽度上昇のため腹部エコー精査",
+      "scheduledAt": "2026-09-23T23:00"
+    },
+    "orderDate": "2026-09-23T22:23",
+    "createdAt": "2026-09-23T13:24:03.976Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T13:24:03.992Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T13:24:03.992Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
+    "orderId": "IV-20260923-9326",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] メロペネム静注用1g + 大塚生食注100ｍL 他2件 (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "メロペネム静注用1g + 大塚生食注100ｍL 他2件",
+      "medicineId": "DR0010",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-23",
+      "endDate": "2026-09-25",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-23〜2026-09-25)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "メロペネム静注用1g + 大塚生食注100ｍL",
+          "medicineId": "DR0010",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-25",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        },
+        {
+          "no": 2,
+          "medicine": "セレネース注5mg1mL",
+          "medicineId": "DR0411",
+          "dosage": "1回5mg、1日1～2回、筋注・静注",
+          "route": "im",
+          "frequency": "1日1回 (朝)",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-25",
+          "days": 3,
+          "rate": "60mL/h",
+          "remarks": ""
+        },
+        {
+          "no": 3,
+          "medicine": "ホリゾン注射液10mg2mL",
+          "medicineId": "DR0432",
+          "dosage": "初回10mg、できるだけ緩徐に筋・静注。以後3～4時間毎",
+          "route": "im",
+          "frequency": "1日1回 (朝)",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-25",
+          "days": 3,
+          "rate": "60mL/h",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-23T21:49",
+      "scheduledAt": "2026-09-23T22:00"
+    },
+    "orderDate": "2026-09-23T21:49",
+    "createdAt": "2026-09-23T12:50:52.117Z",
+    "status": "COMPLETED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T12:50:52.125Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T12:50:52.125Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-23T12:51:34.656Z",
+        "actor": "部門モニター操作者",
+        "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-23T14:15:33.797Z",
+        "actor": "部門モニター操作者",
+        "note": "実施完了"
+      }
+    ]
+  },
+  {
     "orderId": "IV-20260923-4969",
     "orderType": "IV",
     "title": "💉 注射指示: [DIV] ソルデム3号輸液200ｍL+ファモチジン２０ｍｇ 他1件 (asfsad)",
@@ -142,7 +694,7 @@
     },
     "orderDate": "2026-09-23T18:04",
     "createdAt": "2026-09-23T09:11:17.032Z",
-    "status": "ACCEPTED",
+    "status": "COMPLETED",
     "senderHost": "http://localhost:4000",
     "receivedAt": "2026-09-23T09:11:17.036Z",
     "executionHistory": [
@@ -157,6 +709,12 @@
         "timestamp": "2026-09-23T09:12:13.778Z",
         "actor": "部門モニター操作者",
         "note": "受付済"
+      },
+      {
+        "status": "COMPLETED",
+        "timestamp": "2026-09-23T12:51:31.088Z",
+        "actor": "部門モニター操作者",
+        "note": "実施完了"
       }
     ]
   },

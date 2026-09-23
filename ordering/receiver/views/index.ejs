@@ -4,6 +4,280 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>オーダリング【受信側】部門システム モニター</title>
+  <!-- 🔒 多重起動防止・単一タブ排他制御 (1枚のみ起動可能) -->
+  <script>
+  (function() {
+    window.name = 'app_ordering_receiver';
+    const SYSTEM_KEY = 'ordering_receiver';
+    const SYSTEM_TITLE = 'オーダリング受信側 部門モニター (Port 5000)';
+    const ACCENT_COLOR = '#059669';
+
+    const myInstanceId = 'inst_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+    const LOCK_KEY = '__single_tab_lock_' + SYSTEM_KEY;
+    const CHANNEL_NAME = '__single_tab_channel_' + SYSTEM_KEY;
+
+    let isLeader = false;
+    let heartbeatTimer = null;
+    let channel = null;
+    let leaderResponded = false;
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        channel = new BroadcastChannel(CHANNEL_NAME);
+      }
+    } catch (e) {
+      console.warn('BroadcastChannel not supported', e);
+    }
+
+    function getStoredLeader() {
+      try {
+        const val = localStorage.getItem(LOCK_KEY);
+        return val ? JSON.parse(val) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setStoredLeader(id) {
+      try {
+        localStorage.setItem(LOCK_KEY, JSON.stringify({ id: id, time: Date.now() }));
+      } catch (e) {}
+    }
+
+    function clearStoredLeader() {
+      try {
+        const cur = getStoredLeader();
+        if (cur && cur.id === myInstanceId) {
+          localStorage.removeItem(LOCK_KEY);
+        }
+      } catch (e) {}
+    }
+
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      setStoredLeader(myInstanceId);
+      heartbeatTimer = setInterval(function() {
+        if (isLeader) {
+          setStoredLeader(myInstanceId);
+        } else {
+          clearInterval(heartbeatTimer);
+        }
+      }, 1000);
+    }
+
+    function claimLeadership() {
+      isLeader = true;
+      leaderResponded = true;
+      startHeartbeat();
+      hideDuplicateModal();
+      if (channel) {
+        channel.postMessage({ type: 'NEW_LEADER_ELECTED', leaderId: myInstanceId });
+      }
+    }
+
+    function createOrUpdateModal(reason) {
+      if (!document.body) {
+        document.addEventListener('DOMContentLoaded', function() {
+          createOrUpdateModal(reason);
+        });
+        return;
+      }
+
+      let modal = document.getElementById('singleTabEnforceModal_' + SYSTEM_KEY);
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'singleTabEnforceModal_' + SYSTEM_KEY;
+        modal.style.cssText = [
+          'position: fixed',
+          'inset: 0',
+          'z-index: 2147483647',
+          'background: rgba(15, 23, 42, 0.88)',
+          'backdrop-filter: blur(8px)',
+          '-webkit-backdrop-filter: blur(8px)',
+          'display: flex',
+          'align-items: center',
+          'justify-content: center',
+          'padding: 20px',
+          'box-sizing: border-box',
+          'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif'
+        ].join(';');
+
+        const card = document.createElement('div');
+        card.style.cssText = [
+          'background: #ffffff',
+          'color: #1e293b',
+          'border-radius: 16px',
+          'max-width: 520px',
+          'width: 100%',
+          'padding: 30px 24px',
+          'box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6)',
+          'border: 1px solid #e2e8f0',
+          'text-align: center',
+          'box-sizing: border-box'
+        ].join(';');
+
+        card.innerHTML = `
+          <div style="font-size: 3rem; margin-bottom: 10px; line-height: 1;">⚠️</div>
+          <div style="display: inline-block; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-bottom: 12px; letter-spacing: 0.05em;">
+            単一画面排他保護・多重起動防止
+          </div>
+          <h2 id="singleTabTitle_${SYSTEM_KEY}" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 12px; line-height: 1.4;">
+            「${SYSTEM_TITLE}」は既に別のタブで開かれています
+          </h2>
+          <p id="singleTabMsg_${SYSTEM_KEY}" style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 18px; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+            オーダリング受信側モニターにおける部門受付・ステータス更新の競合や誤操作を防止するため、当システムは<strong>同時に1枚（1つのタブ）のみ</strong>起動できるよう制御されています。
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+            <button id="singleTabBtnClose_${SYSTEM_KEY}" type="button" style="background: #ef4444; color: white; border: none; padding: 12px 20px; font-size: 0.98rem; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 4px rgba(239,68,68,0.3); transition: background 0.15s;">
+              <span>✕</span> この重複タブを閉じる（推奨）
+            </button>
+            <button id="singleTabBtnTakeover_${SYSTEM_KEY}" type="button" style="background: ${ACCENT_COLOR}; color: white; border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s;">
+              <span>🔄</span> このタブで開き直す（既存のタブを休止）
+            </button>
+          </div>
+          <div id="singleTabCloseHelp_${SYSTEM_KEY}" style="font-size: 0.78rem; color: #94a3b8; margin-top: 12px; display: none; line-height: 1.4;">
+            ※ブラウザ制限により自動で閉じられない場合は、ブラウザ上部の［×］ボタンで直接閉じてください。
+          </div>
+        `;
+
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+
+        const btnClose = modal.querySelector('#singleTabBtnClose_' + SYSTEM_KEY);
+        const btnTakeover = modal.querySelector('#singleTabBtnTakeover_' + SYSTEM_KEY);
+        const closeHelp = modal.querySelector('#singleTabCloseHelp_' + SYSTEM_KEY);
+
+        btnClose.addEventListener('click', function() {
+          window.close();
+          setTimeout(function() {
+            if (!window.closed && closeHelp) {
+              closeHelp.style.display = 'block';
+            }
+          }, 300);
+        });
+
+        btnTakeover.addEventListener('click', function() {
+          if (channel) {
+            channel.postMessage({ type: 'FORCE_TAKEOVER', newLeaderId: myInstanceId });
+          }
+          claimLeadership();
+        });
+      }
+
+      if (reason === 'takeover') {
+        const titleEl = modal.querySelector('#singleTabTitle_' + SYSTEM_KEY);
+        const msgEl = modal.querySelector('#singleTabMsg_' + SYSTEM_KEY);
+        if (titleEl) titleEl.textContent = `「${SYSTEM_TITLE}」は別のタブで新しく開かれました`;
+        if (msgEl) msgEl.innerHTML = `別のタブで新しく画面が開かれたため、部門受付の競合防止のためこのタブの操作は<strong>安全に休止</strong>されました。<br>このタブで再び作業を続けたい場合は、下記の「このタブで開き直す」を押してください。`;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function showDuplicateModal(reason) {
+      isLeader = false;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      createOrUpdateModal(reason);
+    }
+
+    function hideDuplicateModal() {
+      const modal = document.getElementById('singleTabEnforceModal_' + SYSTEM_KEY);
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    if (channel) {
+      channel.onmessage = function(e) {
+        const data = e.data;
+        if (!data) return;
+
+        if (data.type === 'PING') {
+          if (isLeader) {
+            channel.postMessage({ type: 'PONG', leaderId: myInstanceId });
+            setStoredLeader(myInstanceId);
+          }
+        } else if (data.type === 'PONG') {
+          if (!isLeader && data.leaderId !== myInstanceId) {
+            leaderResponded = true;
+            showDuplicateModal('duplicate');
+          }
+        } else if (data.type === 'FORCE_TAKEOVER') {
+          if (isLeader && data.newLeaderId !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        } else if (data.type === 'NEW_LEADER_ELECTED') {
+          if (isLeader && data.leaderId !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        }
+      };
+    }
+
+    window.addEventListener('storage', function(e) {
+      if (e.key === LOCK_KEY && e.newValue) {
+        try {
+          const l = JSON.parse(e.newValue);
+          if (isLeader && l.id !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        } catch (err) {}
+      }
+    });
+
+    window.addEventListener('beforeunload', function() {
+      if (isLeader) {
+        sessionStorage.setItem('__single_tab_reloading_' + SYSTEM_KEY, Date.now().toString());
+        clearStoredLeader();
+        if (channel) {
+          channel.postMessage({ type: 'LEADER_UNLOAD', leaderId: myInstanceId });
+        }
+      }
+    });
+
+    window.addEventListener('pagehide', function() {
+      if (isLeader) {
+        clearStoredLeader();
+        if (channel) {
+          channel.postMessage({ type: 'LEADER_UNLOAD', leaderId: myInstanceId });
+        }
+      }
+    });
+
+    function initSingleTab() {
+      const reloadTime = sessionStorage.getItem('__single_tab_reloading_' + SYSTEM_KEY);
+      sessionStorage.removeItem('__single_tab_reloading_' + SYSTEM_KEY);
+      const isQuickReload = reloadTime && (Date.now() - parseInt(reloadTime, 10) < 3000);
+
+      const existing = getStoredLeader();
+      const now = Date.now();
+
+      if (!isQuickReload && existing && existing.id && existing.id !== myInstanceId && (now - existing.time) < 2500) {
+        if (channel) {
+          channel.postMessage({ type: 'PING', senderId: myInstanceId });
+        }
+        showDuplicateModal('duplicate');
+
+        setTimeout(function() {
+          if (!leaderResponded) {
+            const check = getStoredLeader();
+            if (!check || (Date.now() - check.time) > 2500) {
+              claimLeadership();
+            }
+          }
+        }, 350);
+      } else {
+        claimLeadership();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSingleTab);
+    } else {
+      initSingleTab();
+    }
+  })();
+  </script>
   <style>
     :root {
       --primary: #059669;
@@ -1110,10 +1384,10 @@
       <% } %>
     </div>
     <div class="header-links">
-      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="_blank" style="background:#f59e0b; color:#0f172a; font-weight:bold; padding:0.35rem 0.85rem; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem;">
+      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="app_ordering_sender" style="background:#f59e0b; color:#0f172a; font-weight:bold; padding:0.35rem 0.85rem; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem;">
         <span>✏️</span> <span>新規オーダー入力画面へ (Port 4000)</span>
       </a>
-      <a href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles" target="_blank">📋 電子カルテ(Port 3000)</a>
+      <a href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles" target="app_carte_articles">📋 電子カルテ(Port 3000)</a>
       <button type="button" onclick="clearAllOrders()" style="background:#dc2626; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
         🧹 履歴クリア
       </button>
@@ -1127,7 +1401,7 @@
         <span style="font-size:1.1rem;">💡</span>
         <span>現在は<strong>【受信側】各部門モニター画面</strong>を表示しています。注射指示・処方・放射線等の新規オーダーを入力する場合は、右のボタンから<strong>「オーダー入力画面」</strong>へお進みください。</span>
       </div>
-      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="_blank" style="background:#059669; color:white; text-decoration:none; font-weight:bold; padding:0.25rem 0.7rem; border-radius:4px; font-size:0.75rem; white-space:nowrap;">
+      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="app_ordering_sender" style="background:#059669; color:white; text-decoration:none; font-weight:bold; padding:0.25rem 0.7rem; border-radius:4px; font-size:0.75rem; white-space:nowrap;">
         ✏️ オーダー入力画面を開く (Port 4000)
       </a>
     </div>

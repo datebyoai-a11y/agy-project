@@ -4,6 +4,280 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>電子カルテ入力 - インシデント管理システム</title>
+  <!-- 🔒 多重起動防止・単一タブ排他制御 (1枚のみ起動可能) -->
+  <script>
+  (function() {
+    window.name = 'app_carte_articles';
+    const SYSTEM_KEY = 'carte_articles';
+    const SYSTEM_TITLE = '電子カルテ入力画面 (Port 3000)';
+    const ACCENT_COLOR = '#0284c7';
+
+    const myInstanceId = 'inst_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+    const LOCK_KEY = '__single_tab_lock_' + SYSTEM_KEY;
+    const CHANNEL_NAME = '__single_tab_channel_' + SYSTEM_KEY;
+
+    let isLeader = false;
+    let heartbeatTimer = null;
+    let channel = null;
+    let leaderResponded = false;
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        channel = new BroadcastChannel(CHANNEL_NAME);
+      }
+    } catch (e) {
+      console.warn('BroadcastChannel not supported', e);
+    }
+
+    function getStoredLeader() {
+      try {
+        const val = localStorage.getItem(LOCK_KEY);
+        return val ? JSON.parse(val) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setStoredLeader(id) {
+      try {
+        localStorage.setItem(LOCK_KEY, JSON.stringify({ id: id, time: Date.now() }));
+      } catch (e) {}
+    }
+
+    function clearStoredLeader() {
+      try {
+        const cur = getStoredLeader();
+        if (cur && cur.id === myInstanceId) {
+          localStorage.removeItem(LOCK_KEY);
+        }
+      } catch (e) {}
+    }
+
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      setStoredLeader(myInstanceId);
+      heartbeatTimer = setInterval(function() {
+        if (isLeader) {
+          setStoredLeader(myInstanceId);
+        } else {
+          clearInterval(heartbeatTimer);
+        }
+      }, 1000);
+    }
+
+    function claimLeadership() {
+      isLeader = true;
+      leaderResponded = true;
+      startHeartbeat();
+      hideDuplicateModal();
+      if (channel) {
+        channel.postMessage({ type: 'NEW_LEADER_ELECTED', leaderId: myInstanceId });
+      }
+    }
+
+    function createOrUpdateModal(reason) {
+      if (!document.body) {
+        document.addEventListener('DOMContentLoaded', function() {
+          createOrUpdateModal(reason);
+        });
+        return;
+      }
+
+      let modal = document.getElementById('singleTabEnforceModal_' + SYSTEM_KEY);
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'singleTabEnforceModal_' + SYSTEM_KEY;
+        modal.style.cssText = [
+          'position: fixed',
+          'inset: 0',
+          'z-index: 2147483647',
+          'background: rgba(15, 23, 42, 0.88)',
+          'backdrop-filter: blur(8px)',
+          '-webkit-backdrop-filter: blur(8px)',
+          'display: flex',
+          'align-items: center',
+          'justify-content: center',
+          'padding: 20px',
+          'box-sizing: border-box',
+          'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif'
+        ].join(';');
+
+        const card = document.createElement('div');
+        card.style.cssText = [
+          'background: #ffffff',
+          'color: #1e293b',
+          'border-radius: 16px',
+          'max-width: 520px',
+          'width: 100%',
+          'padding: 30px 24px',
+          'box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6)',
+          'border: 1px solid #e2e8f0',
+          'text-align: center',
+          'box-sizing: border-box'
+        ].join(';');
+
+        card.innerHTML = `
+          <div style="font-size: 3rem; margin-bottom: 10px; line-height: 1;">⚠️</div>
+          <div style="display: inline-block; background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-bottom: 12px; letter-spacing: 0.05em;">
+            単一画面排他保護・多重起動防止
+          </div>
+          <h2 id="singleTabTitle_${SYSTEM_KEY}" style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 12px; line-height: 1.4;">
+            「${SYSTEM_TITLE}」は既に別のタブで開かれています
+          </h2>
+          <p id="singleTabMsg_${SYSTEM_KEY}" style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 18px; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">
+            電子カルテ・オーダリング業務における入力内容の二重登録やデータの不整合を防止するため、当システムは<strong>同時に1枚（1つのタブ）のみ</strong>起動できるよう制御されています。
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+            <button id="singleTabBtnClose_${SYSTEM_KEY}" type="button" style="background: #ef4444; color: white; border: none; padding: 12px 20px; font-size: 0.98rem; font-weight: 700; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 4px rgba(239,68,68,0.3); transition: background 0.15s;">
+              <span>✕</span> この重複タブを閉じる（推奨）
+            </button>
+            <button id="singleTabBtnTakeover_${SYSTEM_KEY}" type="button" style="background: ${ACCENT_COLOR}; color: white; border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: 600; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s;">
+              <span>🔄</span> このタブで開き直す（既存のタブを休止）
+            </button>
+          </div>
+          <div id="singleTabCloseHelp_${SYSTEM_KEY}" style="font-size: 0.78rem; color: #94a3b8; margin-top: 12px; display: none; line-height: 1.4;">
+            ※ブラウザ制限により自動で閉じられない場合は、ブラウザ上部の［×］ボタンで直接閉じてください。
+          </div>
+        `;
+
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+
+        const btnClose = modal.querySelector('#singleTabBtnClose_' + SYSTEM_KEY);
+        const btnTakeover = modal.querySelector('#singleTabBtnTakeover_' + SYSTEM_KEY);
+        const closeHelp = modal.querySelector('#singleTabCloseHelp_' + SYSTEM_KEY);
+
+        btnClose.addEventListener('click', function() {
+          window.close();
+          setTimeout(function() {
+            if (!window.closed && closeHelp) {
+              closeHelp.style.display = 'block';
+            }
+          }, 300);
+        });
+
+        btnTakeover.addEventListener('click', function() {
+          if (channel) {
+            channel.postMessage({ type: 'FORCE_TAKEOVER', newLeaderId: myInstanceId });
+          }
+          claimLeadership();
+        });
+      }
+
+      if (reason === 'takeover') {
+        const titleEl = modal.querySelector('#singleTabTitle_' + SYSTEM_KEY);
+        const msgEl = modal.querySelector('#singleTabMsg_' + SYSTEM_KEY);
+        if (titleEl) titleEl.textContent = `「${SYSTEM_TITLE}」は別のタブで新しく開かれました`;
+        if (msgEl) msgEl.innerHTML = `別のタブで新しく画面が開かれたため、二重入力防止のためこのタブの操作は<strong>安全に休止</strong>されました。<br>このタブで再び作業を続けたい場合は、下記の「このタブで開き直す」を押してください。`;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function showDuplicateModal(reason) {
+      isLeader = false;
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      createOrUpdateModal(reason);
+    }
+
+    function hideDuplicateModal() {
+      const modal = document.getElementById('singleTabEnforceModal_' + SYSTEM_KEY);
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    if (channel) {
+      channel.onmessage = function(e) {
+        const data = e.data;
+        if (!data) return;
+
+        if (data.type === 'PING') {
+          if (isLeader) {
+            channel.postMessage({ type: 'PONG', leaderId: myInstanceId });
+            setStoredLeader(myInstanceId);
+          }
+        } else if (data.type === 'PONG') {
+          if (!isLeader && data.leaderId !== myInstanceId) {
+            leaderResponded = true;
+            showDuplicateModal('duplicate');
+          }
+        } else if (data.type === 'FORCE_TAKEOVER') {
+          if (isLeader && data.newLeaderId !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        } else if (data.type === 'NEW_LEADER_ELECTED') {
+          if (isLeader && data.leaderId !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        }
+      };
+    }
+
+    window.addEventListener('storage', function(e) {
+      if (e.key === LOCK_KEY && e.newValue) {
+        try {
+          const l = JSON.parse(e.newValue);
+          if (isLeader && l.id !== myInstanceId) {
+            showDuplicateModal('takeover');
+          }
+        } catch (err) {}
+      }
+    });
+
+    window.addEventListener('beforeunload', function() {
+      if (isLeader) {
+        sessionStorage.setItem('__single_tab_reloading_' + SYSTEM_KEY, Date.now().toString());
+        clearStoredLeader();
+        if (channel) {
+          channel.postMessage({ type: 'LEADER_UNLOAD', leaderId: myInstanceId });
+        }
+      }
+    });
+
+    window.addEventListener('pagehide', function() {
+      if (isLeader) {
+        clearStoredLeader();
+        if (channel) {
+          channel.postMessage({ type: 'LEADER_UNLOAD', leaderId: myInstanceId });
+        }
+      }
+    });
+
+    function initSingleTab() {
+      const reloadTime = sessionStorage.getItem('__single_tab_reloading_' + SYSTEM_KEY);
+      sessionStorage.removeItem('__single_tab_reloading_' + SYSTEM_KEY);
+      const isQuickReload = reloadTime && (Date.now() - parseInt(reloadTime, 10) < 3000);
+
+      const existing = getStoredLeader();
+      const now = Date.now();
+
+      if (!isQuickReload && existing && existing.id && existing.id !== myInstanceId && (now - existing.time) < 2500) {
+        if (channel) {
+          channel.postMessage({ type: 'PING', senderId: myInstanceId });
+        }
+        showDuplicateModal('duplicate');
+
+        setTimeout(function() {
+          if (!leaderResponded) {
+            const check = getStoredLeader();
+            if (!check || (Date.now() - check.time) > 2500) {
+              claimLeadership();
+            }
+          }
+        }, 350);
+      } else {
+        claimLeadership();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSingleTab);
+    } else {
+      initSingleTab();
+    }
+  })();
+  </script>
   <style>
     :root {
       --primary: #0284c7;
@@ -19,7 +293,7 @@
       background-color: var(--bg-color);
       color: var(--text-main);
       margin: 0;
-      padding: 0;
+      padding: 0 0 42px 0;
     }
 
     /* 📌 スクロール時も常時最上部に固定されるヘッダーエリア */
@@ -1103,6 +1377,262 @@
     .scroll-down-btn {
       background: #e0f2fe; color: #0369a1; padding: 0.3rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: bold;
     }
+
+    /* 最下段固定ステータスバー */
+    .carte-status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 36px;
+      background: #0f172a;
+      border-top: 1.5px solid #1e293b;
+      color: #cbd5e1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.78rem;
+      z-index: 9990;
+      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      user-select: none;
+    }
+    .status-bar-container {
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .status-section {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .status-left {
+      flex: 1 1 45%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .status-center {
+      flex: 1 1 45%;
+      min-width: 0;
+      overflow: hidden;
+      border-left: 1px solid #334155;
+      padding-left: 0.75rem;
+    }
+    .status-right {
+      flex: 0 0 auto;
+      gap: 0.5rem;
+      border-left: 1px solid #334155;
+      padding-left: 0.75rem;
+    }
+    .status-indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      flex-shrink: 0;
+    }
+    .status-label {
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+    .status-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+      min-width: 0;
+      transition: color 0.2s ease;
+    }
+    .status-action-text {
+      color: #38bdf8;
+    }
+    .status-notice-text {
+      color: #a7f3d0;
+    }
+    .status-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 0.7rem;
+      color: #64748b;
+      flex-shrink: 0;
+      margin-left: 0.25rem;
+    }
+    .status-badge-connection {
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #0284c7;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+    .status-log-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
+    }
+    .status-log-btn:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: #64748b;
+    }
+
+    @keyframes statusPulseAction {
+      0% { background: rgba(56, 189, 248, 0.35); border-radius: 4px; }
+      100% { background: transparent; }
+    }
+    @keyframes statusPulseNotice {
+      0% { background: rgba(52, 211, 153, 0.35); border-radius: 4px; }
+      100% { background: transparent; }
+    }
+    .status-pulse-action {
+      animation: statusPulseAction 0.9s ease-out;
+    }
+    .status-pulse-notice {
+      animation: statusPulseNotice 0.9s ease-out;
+    }
+
+    /* 操作・通知 履歴ポップアップモーダル */
+    .status-history-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0 1.5rem 44px 0;
+      z-index: 10001;
+    }
+    .status-history-dialog {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 8px;
+      width: 540px;
+      max-width: 92vw;
+      max-height: 420px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .status-history-header {
+      padding: 0.6rem 0.85rem;
+      background: #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+    }
+    .status-history-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.1rem 0.3rem;
+      border-radius: 4px;
+    }
+    .status-history-close-btn:hover {
+      color: #ffffff;
+      background: #334155;
+    }
+    .status-history-body {
+      padding: 0.6rem;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      background: #0b1120;
+    }
+    .status-history-item {
+      padding: 0.4rem 0.6rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .status-history-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: #64748b;
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      margin-top: 1px;
+    }
+    .status-history-type {
+      font-weight: bold;
+      font-size: 0.68rem;
+      padding: 0.05rem 0.35rem;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .type-action { background: #0369a1; color: #e0f2fe; }
+    .type-notice { background: #065f46; color: #d1fae5; }
+    .type-warning { background: #92400e; color: #fef3c7; }
+    .type-error { background: #991b1b; color: #fee2e2; }
+    .status-history-msg {
+      color: #f1f5f9;
+      word-break: break-all;
+      flex: 1;
+      line-height: 1.35;
+    }
+    .status-history-footer {
+      padding: 0.45rem 0.85rem;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-history-clear-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .status-history-clear-btn:hover {
+      color: #f87171;
+    }
+    .status-history-ok-btn {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 0.28rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .status-history-ok-btn:hover {
+      background: #0369a1;
+    }
   </style>
 </head>
 <body>
@@ -1176,7 +1706,7 @@
         </div>
 
         <!-- 🚀 オーダリング移行 (Port 4000) -->
-        <a id="btnOrderingTop" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面 (Port 4000) を現在選択中の患者を引き継いで開きます">
+        <a id="btnOrderingTop" href="http://localhost:4000/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面 (Port 4000) を現在選択中の患者を引き継いで開きます">
           <span>🚀</span>
           <span>オーダリング移行 (Port 4000)</span>
         </a>
@@ -1238,11 +1768,18 @@
                 <div class="item-desc">点滴・輸液・注射薬剤の投与指示</div>
               </div>
             </a>
-            <a id="btnOrderingGear" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" class="gear-dropdown-item" style="background:#f0f9ff; border-left:3px solid #0284c7; text-decoration:none;">
+            <a id="btnOrderingGear" href="http://localhost:4000/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" class="gear-dropdown-item" style="background:#f0f9ff; border-left:3px solid #0284c7; text-decoration:none;">
               <span class="item-icon">🚀</span>
               <div class="item-info">
                 <div class="item-title" style="color:#0284c7; font-weight:bold;">オーダリングシステム (Port 4000)</div>
                 <div class="item-desc">病棟用注射指示箋・処方・検査の専用送信画面へ移動</div>
+              </div>
+            </a>
+            <a id="btnPaperInjectionGear" href="http://localhost:4000/injection-sheet-form" target="app_injection_sheet" onclick="return handlePaperInjectionClick(event, this);" class="gear-dropdown-item" style="background:#fefce8; border-left:3px solid #eab308; text-decoration:none;">
+              <span class="item-icon">📝</span>
+              <div class="item-info">
+                <div class="item-title" style="color:#b45309; font-weight:bold;">注射指示箋 入力画面案 (原本様式再現)</div>
+                <div class="item-desc">紙の指示箋様式そのままのレイアウトで入力・A4印刷</div>
               </div>
             </a>
 
@@ -1346,7 +1883,7 @@
           <div style="display:flex; align-items:center; gap:0.3rem;">
             <button type="button" onclick="verifyAllArticlesPgp()" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.72rem; cursor:pointer;" title="全記事PGP検証">🔏 検証</button>
             <button type="button" onclick="showSystemPublicKeyModal()" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.72rem; cursor:pointer;" title="公開鍵確認">🔑 鍵</button>
-            <button type="button" onclick="focusLatestArticle(true)" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.72rem; cursor:pointer; margin-left:auto;" title="最新カルテにフォーカス">⬇️ 最新へ</button>
+            <button type="button" onclick="focusLatestArticle(true)" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.72rem; cursor:pointer; margin-left:auto;" title="最新カルテ（最上部）にフォーカス">⬆️ 最新へ</button>
           </div>
         </div>
 
@@ -1358,7 +1895,7 @@
           </form>
         </div>
 
-        <!-- 過去カルテ・記事タイムラインリスト (上から下へ日時順、編集不可・引用ツリー形式) -->
+        <!-- 過去カルテ・記事タイムラインリスト (最新記事が最上部、編集不可・引用ツリー形式) -->
         <div class="timeline-container" id="timelineContainer" style="flex:1; overflow-y:auto; padding:0.4rem; background:#f8fafc;">
           <!-- 職種フィルタ該当なし時の案内 -->
           <div id="noArticlesNotice" style="display:none; text-align:center; padding:1.2rem 0.5rem; color:#64748b; font-size:0.78rem; background:#ffffff; border:1px dashed #cbd5e1; border-radius:6px; margin:0.5rem 0;">
@@ -1374,7 +1911,7 @@
               <% 
                 const authorDept = (art.author && art.author.department) ? art.author.department : '一般';
                 const isPgpValid = art.pgpVerification && art.pgpVerification.isValid;
-                const isLatest = (index === articles.length - 1);
+                const isLatest = (index === 0);
                 const isQuoted = Boolean(art.parentArticle);
                 const isQuotedCorrection = Boolean(art.isQuotedCorrection);
                 const treeDepth = art.treeDepth || 0;
@@ -1806,57 +2343,26 @@
         </form>
       </div>
 
-      <!-- ↔️ 第2リサイザー (中央ペインと右ペインの境界) -->
-      <div class="carte-resizer" id="resizerRight" title="ドラッグして幅を変更 (ダブルクリックで初期幅に戻す)"></div>
-
-      <!-- 🟢 右ペイン: オーダリング送信画面 (Port 4000 連携) -->
-      <div class="carte-pane-right" id="cartePaneRight">
-        <!-- オーダリングヘッダーツールバー -->
-        <div style="background:#0f172a; color:white; padding:0.35rem 0.65rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; flex-shrink:0;">
-          <div style="display:flex; align-items:center; gap:0.4rem; font-weight:bold; font-size:0.83rem;">
-            <span style="font-size:1rem;">🚀</span>
-            <span style="color:#e0f2fe;">オーダリング指示発行システム</span>
-            <span style="background:#0284c7; color:white; font-size:0.68rem; padding:0.1rem 0.35rem; border-radius:3px; font-weight:bold;">Port 4000</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:0.35rem;">
-            <button type="button" onclick="reloadOrderingFrame()" title="オーダリング画面を再読み込み" style="background:rgba(255,255,255,0.15); color:white; border:none; padding:0.18rem 0.45rem; border-radius:3px; font-size:0.75rem; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-              🔄 再読込
-            </button>
-            <a id="btnOrderingOpenExternal" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" title="オーダリング画面を別ウィンドウで開く" style="background:#0284c7; color:white; text-decoration:none; padding:0.18rem 0.5rem; border-radius:3px; font-size:0.75rem; font-weight:bold; display:flex; align-items:center; gap:0.2rem;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">
-              <span>別窓 ↗</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- オーダリング送信画面 iframe (リアルタイム患者連動) -->
-        <div style="flex:1; width:100%; position:relative; overflow:hidden; background:#f8fafc;">
-          <iframe id="orderingSenderFrame" src="about:blank" style="width:100%; height:100%; border:none; display:block;" title="オーダリング指示発行画面 (Port 4000)"></iframe>
-        </div>
       </div>
 
-    </div> <!-- /.carte-layout-3col -->
+    </div> <!-- /.carte-layout-3col (左ペイン＋中央記載ペインの広々2ペイン構成) -->
   </div> <!-- /.container -->
 
 
   <script>
-    // ↔️ 縦3列の境界ドラッグ＆リサイズ制御 (左・中央・右の幅を自在に変更)
+    // ↔️ 2ペイン分割（左ペインと中央記載ペイン）のリサイズ制御
     function initPaneResizers() {
       const leftPane = document.querySelector('.carte-pane-left');
       const centerPane = document.querySelector('.carte-pane-center');
-      const rightPane = document.querySelector('.carte-pane-right');
       const resizerLeft = document.getElementById('resizerLeft');
-      const resizerRight = document.getElementById('resizerRight');
       const container = document.querySelector('.carte-layout-3col');
 
-      if (!leftPane || !centerPane || !rightPane || !resizerLeft || !resizerRight || !container) return;
+      if (!leftPane || !centerPane || !resizerLeft || !container) return;
 
       const DEFAULT_LEFT_WIDTH = 290;
-      const DEFAULT_RIGHT_WIDTH = 480;
       const MIN_LEFT_WIDTH = 150;
-      const MAX_LEFT_WIDTH = 650;
-      const MIN_RIGHT_WIDTH = 280;
-      const MAX_RIGHT_WIDTH = 950;
-      const MIN_CENTER_WIDTH = 250;
+      const MAX_LEFT_WIDTH = 750;
+      const MIN_CENTER_WIDTH = 300;
 
       // 保存された幅の復元 (localStorage)
       try {
@@ -1868,25 +2374,11 @@
             leftPane.style.flex = `0 0 ${w}px`;
           }
         }
-        const savedRight = localStorage.getItem('carte_pane_right_width');
-        if (savedRight) {
-          const w = parseInt(savedRight, 10);
-          if (!isNaN(w) && w >= MIN_RIGHT_WIDTH && w <= MAX_RIGHT_WIDTH) {
-            rightPane.style.width = `${w}px`;
-            rightPane.style.flex = `0 0 ${w}px`;
-          }
-        }
       } catch (e) {}
 
       let isDraggingLeft = false;
       let startXLeft = 0;
       let startWidthLeft = 0;
-
-      let isDraggingRight = false;
-      let startXRight = 0;
-      let startWidthRight = 0;
-
-      const orderingFrameEl = document.getElementById('orderingSenderFrame');
 
       // --- 左スプリッター (左ペインと中央ペインの境界) ---
       function onMouseDownLeft(e) {
@@ -1897,65 +2389,31 @@
         resizerLeft.classList.add('resizing');
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
-        if (orderingFrameEl) orderingFrameEl.style.pointerEvents = 'none';
-        if (e.cancelable && e.type !== 'touchstart') e.preventDefault();
-      }
-
-      // --- 右スプリッター (中央ペインと右ペインの境界) ---
-      function onMouseDownRight(e) {
-        if (window.innerWidth <= 768) return;
-        isDraggingRight = true;
-        startXRight = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
-        startWidthRight = rightPane.getBoundingClientRect().width;
-        resizerRight.classList.add('resizing');
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        if (orderingFrameEl) orderingFrameEl.style.pointerEvents = 'none';
         if (e.cancelable && e.type !== 'touchstart') e.preventDefault();
       }
 
       function onMouseMove(e) {
-        if (!isDraggingLeft && !isDraggingRight) return;
+        if (!isDraggingLeft) return;
 
         const clientX = (e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX);
         if (clientX === undefined) return;
 
         const containerRect = container.getBoundingClientRect();
-        const resizersTotalWidth = 20; // 10px * 2
+        const deltaX = clientX - startXLeft;
+        let newWidth = startWidthLeft + deltaX;
 
-        if (isDraggingLeft) {
-          const deltaX = clientX - startXLeft;
-          let newWidth = startWidthLeft + deltaX;
+        const maxAllowed = containerRect.width - MIN_CENTER_WIDTH - 12;
+        const actualMax = Math.min(MAX_LEFT_WIDTH, maxAllowed);
 
-          const currentRightWidth = rightPane.getBoundingClientRect().width;
-          const maxAllowed = containerRect.width - currentRightWidth - MIN_CENTER_WIDTH - resizersTotalWidth;
-          const actualMax = Math.min(MAX_LEFT_WIDTH, maxAllowed);
+        if (newWidth < MIN_LEFT_WIDTH) newWidth = MIN_LEFT_WIDTH;
+        if (newWidth > actualMax) newWidth = actualMax;
 
-          if (newWidth < MIN_LEFT_WIDTH) newWidth = MIN_LEFT_WIDTH;
-          if (newWidth > actualMax) newWidth = actualMax;
-
-          const rounded = Math.round(newWidth);
-          leftPane.style.width = `${rounded}px`;
-          leftPane.style.flex = `0 0 ${rounded}px`;
-        } else if (isDraggingRight) {
-          const deltaX = clientX - startXRight;
-          let newWidth = startWidthRight - deltaX;
-
-          const currentLeftWidth = leftPane.getBoundingClientRect().width;
-          const maxAllowed = containerRect.width - currentLeftWidth - MIN_CENTER_WIDTH - resizersTotalWidth;
-          const actualMax = Math.min(MAX_RIGHT_WIDTH, maxAllowed);
-
-          if (newWidth < MIN_RIGHT_WIDTH) newWidth = MIN_RIGHT_WIDTH;
-          if (newWidth > actualMax) newWidth = actualMax;
-
-          const rounded = Math.round(newWidth);
-          rightPane.style.width = `${rounded}px`;
-          rightPane.style.flex = `0 0 ${rounded}px`;
-        }
+        const rounded = Math.round(newWidth);
+        leftPane.style.width = `${rounded}px`;
+        leftPane.style.flex = `0 0 ${rounded}px`;
       }
 
       function onMouseUp() {
-        if (orderingFrameEl) orderingFrameEl.style.pointerEvents = 'auto';
         if (isDraggingLeft) {
           isDraggingLeft = false;
           resizerLeft.classList.remove('resizing');
@@ -1965,42 +2423,31 @@
             localStorage.setItem('carte_pane_left_width', Math.round(leftPane.getBoundingClientRect().width));
           } catch (e) {}
         }
-        if (isDraggingRight) {
-          isDraggingRight = false;
-          resizerRight.classList.remove('resizing');
-          document.body.style.cursor = '';
-          document.body.style.userSelect = '';
-          try {
-            localStorage.setItem('carte_pane_right_width', Math.round(rightPane.getBoundingClientRect().width));
-          } catch (e) {}
-        }
       }
 
       // ダブルクリックでデフォルト幅にリセット
       resizerLeft.addEventListener('dblclick', () => {
         leftPane.style.width = `${DEFAULT_LEFT_WIDTH}px`;
         leftPane.style.flex = `0 0 ${DEFAULT_LEFT_WIDTH}px`;
-        try { localStorage.setItem('carte_pane_left_width', DEFAULT_LEFT_WIDTH); } catch (e) {}
+        try {
+          localStorage.setItem('carte_pane_left_width', DEFAULT_LEFT_WIDTH);
+        } catch (e) {}
       });
 
-      resizerRight.addEventListener('dblclick', () => {
-        rightPane.style.width = `${DEFAULT_RIGHT_WIDTH}px`;
-        rightPane.style.flex = `0 0 ${DEFAULT_RIGHT_WIDTH}px`;
-        try { localStorage.setItem('carte_pane_right_width', DEFAULT_RIGHT_WIDTH); } catch (e) {}
-      });
-
-      // イベントリスナーの登録
       resizerLeft.addEventListener('mousedown', onMouseDownLeft);
       resizerLeft.addEventListener('touchstart', onMouseDownLeft, { passive: true });
-
-      resizerRight.addEventListener('mousedown', onMouseDownRight);
-      resizerRight.addEventListener('touchstart', onMouseDownRight, { passive: true });
 
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('touchmove', onMouseMove, { passive: true });
 
       window.addEventListener('mouseup', onMouseUp);
       window.addEventListener('touchend', onMouseUp);
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(initPaneResizers, 50);
+    } else {
+      document.addEventListener('DOMContentLoaded', initPaneResizers);
     }
 
     // 🌐 全患者表示モード切り替え
@@ -2326,9 +2773,151 @@
     // 🌟 右メニューから選択した要素を「独自記事 (Article)」として作成する新機能
     // =========================================================================
 
+    // =========================================================
+    // 💡 最下段ステータスバー (最後の操作 & 通知) 管理システム
+    // =========================================================
+    const statusHistory = [];
+    const MAX_STATUS_HISTORY = 30;
+
+    function formatCurrentTime() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    // 最後の操作を記録 & ステータスバー更新
+    function setLastAction(actionText) {
+      const timeStr = formatCurrentTime();
+      const el = document.getElementById('statusBarLastAction');
+      const elTime = document.getElementById('statusBarActionTime');
+      const sec = document.getElementById('statusActionSection');
+      if (el) {
+        el.textContent = actionText;
+        el.title = `[${timeStr}] ${actionText}`;
+      }
+      if (elTime) elTime.textContent = timeStr;
+      if (sec) {
+        sec.classList.remove('status-pulse-action');
+        void sec.offsetWidth;
+        sec.classList.add('status-pulse-action');
+      }
+      addStatusHistory('action', actionText, timeStr);
+    }
+
+    // 最新の通知を記録 & ステータスバー更新
+    function setLatestNotice(noticeText, type = 'info') {
+      const timeStr = formatCurrentTime();
+      const el = document.getElementById('statusBarLatestNotice');
+      const elTime = document.getElementById('statusBarNoticeTime');
+      const elIcon = document.getElementById('statusBarNoticeIcon');
+      const sec = document.getElementById('statusNoticeSection');
+
+      let icon = '📢';
+      let color = '#a7f3d0';
+      if (type === 'success') {
+        icon = '✅';
+        color = '#4ade80';
+      } else if (type === 'warning') {
+        icon = '⚠️';
+        color = '#fbbf24';
+      } else if (type === 'error') {
+        icon = '❌';
+        color = '#f87171';
+      } else if (type === 'info') {
+        icon = 'ℹ️';
+        color = '#38bdf8';
+      }
+
+      if (elIcon) elIcon.textContent = icon;
+      if (el) {
+        el.textContent = noticeText;
+        el.style.color = color;
+        el.title = `[${timeStr}] ${noticeText}`;
+      }
+      if (elTime) elTime.textContent = timeStr;
+      if (sec) {
+        sec.classList.remove('status-pulse-notice');
+        void sec.offsetWidth;
+        sec.classList.add('status-pulse-notice');
+      }
+      addStatusHistory(type, noticeText, timeStr);
+    }
+
+    // 操作と通知を両方一度に更新する
+    function updateStatusBar(actionText, noticeText, type = 'info') {
+      if (actionText) setLastAction(actionText);
+      if (noticeText) setLatestNotice(noticeText, type);
+    }
+
+    function addStatusHistory(type, message, timeStr) {
+      statusHistory.unshift({ type, message, time: timeStr });
+      if (statusHistory.length > MAX_STATUS_HISTORY) {
+        statusHistory.pop();
+      }
+      const countEl = document.getElementById('statusHistoryCount');
+      if (countEl) countEl.textContent = statusHistory.length;
+    }
+
+    function toggleStatusHistoryModal() {
+      const modal = document.getElementById('statusHistoryModal');
+      if (!modal) return;
+      if (modal.style.display === 'none' || !modal.style.display) {
+        renderStatusHistoryList();
+        modal.style.display = 'flex';
+      } else {
+        modal.style.display = 'none';
+      }
+    }
+
+    function closeStatusHistoryModal(e) {
+      if (!e || e.target === document.getElementById('statusHistoryModal') || 
+          e.target.classList.contains('status-history-close-btn') || 
+          e.target.classList.contains('status-history-ok-btn')) {
+        const modal = document.getElementById('statusHistoryModal');
+        if (modal) modal.style.display = 'none';
+      }
+    }
+
+    function clearStatusHistory() {
+      statusHistory.length = 0;
+      const countEl = document.getElementById('statusHistoryCount');
+      if (countEl) countEl.textContent = '0';
+      renderStatusHistoryList();
+    }
+
+    function renderStatusHistoryList() {
+      const container = document.getElementById('statusHistoryList');
+      if (!container) return;
+      if (statusHistory.length === 0) {
+        container.innerHTML = '<div style="color:#64748b; text-align:center; padding:1.5rem 0; font-size:0.8rem;">操作・通知履歴はありません</div>';
+        return;
+      }
+      let html = '';
+      statusHistory.forEach(item => {
+        let typeClass = 'type-action';
+        let typeLabel = '操作';
+        if (item.type === 'success') { typeClass = 'type-notice'; typeLabel = '成功'; }
+        else if (item.type === 'notice' || item.type === 'info') { typeClass = 'type-notice'; typeLabel = '通知'; }
+        else if (item.type === 'warning') { typeClass = 'type-warning'; typeLabel = '注意'; }
+        else if (item.type === 'error') { typeClass = 'type-error'; typeLabel = 'エラー'; }
+
+        html += `
+          <div class="status-history-item">
+            <span class="status-history-time">${escapeHtml(item.time)}</span>
+            <span class="status-history-type ${typeClass}">${typeLabel}</span>
+            <span class="status-history-msg">${escapeHtml(item.message)}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
     // トースト通知の表示ヘルパー
     let toastTimeout = null;
     function showToastNotification(message, isSuccess = true) {
+      const plainText = message.replace(/<[^>]*>/g, '').trim();
+      setLatestNotice(plainText, isSuccess ? 'success' : 'error');
+
       const toast = document.getElementById('toastNotification');
       const msgEl = document.getElementById('toastMessage');
       if (!toast || !msgEl) return;
@@ -2895,13 +3484,14 @@
       return url.toString();
     }
 
-    // 🚀 オーダリングシステム送信画面 (Port 4000) を現在選択中の患者情報を引き継いで開く
+    // 🚀 オーダリングシステム送信画面 (Port 4000) を現在選択中の患者情報を引き継いで開く（既存タブがあれば再利用・移行）
     function openOrderingSystem(customOrderType = null) {
       const targetUrl = getOrderingSystemUrl(customOrderType);
       try {
-        const win = window.open(targetUrl, '_blank');
-        // ポップアップブロッカー等で新しいタブが開けなかった場合のフォールバック
-        if (!win || win.closed || typeof win.closed === 'undefined') {
+        const win = window.open(targetUrl, 'app_ordering_sender');
+        if (win && !win.closed) {
+          try { win.focus(); } catch (_) {}
+        } else {
           window.location.href = targetUrl;
         }
       } catch (e) {
@@ -2922,6 +3512,32 @@
       return true;
     }
 
+    // 📋 原本様式の注射指示入力画面（案）を開くハンドラ（既存タブがあれば再利用・移行）
+    function handlePaperInjectionClick(event, elem) {
+      const isHttps = window.location.protocol === 'https:';
+      const hostname = window.location.hostname || 'localhost';
+      const port = isHttps ? 5443 : 4000;
+      let url = `${window.location.protocol}//${hostname}:${port}/injection-sheet-form`;
+      const params = new URLSearchParams();
+      if (currentTargetPersonId) params.set('patientId', currentTargetPersonId);
+      if (currentTargetPersonName) params.set('patientName', currentTargetPersonName);
+      if (currentTargetPersonWard) params.set('patientDept', currentTargetPersonWard);
+      const queryStr = params.toString();
+      if (queryStr) url += `?${queryStr}`;
+
+      if (elem) elem.href = url;
+      try {
+        const win = window.open(url, 'app_injection_sheet');
+        if (win && !win.closed) {
+          try { win.focus(); } catch (_) {}
+        }
+      } catch (e) {
+        window.location.href = url;
+      }
+      if (event) event.preventDefault();
+      return false;
+    }
+
     // 画面上の全オーダリングボタン・リンクおよび右列iframeのURLを最新状態に同期
     function updateOrderingLinks() {
       try {
@@ -2932,6 +3548,22 @@
         if (gearLink) gearLink.href = targetUrl;
         const extBtn = document.getElementById('btnOrderingOpenExternal');
         if (extBtn) extBtn.href = targetUrl;
+
+        // 原本様式入力画面へのリンクも更新
+        const paperLink = document.getElementById('btnPaperInjectionGear');
+        if (paperLink) {
+          const isHttps = window.location.protocol === 'https:';
+          const hostname = window.location.hostname || 'localhost';
+          const port = isHttps ? 5443 : 4000;
+          let paperUrl = `${window.location.protocol}//${hostname}:${port}/injection-sheet-form`;
+          const params = new URLSearchParams();
+          if (currentTargetPersonId) params.set('patientId', currentTargetPersonId);
+          if (currentTargetPersonName) params.set('patientName', currentTargetPersonName);
+          if (currentTargetPersonWard) params.set('patientDept', currentTargetPersonWard);
+          const pStr = params.toString();
+          if (pStr) paperUrl += `?${pStr}`;
+          paperLink.href = paperUrl;
+        }
 
         // 🚀 右ペインのオーダリング埋め込み iframe (embedded=1) を同期
         const frame = document.getElementById('orderingSenderFrame');
@@ -4527,21 +5159,21 @@
     let currentSelectedDeptFilter = '<%= currentUserDept || "ALL" %>';
     let currentSelectedCatFilter = 'ALL';
 
-    // 17. 最新記事（タイムラインの一番下）にフォーカスする関数
+    // 17. 最新記事（タイムラインの一番上）にフォーカスする関数
     function focusLatestArticle(smooth = true) {
       const container = document.getElementById('timelineContainer');
       const visibleItems = Array.from(document.querySelectorAll('.article-item'))
         .filter(item => item.style.display !== 'none');
 
       if (visibleItems.length > 0) {
-        const latestItem = visibleItems[visibleItems.length - 1]; // 日時順で一番下の最新記事
+        const latestItem = visibleItems[0]; // 上が最新記事！
         document.querySelectorAll('.article-item.latest-focus').forEach(el => el.classList.remove('latest-focus'));
         latestItem.classList.add('latest-focus');
         setTimeout(() => {
-          latestItem.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+          latestItem.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'nearest' });
         }, 60);
       } else if (container) {
-        container.scrollTop = container.scrollHeight;
+        container.scrollTop = 0;
       }
     }
 
@@ -5459,8 +6091,58 @@
     </div>
   </div>
 
+  <!-- 最下段固定ステータスバー (画面操作専用・最後の操作と通知を表示) -->
+  <footer id="carteStatusBar" class="carte-status-bar no-print" role="status" aria-live="polite">
+    <div class="status-bar-container">
+      <!-- 左側: システム稼働状態 & 最後の操作 -->
+      <div class="status-section status-left" id="statusActionSection">
+        <span class="status-indicator-dot" title="電子カルテシステム正常稼働中"></span>
+        <span class="status-label">最後の操作:</span>
+        <span id="statusBarLastAction" class="status-value status-action-text" title="直近のユーザー操作">電子カルテ画面を表示しました</span>
+        <span id="statusBarActionTime" class="status-time">--:--:--</span>
+      </div>
+
+      <!-- 中央: 最新の通知 -->
+      <div class="status-section status-center" id="statusNoticeSection">
+        <span id="statusBarNoticeIcon" style="font-size:0.85rem; flex-shrink:0;">📢</span>
+        <span class="status-label">通知:</span>
+        <span id="statusBarLatestNotice" class="status-value status-notice-text" title="最新のシステム通知・案内">準備完了（記事の閲覧・記録・オーダリング連携が可能です）</span>
+        <span id="statusBarNoticeTime" class="status-time">--:--:--</span>
+      </div>
+
+      <!-- 右側: 連動状態 & 履歴ログ表示ボタン -->
+      <div class="status-section status-right">
+        <span class="status-badge-connection" title="オーダリング(Port 4000) / 受信部門(Port 5000) リアルタイム連動中">🟢 連携稼働中</span>
+        <button type="button" class="status-log-btn" onclick="toggleStatusHistoryModal()" title="直近の操作・通知履歴を表示">
+          <span>📜</span> <span>履歴 (<span id="statusHistoryCount">0</span>)</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 操作・通知 履歴ポップアップモーダル -->
+  <div id="statusHistoryModal" class="status-history-modal no-print" style="display:none;" onclick="closeStatusHistoryModal(event)">
+    <div class="status-history-dialog" onclick="event.stopPropagation()">
+      <div class="status-history-header">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.1rem;">📜</span>
+          <h4 style="margin:0; font-size:0.92rem; font-weight:bold; color:#f8fafc;">電子カルテ操作＆通知 履歴ログ</h4>
+          <span style="font-size:0.72rem; color:#94a3b8;">（直近30件）</span>
+        </div>
+        <button type="button" onclick="closeStatusHistoryModal()" class="status-history-close-btn" title="閉じる">✕</button>
+      </div>
+      <div class="status-history-body" id="statusHistoryList">
+        <!-- JSで動的に追加 -->
+      </div>
+      <div class="status-history-footer">
+        <button type="button" onclick="clearStatusHistory()" class="status-history-clear-btn">履歴消去</button>
+        <button type="button" onclick="closeStatusHistoryModal()" class="status-history-ok-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 🔔 トースト通知コンテナ -->
-  <div id="toastNotification" style="display:none; position:fixed; bottom:24px; right:24px; background:#0f172a; color:#ffffff; padding:0.75rem 1.25rem; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:9999; font-size:0.85rem; font-weight:bold; align-items:center; gap:0.5rem; transition:all 0.3s ease;">
+  <div id="toastNotification" style="display:none; position:fixed; bottom:46px; right:24px; background:#0f172a; color:#ffffff; padding:0.75rem 1.25rem; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.3); z-index:10000; font-size:0.85rem; font-weight:bold; align-items:center; gap:0.5rem; transition:all 0.3s ease;">
     <span id="toastMessage"></span>
   </div>
 </body>

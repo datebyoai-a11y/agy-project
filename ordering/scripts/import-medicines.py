@@ -105,18 +105,48 @@ def extract_medicines():
             if not category:
                 if '錠' in name or 'カプセル' in name or '散' in name or 'ドライシロップ' in name:
                     category = '内服薬'
-                elif '注' in name or '点滴' in name:
+                elif '注' in name or '点滴' in name or '輸液' in name:
                     category = '注射剤'
                 elif '軟膏' in name or '貼付' in name or '点眼' in name or '点鼻' in name:
                     category = '外用薬'
                 else:
                     category = '内服薬'
 
+            # 規格 (spec) & 単位 (unit) のインテリジェント抽出
+            import re
+            spec = ''
+            spec_match = re.search(r'([0-9\.\,]+[ｍm]?[ｇg|％%|L|Ｌ|mL|ｍL|μg|単位]+.*)', name)
+            if spec_match:
+                spec = spec_match.group(1).strip()
+            
+            unit = '錠'
+            if category == '注射剤' or '注' in name or '点滴' in name or '輸液' in name:
+                if '輸液' in name or '点滴' in name or '500ｍL' in name or '200ｍL' in name or '100ｍL' in name:
+                    unit = '袋'
+                else:
+                    unit = '管'
+            elif 'カプセル' in name or 'Cap' in name:
+                unit = 'Cap'
+            elif '散' in name or '顆粒' in name or '細粒' in name or 'ドライシロップ' in name:
+                unit = '包'
+            elif '軟膏' in name or 'クリーム' in name or 'ゲル' in name or '点眼' in name or '点鼻' in name:
+                unit = '本'
+            elif '貼付' in name or 'テープ' in name or 'パップ' in name:
+                unit = '枚'
+            elif '坐剤' in name or '坐薬' in name:
+                unit = '個'
+
+            dosage_str = (row_dict.get('用法用量') or '').strip()
+            standard_usage = dosage_str.split('。')[0] if dosage_str else ''
+
             item = {
                 'id': med_id,
                 'name': name,
                 'genericName': (row_dict.get('成分名') or '').strip(),
-                'dosage': (row_dict.get('用法用量') or '').strip(),
+                'dosage': dosage_str,
+                'standardUsage': standard_usage,
+                'spec': spec,
+                'unit': unit,
                 'category': category,
                 'suspensionOk': (row_dict.get('簡易懸濁可否') or '').strip(),
                 'crushOk': (row_dict.get('粉砕可否') or '').strip(),
@@ -129,6 +159,7 @@ def extract_medicines():
                 'genericBrandName': (row_dict.get('後発名') or '').strip(),
                 'originalBrandName': (row_dict.get('先発名') or '').strip(),
                 'adoptType': (row_dict.get('採用区分') or '採用').strip(),
+                'statusFlag': (row_dict.get('採用状態フラグ') or '').strip(),
                 'displayFlag': (row_dict.get('表示フラグ') or '1').strip(),
                 'revisionDate': excel_date_to_str(row_dict.get('改訂日')),
                 'replacedFromId': (row_dict.get('切り替え元ID') or '').strip(),

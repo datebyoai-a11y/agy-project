@@ -77,7 +77,7 @@
                 <span id="selectedPatientBadge" style="font-size: 0.85rem; color: #0369a1; font-weight: bold;">
                     🎯 引き継ぎ患者: <span id="selectedPatientName">未選択</span>
                 </span>
-                <a id="btnOpenOrdering" href="http://localhost:4000/" target="_blank" onclick="return launchOrderingSystem(event);" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" title="当該者（患者情報）を引き継いでオーダリングシステム (Port 4000) を開きます">
+                <a id="btnOpenOrdering" href="http://localhost:4000/" target="app_ordering_sender" onclick="return launchOrderingSystem(event);" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" title="当該者（患者情報）を引き継いでオーダリングシステム (Port 4000) を開きます">
                     <span>🚀</span>
                     <span>オーダリング呼出 (Port 4000)</span>
                 </a>
@@ -281,8 +281,10 @@
             if (event && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
                 event.preventDefault();
                 try {
-                    const win = window.open(url, '_blank');
-                    if (!win || win.closed || typeof win.closed === 'undefined') {
+                    const win = window.open(url, 'app_ordering_sender');
+                    if (win && !win.closed) {
+                        try { win.focus(); } catch (_) {}
+                    } else {
                         window.location.href = url;
                     }
                 } catch (e) {
