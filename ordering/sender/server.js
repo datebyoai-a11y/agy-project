@@ -200,11 +200,15 @@ app.get('/injection-sheet-form', (req, res) => {
     }
   }
 
+  const queryStartDate = String(req.query.startDate || req.query.orderDate || '').trim();
+  const todayStr = new Date().toISOString().split('T')[0];
+
   res.render('injection_sheet_form', {
     patients: patientList,
     selectedPatient: selectedPatient,
     targetOrder: targetOrder,
     orderId: orderId,
+    initialStartDate: queryStartDate || todayStr,
     port: req.socket.localPort || PORT,
     isHttps: isEncrypted,
     protocol: currentProto,

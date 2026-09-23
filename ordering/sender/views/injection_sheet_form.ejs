@@ -16,66 +16,72 @@
       background: #e2e8f0;
       color: #000000;
       font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", "MS P明朝", serif;
-      padding: 1rem 0.5rem 52px 0.5rem;
+      padding: 0.4rem 0.5rem 40px 0.5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
     }
 
-    /* 上部操作ツールバー (画面操作用・印刷時は非表示) */
+    /* 上部操作ツールバー (リボン・画面操作用・印刷時は非表示) */
     .screen-toolbar {
       width: 100%;
-      max-width: 1180px;
+      max-width: 1140px;
       background: #1e293b;
       color: #ffffff;
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      padding: 0.28rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+      gap: 0.6rem;
+      box-shadow: 0 2px 4px -1px rgba(0,0,0,0.12);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 40px;
     }
     .screen-toolbar .title-area {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.45rem;
     }
     .screen-toolbar .title-area h2 {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: bold;
       color: #f8fafc;
+      white-space: nowrap;
+      margin: 0;
     }
     .screen-toolbar .badge {
       background: #0284c7;
       color: white;
-      font-size: 0.72rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
+      font-size: 0.68rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
       font-weight: bold;
+      white-space: nowrap;
     }
     .screen-toolbar .actions {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
     }
     .btn-action {
       background: #334155;
       color: white;
       border: 1px solid #475569;
-      padding: 0.4rem 0.8rem;
-      border-radius: 5px;
-      font-size: 0.82rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.76rem;
       font-weight: bold;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.25rem;
       text-decoration: none;
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
     }
     .btn-action:hover {
       background: #475569;
@@ -94,6 +100,69 @@
     .btn-action.btn-success:hover {
       background: #047857;
     }
+    .toolbar-date-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(2, 132, 199, 0.18);
+      border: 1px solid #38bdf8;
+      padding: 0.18rem 0.45rem;
+      border-radius: 4px;
+    }
+    .toolbar-date-label {
+      font-size: 0.74rem;
+      font-weight: bold;
+      color: #7dd3fc;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .toolbar-date-input {
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid #0284c7;
+      border-radius: 3px;
+      padding: 0.15rem 0.35rem;
+      font-size: 0.78rem;
+      font-weight: bold;
+      outline: none;
+      cursor: pointer;
+      color-scheme: dark;
+    }
+    .btn-date-quick {
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 0.15rem 0.4rem;
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-date-quick:hover {
+      background: #0369a1;
+    }
+    .day-header-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 1px 0;
+    }
+    .header-day-dow {
+      font-size: 9px;
+      line-height: 1;
+      font-weight: bold;
+      color: #64748b;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin-top: 1px;
+    }
+    .header-day-dow.sat { color: #0284c7; }
+    .header-day-dow.sun { color: #dc2626; }
 
     /* 用紙コンテナ (A4横サイズを忠実に模倣) */
     .paper-container {
@@ -1284,53 +1353,57 @@
 </head>
 <body>
 
-  <!-- 上部操作ツールバー (画面操作専用・印刷時は非表示) -->
+  <!-- 上部操作ツールバー (スリムリボン・印刷時は非表示) -->
   <div class="screen-toolbar no-print">
     <div class="title-area">
-      <span style="font-size: 1.3rem;">💉</span>
-      <div>
-        <h2>注射指示箋 入力画面（原本用紙レイアウト再現 案）</h2>
-        <div style="font-size: 0.75rem; color: #94a3b8;">
-          だて病院 様式(2026.5 1.0)忠実再現 / 処方・日付・経路・指示実施サインを直接入力可能
-        </div>
-      </div>
-      <span class="badge">A4横様式案</span>
-    </div>
-    <div class="actions">
-      <!-- 戻るボタン: オーダリング画面へ戻る（既存タブへ移行） -->
-      <a href="http://<%= serverHostname %>:<%= port %>/?orderType=IV&patientId=<%= encodeURIComponent(selectedPatient.id) %>" target="app_ordering_sender" onclick="return returnToOrdering(this.href);" class="btn-action">
-        <span>◀</span> <span>オーダリング画面へ戻る</span>
+      <a href="http://<%= serverHostname %>:<%= port %>/?orderType=IV&patientId=<%= encodeURIComponent(selectedPatient.id) %>" target="app_ordering_sender" onclick="return returnToOrdering(this.href);" class="btn-action" title="オーダリング画面へ戻る">
+        <span>◀</span> <span>戻る</span>
       </a>
-      <!-- 薬品検索モーダルを開くボタン (インクリメンタル検索) -->
-      <button type="button" class="btn-action" onclick="openMedSearchModal()" style="background:#0284c7; border-color:#38bdf8;" title="薬品マスタからインクリメンタル検索して指示箋に入力">
-        <span>🔍</span> <span>薬品検索 (インクリメンタル)</span>
-      </button>
-      <!-- 採用薬一覧へ飛ぶボタン -->
-      <a href="/medicines-list?cat=注射剤" target="app_medicines_list" class="btn-action" style="background:#334155; border-color:#475569;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
-        <span>📚</span> <span>採用薬一覧 ↗</span>
-      </a>
-      <!-- 対象患者バッジ (表示のみ / 選択不可) -->
-      <div style="background:#0f172a; color:#fef08a; border:1px solid #334155; padding:0.3rem 0.65rem; border-radius:4px; font-size:0.8rem; display:flex; align-items:center; gap:0.4rem; white-space:nowrap;" title="対象患者（カルテ引き継ぎ・表示専用）">
-        <span style="color:#94a3b8; font-size:0.75rem;">👤 対象患者:</span>
+      <h2>💉 注射指示箋</h2>
+      <span class="badge">A4横様式</span>
+      
+      <!-- 対象患者バッジ (コンパクト) -->
+      <div style="background:#0f172a; color:#fef08a; border:1px solid #334155; padding:0.18rem 0.5rem; border-radius:4px; font-size:0.75rem; display:flex; align-items:center; gap:0.35rem; white-space:nowrap; margin-left:0.2rem;" title="対象患者（カルテ引き継ぎ）">
+        <span style="color:#94a3b8; font-size:0.7rem;">👤</span>
         <strong style="color:white;">[<%= selectedPatient.id %>] <%= selectedPatient.name %> 様</strong>
-        <span style="font-size:0.75rem; color:#7dd3fc;">(<%= selectedPatient.ward || 'しおかぜ' %>)</span>
+        <span style="font-size:0.7rem; color:#7dd3fc;">(<%= selectedPatient.ward || 'しおかぜ' %>)</span>
       </div>
       <input type="hidden" id="quickPatientSelect" value="<%= selectedPatient.id %>">
+    </div>
+
+    <!-- 📅 指示開始日セレクター (リボン中央に配置) -->
+    <div class="toolbar-date-group">
+      <span class="toolbar-date-label">📅 開始日:</span>
+      <input type="date" id="sheetStartDate" class="toolbar-date-input" value="<%= typeof initialStartDate !== 'undefined' ? initialStartDate : '' %>" onchange="onStartDateChange(this.value)">
+      <button type="button" onclick="setQuickStartDate(0)" class="btn-date-quick" title="今日に設定">今日</button>
+      <button type="button" onclick="setQuickStartDate(1)" class="btn-date-quick" title="明日に設定">明日</button>
+    </div>
+
+    <!-- 右側アクションボタン群 -->
+    <div class="actions">
+      <!-- 薬品検索モーダルを開くボタン -->
+      <button type="button" class="btn-action" onclick="openMedSearchModal()" style="background:#0284c7; border-color:#38bdf8;" title="薬品マスタからインクリメンタル検索して指示箋に入力">
+        <span>🔍</span> <span>薬品検索</span>
+      </button>
+      <!-- 採用薬一覧へ飛ぶボタン -->
+      <a href="/medicines-list?cat=注射剤" target="app_medicines_list" class="btn-action" style="background:#334155; border-color:#475569;" title="検索機能付き採用薬一覧を開く">
+        <span>📚</span> <span>採用薬</span>
+      </a>
       <!-- 保存ボタン -->
-      <button type="button" class="btn-action btn-success" onclick="saveSheetData()">
-        <span>💾</span> <span>指示内容を保存</span>
+      <button type="button" class="btn-action btn-success" onclick="saveSheetData()" title="ブラウザに一時保存">
+        <span>💾</span> <span>保存</span>
       </button>
       <!-- 送信ボタン: 受信部門(Port 5000) & 電子カルテへ反映 -->
-      <button type="button" class="btn-action btn-primary" onclick="submitToOrderingAndCarte()">
-        <span>🚀</span> <span>オーダー確定送信</span>
+      <button type="button" class="btn-action btn-primary" onclick="submitToOrderingAndCarte()" style="box-shadow:0 1px 3px rgba(2,132,199,0.3);" title="部門モニターおよび電子カルテへオーダー送信">
+        <span>🚀</span> <span>確定送信</span>
       </button>
       <!-- A4指示箋印刷ボタン -->
-      <button type="button" class="btn-action" onclick="triggerPrintSheet()" style="background:#0284c7; border-color:#38bdf8; font-size:0.85rem;" title="原本様式のままA4横1枚で印刷します">
-        <span>🖨️</span> <span>A4指示箋印刷</span>
+      <button type="button" class="btn-action" onclick="triggerPrintSheet()" style="background:#475569; border-color:#64748b;" title="原本様式のままA4横1枚で印刷します">
+        <span>🖨️</span> <span>印刷</span>
       </button>
       <!-- クリアボタン -->
-      <button type="button" class="btn-action" onclick="clearSheetForm()" style="background:#ef4444; border-color:#dc2626;">
-        <span>🧹</span> <span>クリア</span>
+      <button type="button" class="btn-action" onclick="clearSheetForm()" style="background:#ef4444; border-color:#dc2626;" title="入力内容をクリア">
+        <span>🧹</span>
       </button>
     </div>
   </div>
@@ -1348,14 +1421,20 @@
 
     <!-- ヘッダー部 -->
     <div class="inj-header">
-      <!-- 左側: 注射指示 & 年月 -->
+      <!-- 左側: 注射指示 & 年月 & 開始日 -->
       <div class="inj-title-area">
-        <h1 class="inj-main-title">注射指示</h1>
-        <div class="inj-year-month-area">
-          <input type="text" id="sheetYear" value="<%= new Date().getFullYear() %>" style="width: 50px;">
-          <span>年</span>
-          <input type="text" id="sheetMonth" value="<%= new Date().getMonth() + 1 %>" style="width: 32px;">
-          <span>月</span>
+        <div style="display:flex; align-items:baseline; gap:12px;">
+          <h1 class="inj-main-title">注射指示</h1>
+          <div class="inj-year-month-area" style="margin-left:0;">
+            <input type="text" id="sheetYear" value="<%= new Date().getFullYear() %>" style="width: 48px;" onchange="syncDateFromYearMonth()">
+            <span>年</span>
+            <input type="text" id="sheetMonth" value="<%= new Date().getMonth() + 1 %>" style="width: 28px;" onchange="syncDateFromYearMonth()">
+            <span>月</span>
+          </div>
+          <!-- 用紙内にも開始日の視覚的案内 -->
+          <div class="no-print" style="font-size:12px; color:#0369a1; font-weight:bold; display:flex; align-items:center; gap:4px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <span>(開始: <span id="labelStartDate"></span> 〜 15日間)</span>
+          </div>
         </div>
       </div>
 
@@ -1428,8 +1507,11 @@
           <th class="col-date-title">日付</th>
           <!-- 15日分カレンダーヘッダー -->
           <% for(let d = 1; d <= 15; d++) { %>
-            <th class="col-day-cell <%= d === 1 ? 'border-thick-left' : '' %>">
-              <input type="text" class="header-day-input" id="headerDay_<%= d %>" value="<%= d %>">
+            <th class="col-day-cell <%= d === 1 ? 'border-thick-left' : '' %>" id="th_day_<%= d %>">
+              <div class="day-header-wrapper">
+                <input type="text" class="header-day-input" id="headerDay_<%= d %>" value="<%= d %>" title="クリックで日付を直接編集可能">
+                <span class="header-day-dow no-print" id="headerDow_<%= d %>"></span>
+              </div>
             </th>
           <% } %>
         </tr>
@@ -2881,6 +2963,7 @@
     function collectSheetData() {
       const year = document.getElementById('sheetYear')?.value || '';
       const month = document.getElementById('sheetMonth')?.value || '';
+      const startDate = document.getElementById('sheetStartDate')?.value || '';
       const patientId = document.getElementById('metaPatientId')?.value || '';
       const patientName = document.getElementById('metaPatientName')?.value || '';
       const ward = document.getElementById('metaWard')?.value || '';
@@ -2899,13 +2982,22 @@
             medicine: rx.split('\n')[0],
             dosage: rx.split('\n')[1] || '',
             route: route,
+            startDate: startDate,
             remarks: rx.split('\n').slice(2).join(' ')
           });
         }
       }
 
+      // 15日目の終了日を計算
+      let endDate = startDate;
+      if (startDate) {
+        const endD = new Date(startDate);
+        endD.setDate(endD.getDate() + 14);
+        endDate = endD.toISOString().split('T')[0];
+      }
+
       return {
-        year, month, patientId, patientName, ward, room, age, gender, doctorName, medicines
+        year, month, startDate, endDate, patientId, patientName, ward, room, age, gender, doctorName, medicines
       };
     }
 
@@ -2914,7 +3006,7 @@
       const data = collectSheetData();
       try {
         localStorage.setItem(`injection_sheet_${data.patientId || 'common'}`, JSON.stringify(data));
-        setLastAction(`指示箋データを一時保存 (患者: ${data.patientName || data.patientId})`);
+        setLastAction(`指示箋データを一時保存 (開始日: ${data.startDate || '未指定'} / 患者: ${data.patientName || data.patientId})`);
         setLatestNotice('指示箋の入力内容をローカルに一時保存しました', 'success');
         alert('✅ 注射指示箋の入力内容を一時保存しました');
       } catch (e) {
@@ -2932,9 +3024,9 @@
         return;
       }
 
-      setLastAction(`オーダー送信を開始 (患者: ${data.patientName || data.patientId} / ${data.medicines.length}品目)`);
+      setLastAction(`オーダー送信を開始 (開始日: ${data.startDate} / 患者: ${data.patientName || data.patientId} / ${data.medicines.length}品目)`);
 
-      if (!confirm(`患者 [${data.patientId}] ${data.patientName} 様の注射指示(${data.medicines.length}件) を確定し、部門モニターおよび電子カルテへ送信しますか？`)) {
+      if (!confirm(`患者 [${data.patientId}] ${data.patientName} 様の注射指示(${data.medicines.length}件 / 開始日: ${data.startDate || '今日'}) を確定し、部門モニターおよび電子カルテへ送信しますか？`)) {
         setLastAction('オーダー送信の確認でキャンセルを選択');
         return;
       }
@@ -2942,6 +3034,7 @@
       const orderPayload = {
         orderType: 'IV',
         priority: 'ROUTINE',
+        orderDate: data.startDate || new Date().toISOString().split('T')[0],
         patient: {
           id: data.patientId,
           name: data.patientName,
@@ -2958,8 +3051,11 @@
           route: data.medicines[0].route || 'DIV',
           medicine: data.medicines.map(m => m.medicine).join(' + '),
           medicines: data.medicines,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          scheduleDays: `${data.startDate} 〜 ${data.endDate} (15日間)`,
           pharmacistChecked: true,
-          remarks: '原本様式入力画面より一括送信'
+          remarks: `注射指示箋(原本様式)より一括送信 [開始日: ${data.startDate || '即時'}]`
         }
       };
 
@@ -2975,7 +3071,7 @@
         if (res.ok && resData.success) {
           setLastAction(`オーダー送信完了 [${resData.order.orderId}]`);
           setLatestNotice(`オーダー送信完了！ [${resData.order.orderId}] 部門モニターおよび電子カルテ記事に反映されました`, 'success');
-          alert(`✅ オーダー送信完了！ [${resData.order.orderId}]\n部門モニターおよび電子カルテ記事に反映されました。`);
+          alert(`✅ オーダー送信完了！ [${resData.order.orderId}]\n開始日: ${data.startDate || '今日'}\n部門モニターおよび電子カルテ記事に反映されました。`);
           window.location.href = `http://${window.location.hostname || 'localhost'}:4000/?orderType=IV&patientId=${encodeURIComponent(data.patientId)}`;
         } else {
           setLatestNotice('送信失敗: ' + (resData.error || '不明なエラー'), 'error');
@@ -2986,6 +3082,143 @@
         alert('❌ 通信エラー: ' + err.message);
       }
     }
+
+    // =========================================================
+    // 📅 指示開始日 & 15日間カレンダー連動システム
+    // =========================================================
+    function onStartDateChange(dateVal) {
+      if (!dateVal) return;
+      updateGridDates(dateVal);
+      setLastAction(`指示開始日を変更: ${dateVal}`);
+      setLatestNotice(`カレンダーを ${dateVal} 開始に更新しました`, 'info');
+    }
+
+    function setQuickStartDate(offsetDays = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const input = document.getElementById('sheetStartDate');
+      if (input) input.value = dateStr;
+      updateGridDates(dateStr);
+      setLastAction(`指示開始日を${offsetDays === 0 ? '今日' : '明日'} (${dateStr}) に設定`);
+    }
+
+    function syncDateFromYearMonth() {
+      const y = parseInt(document.getElementById('sheetYear')?.value, 10);
+      const m = parseInt(document.getElementById('sheetMonth')?.value, 10);
+      const curStart = document.getElementById('sheetStartDate')?.value;
+      let day = 1;
+      if (curStart) {
+        const parts = curStart.split('-');
+        if (parts.length === 3) day = parseInt(parts[2], 10);
+      }
+      if (y && m) {
+        const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const input = document.getElementById('sheetStartDate');
+        if (input) input.value = dateStr;
+        updateGridDates(dateStr);
+      }
+    }
+
+    function updateGridDates(startDateStr) {
+      if (!startDateStr) return;
+      const parts = startDateStr.split('-');
+      if (parts.length !== 3) return;
+      const startYear = parseInt(parts[0], 10);
+      const startMonth = parseInt(parts[1], 10);
+      const startDay = parseInt(parts[2], 10);
+
+      const start = new Date(startYear, startMonth - 1, startDay);
+      if (isNaN(start.getTime())) return;
+
+      // 用紙ヘッダーの年月を同期
+      const yInput = document.getElementById('sheetYear');
+      const mInput = document.getElementById('sheetMonth');
+      if (yInput) yInput.value = startYear;
+      if (mInput) mInput.value = startMonth;
+
+      // 用紙内の開始日案内テキストを同期
+      const label = document.getElementById('labelStartDate');
+      if (label) label.textContent = `${startYear}/${startMonth}/${startDay}`;
+
+      const dows = ['日', '月', '火', '水', '木', '金', '土'];
+
+      // 15日分の各列ヘッダーを計算して更新
+      for (let i = 1; i <= 15; i++) {
+        const cur = new Date(startYear, startMonth - 1, startDay + (i - 1));
+        const curY = cur.getFullYear();
+        const curM = cur.getMonth() + 1;
+        const curD = cur.getDate();
+        const dow = cur.getDay(); // 0=日, 6=土
+        const dowChar = dows[dow];
+
+        const dayInput = document.getElementById(`headerDay_${i}`);
+        if (dayInput) {
+          dayInput.value = curD;
+          dayInput.title = `${curY}/${curM}/${curD} (${dowChar})`;
+          // 月替わりの日を視覚的に強調
+          if (curM !== startMonth && curD === 1) {
+            dayInput.style.color = '#7c3aed';
+            dayInput.style.fontWeight = '900';
+          } else {
+            dayInput.style.color = '';
+            dayInput.style.fontWeight = '';
+          }
+        }
+
+        const dowSpan = document.getElementById(`headerDow_${i}`);
+        if (dowSpan) {
+          dowSpan.textContent = dowChar;
+          dowSpan.className = 'header-day-dow no-print' + (dow === 6 ? ' sat' : dow === 0 ? ' sun' : '');
+        }
+
+        // 処方グリッド各行の対応セルにも日付をデータ属性として紐付け
+        for (let r = 1; r <= 10; r++) {
+          const topCell = document.getElementById(`cell_top_${r}_${i}`);
+          const btmCell = document.getElementById(`cell_bottom_${r}_${i}`);
+          const dateIso = `${curY}-${String(curM).padStart(2, '0')}-${String(curD).padStart(2, '0')}`;
+          if (topCell) topCell.setAttribute('data-date', dateIso);
+          if (btmCell) btmCell.setAttribute('data-date', dateIso);
+        }
+      }
+
+      // ローカルストレージに開始日を一時記録
+      try {
+        const pId = document.getElementById('metaPatientId')?.value || 'common';
+        localStorage.setItem(`injection_sheet_start_date_${pId}`, startDateStr);
+      } catch (_) {}
+    }
+
+    // 初期化処理: 開始日付のセットアップ
+    (function initInjectionSheetDates() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      let initialDate = `${yyyy}-${mm}-${dd}`;
+
+      // URLパラメータの startDate や localStorage からの復元チェック
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const qDate = urlParams.get('startDate') || urlParams.get('orderDate');
+        const pId = document.getElementById('metaPatientId')?.value || 'common';
+        const savedDate = localStorage.getItem(`injection_sheet_start_date_${pId}`);
+        if (qDate && /^\d{4}-\d{2}-\d{2}$/.test(qDate)) {
+          initialDate = qDate;
+        } else if (savedDate && /^\d{4}-\d{2}-\d{2}$/.test(savedDate)) {
+          initialDate = savedDate;
+        }
+      } catch (_) {}
+
+      const dateInput = document.getElementById('sheetStartDate');
+      if (dateInput) {
+        dateInput.value = initialDate;
+      }
+      updateGridDates(initialDate);
+    })();
   </script>
 </body>
 </html>

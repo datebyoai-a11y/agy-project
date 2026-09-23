@@ -2189,34 +2189,19 @@
       <!-- ペイン 2: 💉 注射指示 (Photo 4 準拠: 交雄会 だて病院 注射指示) -->
       <!-- ========================================================= -->
       <div id="pane-IV" class="order-pane" style="display:none;">
-        <div class="photo-form-banner banner-iv">
-          <div class="photo-form-title">
+        <div class="photo-form-banner banner-iv" style="margin-bottom:0.5rem; padding:0.4rem 0.75rem; display:flex; justify-content:space-between; align-items:center;">
+          <div class="photo-form-title" style="font-size:0.95rem; margin:0; display:flex; align-items:center; gap:0.5rem;">
             <span>💉 注射指示書 (医療法人 交雄会 だて病院)</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-            <button type="button" class="btn-inj-print" onclick="openInjectionSheetWithCurrentPatient()" style="padding:0.32rem 0.75rem; border-radius:4px; font-weight:bold; font-size:0.8rem; cursor:pointer; background:#0284c7; border:1px solid #0284c7; color:white; display:inline-flex; align-items:center; gap:0.3rem; box-shadow:0 1px 3px rgba(2,132,199,0.3);" title="インクリメンタル薬品検索・15日スケジュール指示対応の注射指示箋画面を開きます">
-              <span>💉</span> <span>注射指示箋 (インクリメンタル検索) を開く ↗</span>
-            </button>
-            <a href="/medicines-list?cat=注射剤" target="app_medicines_list" style="padding:0.26rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.74rem; text-decoration:none; background:white; border:1px solid #7dd3fc; color:#0284c7; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く">
-              <span>📚</span> <span>採用薬一覧 ↗</span>
-            </a>
             <span class="photo-form-badge">用紙10行様式準拠 (DIV/iv/im/is/IVH)</span>
           </div>
-        </div>
-
-        <!-- 💡 注射指示箋（インクリメンタル検索・15日指示）推奨バナー -->
-        <div style="margin-bottom:0.75rem; background:#eff6ff; border:1.5px solid #0284c7; border-radius:6px; padding:0.65rem 0.85rem; display:flex; justify-content:space-between; align-items:center; gap:0.8rem; box-shadow:0 1px 3px rgba(2,132,199,0.12);">
-          <div>
-            <div style="font-weight:bold; font-size:0.85rem; color:#0369a1; display:flex; align-items:center; gap:0.35rem;">
-              <span>💉</span> <span>病棟用 注射指示箋（インクリメンタル薬品検索 & 15日スケジュール指示完備）</span>
-            </div>
-            <div style="font-size:0.75rem; color:#475569; margin-top:0.2rem; line-height:1.4;">
-              薬品名のひらがな・英数字入力によるリアルタイム候補表示、15日間の投与スケジュール、印刷対応の正規指示箋画面です。
-            </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <button type="button" class="btn-inj-print" onclick="openInjectionSheetWithCurrentPatient()" style="padding:0.28rem 0.7rem; border-radius:4px; font-weight:bold; font-size:0.78rem; cursor:pointer; background:#0284c7; border:1px solid #0284c7; color:white; display:inline-flex; align-items:center; gap:0.3rem; box-shadow:0 1px 3px rgba(2,132,199,0.3);" title="インクリメンタル薬品検索・15日スケジュール指示対応の注射指示箋画面を開きます">
+              <span>💉</span> <span>注射指示箋 (原本15日様式) を開く ↗</span>
+            </button>
+            <a href="/medicines-list?cat=注射剤" target="app_medicines_list" style="padding:0.25rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.74rem; text-decoration:none; background:white; border:1px solid #7dd3fc; color:#0284c7; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く">
+              <span>📚</span> <span>採用薬一覧 ↗</span>
+            </a>
           </div>
-          <button type="button" onclick="openInjectionSheetWithCurrentPatient()" style="background:#0284c7; color:white; border:none; padding:0.4rem 0.85rem; border-radius:5px; font-weight:bold; font-size:0.8rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(2,132,199,0.3); white-space:nowrap;">
-            <span>💉</span> <span>注射指示箋を開く ↗</span>
-          </button>
         </div>
 
         <!-- 頻度補完用データリスト -->
@@ -6191,10 +6176,12 @@
       const currentPId = document.getElementById('patientIdInput')?.value || (SamplePatients[0] && SamplePatients[0].id) || '';
       const currentPName = document.getElementById('patientNameInput')?.value || '';
       const currentDept = document.getElementById('patientWardInput')?.value || '';
+      const currentStartDate = document.getElementById('ivCommonStartDate')?.value || '';
       let query = '';
       if (currentPId) query += `patientId=${encodeURIComponent(currentPId)}`;
       if (currentPName) query += `${query ? '&' : ''}patientName=${encodeURIComponent(currentPName)}`;
       if (currentDept) query += `${query ? '&' : ''}patientDept=${encodeURIComponent(currentDept)}`;
+      if (currentStartDate) query += `${query ? '&' : ''}startDate=${encodeURIComponent(currentStartDate)}`;
       const url = `/injection-sheet-form${query ? `?${query}` : ''}`;
       window.open(url, 'app_injection_sheet');
       return false;
