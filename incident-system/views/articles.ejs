@@ -269,10 +269,10 @@
     }
 
     .carte-pane-right {
-      width: 350px;
-      min-width: 200px;
-      max-width: 850px;
-      flex: 0 0 350px;
+      width: 480px;
+      min-width: 280px;
+      max-width: 950px;
+      flex: 0 0 480px;
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -280,6 +280,7 @@
       border: 1px solid #cbd5e1;
       border-radius: 4px;
       overflow: hidden;
+      position: relative;
     }
 
     /* ↔️ 列境界リサイザー (スプリッター) */
@@ -1752,14 +1753,14 @@
                   <span id="carteAuthorIndicator" style="font-size:0.75rem; background:<%= hasOverride ? '#f0fdf4' : '#e0f2fe' %>; color:<%= hasOverride ? '#166534' : '#0369a1' %>; padding:0.12rem 0.5rem; border-radius:3px; font-weight:bold; border:1px solid <%= hasOverride ? '#86efac' : '#bae6fd' %>;">
                     🩺 記録者: <%= user %> 様 (<%= currentUserDept %>)<% if (hasOverride && origUserName) { %> <span style="color:#2563eb; font-weight:normal; margin-left:0.3rem;">[代行入力: <%= origUserName %> 様]</span><% } %>
                   </span>
-                  <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:0.2rem;">※右メニューのオーダーは下に仮置きされ、カルテ保存時に一緒に確定されます</span>
+                  <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:0.2rem;">※右側のオーダリング画面から処方・注射・放射線・検査指示を直接発行できます</span>
                 </div>
                 <div style="display:flex; gap:0.3rem;">
                   <button type="button" class="carte-block-action-btn" onclick="insertSoapTemplate()" title="SOAPフォーマットを挿入">＋ SOAP雛形</button>
                   <button type="button" class="carte-block-action-btn" onclick="clearSoapContent()" style="color:#ef4444;" title="入力をクリア">クリア</button>
                 </div>
               </div>
-              <textarea id="articleContentInput" name="content" oninput="onCarteContentInput()" class="form-control" style="width:100%; min-height:280px; flex:1; font-size:0.9rem; line-height:1.65; padding:0.75rem; font-family:inherit; border:1px solid #94a3b8; border-radius:4px; box-sizing:border-box; background:#fafafa;" placeholder="【診療記録 (SOAP)】&#10;&#10;[S] 主訴・自覚症状:&#10;&#10;[O] 客観的所見・診察所見:&#10;&#10;[A] 診断・病態評価:&#10;&#10;[P] 治療方針・総合計画:&#10;&#10;※右側のメニューで選択した項目（処方・放射線・点滴・処置・バイタル等）は、この下部に仮置きされ、カルテ保存時に一括確定・保存されます。" required></textarea>
+              <textarea id="articleContentInput" name="content" oninput="onCarteContentInput()" class="form-control" style="width:100%; min-height:280px; flex:1; font-size:0.9rem; line-height:1.65; padding:0.75rem; font-family:inherit; border:1px solid #94a3b8; border-radius:4px; box-sizing:border-box; background:#fafafa;" placeholder="【診療記録 (SOAP)】&#10;&#10;[S] 主訴・自覚症状:&#10;&#10;[O] 客観的所見・診察所見:&#10;&#10;[A] 診断・病態評価:&#10;&#10;[P] 治療方針・総合計画:&#10;&#10;※右側のオーダリング画面で処方・注射・放射線・検査等のオーダーを発行できます。" required></textarea>
             </div>
 
             <!-- 🌟 2. 仮置きオーダー一覧領域 (0件時は非表示、右ペインからオーダー追加時のみ表示) -->
@@ -1808,1254 +1809,30 @@
       <!-- ↔️ 第2リサイザー (中央ペインと右ペインの境界) -->
       <div class="carte-resizer" id="resizerRight" title="ドラッグして幅を変更 (ダブルクリックで初期幅に戻す)"></div>
 
-      <!-- 🟢 右ペイン: 診療行為・処置・バイタル・処方を選択できるパレットエリア -->
-      <div class="carte-pane-right">
-        <!-- 🎀 上部2段リボンバー (上段: 部署選択 / 下段: 部署別メニュー) -->
-        <div class="ribbon-container">
-          <!-- 上段: 部署選択リボン (初期値は入力者の部署) -->
-          <div class="ribbon-tier1" id="ribbonTier1">
-            <span class="ribbon-tier1-title">🏢 部署:</span>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_doctor" onclick="selectRibbonDept('doctor')">
-              <span>👨‍⚕️ 医師</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_nurse" onclick="selectRibbonDept('nurse')">
-              <span>👩‍⚕️ 看護部</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_pharmacy" onclick="selectRibbonDept('pharmacy')">
-              <span>💊 薬剤部</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_radiology" onclick="selectRibbonDept('radiology')">
-              <span>🩻 放射線科</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_rehab" onclick="selectRibbonDept('rehab')">
-              <span>🏃 リハビリ科</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_care" onclick="selectRibbonDept('care')">
-              <span>🤝 介護</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_nutrition" onclick="selectRibbonDept('nutrition')">
-              <span>🍱 栄養科</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_safety" onclick="selectRibbonDept('safety')">
-              <span>🛡️ 医療安全</span>
-            </button>
-            <button type="button" class="ribbon-dept-btn" id="deptBtn_admin" onclick="selectRibbonDept('admin')">
-              <span>🏢 医事・事務</span>
-            </button>
+      <!-- 🟢 右ペイン: オーダリング送信画面 (Port 4000 連携) -->
+      <div class="carte-pane-right" id="cartePaneRight">
+        <!-- オーダリングヘッダーツールバー -->
+        <div style="background:#0f172a; color:white; padding:0.35rem 0.65rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; flex-shrink:0;">
+          <div style="display:flex; align-items:center; gap:0.4rem; font-weight:bold; font-size:0.83rem;">
+            <span style="font-size:1rem;">🚀</span>
+            <span style="color:#e0f2fe;">オーダリング指示発行システム</span>
+            <span style="background:#0284c7; color:white; font-size:0.68rem; padding:0.1rem 0.35rem; border-radius:3px; font-weight:bold;">Port 4000</span>
           </div>
-
-          <!-- 下段: 部署ごとのメニューリボン (上段で選んだ部署に応じてグループが切り替わる) -->
-          <div class="ribbon-tier2" id="ribbonTier2">
-            <!-- 👨‍⚕️ 医師メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_doctor">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('prescription', this)">💊 処方・点滴指示</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('orders', this)">🔬 検査指示</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('medicalAct', this)">🩺 診療行為</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('treatment', this)">🩹 処置・小手術</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('vital', this)">📈 バイタル</button>
-            </div>
-
-            <!-- 👩‍⚕️ 看護部メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_nurse">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('vital', this)">📈 バイタル測定</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('nurse_care', this)">🩹 看護処置・ケア</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('nurse_iv', this)">💉 点滴実施・ライン</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('nurse_obs', this)">📋 看護観察・評価</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('nurse_alert', this)">🔔 医師への連絡・報告</button>
-            </div>
-
-            <!-- 💊 薬剤部メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_pharmacy">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('pharm_audit', this)">💊 処方監査・鑑査</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('pharm_guidance', this)">🔍 服薬指導・管理</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('pharm_inquiry', this)">⚠️ 疑義照会・アレルギー</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('pharm_tdm', this)">📊 TDM・血中濃度</button>
-            </div>
-
-            <!-- 🩻 放射線科メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_radiology">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('rad_exec', this)">🩻 撮影実施記録</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('rad_portable', this)">🛏️ ポータブル撮影</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('rad_safety', this)">⚠️ 造影剤・安全確認</button>
-            </div>
-
-            <!-- 🏃 リハビリ科メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_rehab">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('rehab_pt', this)">🚶 運動療法・歩行</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('rehab_ot', this)">🤲 ADL・作業療法</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('rehab_st', this)">🗣️ 摂食嚥下・言語</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('rehab_eval', this)">📈 FIM・認知評価</button>
-            </div>
-
-            <!-- 🤝 介護メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_care">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('care_bath', this)">🛁 入浴・清拭</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('care_meal', this)">🍽️ 食事介助・水分</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('care_excretion', this)">🚽 排泄介助・おむつ</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('care_position', this)">🛏️ 体位変換・移乗</button>
-            </div>
-
-            <!-- 🍱 栄養科メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_nutrition">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('nutr_meal', this)">🍱 食形態・献立</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('nutr_assess', this)">📊 栄養アセスメント</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('nutr_guidance', this)">💬 栄養食事指導</button>
-            </div>
-
-            <!-- 🛡️ 医療安全メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_safety">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('safety_risk', this)">🛡️ リスク点検・予防</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('safety_incident', this)">⚠️ インシデント連携</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('safety_audit', this)">🔒 PGP真正性監査</button>
-            </div>
-
-            <!-- 🏢 医事・事務メニュー -->
-            <div class="ribbon-menu-group" id="menuGroup_admin">
-              <button type="button" class="ribbon-menu-btn active" onclick="selectRibbonMenu('admin_insurance', this)">🏷️ 保険・公費確認</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('admin_certs', this)">📑 診断書・証明書</button>
-              <button type="button" class="ribbon-menu-btn" onclick="selectRibbonMenu('admin_billing', this)">💰 算定チェック</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 💡 仮置きオーダーアクション設定バー -->
-        <div style="padding:0.3rem 0.6rem; background:#ecfdf5; border-bottom:1px solid #a7f3d0; display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
-          <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-            <span style="color:#065f46; font-weight:bold; display:flex; align-items:center; gap:0.25rem;">
-              <span>✨</span> 項目を選んで仮置き
-            </span>
-            <span id="paletteTargetPersonBadge" style="background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; font-size:0.72rem; font-weight:bold; padding:0.1rem 0.45rem; border-radius:3px;" title="現在この患者に対するオーダーを作成・仮置き中">
-              🎯 対象患者: <strong id="paletteTargetPersonText"><%= activeTarget ? `[${activeTarget.customId}] ${activeTarget.name} 様` : '未選択' %></strong>
-            </span>
-            <a id="btnOrderingPalette" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.15rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center;" title="オーダリングシステム送信画面 (Port 4000) を開く">
-              🚀 オーダリング画面 (Port 4000)
+          <div style="display:flex; align-items:center; gap:0.35rem;">
+            <button type="button" onclick="reloadOrderingFrame()" title="オーダリング画面を再読み込み" style="background:rgba(255,255,255,0.15); color:white; border:none; padding:0.18rem 0.45rem; border-radius:3px; font-size:0.75rem; cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+              🔄 再読込
+            </button>
+            <a id="btnOrderingOpenExternal" href="http://localhost:4000/" target="_blank" onclick="return handleOrderingClick(event, this);" title="オーダリング画面を別ウィンドウで開く" style="background:#0284c7; color:white; text-decoration:none; padding:0.18rem 0.5rem; border-radius:3px; font-size:0.75rem; font-weight:bold; display:flex; align-items:center; gap:0.2rem;" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">
+              <span>別窓 ↗</span>
             </a>
           </div>
-          <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:#166534; font-size:0.72rem; user-select:none;" title="チェック時は右メニュークリックで即座に中央の仮置きリストに追加されます">
-            <input type="checkbox" id="directPostToggle" style="cursor:pointer;" checked>
-            <span>⚡ ワンクリック仮置き</span>
-          </label>
-        </div>
-        <div class="palette-tab-content active" id="tabContentPrescription">
-          <!-- 検索ミニボックス -->
-          <div style="padding:0.25rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; gap:0.25rem;">
-            <input type="text" id="paletteSearchInput" placeholder="処方薬・点滴輸液を検索..." style="flex:1; padding:0.25rem 0.4rem; font-size:0.76rem; border:1px solid #cbd5e1; border-radius:3px;" oninput="filterPaletteItems(this.value)">
-            <button type="button" onclick="openCustomMedModal()" style="background:#0284c7; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋任意</button>
-          </div>
-          <!-- 処方・点滴サブカテゴリタブ -->
-          <div style="display:flex; gap:0.2rem; padding:0.2rem 0.5rem; background:#f1f5f9; border-bottom:1px solid #e2e8f0; overflow-x:auto;">
-            <button type="button" class="btn-subtab" onclick="filterMedSubCategory('ALL', this)" style="padding:0.15rem 0.4rem; font-size:0.7rem; border-radius:3px; border:1px solid #0284c7; background:#0284c7; color:white; cursor:pointer; font-weight:bold;">すべて</button>
-            <button type="button" class="btn-subtab" onclick="filterMedSubCategory('点滴', this)" style="padding:0.15rem 0.4rem; font-size:0.7rem; border-radius:3px; border:1px solid #059669; background:#ffffff; color:#059669; cursor:pointer; font-weight:bold;">💉 点滴・輸液</button>
-            <button type="button" class="btn-subtab" onclick="filterMedSubCategory('内科', this)" style="padding:0.15rem 0.4rem; font-size:0.7rem; border-radius:3px; border:1px solid #cbd5e1; background:#ffffff; color:#334155; cursor:pointer;">内科・心臓</button>
-            <button type="button" class="btn-subtab" onclick="filterMedSubCategory('感冒', this)" style="padding:0.15rem 0.4rem; font-size:0.7rem; border-radius:3px; border:1px solid #cbd5e1; background:#ffffff; color:#334155; cursor:pointer;">感冒・呼吸器</button>
-            <button type="button" class="btn-subtab" onclick="filterMedSubCategory('消化器', this)" style="padding:0.15rem 0.4rem; font-size:0.7rem; border-radius:3px; border:1px solid #cbd5e1; background:#ffffff; color:#334155; cursor:pointer;">消化器・便秘</button>
-            <button type="button" class="btn-subtab" onclick="filterMedSubCategory('外用', this)" style="padding:0.15rem 0.4rem; font-size:0.7rem; border-radius:3px; border:1px solid #cbd5e1; background:#ffffff; color:#334155; cursor:pointer;">外用・吸入</button>
-          </div>
-          <!-- よく使う医薬品・点滴アイテム一覧 -->
-          <div style="flex:1; overflow-y:auto; background:#ffffff;" id="paletteItemList">
-            <!-- 💉 点滴・輸液指示アイテム -->
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('生理食塩液 500ml', '80ml/h', '点滴静注 (末梢)')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">点滴:</span><strong>生理食塩液 500ml</strong> <span style="font-size:0.72rem; color:#64748b;">(80ml/h 末梢)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('ヴィーンF輸液 500ml', '100ml/h', '点滴静注 (末梢)')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">点滴:</span><strong>ヴィーンF輸液 500ml</strong> <span style="font-size:0.72rem; color:#64748b;">(100ml/h)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('ソルデム3A維持輸液 500ml', '60ml/h', '点滴静注 (末梢)')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">点滴:</span><strong>ソルデム3A維持輸液 500ml</strong> <span style="font-size:0.72rem; color:#64748b;">(60ml/h)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('5%ブドウ糖注射液 250ml', '50ml/h', '点滴静注')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">点滴:</span><strong>5%ブドウ糖注射液 250ml</strong> <span style="font-size:0.72rem; color:#64748b;">(50ml/h)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('ロセフィン点滴静注用1g (生食100ml溶解)', '30分点滴', '点滴静注')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">抗菌点滴:</span><strong>ロセフィン点滴用1g</strong> <span style="font-size:0.72rem; color:#64748b;">(生食100ml)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('プリンペラン注射液10mg (生食50ml溶解)', '静脈内点滴', '点滴静注')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">制吐点滴:</span><strong>プリンペラン注10mg</strong> <span style="font-size:0.72rem; color:#64748b;">(生食50ml)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" data-subcat="点滴" onclick="applyIvOrderToForm('ラシックス注射液20mg', '静注 ワンショット', '静脈内注射')">
-              <span><span class="palette-category-label" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0;">利尿注:</span><strong>ラシックス注射液20mg</strong> <span style="font-size:0.72rem; color:#64748b;">(ワンショット)</span></span>
-              <span style="color:#059669; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'デパケンR錠200mg', '1日1錠(1回1錠) 夕食後', '30 日分')">
-              <span><span class="palette-category-label">てんかん:</span><strong>デパケンR錠200mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'タミフルカプセル75 75mg', '1日2回(1回1Cap) 朝・夕食後', '5 日分')">
-              <span><span class="palette-category-label">インフル:</span><strong>タミフルカプセル75 75mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('吸入', 'リレンザ 5mg', '1日2回(1回2ブリスター) 吸入', '5 日分')">
-              <span><span class="palette-category-label">インフル:</span><strong>リレンザ 5mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'ロペミンカプセル1mg', '1回1Cap 下痢時頓用', '10 Cap')">
-              <span><span class="palette-category-label">下痢:</span><strong>ロペミンカプセル1mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', '酸化マグネシウム錠「マグラックス錠」330mg', '1日3錠(1回1錠) 毎食後', '30 日分')">
-              <span><span class="palette-category-label">便秘:</span><strong>酸化マグネシウム錠「マグラックス錠」330mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'ラシックス錠40mg', '1日1錠 朝食後', '30 日分')">
-              <span><span class="palette-category-label">利尿:</span><strong>ラシックス錠40mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'メジコン錠15mg', '1日3錠(1回1錠) 毎食後', '14 日分')">
-              <span><span class="palette-category-label">咳:</span><strong>メジコン錠15mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('吸入', 'アドエア250ディスカス吸入用 28ブリスター', '1日2回(1回1吸入) 朝・夕', '1 包装')">
-              <span><span class="palette-category-label">喘息:</span><strong>アドエア250ディスカス吸入用 28ブリスター</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('吸入', 'シムビコートタービュヘイラー 30吸入', '1日2回(1回1吸入) 朝・夕', '1 本')">
-              <span><span class="palette-category-label">喘息:</span><strong>シムビコートタービュヘイラー 30吸入</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'テオドール錠100mg', '1日2錠(1回1錠) 朝・夕食後', '30 日分')">
-              <span><span class="palette-category-label">喘息:</span><strong>テオドール錠100mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('外用', 'ホクナリンテープ2mg', '1日1回 貼付', '30 枚')">
-              <span><span class="palette-category-label">喘息:</span><strong>ホクナリンテープ2mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'プリンペラン錠5mg', '1日3錠(1回1錠) 毎食前', '14 日分')">
-              <span><span class="palette-category-label">嘔気:</span><strong>プリンペラン錠5mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'インデラル錠10mg', '1日3錠(1回1錠) 毎食後', '30 日分')">
-              <span><span class="palette-category-label">心臓:</span><strong>インデラル錠10mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'サンリズムカプセル50mg', '1日3Cap(1回1Cap) 毎食後', '30 日分')">
-              <span><span class="palette-category-label">心臓:</span><strong>サンリズムカプセル50mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'ジゴキシン錠0.125mg', '1日1錠 朝食後', '30 日分')">
-              <span><span class="palette-category-label">心臓:</span><strong>ジゴキシン錠0.125mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'ニトロペン舌下錠0.3mg', '発作時 1回1錠 舌下', '10 錠')">
-              <span><span class="palette-category-label">心臓:</span><strong>ニトロペン舌下錠0.3mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'バイアスピリン錠100mg', '1日1錠 朝食後', '30 日分')">
-              <span><span class="palette-category-label">心臓:</span><strong>バイアスピリン錠100mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('外用', 'フランドルテープ40mg', '1日1回 貼付', '30 枚')">
-              <span><span class="palette-category-label">心臓:</span><strong>フランドルテープ40mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'プラビックス錠25mg', '1日1錠 朝食後', '30 日分')">
-              <span><span class="palette-category-label">心臓:</span><strong>プラビックス錠25mg</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'ツムラ麦門冬湯エキス顆粒（医療用）', '1日3包(1回1包) 食前', '14 日分')">
-              <span><span class="palette-category-label">感冒・咳:</span><strong>ツムラ麦門冬湯エキス顆粒（医療用）</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('内服', 'ツムラ小青竜湯エキス顆粒（医療用）', '1日3包(1回1包) 食前', '14 日分')">
-              <span><span class="palette-category-label">感冒・鼻:</span><strong>ツムラ小青竜湯エキス顆粒（医療用）</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-            <div class="palette-item" onclick="addMedToPrescription('外用', 'アズノールうがい液4%', '1日数回 含嗽', '1 本')">
-              <span><span class="palette-category-label">感冒:</span><strong>アズノールうがい液4%</strong></span>
-              <span style="color:#0284c7; font-weight:bold; font-size:0.85rem;">＋</span>
-            </div>
-          </div>
         </div>
 
-        <!-- 2. 🩺 診療行為タブコンテンツ -->
-        <div class="palette-tab-content" id="tabContentMedicalAct">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#334155;">🩺 よく使う診療行為・検査・指導料</span>
-            <button type="button" onclick="addMedicalActPrompt()" style="background:#0284c7; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意行為</button>
-          </div>
-          <div class="palette-chip-grid" id="medicalActPaletteGrid">
-            <div class="palette-chip" onclick="selectMedicalAct('初診料', '291点')">
-              <span class="chip-title">初診料</span>
-              <span class="chip-sub">291点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('再診料', '75点')">
-              <span class="chip-title">再診料</span>
-              <span class="chip-sub">75点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('外来管理加算', '52点')">
-              <span class="chip-title">外来管理加算</span>
-              <span class="chip-sub">52点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('特定疾患療養管理料', '225点')">
-              <span class="chip-title">特定疾患療養管理料</span>
-              <span class="chip-sub">225点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('明細書発行体制等加算', '1点')">
-              <span class="chip-title">明細書発行体制加算</span>
-              <span class="chip-sub">1点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('末梢血液一般検査 (CBC)', '21点')">
-              <span class="chip-title">末梢血液一般検査</span>
-              <span class="chip-sub">CBC (21点)</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('生化学的検査Ⅰ (多項目)', '103点')">
-              <span class="chip-title">生化学的検査Ⅰ</span>
-              <span class="chip-sub">肝腎機能等 (103点)</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('尿中一般物質定性半定量検査', '26点')">
-              <span class="chip-title">尿一般検査</span>
-              <span class="chip-sub">26点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('HbA1c測定検査', '49点')">
-              <span class="chip-title">HbA1c検査</span>
-              <span class="chip-sub">糖尿病管理 (49点)</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('安静時十二誘導心電図検査', '130点')">
-              <span class="chip-title">十二誘導心電図</span>
-              <span class="chip-sub">130点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('超音波検査 (腹部断層)', '530点')">
-              <span class="chip-title">腹部エコー検査</span>
-              <span class="chip-sub">530点</span>
-            </div>
-            <div class="palette-chip" onclick="selectMedicalAct('感染症迅速抗原検査 (インフル/COVID)', '300点')">
-              <span class="chip-title">迅速抗原検査</span>
-              <span class="chip-sub">インフル/コロナ</span>
-            </div>
-          </div>
+        <!-- オーダリング送信画面 iframe (リアルタイム患者連動) -->
+        <div style="flex:1; width:100%; position:relative; overflow:hidden; background:#f8fafc;">
+          <iframe id="orderingSenderFrame" src="about:blank" style="width:100%; height:100%; border:none; display:block;" title="オーダリング指示発行画面 (Port 4000)"></iframe>
         </div>
-
-        <!-- 3. 🩹 処置タブコンテンツ -->
-        <div class="palette-tab-content" id="tabContentTreatment">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#334155;">🩹 よく使う処置・ケア項目</span>
-            <button type="button" onclick="addTreatmentPrompt()" style="background:#0284c7; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意処置</button>
-          </div>
-          <div class="palette-chip-grid" id="treatmentPaletteGrid">
-            <div class="palette-chip" onclick="selectTreatment('創傷処置 (100cm2未満)', '45点')">
-              <span class="chip-title">創傷処置 (小)</span>
-              <span class="chip-sub">100cm2未満 (45点)</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('創傷処置 (100〜500cm2)', '55点')">
-              <span class="chip-title">創傷処置 (中)</span>
-              <span class="chip-sub">100〜500cm2 (55点)</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('包帯交換・ガーゼ交換', '実施')">
-              <span class="chip-title">包帯・ガーゼ交換</span>
-              <span class="chip-sub">被覆保護</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('皮膚科軟膏処置', '実施')">
-              <span class="chip-title">軟膏塗布処置</span>
-              <span class="chip-sub">外用処置</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('吸入処置 (ネブライザー)', '12点')">
-              <span class="chip-title">吸入療法</span>
-              <span class="chip-sub">ネブライザー (12点)</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('酸素吸入 (鼻腔カニューレ)', '実施')">
-              <span class="chip-title">酸素吸入</span>
-              <span class="chip-sub">カニューレ/マスク</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('口腔・気管内吸引処置', '実施')">
-              <span class="chip-title">気道内吸引</span>
-              <span class="chip-sub">喀痰吸引</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('尿道留置カテーテル挿入・管理', '実施')">
-              <span class="chip-title">導尿カテーテル</span>
-              <span class="chip-sub">留置挿入・管理</span>
-            </div>
-            <div class="palette-chip" onclick="selectTreatment('浣腸・摘便処置', '実施')">
-              <span class="chip-title">浣腸・摘便処置</span>
-              <span class="chip-sub">排便管理</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. 📈 バイタルタブコンテンツ -->
-        <div class="palette-tab-content" id="tabContentVital">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#334155;">📈 バイタルサイン測定値入力</span>
-          </div>
-          <div class="palette-vital-card">
-            <div class="vital-input-group">
-              <label>血圧 (mmHg):</label>
-              <div style="display:flex; align-items:center; gap:0.2rem; flex:1;">
-                <input type="text" id="vitalSys" placeholder="120" oninput="onVitalValuesChanged()">
-                <span>/</span>
-                <input type="text" id="vitalDia" placeholder="75" oninput="onVitalValuesChanged()">
-              </div>
-            </div>
-            <div class="vital-input-group">
-              <label>脈拍数 (bpm):</label>
-              <input type="text" id="vitalPulseInput" placeholder="例: 72" oninput="onVitalValuesChanged()">
-            </div>
-            <div class="vital-input-group">
-              <label>体温 (℃):</label>
-              <input type="text" id="vitalTempInput" placeholder="例: 36.5" oninput="onVitalValuesChanged()">
-            </div>
-            <div class="vital-input-group">
-              <label>SpO2 (%):</label>
-              <input type="text" id="vitalSpo2Input" placeholder="例: 98" oninput="onVitalValuesChanged()">
-            </div>
-            <div class="vital-input-group">
-              <label>呼吸数 (回/分):</label>
-              <input type="text" id="vitalRespInput" placeholder="例: 16" oninput="onVitalValuesChanged()">
-            </div>
-
-            <div style="margin-top:0.4rem;">
-              <span style="font-size:0.72rem; font-weight:bold; color:#64748b; display:block; margin-bottom:0.25rem;">⚡ クイック入力プリセット:</span>
-              <div style="display:flex; flex-direction:column; gap:0.25rem;">
-                <button type="button" onclick="setVitalPreset('120', '75', '72', '36.5', '98', '16')" style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.74rem; text-align:left; cursor:pointer; font-weight:600;">
-                  🟢 正常値 (120/75, HR:72, BT:36.5℃, SpO2:98%)
-                </button>
-                <button type="button" onclick="setVitalPreset('110', '70', '96', '38.4', '96', '20')" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.74rem; text-align:left; cursor:pointer; font-weight:600;">
-                  🔴 発熱・頻脈 (110/70, HR:96, BT:38.4℃, SpO2:96%)
-                </button>
-                <button type="button" onclick="setVitalPreset('162', '95', '78', '36.6', '97', '16')" style="background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:0.3rem 0.5rem; border-radius:4px; font-size:0.74rem; text-align:left; cursor:pointer; font-weight:600;">
-                  🟡 高血圧 (162/95, HR:78, BT:36.6℃, SpO2:97%)
-                </button>
-              </div>
-            </div>
-
-            <div style="margin-top:0.6rem; display:flex; gap:0.4rem;">
-              <button type="button" onclick="createVitalArticle()" style="flex:1; background:#0284c7; color:white; border:none; padding:0.45rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; box-shadow:0 1px 3px rgba(2,132,199,0.3);">
-                💾 バイタル独自記事として作成・保存
-              </button>
-              <button type="button" onclick="clearVitalInputs()" style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; padding:0.45rem 0.6rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
-                クリア
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. 🔬 検査指示タブコンテンツ (検体検査・放射線画像・生理機能検査オーダー) -->
-        <div class="palette-tab-content" id="tabContentOrders">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0f766e;">🔬 検査指示オーダー (検体・画像・生理検査)</span>
-            <button type="button" onclick="addExamPrompt()" style="background:#0f766e; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意検査</button>
-          </div>
-          <div style="padding:0.5rem; display:flex; flex-direction:column; gap:0.6rem; overflow-y:auto; flex:1;">
-            
-            <!-- 🩸 1. 検体検査・血液・尿検査オーダー -->
-            <div>
-              <span style="font-size:0.74rem; font-weight:bold; color:#be123c; display:flex; align-items:center; gap:0.25rem; margin-bottom:0.3rem;">
-                <span>🩸</span> 検体検査・血液/尿検査オーダー:
-              </span>
-              <div class="palette-chip-grid" style="padding:0;">
-                <div class="palette-chip" onclick="selectExamOrder('末梢血液一般検査 (CBC)', '検体検査', '白血球, 赤血球, Hb, Ht, 血小板')">
-                  <span class="chip-title">末梢血一般 (CBC)</span>
-                  <span class="chip-sub">血球算定・Hb・PLT</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('生化学検査セット (多項目)', '検体検査', 'AST, ALT, γGTP, BUN, Cre, eGFR, Na, K, Cl')">
-                  <span class="chip-title">生化学セット (多項目)</span>
-                  <span class="chip-sub">肝機能・腎機能・電解質</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('CRP定量 (炎症反応)', '検体検査', '炎症マーカー・定量的評価')">
-                  <span class="chip-title">CRP定量 (炎症反応)</span>
-                  <span class="chip-sub">感染・炎症評価</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('血糖・HbA1c測定', '検体検査', '随時血糖, HbA1c (NGSP)')">
-                  <span class="chip-title">血糖 ＆ HbA1c</span>
-                  <span class="chip-sub">糖尿病・糖代謝</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('凝固能検査 (PT-INR / APTT)', '検体検査', 'PT, PT%, PT-INR, APTT')">
-                  <span class="chip-title">凝固能 (PT-INR/APTT)</span>
-                  <span class="chip-sub">出血傾向・抗凝固薬</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('尿中一般物質定性半定量検査', '検体検査', '蛋白, 糖, 潜血, 白血球, 尿比重')">
-                  <span class="chip-title">尿一般定性検査</span>
-                  <span class="chip-sub">尿蛋白・潜血・沈渣</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('感染症迅速抗原 (インフルエンザ/COVID)', '検体検査', '鼻咽頭ぬぐい液 抗原定性')">
-                  <span class="chip-title">インフル/コロナ迅速</span>
-                  <span class="chip-sub">抗原定性検査</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('血液培養検査 (2セット)', '検体検査', '好気/嫌気 左右採血 2セット')">
-                  <span class="chip-title">血液培養 (2セット)</span>
-                  <span class="chip-sub">敗血症・発熱精査</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 🩻 2. 放射線・画像検査オーダー -->
-            <div>
-              <span style="font-size:0.74rem; font-weight:bold; color:#6d28d9; display:flex; align-items:center; gap:0.25rem; margin-bottom:0.3rem;">
-                <span>🩻</span> 放射線・画像検査オーダー:
-              </span>
-              <div class="palette-chip-grid" style="padding:0;">
-                <div class="palette-chip" onclick="applyRadOrderToForm('胸部単純X線 (立位 PA/ラテラル)', '放射線科撮影室')">
-                  <span class="chip-title">胸部X線 (立位 PA)</span>
-                  <span class="chip-sub">放射線科撮影室</span>
-                </div>
-                <div class="palette-chip" onclick="applyRadOrderToForm('胸部単純X線 (ポータブル)', '病室ポータブル撮影')">
-                  <span class="chip-title">胸部ポータブルX線</span>
-                  <span class="chip-sub">病室撮影</span>
-                </div>
-                <div class="palette-chip" onclick="applyRadOrderToForm('腹部単純X線 (仰臥位/立位)', '放射線科撮影室')">
-                  <span class="chip-title">腹部X線 (立位/臥位)</span>
-                  <span class="chip-sub">放射線科撮影室</span>
-                </div>
-                <div class="palette-chip" onclick="applyRadOrderToForm('頭部単純CT検査', '放射線科撮影室')">
-                  <span class="chip-title">頭部単純CT</span>
-                  <span class="chip-sub">頭蓋内出血・梗塞</span>
-                </div>
-                <div class="palette-chip" onclick="applyRadOrderToForm('胸部単純CT検査', '放射線科撮影室')">
-                  <span class="chip-title">胸部単純CT</span>
-                  <span class="chip-sub">肺炎・腫瘍・肺塞栓</span>
-                </div>
-                <div class="palette-chip" onclick="applyRadOrderToForm('腹部骨盤単純CT検査', '放射線科撮影室')">
-                  <span class="chip-title">腹部骨盤CT</span>
-                  <span class="chip-sub">急性腹症・消化管</span>
-                </div>
-                <div class="palette-chip" onclick="applyRadOrderToForm('頭部単純MRI / MRA検査', '放射線科撮影室')">
-                  <span class="chip-title">頭部MRI / MRA</span>
-                  <span class="chip-sub">脳虚血・血管評価</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 📈 3. 生理機能・超音波エコー検査 -->
-            <div>
-              <span style="font-size:0.74rem; font-weight:bold; color:#0369a1; display:flex; align-items:center; gap:0.25rem; margin-bottom:0.3rem;">
-                <span>📈</span> 生理機能・心電図・エコー検査オーダー:
-              </span>
-              <div class="palette-chip-grid" style="padding:0;">
-                <div class="palette-chip" onclick="selectExamOrder('安静時十二誘導心電図 (ECG)', '生理機能検査', '不整脈・虚血性変化評価')">
-                  <span class="chip-title">12誘導心電図 (ECG)</span>
-                  <span class="chip-sub">安静時心電図</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('超音波検査 (心臓エコー)', '生理機能検査', '左室駆出率EF, 弁膜症, 壁運動')">
-                  <span class="chip-title">心臓超音波 (心エコー)</span>
-                  <span class="chip-sub">EF・弁膜症評価</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('超音波検査 (腹部エコー)', '生理機能検査', '肝胆膵脾腎・腹水評価')">
-                  <span class="chip-title">腹部超音波エコー</span>
-                  <span class="chip-sub">実質臓器・胆石</span>
-                </div>
-                <div class="palette-chip" onclick="selectExamOrder('頸動脈超音波エコー検査', '生理機能検査', 'IMT計測, プラーク評価')">
-                  <span class="chip-title">頸動脈エコー</span>
-                  <span class="chip-sub">動脈硬化・IMT</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 🍱 4. 食事指示オーダー (栄養指示) -->
-            <div>
-              <span style="font-size:0.74rem; font-weight:bold; color:#92400e; display:flex; align-items:center; gap:0.25rem; margin-bottom:0.3rem;">
-                <span>🍱</span> 食事指示オーダー:
-              </span>
-              <div class="palette-chip-grid" style="padding:0;">
-                <div class="palette-chip" onclick="applyMealOrderToForm('常食 (一般食)', 'なし')">
-                  <span class="chip-title">常食 (一般食)</span>
-                  <span class="chip-sub">制限なし</span>
-                </div>
-                <div class="palette-chip" onclick="applyMealOrderToForm('全粥食 (軟菜)', 'なし')">
-                  <span class="chip-title">全粥食</span>
-                  <span class="chip-sub">軟菜</span>
-                </div>
-                <div class="palette-chip" onclick="applyMealOrderToForm('減塩食 (6g/日制限)', 'なし')">
-                  <span class="chip-title">減塩食</span>
-                  <span class="chip-sub">6g/日制限</span>
-                </div>
-                <div class="palette-chip" onclick="applyMealOrderToForm('糖尿病食 (1600kcal)', 'なし')">
-                  <span class="chip-title">糖尿病食</span>
-                  <span class="chip-sub">1600kcal</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- ==================== 👩‍⚕️ 看護部パレット群 ==================== -->
-        <!-- 1. 看護処置・ケア -->
-        <div class="palette-tab-content" id="tabContentNurseCare">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#166534;">🩹 看護処置・保清・ケア</span>
-            <button type="button" onclick="addGenericPrompt('看護部', '看護処置', 'P')" style="background:#166534; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意処置</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '創傷被覆材交換', '仙骨部処置・被覆材交換', 'P')">
-              <span class="chip-title">創傷被覆材交換</span>
-              <span class="chip-sub">仙骨部処置・被覆材交換</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '褥瘡処置', 'ゲーベン塗布・ガーゼ保護', 'P')">
-              <span class="chip-title">褥瘡処置</span>
-              <span class="chip-sub">外用薬塗布・保護</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', 'ネブライザー吸入', '生理食塩水5ml吸入完了', 'P')">
-              <span class="chip-title">ネブライザー吸入</span>
-              <span class="chip-sub">生食5ml吸入実施</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '口腔ケア', '保湿ジェル塗布・義歯清掃', 'P')">
-              <span class="chip-title">口腔ケア</span>
-              <span class="chip-sub">保湿・義歯清掃</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '気管内吸引', '分泌物中等量・排痰良好', 'P')">
-              <span class="chip-title">気管内吸引</span>
-              <span class="chip-sub">排痰・SpO2回復</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '尿道留置カテーテル管理', '閉鎖回路保持・尿量流出確認', 'P')">
-              <span class="chip-title">カテーテル管理</span>
-              <span class="chip-sub">尿量・性状確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '酸素投与', '鼻腔カニューラ 1.5L/分', 'P')">
-              <span class="chip-title">酸素投与</span>
-              <span class="chip-sub">カニューラ 1.5L</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', 'グリセリン浣腸', 'GE浣腸50ml実施・排便あり', 'P')">
-              <span class="chip-title">グリセリン浣腸</span>
-              <span class="chip-sub">排便確認・腹痛なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '摘便実施', '直腸内硬便摘出・腹部膨満軽減', 'P')">
-              <span class="chip-title">摘便実施</span>
-              <span class="chip-sub">硬便摘出・安楽</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護処置', '温罨法', '患部温罨法15分実施', 'P')">
-              <span class="chip-title">温罨法</span>
-              <span class="chip-sub">患部温罨法15分</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 点滴実施・ライン管理 -->
-        <div class="palette-tab-content" id="tabContentNurseIv">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#166534;">💉 点滴実施・静脈ライン管理</span>
-            <button type="button" onclick="addGenericPrompt('看護部', '点滴管理', 'P')" style="background:#166534; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意ライン</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '点滴管理', '末梢ルート確保', '右前腕22G 1回成功・滴下良好', 'P')">
-              <span class="chip-title">末梢ルート確保</span>
-              <span class="chip-sub">右前腕 22G 成功</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '点滴管理', '点滴更新', '指示通り更新・滴下速度確認', 'P')">
-              <span class="chip-title">点滴ボトル更新</span>
-              <span class="chip-sub">指示通りの滴下確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '点滴管理', '刺入部確認', '発赤・腫脹・疼痛なし 良好', 'O')">
-              <span class="chip-title">刺入部観察(異常なし)</span>
-              <span class="chip-sub">発赤・漏出なし確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '点滴管理', '点滴終了・抜針', '抜針・圧迫止血5分・止血良好', 'P')">
-              <span class="chip-title">点滴終了・抜針</span>
-              <span class="chip-sub">止血確認・異常なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '点滴管理', '生食ロック', '生食フラッシュ・陽圧ロック完了', 'P')">
-              <span class="chip-title">生食ロック</span>
-              <span class="chip-sub">ライン開通性良好</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '点滴管理', '抗生剤側管投与', '側管より30分かけて点滴静注', 'P')">
-              <span class="chip-title">抗生剤側管点滴</span>
-              <span class="chip-sub">アレルギー症状なし</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 看護観察・評価 -->
-        <div class="palette-tab-content" id="tabContentNurseObs">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#166534;">📋 看護観察・全身アセスメント</span>
-            <button type="button" onclick="addGenericPrompt('看護部', '看護観察', 'O')" style="background:#166534; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意観察</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '全身状態良好', '活気あり・会話良好・食欲あり', 'O')">
-              <span class="chip-title">全身状態良好</span>
-              <span class="chip-sub">活気・表情安定</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '全身倦怠感の訴え', '倦怠感あり・臥床傾向・表情やや疲労', 'S')">
-              <span class="chip-title">倦怠感の訴え</span>
-              <span class="chip-sub">臥床・疲労感あり</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '呼吸音清', '両側肺野にて副雑音なし・SpO2安定', 'O')">
-              <span class="chip-title">呼吸音清</span>
-              <span class="chip-sub">喘鳴・ラ音なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '腹部平坦・軟', '自発痛・圧痛なし・腸蠕動音聴取', 'O')">
-              <span class="chip-title">腹部平坦・軟</span>
-              <span class="chip-sub">圧痛なし・蠕動良好</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '浮腫なし', '両下肢浮腫陰性・皮膚緊張度保たれる', 'O')">
-              <span class="chip-title">下肢浮腫なし</span>
-              <span class="chip-sub">浮腫陰性(-)</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '転倒リスク注意', 'ふらつきあり・見守り・センサー稼働', 'A')">
-              <span class="chip-title">転倒リスク注意</span>
-              <span class="chip-sub">見守り・センサー対応</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '夜間良眠', '中途覚醒なく朝まで入眠・覚醒良好', 'O')">
-              <span class="chip-title">夜間良眠</span>
-              <span class="chip-sub">睡眠十分・朝覚醒良好</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '看護観察', '食事全量摂取', '主食10/10・副食10/10・水分十分', 'O')">
-              <span class="chip-title">食事全量摂取</span>
-              <span class="chip-sub">完食・むせなし</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. 医師への連絡・報告 -->
-        <div class="palette-tab-content" id="tabContentNurseAlert">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#166534;">🔔 医師への連絡・指示受け (SBAR)</span>
-            <button type="button" onclick="addGenericPrompt('看護部', '医師報告', 'P')" style="background:#166534; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意連絡</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '医師報告', '医師へ状態報告・指示受け', '微熱と咳嗽増悪を主治医へ報告・対症薬指示受領', 'P')">
-              <span class="chip-title">状態報告・指示受領</span>
-              <span class="chip-sub">発熱・症状変化を報告</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '医師報告', '定期診察依頼', '創部確認・抜糸の要否について回診依頼', 'P')">
-              <span class="chip-title">回診・診察依頼</span>
-              <span class="chip-sub">創部確認依頼</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '医師報告', '急変時緊急コール', '血圧低下あり直ちに当直医へコール・訪室対応', 'P')">
-              <span class="chip-title">急変時緊急コール</span>
-              <span class="chip-sub">直ちに医師訪室</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('看護部', '医師報告', '検査結果報告', '迅速血糖値高値を主治医へ報告・インスリン指示確認', 'P')">
-              <span class="chip-title">検査結果報告</span>
-              <span class="chip-sub">検査値異常報告</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 💊 薬剤部パレット群 ==================== -->
-        <!-- 1. 処方監査・鑑査 -->
-        <div class="palette-tab-content" id="tabContentPharmAudit">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0369a1;">💊 処方鑑査・調剤確認</span>
-            <button type="button" onclick="addGenericPrompt('薬剤部', '処方鑑査', 'P')" style="background:#0369a1; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意鑑査</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '処方鑑査', '処方鑑査完了', '用法用量・適応症・相互作用チェック適正確認', 'P')">
-              <span class="chip-title">処方鑑査完了</span>
-              <span class="chip-sub">用法用量適正確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '処方鑑査', '腎機能減量確認', 'eGFR確認・腎排泄型薬剤の減量基準適正', 'O')">
-              <span class="chip-title">腎機能減量適正</span>
-              <span class="chip-sub">eGFR基準適合確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '処方鑑査', '一包化調剤完了', '服用時点毎の一包化・識別印字調剤完了', 'P')">
-              <span class="chip-title">一包化調剤完了</span>
-              <span class="chip-sub">印字・分包完了</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '処方鑑査', '粉砕・簡易懸濁可否確認', '錠剤粉砕可否・経管投与チューブ通過性確認', 'P')">
-              <span class="chip-title">簡易懸濁確認</span>
-              <span class="chip-sub">粉砕・懸濁適格確認</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 服薬指導・管理 -->
-        <div class="palette-tab-content" id="tabContentPharmGuidance">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0369a1;">🔍 服薬指導・管理指導</span>
-            <button type="button" onclick="addGenericPrompt('薬剤部', '服薬指導', 'P')" style="background:#0369a1; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意指導</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '服薬指導', '薬剤情報提供書交付', '新規処方薬の効能・注意点・副作用を説明', 'P')">
-              <span class="chip-title">薬情交付・説明</span>
-              <span class="chip-sub">効能・副作用説明完了</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '服薬指導', 'お薬手帳確認・貼付', '他院処方重複なし・併用薬情報更新', 'P')">
-              <span class="chip-title">お薬手帳確認</span>
-              <span class="chip-sub">併用薬重複なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '服薬指導', '吸入薬手技指導', 'ディスカス吸入実技指導・吸気流速良好確認', 'P')">
-              <span class="chip-title">吸入薬手技指導</span>
-              <span class="chip-sub">吸入動作良好確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '服薬指導', '残薬確認・調整', '自宅残薬数を聴取・次回処方日数の調整完了', 'P')">
-              <span class="chip-title">残薬確認・調整</span>
-              <span class="chip-sub">残薬適正化</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 疑義照会・アレルギー -->
-        <div class="palette-tab-content" id="tabContentPharmInquiry">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0369a1;">⚠️ 疑義照会・アレルギー確認</span>
-            <button type="button" onclick="addGenericPrompt('薬剤部', '疑義照会', 'P')" style="background:#0369a1; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意疑義</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '疑義照会', '疑義照会実施・処方変更', '重複投薬について処方医へ疑義照会・削除合意', 'P')">
-              <span class="chip-title">疑義照会(重複変更)</span>
-              <span class="chip-sub">医師合意の上で修正</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', 'アレルギー確認', '薬剤アレルギー歴確認', 'ペニシリン系アレルギー歴あり・非配合薬を確認', 'O')">
-              <span class="chip-title">アレルギー歴確認</span>
-              <span class="chip-sub">禁忌薬非配合確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', '副作用モニタリング', '副作用モニタリング良好', '皮疹・掻痒・消化器症状等なし確認', 'O')">
-              <span class="chip-title">副作用なし確認</span>
-              <span class="chip-sub">有害事象なし</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. TDM・血中濃度 -->
-        <div class="palette-tab-content" id="tabContentPharmTdm">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0369a1;">📊 TDM・薬物動態モニタリング</span>
-            <button type="button" onclick="addGenericPrompt('薬剤部', 'TDM', 'P')" style="background:#0369a1; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意TDM</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', 'TDM', 'バンコマイシンTDM提案', '次回投与前トラフ値採血オーダーおよび目標濃度提案', 'P')">
-              <span class="chip-title">VCMトラフ測定提案</span>
-              <span class="chip-sub">目標15-20μg/mL</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('薬剤部', 'TDM', 'ジゴキシン濃度確認', '血中濃度測定値: 0.9ng/mL (適正有効域内)', 'O')">
-              <span class="chip-title">ジゴキシン適正確認</span>
-              <span class="chip-sub">有効濃度域内</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 🩻 放射線科パレット群 ==================== -->
-        <!-- 1. 撮影実施記録 -->
-        <div class="palette-tab-content" id="tabContentRadExec">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#6d28d9;">🩻 放射線検査実施記録</span>
-            <button type="button" onclick="addGenericPrompt('放射線科', '検査実施', 'P')" style="background:#6d28d9; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意検査</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '放射線検査', '胸部単純X線撮影実施', '撮影室 PA立位 1枚・体位保持良好・PACS送信完了', 'P')">
-              <span class="chip-title">胸部X線(立位)実施</span>
-              <span class="chip-sub">撮影完了・PACS送信</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '放射線検査', '腹部単純X線撮影実施', '仰臥位・立位 2方向撮影完了・ガス像確認可能', 'P')">
-              <span class="chip-title">腹部X線(2方向)実施</span>
-              <span class="chip-sub">撮影完了・PACS送信</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '放射線検査', '頭部単純CT撮影実施', '頭部ヘリカルスキャン・体動なし・画像再構成完了', 'P')">
-              <span class="chip-title">頭部単純CT実施</span>
-              <span class="chip-sub">撮影完了・画像送信</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '放射線検査', '胸部単純CT撮影実施', '深吸気息止め良好・薄切スライス画像作成完了', 'P')">
-              <span class="chip-title">胸部単純CT実施</span>
-              <span class="chip-sub">撮影完了・薄切画像</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '放射線検査', '骨密度測定(DXA)', '腰椎・大腿骨近位部DXA測定完了', 'P')">
-              <span class="chip-title">骨密度DXA測定</span>
-              <span class="chip-sub">測定完了・データ保存</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. ポータブル撮影 -->
-        <div class="palette-tab-content" id="tabContentRadPortable">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#6d28d9;">🛏️ 病室ポータブルX線撮影</span>
-            <button type="button" onclick="addGenericPrompt('放射線科', 'ポータブル', 'P')" style="background:#6d28d9; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', 'ポータブル撮影', '病室ポータブル胸部X線', '病室ベッドサイド撮影完了・カセッテ挿入時疼痛なし', 'P')">
-              <span class="chip-title">病室ポータブル胸部X線</span>
-              <span class="chip-sub">ベッドサイド撮影完了</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', 'ポータブル撮影', '撮影後安全確認', '撮影終了・ベッド柵復元およびコール位置確認', 'P')">
-              <span class="chip-title">撮影後ベッド安全復元</span>
-              <span class="chip-sub">柵・コール位置確認</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 造影剤・安全確認 -->
-        <div class="palette-tab-content" id="tabContentRadSafety">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#6d28d9;">⚠️ 造影剤・放射線安全確認</span>
-            <button type="button" onclick="addGenericPrompt('放射線科', '安全確認', 'O')" style="background:#6d28d9; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意安全</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '造影安全', '造影剤同意書確認済み', 'アレルギー・喘息既往なし・腎機能eGFR良好確認', 'O')">
-              <span class="chip-title">同意書・禁忌確認</span>
-              <span class="chip-sub">アレルギー・腎機能OK</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '造影安全', '血管外漏出なし', 'テスト注入逆血確認・注入時および後疼痛漏出なし', 'O')">
-              <span class="chip-title">血管外漏出なし確認</span>
-              <span class="chip-sub">注入路良好・漏出ゼロ</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('放射線科', '造影安全', '造影後急性副反応なし', '皮疹・掻痒・嘔気・呼吸苦なし・水分摂取説明', 'O')">
-              <span class="chip-title">急性副反応なし</span>
-              <span class="chip-sub">水分摂取励行説明</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 🏃 リハビリ科パレット群 ==================== -->
-        <!-- 1. 運動療法・歩行訓練 -->
-        <div class="palette-tab-content" id="tabContentRehabPt">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0f766e;">🚶 運動療法・歩行訓練 (PT)</span>
-            <button type="button" onclick="addGenericPrompt('リハビリ', '運動療法', 'P')" style="background:#0f766e; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意PT</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '運動療法', '関節可動域訓練(ROM)', '両下肢・肩関節ROM訓練実施・拘縮予防', 'P')">
-              <span class="chip-title">関節可動域訓練(ROM)</span>
-              <span class="chip-sub">拘縮予防・ストレッチ</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '離床訓練', '端座位・立位保持訓練', '端座位15分自立保持・立位バランス良好', 'P')">
-              <span class="chip-title">端座位・立位保持</span>
-              <span class="chip-sub">バイタル変動なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '歩行訓練', '歩行器歩行訓練', '四輪歩行器にて病棟内50m歩行・見守り', 'P')">
-              <span class="chip-title">歩行器歩行(50m)</span>
-              <span class="chip-sub">見守り自立レベル</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '歩行訓練', 'T字杖歩行訓練', 'T字杖にて平地歩行自立・すり足改善傾向', 'P')">
-              <span class="chip-title">T字杖歩行訓練</span>
-              <span class="chip-sub">屋内自立レベル</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. ADL・作業療法 -->
-        <div class="palette-tab-content" id="tabContentRehabOt">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0f766e;">🤲 ADL・作業療法 (OT)</span>
-            <button type="button" onclick="addGenericPrompt('リハビリ', '作業療法', 'P')" style="background:#0f766e; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意OT</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', 'ADL訓練', '食事動作訓練', '自助具スプーン使用・こぼし少なく自力摂取自立', 'P')">
-              <span class="chip-title">食事動作訓練</span>
-              <span class="chip-sub">自助具使用自立</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', 'ADL訓練', '更衣動作訓練', '前開き上衣・ズボン着脱訓練・見守り自立', 'P')">
-              <span class="chip-title">更衣動作訓練</span>
-              <span class="chip-sub">着脱見守り自立</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', 'ADL訓練', 'トイレ移乗動作訓練', '手すり把持にて便座移乗・立ち上がり自立', 'P')">
-              <span class="chip-title">トイレ移乗訓練</span>
-              <span class="chip-sub">手すり把持自立</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 摂食嚥下・言語訓練 -->
-        <div class="palette-tab-content" id="tabContentRehabSt">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0f766e;">🗣️ 摂食嚥下・言語聴覚 (ST)</span>
-            <button type="button" onclick="addGenericPrompt('リハビリ', '言語聴覚', 'P')" style="background:#0f766e; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意ST</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '摂食嚥下', '間接嚥下訓練', '頸部・舌運動・ブローイング実施', 'P')">
-              <span class="chip-title">間接嚥下訓練</span>
-              <span class="chip-sub">器官運動・可動域</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '摂食嚥下', '直接嚥下訓練', 'とろみ水・ゼリー摂取実施・むせ込みなし', 'P')">
-              <span class="chip-title">直接嚥下訓練</span>
-              <span class="chip-sub">とろみ摂取・湿性嗄声なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '言語聴覚', '呼称・発声訓練', '絵カード呼称訓練実施・復唱明瞭度向上', 'P')">
-              <span class="chip-title">呼称・発声訓練</span>
-              <span class="chip-sub">構音・明瞭度向上</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. FIM・評価 -->
-        <div class="palette-tab-content" id="tabContentRehabEval">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#0f766e;">📈 FIM・身体認知評価</span>
-            <button type="button" onclick="addGenericPrompt('リハビリ', 'リハビリ評価', 'O')" style="background:#0f766e; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意評価</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', 'FIM評価', 'FIM運動項目評価実施', '食事・移乗・歩行の介助度評価スコア算出', 'O')">
-              <span class="chip-title">FIM運動項目評価</span>
-              <span class="chip-sub">介助度スコア算出</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('リハビリ', '認知評価', 'HDS-R(長谷川式)実施', '見当識・記銘力テスト実施・経過評価', 'O')">
-              <span class="chip-title">HDS-R長谷川式評価</span>
-              <span class="chip-sub">認知・見当識評価</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 🤝 介護パレット群 ==================== -->
-        <!-- 1. 入浴・清拭 -->
-        <div class="palette-tab-content" id="tabContentCareBath">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b45309;">🛁 入浴・清拭ケア (介護)</span>
-            <button type="button" onclick="addGenericPrompt('介護', '入浴ケア', 'P')" style="background:#b45309; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意入浴</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '入浴介助', '一般浴実施', '見守り・洗身介助にて入浴完了・皮疹なし', 'P')">
-              <span class="chip-title">一般浴実施</span>
-              <span class="chip-sub">洗身洗髪介助・異常なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '入浴介助', '機械浴(特浴)実施', 'リフト特浴にて安全に入浴・リラックス良好', 'P')">
-              <span class="chip-title">機械浴(特浴)実施</span>
-              <span class="chip-sub">安全に移乗・安楽</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '清拭ケア', '全身清拭・陰部洗浄', 'ベッド上清拭実施・皮膚清潔保持', 'P')">
-              <span class="chip-title">全身清拭・陰部洗浄</span>
-              <span class="chip-sub">清潔保持・異常なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '清拭ケア', '足浴実施', '足浴15分実施・温熱リラクゼーション', 'P')">
-              <span class="chip-title">足浴実施</span>
-              <span class="chip-sub">微温湯15分</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 食事介助・水分 -->
-        <div class="palette-tab-content" id="tabContentCareMeal">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b45309;">🍽️ 食事介助・水分補給</span>
-            <button type="button" onclick="addGenericPrompt('介護', '食事介助', 'P')" style="background:#b45309; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意介助</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '食事介助', '食事全介助(全量摂取)', '座位保持良好・ゆっくり一口ずつ介助・完食', 'P')">
-              <span class="chip-title">食事全介助(完食)</span>
-              <span class="chip-sub">全量摂取・むせなし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '食事介助', '食事一部介助・見守り', '自力摂取見守り・主食8割副食7割摂取', 'P')">
-              <span class="chip-title">一部介助・見守り</span>
-              <span class="chip-sub">主食8割・副食7割</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '水分補給', '水分200ml補給', 'お茶200mlとろみ付き摂取完了', 'P')">
-              <span class="chip-title">水分200ml補給</span>
-              <span class="chip-sub">とろみ付き摂取完了</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 排泄介助・おむつ -->
-        <div class="palette-tab-content" id="tabContentCareExcretion">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b45309;">🚽 排泄介助・おむつ交換</span>
-            <button type="button" onclick="addGenericPrompt('介護', '排泄介助', 'P')" style="background:#b45309; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意排泄</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '排泄介助', 'トイレ誘導・自力排尿', 'トイレ誘導・手すり立ち上がり自力排尿確認', 'P')">
-              <span class="chip-title">トイレ誘導排尿</span>
-              <span class="chip-sub">排尿あり・転倒なし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '排泄介助', 'おむつ・パッド交換', 'パッド交換実施・尿量中等量・皮膚トラブルなし', 'P')">
-              <span class="chip-title">おむつ・パッド交換</span>
-              <span class="chip-sub">尿量中等量・清潔</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '排泄介助', '排便確認(普通便)', '普通便中等量排便あり・腹部安楽', 'O')">
-              <span class="chip-title">排便あり(普通便)</span>
-              <span class="chip-sub">普通便中等量</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. 体位変換・移乗 -->
-        <div class="palette-tab-content" id="tabContentCarePosition">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b45309;">🛏️ 体位変換・移乗介助</span>
-            <button type="button" onclick="addGenericPrompt('介護', '体位変換', 'P')" style="background:#b45309; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意体位</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '体位変換', '右側臥位へ体位変換', 'クッション挟み込み・仙骨部圧迫解除・安楽', 'P')">
-              <span class="chip-title">体位変換(右側臥位)</span>
-              <span class="chip-sub">仙骨部減圧・良肢位</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '体位変換', '左側臥位へ体位変換', '体幹保持クッション調整・褥瘡好発部位除圧', 'P')">
-              <span class="chip-title">体位変換(左側臥位)</span>
-              <span class="chip-sub">除圧保持・安楽</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('介護', '移乗介助', '車椅子移乗完了', 'アームレスト外しスライディングボードにて車椅子移乗', 'P')">
-              <span class="chip-title">車椅子移乗完了</span>
-              <span class="chip-sub">安全に移乗・姿勢保持</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 🍱 栄養科パレット群 ==================== -->
-        <!-- 1. 食形態・献立 -->
-        <div class="palette-tab-content" id="tabContentNutrMeal">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#c2410c;">🍱 食事形態・献立調整</span>
-            <button type="button" onclick="addGenericPrompt('栄養科', '食事形態', 'P')" style="background:#c2410c; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意形態</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '食形態', '全粥食へ食形態変更', '咀嚼疲労軽減のため全粥・軟菜食へ変更適用', 'P')">
-              <span class="chip-title">全粥・軟菜食変更</span>
-              <span class="chip-sub">咀嚼支援・軟菜</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '食形態', '刻みトロミ食適用', '一口大刻み・汁物すべてトロミ調整適用', 'P')">
-              <span class="chip-title">刻みトロミ食適用</span>
-              <span class="chip-sub">誤嚥予防とろみ付き</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '食形態', 'エネルギー制限食(1600kcal)', '糖尿病食事療法1600kcal適用・栄養配分適正', 'P')">
-              <span class="chip-title">制限食(1600kcal)</span>
-              <span class="chip-sub">糖尿病治療食</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 栄養アセスメント -->
-        <div class="palette-tab-content" id="tabContentNutrAssess">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#c2410c;">📊 栄養アセスメント・スクリーニング</span>
-            <button type="button" onclick="addGenericPrompt('栄養科', '栄養評価', 'O')" style="background:#c2410c; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意評価</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '栄養評価', '栄養アセスメント(良好)', 'BMI 21.5・Alb 3.8g/dL・低栄養リスクなし', 'O')">
-              <span class="chip-title">栄養状態良好</span>
-              <span class="chip-sub">低栄養リスクなし</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '栄養評価', '低栄養リスク中等度', '摂取率60%台低下・高カロリー補助ゼリー追加提案', 'A')">
-              <span class="chip-title">低栄養中等度リスク</span>
-              <span class="chip-sub">補助ゼリー追加提案</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 栄養食事指導 -->
-        <div class="palette-tab-content" id="tabContentNutrGuidance">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#c2410c;">💬 栄養食事指導</span>
-            <button type="button" onclick="addGenericPrompt('栄養科', '栄養指導', 'P')" style="background:#c2410c; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意指導</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '栄養指導', '初回個別栄養指導実施', '減塩6g/日達成に向けた出汁活用・加工食品注意を指導', 'P')">
-              <span class="chip-title">初回個別栄養指導</span>
-              <span class="chip-sub">減塩指導・パンフ交付</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('栄養科', '栄養指導', '家族同席退院食事指導', '退院後の調理形態とトロミ調整法をご家族へ説明指導', 'P')">
-              <span class="chip-title">家族同席食事指導</span>
-              <span class="chip-sub">退院後調理形態説明</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 🛡️ 医療安全パレット群 ==================== -->
-        <!-- 1. リスク点検・予防 -->
-        <div class="palette-tab-content" id="tabContentSafetyRisk">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b91c1c;">🛡️ 医療安全リスク点検・予防策</span>
-            <button type="button" onclick="addGenericPrompt('医療安全', '安全点検', 'P')" style="background:#b91c1c; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意点検</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医療安全', '安全対策', '転倒転落予防策確認', '低床ベッド設定・床面衝撃吸収マット・履物適正確認', 'P')">
-              <span class="chip-title">転倒転落防止策確認</span>
-              <span class="chip-sub">低床ベッド・マット確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医療安全', '安全対策', '患者誤認防止確認', 'ネームバンドバーコード照合・フルネーム復唱確認徹底', 'P')">
-              <span class="chip-title">患者誤認防止確認</span>
-              <span class="chip-sub">ネームバンド照合徹底</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医療安全', '安全対策', '離床センサー連動確認', 'コールシステム連動テスト完了・正常動作確認', 'P')">
-              <span class="chip-title">離床センサー動作確認</span>
-              <span class="chip-sub">コール連動テストOK</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. インシデント連携 -->
-        <div class="palette-tab-content" id="tabContentSafetyIncident">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b91c1c;">⚠️ インシデント・ヒヤリハット連携</span>
-            <button type="button" onclick="addGenericPrompt('医療安全', 'インシデント', 'A')" style="background:#b91c1c; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意記載</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医療安全', 'インシデント', 'インシデント報告連携', '院内インシデント管理システムへ報告書提出済み・対策共有', 'P')">
-              <span class="chip-title">報告書作成連携</span>
-              <span class="chip-sub">安全管理システム連携</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医療安全', '要因分析', 'ヒヤリハット要因分析メモ', '手順不徹底防止のためマニュアル再確認・カンファレンス周知', 'A')">
-              <span class="chip-title">要因分析メモ</span>
-              <span class="chip-sub">手順再確認・周知</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. PGP真正性監査 -->
-        <div class="palette-tab-content" id="tabContentSafetyAudit">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#b91c1c;">🔒 PGP暗号・真正性監査ツール</span>
-            <button type="button" onclick="verifyAllArticlesPgp()" style="background:#0284c7; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">⚡ 一括監査実行</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="verifyAllArticlesPgp()">
-              <span class="chip-title">🔏 全カルテ一括PGP検証</span>
-              <span class="chip-sub">全記事の真正性を暗号検証</span>
-            </div>
-            <div class="palette-chip" onclick="showSystemPublicKeyModal()">
-              <span class="chip-title">🔑 システム公開鍵確認</span>
-              <span class="chip-sub">PGP公開鍵ブロック表示</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医療安全', '真正性監査', '電子カルテ真正性監査完了', '暗号署名整合性確認・改ざん検知なし確認済み', 'O')">
-              <span class="chip-title">監査完了記録を挿入</span>
-              <span class="chip-sub">改ざんなし真正性保証</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ==================== 🏢 医事・事務パレット群 ==================== -->
-        <!-- 1. 保険・公費確認 -->
-        <div class="palette-tab-content" id="tabContentAdminInsurance">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#475569;">🏷️ 保険証・公費資格確認</span>
-            <button type="button" onclick="addGenericPrompt('医事課', '保険確認', 'P')" style="background:#475569; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意確認</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '保険確認', '健康保険証原本確認済み', '被保険者証原本提示確認・有効期限確認完了', 'P')">
-              <span class="chip-title">健康保険証原本確認</span>
-              <span class="chip-sub">資格有効性確認済み</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '保険確認', '限度額認定証確認済み', '限度額適用認定証原本確認・負担区分登録', 'P')">
-              <span class="chip-title">限度額適用認定確認</span>
-              <span class="chip-sub">負担上限区分登録</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '保険確認', '公費受給者証確認済み', '指定難病公費受給者証確認・上限額管理票記帳', 'P')">
-              <span class="chip-title">公費受給者証確認</span>
-              <span class="chip-sub">難病等公費適用</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. 診断書・証明書 -->
-        <div class="palette-tab-content" id="tabContentAdminCerts">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#475569;">📑 診断書・意見書・証明書類</span>
-            <button type="button" onclick="addGenericPrompt('医事課', '書類作成', 'P')" style="background:#475569; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意書類</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '書類作成', '診断書作成依頼受付', '生命保険提出用診断書作成依頼受付・受領書交付', 'P')">
-              <span class="chip-title">生命保険診断書受付</span>
-              <span class="chip-sub">依頼受付・医師回覧</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '書類作成', '傷病手当金申請書受付', '傷病手当金支給申請書(医師証明欄)受付', 'P')">
-              <span class="chip-title">傷病手当金申請受付</span>
-              <span class="chip-sub">労務不能期間証明</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '書類作成', '介護保険意見書依頼受領', '主治医意見書作成依頼受領・問診票添付', 'P')">
-              <span class="chip-title">主治医意見書受付</span>
-              <span class="chip-sub">介護保険要介護認定用</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. 算定チェック -->
-        <div class="palette-tab-content" id="tabContentAdminBilling">
-          <div style="padding:0.35rem 0.5rem; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:0.76rem; font-weight:bold; color:#475569;">💰 診療報酬算定要件点検</span>
-            <button type="button" onclick="addGenericPrompt('医事課', '算定チェック', 'P')" style="background:#475569; color:white; border:none; padding:0.2rem 0.45rem; border-radius:3px; font-size:0.72rem; cursor:pointer; font-weight:bold;">＋ 任意算定</button>
-          </div>
-          <div class="palette-chip-grid">
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '算定チェック', '初再診算定要件確認', '前回受診日確認・再診料算定適格', 'P')">
-              <span class="chip-title">初再診算定適格確認</span>
-              <span class="chip-sub">算定要件充足確認</span>
-            </div>
-            <div class="palette-chip" onclick="selectGenericPaletteItem('医事課', '算定チェック', '外来管理加算算定確認', '計画的な医学管理および丁寧な説明実施確認', 'P')">
-              <span class="chip-title">外来管理加算確認</span>
-              <span class="chip-sub">説明要件充足</span>
-            </div>
-          </div>
-        </div>
+      </div>
 
     </div> <!-- /.carte-layout-3col -->
   </div> <!-- /.container -->
@@ -3074,11 +1851,11 @@
       if (!leftPane || !centerPane || !rightPane || !resizerLeft || !resizerRight || !container) return;
 
       const DEFAULT_LEFT_WIDTH = 290;
-      const DEFAULT_RIGHT_WIDTH = 350;
+      const DEFAULT_RIGHT_WIDTH = 480;
       const MIN_LEFT_WIDTH = 150;
       const MAX_LEFT_WIDTH = 650;
-      const MIN_RIGHT_WIDTH = 200;
-      const MAX_RIGHT_WIDTH = 750;
+      const MIN_RIGHT_WIDTH = 280;
+      const MAX_RIGHT_WIDTH = 950;
       const MIN_CENTER_WIDTH = 250;
 
       // 保存された幅の復元 (localStorage)
@@ -3109,6 +1886,8 @@
       let startXRight = 0;
       let startWidthRight = 0;
 
+      const orderingFrameEl = document.getElementById('orderingSenderFrame');
+
       // --- 左スプリッター (左ペインと中央ペインの境界) ---
       function onMouseDownLeft(e) {
         if (window.innerWidth <= 768) return;
@@ -3118,6 +1897,7 @@
         resizerLeft.classList.add('resizing');
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
+        if (orderingFrameEl) orderingFrameEl.style.pointerEvents = 'none';
         if (e.cancelable && e.type !== 'touchstart') e.preventDefault();
       }
 
@@ -3130,6 +1910,7 @@
         resizerRight.classList.add('resizing');
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
+        if (orderingFrameEl) orderingFrameEl.style.pointerEvents = 'none';
         if (e.cancelable && e.type !== 'touchstart') e.preventDefault();
       }
 
@@ -3174,6 +1955,7 @@
       }
 
       function onMouseUp() {
+        if (orderingFrameEl) orderingFrameEl.style.pointerEvents = 'auto';
         if (isDraggingLeft) {
           isDraggingLeft = false;
           resizerLeft.classList.remove('resizing');
@@ -3532,10 +2314,12 @@
       selectRibbonMenu(tabName, null);
     }
 
-    // 右ペインリボンの初期化 (ユーザーの所属部署を初期選択)
+    // 右ペインリボンの初期化 (右列がオーダリングに置き換わったため安全化)
     function initRightRibbon(userDept) {
-      const deptKey = getDeptKeyFromDeptName(userDept);
-      selectRibbonDept(deptKey);
+      try {
+        const deptKey = getDeptKeyFromDeptName(userDept);
+        selectRibbonDept(deptKey);
+      } catch (_) {}
     }
 
     // =========================================================================
@@ -4138,18 +2922,64 @@
       return true;
     }
 
-    // 画面上の全オーダリングボタン・リンクの href を最新状態に同期
+    // 画面上の全オーダリングボタン・リンクおよび右列iframeのURLを最新状態に同期
     function updateOrderingLinks() {
       try {
         const targetUrl = getOrderingSystemUrl();
         const topBtn = document.getElementById('btnOrderingTop');
         if (topBtn) topBtn.href = targetUrl;
-        const paletteBtn = document.getElementById('btnOrderingPalette');
-        if (paletteBtn) paletteBtn.href = targetUrl;
         const gearLink = document.getElementById('btnOrderingGear');
         if (gearLink) gearLink.href = targetUrl;
-      } catch (_) {}
+        const extBtn = document.getElementById('btnOrderingOpenExternal');
+        if (extBtn) extBtn.href = targetUrl;
+
+        // 🚀 右ペインのオーダリング埋め込み iframe (embedded=1) を同期
+        const frame = document.getElementById('orderingSenderFrame');
+        if (frame) {
+          const embeddedUrl = new URL(targetUrl);
+          embeddedUrl.searchParams.set('embedded', '1');
+          const finalUrlStr = embeddedUrl.toString();
+
+          const currentSrc = frame.getAttribute('src');
+          if (currentSrc !== finalUrlStr) {
+            frame.src = finalUrlStr;
+          }
+        }
+      } catch (err) {
+        console.warn('updateOrderingLinks error:', err);
+      }
     }
+
+    // オーダリングiframe再読込
+    function reloadOrderingFrame() {
+      const frame = document.getElementById('orderingSenderFrame');
+      if (frame) {
+        try {
+          frame.contentWindow.location.reload();
+        } catch (e) {
+          const currentSrc = frame.src;
+          frame.src = currentSrc;
+        }
+      }
+    }
+
+    // 📨 オーダリング送信完了イベントのリスナー (iframe連携)
+    window.addEventListener('message', (event) => {
+      if (event && event.data && event.data.type === 'ORDER_SUBMITTED') {
+        const orderData = event.data;
+        try {
+          playCarteBellSound('normal');
+        } catch (_) {}
+        showToastNotification(`🚀 <strong>オーダー [${escapeHtml(orderData.orderId || '')}] 送信完了！</strong><br>カルテタイムラインに自動反映中...`);
+
+        // 新着記事ポーリングを即座にキック
+        setTimeout(() => {
+          if (typeof checkNewArticles === 'function') {
+            checkNewArticles();
+          }
+        }, 600);
+      }
+    });
 
     // 📡 オーダリング受信側 (Port 5000: 部門モニター) へ即座にオーダーを送信（飛ばす）
     async function sendOrderToOrderingReceiver(orderData, targetPersonId, authorName) {
@@ -4253,8 +3083,7 @@
       // もしSOAP本文が空の場合
       if (!soapContent) {
         if (stagedOrders.length > 0) {
-          const confirmAuto = confirm(`診療記録(SOAP)が未入力ですが、仮置きオーダー(${stagedOrders.length}件)を確定・保存しますか？\n（SOAPには「診察・オーダー発行記録」として自動保存されます）`);
-          if (!confirmAuto) return;
+          // 確認ポップアップなしで直接オーダー確定内容を自動セットして保存
           soapContent = `【診療記録】\n診察に基づき、以下のオーダー（${stagedOrders.length}件）を発行・確定しました。\n\n` +
             stagedOrders.map((o, idx) => `${idx + 1}. [${o.category}] ${o.title} ${o.detail || ''}`).join('\n');
           if (contentInput) contentInput.value = soapContent;

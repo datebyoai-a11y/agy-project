@@ -1331,6 +1331,38 @@
         border-color: #000 !important;
       }
     }
+
+    <% if (typeof isEmbedded !== 'undefined' && isEmbedded) { %>
+    /* 嵌入（カルテ右ペイン埋め込み）モード専用スタイル */
+    header {
+      display: none !important;
+    }
+    body {
+      background: #f8fafc;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      padding: 0.3rem 0.45rem;
+      height: 100vh;
+      gap: 0;
+    }
+    .form-card {
+      flex: 1 1 100% !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      border-radius: 4px;
+      padding: 0.5rem 0.65rem;
+      box-shadow: none;
+      border: 1px solid #cbd5e1;
+    }
+    .pane-resizer {
+      display: none !important;
+    }
+    .history-card {
+      display: none !important;
+    }
+    <% } %>
   </style>
 </head>
 <body>
@@ -1412,45 +1444,8 @@
         </div>
       </details>
 
-      <!-- 2. だて病院 共通患者情報セクション (表示のみ・コンパクト集約) -->
-      <div class="patient-master-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #0284c7; border-radius:6px; padding:0.5rem 0.75rem; display:flex; flex-direction:column; gap:0.35rem;">
-        <div class="patient-master-header" style="margin-bottom:0.15rem; padding-bottom:0.25rem; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-          <div class="patient-master-title" style="font-size:0.85rem; font-weight:bold; color:#0369a1; display:flex; align-items:center; gap:0.35rem;">
-            <span>👤 対象患者情報</span>
-            <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">(引き継ぎ対象者・固定表示)</span>
-          </div>
-          <span class="hospital-stamp-label" style="font-size:0.7rem; color:#0284c7; background:#e0f2fe; padding:0.1rem 0.4rem; border-radius:3px; font-weight:bold;">だて病院 診療録・指示票様式</span>
-        </div>
-
-        <!-- 1行目: ID、氏名、カナ、属性(性別/年齢/生年月日/身体計測) 表示のみ -->
-        <div style="display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap; font-size:0.85rem; line-height:1.4;">
-          <span style="background:#0f172a; color:#fef08a; font-family:monospace; font-weight:bold; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.85rem;" id="dispPatientId">
-            [<%= patients[0].id %>]
-          </span>
-          <span style="font-size:1.02rem; font-weight:bold; color:#0f172a;" id="dispPatientName">
-            <%= patients[0].name %> 様
-          </span>
-          <span style="font-size:0.78rem; color:#64748b;" id="dispPatientKana">
-            (<%= patients[0].kana || '' %>)
-          </span>
-          <span style="background:#e0f2fe; color:#0369a1; font-weight:bold; font-size:0.78rem; padding:0.1rem 0.45rem; border-radius:3px;" id="dispPatientMeta">
-            <%= patients[0].gender || '男' %> / <%= patients[0].age || '' %>才 (<%= patients[0].era || '昭' %><%= patients[0].birthDate ? ` / ${patients[0].birthDate}` : '' %>)
-          </span>
-          <span style="font-size:0.78rem; color:#475569;" id="dispPatientBody">
-            <% if (patients[0].height || patients[0].weight) { %>
-              📏 <%= patients[0].height ? `${patients[0].height}cm` : '' %> <%= patients[0].weight ? `${patients[0].weight}kg` : '' %>
-            <% } %>
-          </span>
-        </div>
-
-        <!-- 2行目: 病棟・病室・区分・感染症・移動方法 表示のみ -->
-        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; font-size:0.78rem; color:#334155; margin-top:0.15rem; padding-top:0.25rem; border-top:1px dashed #e2e8f0;">
-          <span>🏥 病棟: <strong id="dispPatientWard" style="color:#0284c7;"><%= patients[0].ward || 'しおかぜ' %></strong> (<span id="dispPatientRoom"><%= patients[0].room || '302号室' %></span>)</span>
-          <span>📋 区分: <strong id="dispPatientExamCat"><%= patients[0].examCategory || '一般診療' %></strong></span>
-          <span>🦠 感染症: <strong id="dispPatientInfection" style="<%= (patients[0].infection && patients[0].infection !== '無') ? 'color:#dc2626;' : 'color:#16a34a;' %>"><%= patients[0].infection || '無' %></strong></span>
-          <span>🦽 移動: <strong id="dispPatientMobility"><%= patients[0].mobility || '車椅子' %></strong></span>
-        </div>
-
+      <!-- 2. オーダー属性（指示医 / 優先度 / 日時） ※患者情報はカルテ上部リボンで一元管理（右列には非表示） -->
+      <div class="patient-master-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:0.4rem 0.65rem; margin-bottom:0.4rem;">
         <!-- 内部保持用の隠しフォーム群 (submitOrderやJS連携用・非表示) -->
         <div style="display:none;" aria-hidden="true">
           <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)">
@@ -1507,10 +1502,10 @@
           <select id="patientMobilityInput"><option value="車椅子" selected>車椅子</option><option value="徒歩">徒歩</option><option value="ベッド">ベッド</option><option value="ストレッチャー">ストレッチャー</option></select>
         </div>
 
-        <!-- 行4: 指示医 / 優先度 / オーダー入力日時 / 実施予定日時 (1行にスッキリ統合) -->
-        <div class="form-row" style="grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr; margin-top:0.35rem; padding-top:0.35rem; border-top:1px solid #e2e8f0;">
+        <!-- 指示医 / 優先度 / オーダー入力日時 / 実施予定日時 (1行にスッキリ統合) -->
+        <div class="form-row" style="grid-template-columns: 1.1fr 1fr 1.1fr 1.1fr;">
           <div class="form-group">
-            <label class="form-label" for="doctorNameInput" style="font-size:0.76rem;">🩺 指示医師 (処方医師):</label>
+            <label class="form-label" for="doctorNameInput" style="font-size:0.75rem;">🩺 指示医師 (処方医師):</label>
             <input type="text" id="doctorNameInput" class="form-control" value="北島 先生 (内科)" style="padding:0.25rem 0.5rem; font-size:0.8rem;">
           </div>
           <div class="form-group">
@@ -3502,8 +3497,21 @@
           // 2. フォームの入力内容をクリア・初期化（消えずに何度も送信されるのを防止）
           resetOrderFormAfterSubmit(currentOrderType);
 
-          // 3. 送信完了通知 ＆ カルテ直通確認ボタンを表示
-          showOrderSentSuccessDialog(sentOrderId, sentPatientId, sentPatientName);
+          // 3. 送信完了通知（ポップアップなし・ボタンおよび履歴で確認可能）
+
+
+          // 4. 親ウィンドウ（電子カルテ等）へオーダー完了を通知
+          try {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({
+                type: 'ORDER_SUBMITTED',
+                orderId: sentOrderId,
+                patientId: sentPatientId,
+                patientName: sentPatientName,
+                orderType: currentOrderType
+              }, '*');
+            }
+          } catch (pmErr) {}
 
           pollHistory();
 
@@ -3592,36 +3600,9 @@
       }
     }
 
-    // 📋 送信成功時のカルテジャンプ付きダイアログ
+    // 📋 送信成功時のカルテジャンプ付きダイアログ（ポップアップ不要のため抑止）
     function showOrderSentSuccessDialog(orderId, patientId, patientName) {
-      const carteUrl = `http://${window.location.hostname || 'localhost'}:3000/articles?targetId=${encodeURIComponent(patientId)}`;
-      const toast = document.getElementById('toast');
-      if (toast) {
-        toast.innerHTML = `
-          <div style="display:flex; flex-direction:column; gap:0.4rem; padding:0.2rem; min-width:280px;">
-            <div style="font-weight:bold; font-size:0.85rem; color:#86efac; display:flex; align-items:center; gap:0.3rem;">
-              <span>✅</span> オーダー [${escapeHtml(orderId)}] 送信完了！
-            </div>
-            <div style="font-size:0.75rem; color:#cbd5e1; line-height:1.4;">
-              部門モニターへ送信され、<strong>患者「${escapeHtml(patientName)}」の電子カルテ記事にも自動保存</strong>されました。<br>入力欄をクリアしました。
-            </div>
-            <div style="display:flex; gap:0.4rem; margin-top:0.25rem;">
-              <a href="${carteUrl}" target="_blank" style="background:#0284c7; color:white; padding:0.35rem 0.75rem; border-radius:4px; font-weight:bold; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem; box-shadow:0 1px 3px rgba(0,0,0,0.3);">
-                📋 電子カルテで確認する ↗
-              </a>
-              <button type="button" onclick="document.getElementById('toast').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:0.35rem 0.6rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
-                閉じる
-              </button>
-            </div>
-          </div>
-        `;
-        toast.style.background = '#0f172a';
-        toast.style.border = '2px solid #10b981';
-        toast.style.display = 'flex';
-        setTimeout(() => {
-          if (toast.style.display !== 'none') toast.style.display = 'none';
-        }, 8000);
-      }
+      // ポップアップ不要化のため表示処理を抑止
     }
 
     function escapeHtml(str) {

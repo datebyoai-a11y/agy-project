@@ -125,6 +125,10 @@ app.get('/', (req, res) => {
     }
   }
 
+  const isEmbedded = String(req.query.embedded || req.query.embed || req.query.mode || '').toLowerCase() === '1' ||
+                     String(req.query.embedded || req.query.embed || req.query.mode || '').toLowerCase() === 'true' ||
+                     String(req.query.mode || '').toLowerCase() === 'compact';
+
   res.render('index', {
     patients: patientList,
     sentOrders: sentOrders,
@@ -137,7 +141,8 @@ app.get('/', (req, res) => {
     initialPatientId: queryPatientId,
     initialPatientName: queryPatientName,
     initialPatientDept: queryPatientDept,
-    initialOrderType: queryOrderType
+    initialOrderType: queryOrderType,
+    isEmbedded: isEmbedded
   });
 });
 

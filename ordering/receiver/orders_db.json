@@ -1,5 +1,89 @@
 [
   {
+    "orderId": "IV-20260923-4969",
+    "orderType": "IV",
+    "title": "💉 注射指示: [DIV] ソルデム3号輸液200ｍL+ファモチジン２０ｍｇ 他1件 (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "ソルデム3号輸液200ｍL+ファモチジン２０ｍｇ 他1件",
+      "medicineId": "DR0216",
+      "dosage": "1回1袋",
+      "rate": "80mL/h (約1時間15分で点滴)",
+      "frequency": "1日2回 (朝・夕)",
+      "startDate": "2026-09-23",
+      "endDate": "2026-09-25",
+      "days": 3,
+      "scheduleDays": "1日2回 (朝・夕) 3日間 (2026-09-23〜2026-09-25)",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "ソルデム3号輸液200ｍL+ファモチジン２０ｍｇ",
+          "medicineId": "DR0216",
+          "dosage": "1回1袋",
+          "route": "DIV",
+          "frequency": "1日2回 (朝・夕)",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-25",
+          "days": 3,
+          "rate": "80mL/h (約1時間15分で点滴)",
+          "remarks": "側管注"
+        },
+        {
+          "no": 2,
+          "medicine": "ブドウ糖注射液5％500ｍL「VTRS」",
+          "medicineId": "DR0207",
+          "dosage": "1回5％液500～1000ｍL。（注射液の溶解希釈）適量を用いる。",
+          "route": "DIV",
+          "frequency": "1日1回 (朝)",
+          "startDate": "2026-09-23",
+          "endDate": "2026-09-25",
+          "days": 3,
+          "rate": "60mL/h",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": false,
+      "remarks": "点滴刺入部の腫脹・疼痛に注意のこと",
+      "orderDate": "2026-09-23T18:39",
+      "scheduledAt": "2026-09-23T19:00"
+    },
+    "orderDate": "2026-09-23T18:39",
+    "createdAt": "2026-09-23T09:42:05.201Z",
+    "status": "RECEIVED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T09:42:05.211Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T09:42:05.211Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      }
+    ]
+  },
+  {
     "orderId": "IV-20260923-5511",
     "orderType": "IV",
     "title": "💉 注射指示: [DIV] ソルデム3号輸液500ｍL (asfsad)",
