@@ -146,7 +146,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// 1-2. 注射指示箋（紙様式忠実再現・入力画面案） (GET /injection-sheet-form)
+// 1-2. 病棟用 注射指示箋 入力画面 (インクリメンタル検索機能完備)
 app.get('/injection-sheet-form', (req, res) => {
   const hostHeader = req.headers.host || `localhost:${PORT}`;
   const hostname = hostHeader.split(':')[0] || 'localhost';

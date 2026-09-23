@@ -1633,6 +1633,226 @@
     .status-history-ok-btn:hover {
       background: #0369a1;
     }
+    /* 最小限リボン検索ボタン */
+    .btn-ribbon-search-minimal {
+      background: rgba(255, 255, 255, 0.14);
+      color: #e0f2fe;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      padding: 0.22rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .btn-ribbon-search-minimal:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+    .btn-ribbon-search-minimal.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
+    }
+
+    /* 検索条件展開パネル */
+    .ribbon-search-panel {
+      background: #ffffff;
+      border-bottom: 2px solid #0284c7;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+      padding: 0.55rem 0.9rem;
+      animation: slideDownPanel 0.18s ease-out;
+    }
+    @keyframes slideDownPanel {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .search-panel-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .search-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .ribbon-fixed-patient-badge {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #166534;
+      font-size: 0.76rem;
+      padding: 0.12rem 0.5rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .search-panel-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.1rem 0.35rem;
+      line-height: 1;
+      border-radius: 3px;
+    }
+    .search-panel-close-btn:hover {
+      background: #f1f5f9;
+      color: #ef4444;
+    }
+    .search-panel-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .search-input-box {
+      display: flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      gap: 0.35rem;
+    }
+    .search-input-box:focus-within {
+      border-color: #0284c7;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+    .search-text-input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 0.82rem;
+      flex: 1;
+      color: #0f172a;
+    }
+    .remarks-only-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #b45309;
+      background: #fefce8;
+      border: 1px solid #fde047;
+      padding: 0.25rem 0.55rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .drug-pill-group {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+    .drug-pill-btn {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.18rem 0.5rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+    .drug-pill-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .drug-pill-btn.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+    }
+    .drug-pill-btn.pill-ab.active {
+      background: #0f766e;
+      color: #ffffff;
+      border-color: #0f766e;
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(15, 118, 110, 0.3);
+    }
+    .search-mini-input {
+      padding: 0.2rem 0.45rem;
+      font-size: 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 3px;
+      outline: none;
+    }
+    .search-mini-input:focus {
+      border-color: #0284c7;
+    }
+    .mini-select-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.74rem;
+      color: #475569;
+      font-weight: 600;
+    }
+    .mini-select-box select {
+      padding: 0.18rem 0.4rem;
+      font-size: 0.74rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 3px;
+      background: #ffffff;
+      outline: none;
+    }
+    .btn-panel-submit {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 0.3rem 0.85rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.15s ease;
+    }
+    .btn-panel-submit:hover {
+      background: #0369a1;
+    }
+    .btn-panel-reset {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      padding: 0.3rem 0.65rem;
+      border-radius: 4px;
+      font-size: 0.76rem;
+      cursor: pointer;
+    }
+    .btn-panel-reset:hover {
+      background: #e2e8f0;
+    }
+    @keyframes highlightPulse {
+      0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); background-color: #fef08a !important; }
+      50% { box-shadow: 0 0 18px 6px rgba(79, 70, 229, 0.45); background-color: #fef9c3 !important; }
+      100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    }
+    .article-highlight-target {
+      animation: highlightPulse 2.5s ease-out;
+      border-color: #4f46e5 !important;
+      border-width: 2px !important;
+    }
   </style>
 </head>
 <body>
@@ -1705,10 +1925,23 @@
           <span id="headerOverrideBadge" style="display:<%= (typeof isOverride !== 'undefined' && isOverride) ? 'inline-block' : 'none' %>; background:#f59e0b; color:white; font-size:0.7rem; font-weight:bold; padding:0.1rem 0.35rem; border-radius:3px; white-space:nowrap;" title="一時代行入力モード中">代行中</span>
         </div>
 
+        <!-- 🔍 検索トグルボタン (リボン埋め込み最小限) -->
+        <button type="button" id="btnRibbonSearchToggle" class="btn-ribbon-search-minimal" onclick="toggleRibbonSearchPanel()" title="カルテ記載・オーダー条件検索パネルを展開/収納" aria-expanded="false">
+          <span>🔍</span>
+          <span>検索</span>
+          <span id="ribbonSearchArrow" style="font-size:0.65rem; transition:transform 0.2s ease;">▼</span>
+        </button>
+
         <!-- 🚀 オーダリング移行 (Port 4000) -->
         <a id="btnOrderingTop" href="http://localhost:4000/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面 (Port 4000) を現在選択中の患者を引き継いで開きます">
           <span>🚀</span>
           <span>オーダリング移行 (Port 4000)</span>
+        </a>
+
+        <!-- 💉 注射指示箋 (インクリメンタル検索対応) -->
+        <a id="btnInjSheetTop" href="http://localhost:4000/injection-sheet-form" target="app_injection_sheet" onclick="return handleInjectionSheetClick(event, this);" style="background:#059669; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="注射指示箋 (インクリメンタル薬品検索完備) を現在選択中の患者を引き継いで開きます">
+          <span>💉</span>
+          <span>注射指示箋</span>
         </a>
 
         <!-- ⚙️ メニュー -->
@@ -1731,13 +1964,6 @@
                 <div class="item-desc">メインポータルへ戻る</div>
               </div>
             </a>
-            <a href="javascript:void(0)" onclick="testCarteBellSound()" class="gear-dropdown-item">
-              <span class="item-icon">🔔</span>
-              <div class="item-info">
-                <div class="item-title">着信ベル試聴</div>
-                <div class="item-desc">新着通知音のテスト再生</div>
-              </div>
-            </a>
 
             <div class="gear-section-label">診療記録・ナレッジ</div>
             <a href="/target-people" class="gear-dropdown-item">
@@ -1752,6 +1978,13 @@
               <div class="item-info">
                 <div class="item-title">記事・電子カルテ</div>
                 <div class="item-desc">診療記事・各種記録の閲覧・投稿</div>
+              </div>
+            </a>
+            <a id="btnCarteSearchGear" href="javascript:void(0)" onclick="toggleRibbonSearchPanel(true); if(typeof closeGearMenu==='function')closeGearMenu();" class="gear-dropdown-item">
+              <span class="item-icon">🔍</span>
+              <div class="item-info">
+                <div class="item-title">記事・オーダー条件検索</div>
+                <div class="item-desc">リボンの条件検索パネルを展開します</div>
               </div>
             </a>
             <a href="/articles?order=radiology" class="gear-dropdown-item">
@@ -1775,11 +2008,11 @@
                 <div class="item-desc">病棟用注射指示箋・処方・検査の専用送信画面へ移動</div>
               </div>
             </a>
-            <a id="btnPaperInjectionGear" href="http://localhost:4000/injection-sheet-form" target="app_injection_sheet" onclick="return handlePaperInjectionClick(event, this);" class="gear-dropdown-item" style="background:#fefce8; border-left:3px solid #eab308; text-decoration:none;">
-              <span class="item-icon">📝</span>
+            <a id="btnInjSheetGear" href="http://localhost:4000/injection-sheet-form" target="app_injection_sheet" onclick="return handleInjectionSheetClick(event, this);" class="gear-dropdown-item" style="background:#f0fdf4; border-left:3px solid #059669; text-decoration:none;">
+              <span class="item-icon">💉</span>
               <div class="item-info">
-                <div class="item-title" style="color:#b45309; font-weight:bold;">注射指示箋 入力画面案 (原本様式再現)</div>
-                <div class="item-desc">紙の指示箋様式そのままのレイアウトで入力・A4印刷</div>
+                <div class="item-title" style="color:#059669; font-weight:bold;">注射指示箋 (インクリメンタル検索)</div>
+                <div class="item-desc">打鍵リアルタイム検索・15日スケジュール完備の注射指示箋画面</div>
               </div>
             </a>
 
@@ -1844,6 +2077,130 @@
         <a href="/logout" class="btn-logout" style="font-size:0.75rem; padding:0.3rem 0.6rem;">退室</a>
       </div>
     </div>
+
+    <!-- 🔽 検索条件展開パネル (リボン埋め込みボタン押下でスライド展開) -->
+    <div id="ribbonSearchPanel" class="ribbon-search-panel" style="display:none;">
+      <form id="ribbonSearchForm" action="/articles/search" method="get">
+        <!-- 対象患者はカルテで選択中の患者に固定 (hiddenで送信) -->
+        <input type="hidden" name="targetId" id="ribbonSearchTargetId" value="<%= activeTarget ? activeTarget._id : '' %>">
+        <input type="hidden" name="drugCategory" id="ribbonSearchDrugCat" value="all">
+
+        <div class="search-panel-container">
+          <!-- 上段: タイトル ＆ 患者固定バッジ ＆ 閉じるボタン -->
+          <div class="search-panel-header">
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+              <span style="font-weight:bold; font-size:0.85rem; color:#0369a1; display:flex; align-items:center; gap:0.3rem;">
+                <span>🔍</span> カルテ・オーダー詳細条件検索
+              </span>
+              <!-- 患者固定表示バッジ -->
+              <div class="ribbon-fixed-patient-badge" title="対象患者はカルテ画面で選択中の患者に固定されています">
+                <span>🔒 対象患者:</span>
+                <strong id="ribbonSearchPatientName">
+                  <%= activeTarget ? (activeTarget.customId ? `[${activeTarget.customId}] ` : '') + activeTarget.name + ' 様' : '全患者' %>
+                </strong>
+                <span style="font-size:0.65rem; background:#bae6fd; color:#0369a1; padding:0.05rem 0.3rem; border-radius:3px; margin-left:0.25rem;">固定</span>
+              </div>
+            </div>
+            <button type="button" class="search-panel-close-btn" onclick="toggleRibbonSearchPanel(false)" title="検索パネルを閉じる">✕</button>
+          </div>
+
+          <!-- 中段1: 自由文字列 & 備考欄限定チェック -->
+          <div class="search-panel-row">
+            <div class="search-input-box" style="flex:1;">
+              <span style="font-size:0.85rem;">✏️</span>
+              <input type="text" name="q" id="ribbonSearchQuery" class="search-text-input" placeholder="カルテ記載・オーダー備考欄の自由文字列検索（スペース区切りでAND検索）..." autocomplete="off">
+            </div>
+            <label class="remarks-only-label" title="オーダリング送信時の自由記述備考欄・調剤指示・特記事項のみに絞り込みます">
+              <input type="checkbox" name="remarksOnly" value="1" id="ribbonRemarksOnlyChk" style="cursor:pointer;">
+              <span>⚡ 備考欄・特記事項のみ限定</span>
+            </label>
+          </div>
+
+          <!-- 中段2: 処方・抗生剤などのワンクリック条件選択 -->
+          <div class="search-panel-row">
+            <span style="font-size:0.75rem; font-weight:bold; color:#475569; white-space:nowrap; display:flex; align-items:center; gap:0.2rem;">
+              <span>💊</span> 処方条件:
+            </span>
+            <div class="drug-pill-group">
+              <button type="button" class="drug-pill-btn active" data-cat="all" onclick="selectRibbonDrugCat('all', this)">
+                <span>指定なし</span>
+              </button>
+              <button type="button" class="drug-pill-btn pill-ab" data-cat="antibiotics" onclick="selectRibbonDrugCat('antibiotics', this)" title="ユナシン、セフォセフ、クラビット、メロペネム等の抗生剤・抗菌薬を一括抽出">
+                <span>🛡️ 抗生剤・抗菌薬</span>
+              </button>
+              <button type="button" class="drug-pill-btn" data-cat="antipyretic" onclick="selectRibbonDrugCat('antipyretic', this)" title="カロナール、ロキソニン等の解熱鎮痛消炎剤">
+                <span>💊 解熱鎮痛</span>
+              </button>
+              <button type="button" class="drug-pill-btn" data-cat="antihypertensive" onclick="selectRibbonDrugCat('antihypertensive', this)" title="降圧薬・循環器薬">
+                <span>🫀 降圧剤</span>
+              </button>
+              <button type="button" class="drug-pill-btn" data-cat="gastro" onclick="selectRibbonDrugCat('gastro', this)" title="タケキャブ等の胃腸・消化性潰瘍薬">
+                <span>🧪 胃腸薬</span>
+              </button>
+              <button type="button" class="drug-pill-btn" data-cat="sedative" onclick="selectRibbonDrugCat('sedative', this)" title="睡眠導入剤・抗不安薬">
+                <span>😴 睡眠薬</span>
+              </button>
+              <button type="button" class="drug-pill-btn" data-cat="injection" onclick="selectRibbonDrugCat('injection', this)" title="輸液・注射製剤">
+                <span>💉 輸液</span>
+              </button>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.3rem; margin-left:auto;">
+              <span style="font-size:0.75rem; color:#64748b; white-space:nowrap;">薬品名:</span>
+              <input type="text" name="drugName" id="ribbonDrugName" class="search-mini-input" placeholder="薬品名..." style="width:130px;">
+            </div>
+          </div>
+
+          <!-- 下段: 期間・オーダー種別・職種 ＆ 実行ボタン -->
+          <div class="search-panel-row">
+            <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+              <div class="mini-select-box">
+                <label>📅 期間:</label>
+                <select name="period" id="ribbonPeriodSelect">
+                  <option value="all">全期間</option>
+                  <option value="7d">直近1週間</option>
+                  <option value="1m">直近1ヶ月</option>
+                  <option value="3m">直近3ヶ月</option>
+                  <option value="1y">直近1年</option>
+                </select>
+              </div>
+
+              <div class="mini-select-box">
+                <label>📋 種別:</label>
+                <select name="orderType" id="ribbonOrderTypeSelect">
+                  <option value="all">全記録・指示</option>
+                  <option value="prescription">💊 処方オーダー</option>
+                  <option value="iv">💉 点滴指示</option>
+                  <option value="radiology">🩻 放射線科</option>
+                  <option value="meal">🍱 食事オーダー</option>
+                  <option value="soap">📋 SOAP経過記録</option>
+                </select>
+              </div>
+
+              <div class="mini-select-box">
+                <label>🩺 職種:</label>
+                <select name="authorDept" id="ribbonAuthorDeptSelect">
+                  <option value="ALL">全職種</option>
+                  <option value="医師">医師</option>
+                  <option value="看護師">看護師</option>
+                  <option value="薬剤師">薬剤師</option>
+                  <option value="放射線技師">放射線技師</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- アクションボタン群 -->
+            <div style="display:flex; align-items:center; gap:0.4rem; margin-left:auto;">
+              <button type="button" class="btn-panel-reset" onclick="resetRibbonSearchConditions()">
+                <span>🔄 クリア</span>
+              </button>
+              <button type="submit" class="btn-panel-submit">
+                <span>🔍 検索する</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 
   <div class="container">
@@ -1889,9 +2246,11 @@
 
         <!-- 検索バー -->
         <div style="padding:0.35rem 0.5rem; background:#ffffff; border-bottom:1px solid #e2e8f0;">
-          <form action="/articles" method="get" style="display:flex; gap:0.25rem;">
+          <form action="/articles" method="get" style="display:flex; gap:0.25rem; align-items:center;">
             <input type="search" name="q" value="<%= searchQuery || '' %>" placeholder="カルテ検索..." style="flex:1; padding:0.25rem 0.4rem; font-size:0.78rem; border:1px solid #cbd5e1; border-radius:3px;">
-            <button type="submit" style="padding:0.25rem 0.5rem; background:#0284c7; color:white; border:none; border-radius:3px; font-size:0.75rem; cursor:pointer;">🔍</button>
+            <button type="button" id="btnLeftDetailedSearch" onclick="toggleRibbonSearchPanel(true);" style="padding:0.25rem 0.45rem; background:#4f46e5; color:white; border:none; border-radius:3px; font-size:0.72rem; font-weight:bold; white-space:nowrap; display:flex; align-items:center; gap:0.2rem; cursor:pointer;" title="リボンのカルテ記載・オーダー条件検索パネルを展開します">
+              <span>詳細条件</span>
+            </button>
           </form>
         </div>
 
@@ -3512,30 +3871,45 @@
       return true;
     }
 
-    // 📋 原本様式の注射指示入力画面（案）を開くハンドラ（既存タブがあれば再利用・移行）
-    function handlePaperInjectionClick(event, elem) {
+    // 💉 注射指示箋 (インクリメンタル検索対応) のURL生成
+    function getInjectionSheetUrl() {
+      const patientCustomId = document.getElementById('selectedPersonCode')?.value || (currentPerson && currentPerson.id) || currentTargetPersonId || '';
+      const patientName = currentTargetPersonName || (currentPerson && currentPerson.name) || '';
       const isHttps = window.location.protocol === 'https:';
-      const hostname = window.location.hostname || 'localhost';
-      const port = isHttps ? 5443 : 4000;
-      let url = `${window.location.protocol}//${hostname}:${port}/injection-sheet-form`;
-      const params = new URLSearchParams();
-      if (currentTargetPersonId) params.set('patientId', currentTargetPersonId);
-      if (currentTargetPersonName) params.set('patientName', currentTargetPersonName);
-      if (currentTargetPersonWard) params.set('patientDept', currentTargetPersonWard);
-      const queryStr = params.toString();
-      if (queryStr) url += `?${queryStr}`;
+      const senderPort = isHttps ? 4443 : 4000;
+      const protocol = isHttps ? 'https:' : 'http:';
+      const host = window.location.hostname || 'localhost';
+      const url = new URL(`${protocol}//${host}:${senderPort}/injection-sheet-form`);
+      if (patientCustomId) url.searchParams.set('patientId', patientCustomId);
+      if (patientName) url.searchParams.set('patientName', patientName);
+      return url.toString();
+    }
 
-      if (elem) elem.href = url;
+    // 💉 注射指示箋画面を別タブで開く (既存タブがあれば再利用)
+    function openInjectionSheet() {
+      const targetUrl = getInjectionSheetUrl();
       try {
-        const win = window.open(url, 'app_injection_sheet');
+        const win = window.open(targetUrl, 'app_injection_sheet');
         if (win && !win.closed) {
           try { win.focus(); } catch (_) {}
+        } else {
+          window.location.href = targetUrl;
         }
       } catch (e) {
-        window.location.href = url;
+        window.location.href = targetUrl;
       }
-      if (event) event.preventDefault();
-      return false;
+    }
+
+    // 💉 注射指示箋ボタンクリックハンドラ
+    function handleInjectionSheetClick(event, elem) {
+      const targetUrl = getInjectionSheetUrl();
+      if (elem) elem.href = targetUrl;
+      if (event && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        event.preventDefault();
+        openInjectionSheet();
+        return false;
+      }
+      return true;
     }
 
     // 画面上の全オーダリングボタン・リンクおよび右列iframeのURLを最新状態に同期
@@ -3549,21 +3923,11 @@
         const extBtn = document.getElementById('btnOrderingOpenExternal');
         if (extBtn) extBtn.href = targetUrl;
 
-        // 原本様式入力画面へのリンクも更新
-        const paperLink = document.getElementById('btnPaperInjectionGear');
-        if (paperLink) {
-          const isHttps = window.location.protocol === 'https:';
-          const hostname = window.location.hostname || 'localhost';
-          const port = isHttps ? 5443 : 4000;
-          let paperUrl = `${window.location.protocol}//${hostname}:${port}/injection-sheet-form`;
-          const params = new URLSearchParams();
-          if (currentTargetPersonId) params.set('patientId', currentTargetPersonId);
-          if (currentTargetPersonName) params.set('patientName', currentTargetPersonName);
-          if (currentTargetPersonWard) params.set('patientDept', currentTargetPersonWard);
-          const pStr = params.toString();
-          if (pStr) paperUrl += `?${pStr}`;
-          paperLink.href = paperUrl;
-        }
+        const injSheetUrl = getInjectionSheetUrl();
+        const topInjBtn = document.getElementById('btnInjSheetTop');
+        if (topInjBtn) topInjBtn.href = injSheetUrl;
+        const gearInjLink = document.getElementById('btnInjSheetGear');
+        if (gearInjLink) gearInjLink.href = injSheetUrl;
 
         // 🚀 右ペインのオーダリング埋め込み iframe (embedded=1) を同期
         const frame = document.getElementById('orderingSenderFrame');
@@ -3576,6 +3940,18 @@
           if (currentSrc !== finalUrlStr) {
             frame.src = finalUrlStr;
           }
+        }
+
+        // 🔍 詳細検索リンク & 展開パネルへの患者固定情報の同期
+        const hiddenTargetInput = document.getElementById('ribbonSearchTargetId');
+        if (hiddenTargetInput) hiddenTargetInput.value = currentTargetPersonId || '';
+        const patientNameEl = document.getElementById('ribbonSearchPatientName');
+        if (patientNameEl) {
+          patientNameEl.textContent = currentTargetPersonName ? `${currentTargetPersonName} 様` : '全患者';
+        }
+        const gearSearchBtn = document.getElementById('btnCarteSearchGear');
+        if (gearSearchBtn) {
+          gearSearchBtn.href = currentTargetPersonId ? `/articles/search?targetId=${currentTargetPersonId}` : '/articles/search';
         }
       } catch (err) {
         console.warn('updateOrderingLinks error:', err);
@@ -3599,9 +3975,6 @@
     window.addEventListener('message', (event) => {
       if (event && event.data && event.data.type === 'ORDER_SUBMITTED') {
         const orderData = event.data;
-        try {
-          playCarteBellSound('normal');
-        } catch (_) {}
         showToastNotification(`🚀 <strong>オーダー [${escapeHtml(orderData.orderId || '')}] 送信完了！</strong><br>カルテタイムラインに自動反映中...`);
 
         // 新着記事ポーリングを即座にキック
@@ -5566,81 +5939,7 @@
       window.addEventListener('focus', checkNewArticles);
     });
 
-    // 🔔 ベル・チャイム音再生エンジン (Web Audio API)
-    let carteAudioCtx = null;
-    function getCarteAudioContext() {
-      if (!carteAudioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) carteAudioCtx = new AudioContextClass();
-      }
-      if (carteAudioCtx && carteAudioCtx.state === 'suspended') {
-        carteAudioCtx.resume();
-      }
-      return carteAudioCtx;
-    }
-
-    document.addEventListener('click', () => {
-      if (carteAudioCtx && carteAudioCtx.state === 'suspended') {
-        carteAudioCtx.resume();
-      }
-    }, { once: false, passive: true });
-
-    function playCarteBellSound(type = 'normal') {
-      try {
-        const ctx = getCarteAudioContext();
-        if (!ctx) return;
-        const now = ctx.currentTime;
-
-        if (type === 'urgent') {
-          // 🚨 至急用アラート
-          [0, 0.15].forEach(delay => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, now + delay);
-            gain.gain.setValueAtTime(0.25, now + delay);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now + delay);
-            osc.stop(now + delay + 0.12);
-          });
-        } else {
-          // 🔔 通常チャイム音 (ソ: 784Hz -> ド: 1046.5Hz)
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(783.99, now);
-          gain1.gain.setValueAtTime(0.28, now);
-          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-          osc1.connect(gain1);
-          gain1.connect(ctx.destination);
-          osc1.start(now);
-          osc1.stop(now + 0.45);
-
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1046.50, now + 0.22);
-          gain2.gain.setValueAtTime(0.32, now + 0.22);
-          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
-          osc2.connect(gain2);
-          gain2.connect(ctx.destination);
-          osc2.start(now + 0.22);
-          osc2.stop(now + 0.85);
-        }
-      } catch (e) {
-        console.warn('カルテベル再生エラー:', e);
-      }
-    }
-
-    function testCarteBellSound() {
-      getCarteAudioContext();
-      playCarteBellSound('normal');
-      showToastNotification('🔔 ベル通知音を試聴しました（ピンポーン♪）');
-    }
-
-    // 🔔 リアルタイム新着記事・オーダー自動同期システム
+    // 📨 リアルタイム新着記事・オーダー自動同期システム（通知音・ベルは不要のため廃止）
     let lastArticleTimestamp = '<%= (articles && articles.length > 0) ? articles[articles.length - 1].createdAt.toISOString() : new Date().toISOString() %>';
     let isPollingArticles = false;
 
@@ -5682,12 +5981,10 @@
 
           if (hasCurrentTargetNew) {
             scrollToLatestArticle(true);
-            playCarteBellSound('normal');
-            showToastNotification('🔔 <strong>新着オーダー／記事を受信しました！</strong> タイムラインに自動反映されました。');
+            showToastNotification('📨 <strong>新着オーダー／記事を受信しました！</strong> タイムラインに自動反映されました。');
           } else if (otherTargetNewNames.length > 0) {
-            playCarteBellSound('normal');
             const first = otherTargetNewNames[0];
-            const notifMsg = `🔔 <strong>${escapeHtml(first.name)} 様</strong> 宛ての新着オーダーを受信しました <button type="button" onclick="onCarteTargetSelect('${first.id}')" style="background:#0284c7; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer; margin-left:6px;">表示する ↗</button>`;
+            const notifMsg = `📨 <strong>${escapeHtml(first.name)} 様</strong> 宛ての新着オーダーを受信しました <button type="button" onclick="onCarteTargetSelect('${first.id}')" style="background:#0284c7; color:white; border:none; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer; margin-left:6px;">表示する ↗</button>`;
             showToastNotification(notifMsg);
           }
         }
@@ -5897,6 +6194,113 @@
         }
       });
     })();
+
+    // 🔍 検索画面等からのアンカー遷移時の自動スクロール＆ハイライト
+    function scrollToAnchorArticle() {
+      const hash = window.location.hash;
+      if (!hash || !hash.startsWith('#article-')) return;
+      const cleanId = hash.replace('#article-', '');
+      setTimeout(() => {
+        const targetEl = document.getElementById(hash.substring(1)) ||
+                         document.getElementById('article-' + cleanId) ||
+                         document.querySelector(`[data-article-id="${cleanId}"]`);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetEl.classList.add('article-highlight-target');
+          if (typeof updateStatusBarAction === 'function') {
+            updateStatusBarAction(`🔍 検索結果から該当記事 [${cleanId.slice(-6)}] をフォーカスしました`);
+          }
+          setTimeout(() => {
+            targetEl.classList.remove('article-highlight-target');
+          }, 3500);
+        }
+      }, 350);
+    }
+    window.addEventListener('load', scrollToAnchorArticle);
+    window.addEventListener('hashchange', scrollToAnchorArticle);
+
+    // 🔍 最小限リボン検索ボタン押下時の条件パネル展開・格納トグル
+    function toggleRibbonSearchPanel(forceState) {
+      const panel = document.getElementById('ribbonSearchPanel');
+      const toggleBtn = document.getElementById('btnRibbonSearchToggle');
+      const arrow = document.getElementById('ribbonSearchArrow');
+      if (!panel) return;
+
+      const isCurrentlyOpen = panel.style.display !== 'none';
+      const nextState = (typeof forceState === 'boolean') ? forceState : !isCurrentlyOpen;
+
+      if (nextState) {
+        panel.style.display = 'block';
+        if (toggleBtn) {
+          toggleBtn.classList.add('active');
+          toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+        if (arrow) arrow.textContent = '▲';
+
+        // 患者情報を確実に同期（カルテ固定）
+        const targetInput = document.getElementById('ribbonSearchTargetId');
+        if (targetInput) targetInput.value = currentTargetPersonId || '';
+        const patientNameEl = document.getElementById('ribbonSearchPatientName');
+        if (patientNameEl) {
+          patientNameEl.textContent = currentTargetPersonName ? `${currentTargetPersonName} 様` : '全患者';
+        }
+
+        // 入力欄に自動フォーカス
+        setTimeout(() => {
+          const qInput = document.getElementById('ribbonSearchQuery');
+          if (qInput) qInput.focus();
+        }, 100);
+
+        if (typeof updateStatusBarAction === 'function') {
+          updateStatusBarAction('🔍 カルテ・オーダー検索条件パネルを展開しました');
+        }
+      } else {
+        panel.style.display = 'none';
+        if (toggleBtn) {
+          toggleBtn.classList.remove('active');
+          toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+        if (arrow) arrow.textContent = '▼';
+      }
+    }
+
+    // 処方ピル選択
+    function selectRibbonDrugCat(cat, elem) {
+      const hiddenInput = document.getElementById('ribbonSearchDrugCat');
+      if (hiddenInput) hiddenInput.value = cat;
+
+      document.querySelectorAll('.drug-pill-btn').forEach(btn => btn.classList.remove('active'));
+      if (elem) elem.classList.add('active');
+    }
+
+    // 検索条件リセット
+    function resetRibbonSearchConditions() {
+      const qInput = document.getElementById('ribbonSearchQuery');
+      if (qInput) qInput.value = '';
+      const remChk = document.getElementById('ribbonRemarksOnlyChk');
+      if (remChk) remChk.checked = false;
+      const drugName = document.getElementById('ribbonDrugName');
+      if (drugName) drugName.value = '';
+      const period = document.getElementById('ribbonPeriodSelect');
+      if (period) period.value = 'all';
+      const ordType = document.getElementById('ribbonOrderTypeSelect');
+      if (ordType) ordType.value = 'all';
+      const dept = document.getElementById('ribbonAuthorDeptSelect');
+      if (dept) dept.value = 'ALL';
+
+      // 薬効ピルを「指定なし」に
+      selectRibbonDrugCat('all', document.querySelector('.drug-pill-btn[data-cat="all"]'));
+    }
+
+    // Escキーで検索パネルを閉じる
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const panel = document.getElementById('ribbonSearchPanel');
+        if (panel && panel.style.display !== 'none') {
+          toggleRibbonSearchPanel(false);
+        }
+      }
+    });
   </script>
 
   <!-- 🔏 PGP電子署名・改ざん検証詳細モーダル -->

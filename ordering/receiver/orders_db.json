@@ -1,5 +1,58 @@
 [
   {
+    "orderId": "IV-20260923-8686",
+    "orderType": "IV",
+    "title": "IVオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "一般病棟",
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "gender": "男",
+      "age": 65
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "フルカリック3号輸液1103ｍL 1袋",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "フルカリック3号輸液1103ｍL 1袋",
+          "dosage": "ハイカリックRF輸液500ｍL 1袋",
+          "route": "DIV",
+          "remarks": ""
+        }
+      ],
+      "pharmacistChecked": true,
+      "remarks": "原本様式入力画面より一括送信"
+    },
+    "orderDate": "2026-09-23T23:12:43.761Z",
+    "createdAt": "2026-09-23T23:12:43.761Z",
+    "status": "ACCEPTED",
+    "senderHost": "http://localhost:4000",
+    "receivedAt": "2026-09-23T23:12:43.771Z",
+    "executionHistory": [
+      {
+        "status": "RECEIVED",
+        "timestamp": "2026-09-23T23:12:43.771Z",
+        "actor": "受信サーバー (Receiver)",
+        "note": "オーダーを受信・登録しました"
+      },
+      {
+        "status": "ACCEPTED",
+        "timestamp": "2026-09-23T23:13:13.963Z",
+        "actor": "部門モニター操作者",
+        "note": "受付済"
+      }
+    ]
+  },
+  {
     "orderId": "IV-20260923-8325",
     "orderType": "IV",
     "title": "IVオーダー (undefined)",

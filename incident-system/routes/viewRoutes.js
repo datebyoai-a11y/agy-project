@@ -358,6 +358,334 @@ router.get('/articles', async (req, res) => {
   }
 });
 
+// =========================================================
+// 🔍 記事・オーダー詳細検索・条件検索 (GET /articles/search)
+// =========================================================
+const path = require('path');
+const fs = require('fs');
+
+// 抗生剤・抗菌薬判定用キーワード
+let ANTIBIOTICS_KEYWORDS = [
+  'ユナシン', 'アモキシシリン', 'サワシリン', 'オーグメンチン', 'アンピシリン',
+  'セファメジン', 'セファゾリン', 'セフォチアム', 'パンスポリン', 'セフォセフ', 'セフォペラゾン',
+  'ロセフィン', 'セフトリアキソン', 'セフォタキシム', 'モダシン', 'セフタジジム', 'マキシピーム', 'セフェピム',
+  'セフカペン', 'フロモックス', 'セフジトレン', 'メイアクト', 'セフジニル', 'セフゾン',
+  'メロペン', 'メロペネム', 'チエナム', 'イミペネム', 'フィニバックス',
+  'クラリス', 'クラリスロマイシン', 'クラリシッド', 'ジスロマック', 'アジスロマイシン', 'エリスロシン',
+  'クラビット', 'レボフロキサシン', 'シプロフロキサシン', 'アベロックス',
+  'バンコマイシン', 'テイコプラニン', 'ダプトマイシン', 'キュビシン',
+  'ゲンタマイシン', 'アミカシン', 'トブラマイシン',
+  'ミノマイシン', 'ドキシサイクリン',
+  'ダラシン', 'クリンダマイシン', 'フラジール', 'メトロニダゾール', 'バクタ',
+  '抗生', '抗菌', 'ペニシリン', 'セフェム', 'カルバペネム', 'マクロライド', 'キノロン'
+];
+
+try {
+  const medSharedPath = path.join(__dirname, '../../ordering/shared/medicines.json');
+  if (fs.existsSync(medSharedPath)) {
+    const medList = JSON.parse(fs.readFileSync(medSharedPath, 'utf-8'));
+    medList.forEach(m => {
+      const maj = m.therapeuticCategoryMajor || '';
+      if (maj.includes('抗菌') || maj.includes('抗生物質')) {
+        if (m.name) ANTIBIOTICS_KEYWORDS.push(m.name);
+        if (m.genericName) ANTIBIOTICS_KEYWORDS.push(m.genericName);
+      }
+    });
+  }
+} catch (_) {}
+ANTIBIOTICS_KEYWORDS = Array.from(new Set(ANTIBIOTICS_KEYWORDS));
+
+// 薬効分類プリセット
+const DRUG_CATEGORY_PATTERNS = {
+  antibiotics: new RegExp(ANTIBIOTICS_KEYWORDS.map(k => escapeRegex(k)).join('|'), 'i'),
+  antipyretic: /カロナール|アセトアミノフェン|ロキソニン|ロキソプロフェン|セレコックス|セレコキシブ|ボルタレン|ジクロフェナク|ナイキサン|ポンタール|ブルフェン|イブプロフェン|PL配合|SG配合/i,
+  antihypertensive: /アムロジピン|ノルバスク|アダラート|ニフェジピン|オルメテック|オルメサルタン|ミカルディス|テルミサルタン|ディオバン|バルサルタン|ブロプレス|カンデサルタン|アーチスト|カルベジロール|メインテート|ビソプロロール/i,
+  antithrombotic: /ワルファリン|ワーファリン|リバーロキサバン|イグザレルト|アピキサバン|エリキュース|エドキサバン|リクシアナ|ダビガトラン|プラザキサ|バイアスピリン|アスピリン|プラビックス|クロピドグレル|エフィエント|シロスタゾール|プレタール/i,
+  gastro: /タケキャブ|ボノプラザン|ネキシウム|エソメプラゾール|オメプラール|オメプラゾール|パリエット|ラベプラゾール|ガスター|ファモチジン|ムコスタ|レバミピド|セルベックス|テプレノン/i,
+  sedative: /マイスリー|ゾルピデム|デエビゴ|レンボレキサント|ベルソムラ|スボレキサント|エチゾラム|デパス|ロラゼパム|ワイパックス|ブロチゾラム|レンドルミン|フルニトラゼパム|サイレース/i,
+  injection: /生食|生理食塩水|大塚生食|ブドウ糖|ソルデム|ソリタ|フィジオ|ヴィーン|点滴|静注|注/i
+};
+
+// 備考欄テキスト抽出ヘルパー
+function extractOrderRemarks(art) {
+  const list = [];
+  if (art.ivOrderDetails && art.ivOrderDetails.remarks) list.push(art.ivOrderDetails.remarks);
+  if (art.radiologyOrderDetails && art.radiologyOrderDetails.remarks) list.push(art.radiologyOrderDetails.remarks);
+  if (art.mealOrderDetails && art.mealOrderDetails.remarks) list.push(art.mealOrderDetails.remarks);
+  
+  const content = art.content || '';
+  const lines = content.split('\n');
+  for (const l of lines) {
+    const trimmed = l.trim();
+    if (/^(・?(備考|注意事項|特記事項|調剤指示|注)[:：・]|・備考)/i.test(trimmed)) {
+      const cleaned = trimmed.replace(/^[・\s]*(備考|注意事項|特記事項|調剤指示|注)[:：・\s]*/i, '').trim();
+      if (cleaned) list.push(cleaned);
+    }
+  }
+  return Array.from(new Set(list));
+}
+
+// 処方・指示薬剤テキスト抽出ヘルパー
+function extractPrescriptionMeds(art) {
+  const list = [];
+  if (art.ivOrderDetails && art.ivOrderDetails.medicine) list.push(art.ivOrderDetails.medicine);
+  const content = art.content || '';
+  const lines = content.split('\n');
+  for (const l of lines) {
+    const trimmed = l.trim();
+    if (/^(\s*Rp\d*[:：]|\s*\(\d+\)|\s*・薬剤[:：])/i.test(trimmed)) {
+      list.push(trimmed);
+    }
+  }
+  return Array.from(new Set(list));
+}
+
+// 抗生剤判定ヘルパー
+function isAntibioticRecord(art) {
+  const abPattern = DRUG_CATEGORY_PATTERNS.antibiotics;
+  if (!abPattern) return false;
+  if (abPattern.test(art.title || '')) return true;
+  if (abPattern.test(art.content || '')) return true;
+  if (art.ivOrderDetails && abPattern.test(art.ivOrderDetails.medicine || '')) return true;
+  return false;
+}
+
+// キーワードハイライト関数 (HTMLエスケープ後にmarkタグ付与)
+function highlightSearchTerms(text, terms) {
+  if (!text) return '';
+  let escaped = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  if (!terms || terms.length === 0) return escaped;
+  
+  terms.forEach(term => {
+    if (!term) return;
+    const re = new RegExp(`(${escapeRegex(term)})`, 'gi');
+    escaped = escaped.replace(re, '<mark class="highlight">$1</mark>');
+  });
+  return escaped;
+}
+
+// 4.5.5. 記事・オーダー詳細検索画面 (GET /articles/search)
+router.get('/articles/search', async (req, res) => {
+  try {
+    const queryText = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const selectedTargetId = typeof req.query.targetId === 'string' ? req.query.targetId.trim() : '';
+    const selectedDrugCategory = typeof req.query.drugCategory === 'string' ? req.query.drugCategory.trim() : 'all';
+    const specifiedDrugName = typeof req.query.drugName === 'string' ? req.query.drugName.trim() : '';
+    const selectedRxType = typeof req.query.rxType === 'string' ? req.query.rxType.trim() : 'all';
+    const selectedOrderType = typeof req.query.orderType === 'string' ? req.query.orderType.trim() : 'all';
+    const selectedPeriod = typeof req.query.period === 'string' ? req.query.period.trim() : 'all';
+    const startDate = typeof req.query.startDate === 'string' ? req.query.startDate.trim() : '';
+    const endDate = typeof req.query.endDate === 'string' ? req.query.endDate.trim() : '';
+    const selectedAuthorDept = typeof req.query.authorDept === 'string' ? req.query.authorDept.trim() : 'ALL';
+    const remarksOnly = req.query.remarksOnly === '1' || req.query.remarksOnly === 'true';
+    const includeContent = req.query.includeContent !== '0';
+    const includeRemarks = req.query.includeRemarks !== '0';
+
+    const targetPeople = await TargetPerson.find().sort({ customId: 1 });
+    const users = await User.find({}, 'userName loginId department').sort({ userName: 1 });
+
+    const andConditions = [];
+
+    // 1. 患者絞り込み
+    let selectedTargetPersonName = '';
+    if (selectedTargetId && selectedTargetId !== 'ALL') {
+      const tp = targetPeople.find(t => t._id.toString() === selectedTargetId || t.customId === selectedTargetId);
+      if (tp) {
+        andConditions.push({ targetPerson: tp._id });
+        selectedTargetPersonName = `[${tp.customId}] ${tp.name} 様`;
+      }
+    }
+
+    // 2. 期間絞り込み
+    const now = new Date();
+    if (selectedPeriod === '7d') {
+      const d = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+      andConditions.push({ createdAt: { $gte: d } });
+    } else if (selectedPeriod === '1m') {
+      const d = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
+      andConditions.push({ createdAt: { $gte: d } });
+    } else if (selectedPeriod === '3m') {
+      const d = new Date(now.getTime() - 90 * 24 * 3600 * 1000);
+      andConditions.push({ createdAt: { $gte: d } });
+    } else if (selectedPeriod === '1y') {
+      const d = new Date(now.getTime() - 365 * 24 * 3600 * 1000);
+      andConditions.push({ createdAt: { $gte: d } });
+    } else if (selectedPeriod === 'custom' || startDate || endDate) {
+      const dateCond = {};
+      if (startDate) dateCond.$gte = new Date(startDate + 'T00:00:00.000Z');
+      if (endDate) dateCond.$lte = new Date(endDate + 'T23:59:59.999Z');
+      if (Object.keys(dateCond).length > 0) {
+        andConditions.push({ createdAt: dateCond });
+      }
+    }
+
+    // 3. オーダー種別絞り込み
+    if (selectedOrderType === 'prescription') {
+      andConditions.push({ $or: [{ category: /処方/ }, { title: /【処方】|PRESCRIPTION/ }] });
+    } else if (selectedOrderType === 'iv') {
+      andConditions.push({ $or: [{ category: /点滴|注射/ }, { title: /点滴|注射|IV/ }, { 'ivOrderDetails.medicine': { $exists: true, $ne: '' } }] });
+    } else if (selectedOrderType === 'radiology') {
+      andConditions.push({ $or: [{ category: /放射線/ }, { title: /放射線|X線|CT|MRI|透視|RADIOLOGY/ }] });
+    } else if (selectedOrderType === 'lab') {
+      andConditions.push({ $or: [{ category: /検査/ }, { title: /検査|LAB/ }] });
+    } else if (selectedOrderType === 'meal') {
+      andConditions.push({ $or: [{ category: /食事/ }, { title: /食事|MEAL/ }] });
+    } else if (selectedOrderType === 'rehab') {
+      andConditions.push({ $or: [{ category: /リハビリ/ }, { title: /リハビリ|REHAB/ }] });
+    } else if (selectedOrderType === 'soap') {
+      andConditions.push({ category: { $nin: [/オーダー/, /処方/, /点滴/, /注射/, /放射線/, /食事/, /リハビリ/] } });
+    }
+
+    // 4. 処方種別 (内服 vs 注射)
+    if (selectedRxType === 'oral') {
+      andConditions.push({ $or: [{ category: /処方/ }, { title: /【処方】|PRESCRIPTION/ }] });
+    } else if (selectedRxType === 'iv') {
+      andConditions.push({ $or: [{ category: /点滴|注射/ }, { title: /点滴|注射|IV/ }] });
+    }
+
+    // 5. 薬効分類条件 (抗生剤・抗菌薬など)
+    if (selectedDrugCategory && selectedDrugCategory !== 'all' && DRUG_CATEGORY_PATTERNS[selectedDrugCategory]) {
+      const pattern = DRUG_CATEGORY_PATTERNS[selectedDrugCategory];
+      andConditions.push({
+        $or: [
+          { title: pattern },
+          { content: pattern },
+          { 'ivOrderDetails.medicine': pattern }
+        ]
+      });
+    }
+
+    // 6. 薬品名直接指定
+    if (specifiedDrugName) {
+      const dPattern = new RegExp(escapeRegex(specifiedDrugName), 'i');
+      andConditions.push({
+        $or: [
+          { title: dPattern },
+          { content: dPattern },
+          { 'ivOrderDetails.medicine': dPattern }
+        ]
+      });
+    }
+
+    // 7. 自由文字列検索 (q)
+    const searchTerms = [];
+    if (queryText) {
+      const terms = queryText.split(/[\s　]+/).filter(Boolean);
+      terms.forEach(term => {
+        searchTerms.push(term);
+        const tPattern = new RegExp(escapeRegex(term), 'i');
+
+        if (remarksOnly) {
+          // 備考欄のみに絞り込み検索
+          const remInContentPattern = new RegExp(`(備考|特記事項|注意事項|調剤指示|注)[^\\n]*${escapeRegex(term)}`, 'i');
+          andConditions.push({
+            $or: [
+              { 'ivOrderDetails.remarks': tPattern },
+              { 'radiologyOrderDetails.remarks': tPattern },
+              { 'mealOrderDetails.remarks': tPattern },
+              { content: remInContentPattern }
+            ]
+          });
+        } else {
+          // 過去の記載・オーダー備考欄を両方検索
+          const orList = [
+            { title: tPattern },
+            { content: tPattern },
+            { 'ivOrderDetails.medicine': tPattern },
+            { 'ivOrderDetails.remarks': tPattern },
+            { 'radiologyOrderDetails.remarks': tPattern },
+            { 'mealOrderDetails.remarks': tPattern }
+          ];
+          andConditions.push({ $or: orList });
+        }
+      });
+    }
+
+    // 8. 職種絞り込み
+    if (selectedAuthorDept && selectedAuthorDept !== 'ALL') {
+      const matchingUsers = users.filter(u => u.department && (u.department === selectedAuthorDept || u.department.includes(selectedAuthorDept)));
+      if (matchingUsers.length > 0) {
+        andConditions.push({ author: { $in: matchingUsers.map(u => u._id) } });
+      }
+    }
+
+    const mongoQuery = andConditions.length > 0 ? { $and: andConditions } : {};
+
+    const articles = await Article.find(mongoQuery)
+      .populate('author')
+      .populate('targetPerson')
+      .sort({ createdAt: -1 })
+      .limit(150);
+
+    // ハイライト対象ワード群
+    const allHighlightTerms = [...searchTerms];
+    if (specifiedDrugName) allHighlightTerms.push(specifiedDrugName);
+
+    // 検索結果オブジェクトの構築
+    const results = articles.map(art => {
+      const remarks = extractOrderRemarks(art);
+      const meds = extractPrescriptionMeds(art);
+      const isAb = isAntibioticRecord(art);
+
+      // 本文スニペット生成
+      let rawSnippet = art.content || '';
+      if (rawSnippet.length > 250) {
+        let cutStart = 0;
+        if (searchTerms.length > 0) {
+          const idx = rawSnippet.toLowerCase().indexOf(searchTerms[0].toLowerCase());
+          if (idx > 40) cutStart = idx - 30;
+        }
+        rawSnippet = (cutStart > 0 ? '…' : '') + rawSnippet.slice(cutStart, cutStart + 220) + '…';
+      }
+
+      const highlightedTitle = highlightSearchTerms(art.title, allHighlightTerms);
+      const highlightedSnippet = highlightSearchTerms(rawSnippet, allHighlightTerms);
+      const highlightedRemarks = remarks.map(r => highlightSearchTerms(r, allHighlightTerms));
+      const highlightedMeds = meds.map(m => highlightSearchTerms(m, allHighlightTerms));
+
+      return {
+        _id: art._id,
+        title: art.title,
+        highlightedTitle,
+        category: art.category,
+        createdAt: art.createdAt,
+        targetPerson: art.targetPerson,
+        author: art.author,
+        isAntibiotic: isAb,
+        orderRemarks: highlightedRemarks,
+        prescriptionMeds: highlightedMeds,
+        highlightedSnippet
+      };
+    });
+
+    res.render('article-search', {
+      results,
+      targetPeople,
+      selectedTargetId,
+      selectedTargetPersonName,
+      queryText,
+      includeContent,
+      includeRemarks,
+      remarksOnly,
+      selectedDrugCategory,
+      specifiedDrugName,
+      selectedRxType,
+      selectedOrderType,
+      selectedPeriod,
+      startDate,
+      endDate,
+      selectedAuthorDept
+    });
+  } catch (err) {
+    console.error('[Search Error]', err);
+    res.status(500).send('検索処理エラー: ' + err.message);
+  }
+});
+
 // 4.6. ユーザー管理画面
 router.get('/users', async (req, res) => {
   try {

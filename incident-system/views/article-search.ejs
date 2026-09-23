@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>記事・オーダー詳細検索 - 交雄会だて病院 電子カルテシステム</title>
+  <!-- 多重起動制御: カルテ入力画面と同一タブ名で管理 -->
+  <script>
+    window.name = 'app_carte_articles';
+  </script>
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --accent: #0f766e;
+      --accent-light: #ccfbf1;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* 最上部ヘッダー */
+    header {
+      background: #0f172a;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-branding {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+    .header-logo {
+      font-size: 1.5rem;
+    }
+    .header-hospital-name {
+      font-size: 0.78rem;
+      color: #7dd3fc;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+    }
+    .header-title {
+      font-size: 1.12rem;
+      font-weight: 800;
+      margin: 0;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.38rem 0.85rem;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+    }
+    .btn-header-back {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+    }
+    .btn-header-back:hover {
+      background: #334155;
+      color: white;
+    }
+    .btn-header-ordering {
+      background: #0284c7;
+      color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .btn-header-ordering:hover {
+      background: #0369a1;
+    }
+
+    /* メインコンテナ */
+    .search-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem 1.2rem 2.5rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      flex: 1;
+    }
+
+    /* 検索条件設定カード */
+    .search-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .card-header-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid #0f766e;
+    }
+    .card-header-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: normal;
+      margin-left: auto;
+    }
+
+    /* 検索フォームセクション */
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .section-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .section-label .tag-req {
+      font-size: 0.68rem;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+    }
+
+    /* 自由文字列検索バー */
+    .keyword-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .keyword-icon {
+      position: absolute;
+      left: 12px;
+      font-size: 1.15rem;
+      color: #64748b;
+      pointer-events: none;
+    }
+    .keyword-input {
+      width: 100%;
+      padding: 0.65rem 0.75rem 0.65rem 2.6rem;
+      font-size: 0.95rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      outline: none;
+      transition: all 0.15s ease;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .keyword-input:focus {
+      background: #ffffff;
+      border-color: #0f766e;
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    }
+    .search-options-row {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      margin-top: 0.2rem;
+      font-size: 0.82rem;
+    }
+    .chk-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      font-weight: 600;
+      color: #334155;
+      user-select: none;
+    }
+
+    /* 処方・薬効分類ピルセレクター */
+    .drug-pills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      align-items: center;
+    }
+    .pill-btn {
+      padding: 0.38rem 0.75rem;
+      border-radius: 9999px;
+      border: 1.5px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      user-select: none;
+    }
+    .pill-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+    .pill-btn.active {
+      background: #0f766e;
+      color: #ffffff;
+      border-color: #0f766e;
+      box-shadow: 0 2px 4px rgba(15,118,110,0.25);
+    }
+    .pill-btn.pill-antibiotics {
+      border-color: #0284c7;
+      background: #f0f9ff;
+      color: #0369a1;
+      font-weight: 700;
+    }
+    .pill-btn.pill-antibiotics:hover {
+      background: #e0f2fe;
+    }
+    .pill-btn.pill-antibiotics.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 2px 6px rgba(2,132,199,0.35);
+    }
+
+    /* グリッドフィルター (患者・期間・職種) */
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.75rem;
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .filter-item label {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #475569;
+    }
+    .filter-item select,
+    .filter-item input {
+      padding: 0.38rem 0.55rem;
+      font-size: 0.82rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+    }
+    .filter-item select:focus,
+    .filter-item input:focus {
+      border-color: #0284c7;
+    }
+
+    /* ボタンアクション行 */
+    .search-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 0.4rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #f1f5f9;
+    }
+    .btn-search-exec {
+      background: #0f766e;
+      color: white;
+      border: none;
+      padding: 0.55rem 1.6rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 2px 6px rgba(15,118,110,0.3);
+      transition: all 0.15s ease;
+    }
+    .btn-search-exec:hover {
+      background: #115e59;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(15,118,110,0.35);
+    }
+    .btn-search-reset {
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-search-reset:hover {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    /* 検索結果エリア */
+    .results-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .results-summary-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 1rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .active-conditions-tags {
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .condition-tag {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.12rem 0.45rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .condition-tag.tag-ab {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #bae6fd;
+    }
+    .condition-tag.tag-rem {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    /* 記事結果カード */
+    .result-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .result-card:hover {
+      border-color: #0284c7;
+      box-shadow: 0 4px 12px rgba(2,132,199,0.08);
+    }
+    .result-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .result-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #64748b;
+      flex-wrap: wrap;
+    }
+    .badge-cat {
+      font-size: 0.72rem;
+      font-weight: bold;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+    .cat-rx { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .cat-iv { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .cat-rad { background: #fce7f3; color: #9d174d; border: 1px solid #fbcfe8; }
+    .cat-meal { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .cat-rehab { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .cat-soap { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+    .result-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.4;
+    }
+
+    /* 備考欄ハイライトブロック */
+    .remarks-highlight-box {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-left: 4px solid #f59e0b;
+      border-radius: 4px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.82rem;
+      color: #78350f;
+      line-height: 1.4;
+    }
+    .remarks-label {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.2rem;
+      color: #b45309;
+    }
+
+    /* 処方・指示薬剤ハイライトブロック */
+    .meds-highlight-box {
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      border-left: 4px solid #0284c7;
+      border-radius: 4px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.82rem;
+      color: #1e3a8a;
+      line-height: 1.4;
+    }
+    .meds-label {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.2rem;
+      color: #0369a1;
+    }
+
+    /* 過去記載本文プレビュー */
+    .content-snippet {
+      font-size: 0.82rem;
+      color: #334155;
+      line-height: 1.5;
+      background: #f8fafc;
+      padding: 0.5rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    /* キーワードハイライトマーク */
+    mark.highlight {
+      background: #fef08a;
+      color: #854d0e;
+      padding: 0.05rem 0.2rem;
+      border-radius: 2px;
+      font-weight: bold;
+    }
+
+    /* カードフッター */
+    .result-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.4rem;
+      border-top: 1px solid #f1f5f9;
+      font-size: 0.78rem;
+    }
+    .btn-open-article {
+      background: #0284c7;
+      color: white;
+      text-decoration: none;
+      padding: 0.3rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.15s ease;
+    }
+    .btn-open-article:hover {
+      background: #0369a1;
+    }
+
+    /* 該当なし表示 */
+    .no-results-card {
+      background: #ffffff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 最上部ヘッダー -->
+  <header>
+    <div class="header-branding">
+      <span class="header-logo">🏥</span>
+      <div>
+        <div class="header-hospital-name">医療法人 社団 交雄会 だて病院</div>
+        <h1 class="header-title">🔍 診療記事・オーダー統合詳細検索</h1>
+      </div>
+    </div>
+    <div class="header-actions">
+      <% const curTargetId = selectedTargetId || (typeof targetId !== 'undefined' ? targetId : ''); %>
+      <a href="/articles<%= curTargetId && curTargetId !== 'ALL' ? `?targetId=${encodeURIComponent(curTargetId)}` : '' %>" class="btn-header btn-header-back" title="電子カルテ入力画面へ戻る">
+        <span>◀</span>
+        <span>カルテ記事画面へ戻る</span>
+      </a>
+      <a href="http://localhost:4000/<%= curTargetId && curTargetId !== 'ALL' ? `?patientId=${encodeURIComponent(curTargetId)}` : '' %>" target="app_ordering_sender" class="btn-header btn-header-ordering" title="オーダリングシステム (Port 4000) へ移動">
+        <span>🚀</span>
+        <span>オーダリング (4000)</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="search-container">
+    <!-- 検索条件入力カード -->
+    <div class="search-card">
+      <div class="card-header-title">
+        <span>⚙️ 検索条件の指定</span>
+        <span class="card-header-subtitle">過去の記載・オーダー備考欄の自由文字列検索 ＆ 処方薬効分類検索</span>
+      </div>
+
+      <form id="advancedSearchForm" action="/articles/search" method="GET">
+        <!-- 1. 自由文字列検索 (カルテ本文 & オーダー備考欄) -->
+        <div class="form-section">
+          <label class="section-label" for="keywordInput">
+            <span>📝 自由文字列検索 (過去の記載 & オーダー画面の備考欄):</span>
+            <span class="tag-req">複数単語AND検索対応</span>
+          </label>
+          <div class="keyword-input-wrapper">
+            <span class="keyword-icon">🔍</span>
+            <input type="search" id="keywordInput" name="q" class="keyword-input"
+                   placeholder="例: 発熱、立位困難、刺入部腫脹、肺炎、点滴速度、食形態、アレルギーなど"
+                   value="<%= typeof queryText !== 'undefined' ? queryText : '' %>" autocomplete="off">
+          </div>
+          <div class="search-options-row">
+            <label class="chk-label" title="カルテの経過記録・SOAP・医師/看護師等の記載全文を検索対象に含める">
+              <input type="checkbox" name="includeContent" value="1" <%= (typeof includeContent === 'undefined' || includeContent) ? 'checked' : '' %>>
+              <span>カルテ本文・経過記録 (SOAP・医師・看護記録等)</span>
+            </label>
+            <label class="chk-label" title="オーダリング送信時の自由記載欄・特記事項・調剤備考等を検索対象に含める">
+              <input type="checkbox" name="includeRemarks" value="1" <%= (typeof includeRemarks === 'undefined' || includeRemarks) ? 'checked' : '' %>>
+              <span>オーダー画面の備考欄 (指示特記事項・禁忌・調剤指示等)</span>
+            </label>
+            <label class="chk-label" style="color:#b45309;" title="オーダー画面の備考欄・特記事項だけに絞り込んで検索する">
+              <input type="checkbox" name="remarksOnly" id="remarksOnlyChk" value="1" <%= (typeof remarksOnly !== 'undefined' && remarksOnly) ? 'checked' : '' %> onchange="onRemarksOnlyChange(this.checked)">
+              <span>⚡ 備考欄のみに絞り込み</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 2. 処方・薬剤条件検索 (抗生剤・抗菌薬クイック選択 & 薬品名) -->
+        <div class="form-section" style="margin-top:0.3rem;">
+          <label class="section-label">
+            <span>💊 過去の処方・薬剤条件検索 (薬効分類 & 薬品名):</span>
+            <span style="font-size:0.75rem; color:#64748b; font-weight:normal;">ワンクリックで薬効分類を瞬時に絞り込み</span>
+          </label>
+          <input type="hidden" name="drugCategory" id="drugCategoryInput" value="<%= typeof selectedDrugCategory !== 'undefined' ? selectedDrugCategory : 'all' %>">
+          
+          <div class="drug-pills-container">
+            <button type="button" class="pill-btn <%= (!selectedDrugCategory || selectedDrugCategory === 'all') ? 'active' : '' %>" onclick="selectDrugCategory('all', this)">
+              <span>🌐 全処方 (指定なし)</span>
+            </button>
+            <button type="button" class="pill-btn pill-antibiotics <%= (selectedDrugCategory === 'antibiotics') ? 'active' : '' %>" onclick="selectDrugCategory('antibiotics', this)" title="ユナシン・セフォセフ・ロセフィン・クラビット等の抗生物質・抗菌薬">
+              <span>🛡️ 抗生剤・抗菌薬 (Antibiotics)</span>
+            </button>
+            <button type="button" class="pill-btn <%= (selectedDrugCategory === 'antipyretic') ? 'active' : '' %>" onclick="selectDrugCategory('antipyretic', this)" title="カロナール・ロキソニン・アセトアミノフェン等の解熱消炎鎮痛剤">
+              <span>💊 解熱鎮痛消炎薬 (NSAIDs等)</span>
+            </button>
+            <button type="button" class="pill-btn <%= (selectedDrugCategory === 'antihypertensive') ? 'active' : '' %>" onclick="selectDrugCategory('antihypertensive', this)" title="アムロジピン・オルメサルタン等の降圧薬">
+              <span>🫀 降圧剤・循環器用薬</span>
+            </button>
+            <button type="button" class="pill-btn <%= (selectedDrugCategory === 'antithrombotic') ? 'active' : '' %>" onclick="selectDrugCategory('antithrombotic', this)" title="ワルファリン・リバーロキサバン等の抗血栓薬">
+              <span>🩸 抗血栓・抗凝固薬</span>
+            </button>
+            <button type="button" class="pill-btn <%= (selectedDrugCategory === 'gastro') ? 'active' : '' %>" onclick="selectDrugCategory('gastro', this)" title="タケキャブ・ネキシウム・ファモチジン等の消化器薬">
+              <span>🧪 消化性潰瘍治療薬 (胃腸薬)</span>
+            </button>
+            <button type="button" class="pill-btn <%= (selectedDrugCategory === 'sedative') ? 'active' : '' %>" onclick="selectDrugCategory('sedative', this)" title="マイスリー・デエビゴ・エチゾラム等の睡眠導入薬">
+              <span>😴 睡眠薬・抗不安薬</span>
+            </button>
+            <button type="button" class="pill-btn <%= (selectedDrugCategory === 'injection') ? 'active' : '' %>" onclick="selectDrugCategory('injection', this)" title="生理食塩水・ソルデム・ブドウ糖等の点滴輸液製剤">
+              <span>💉 注射・輸液製剤</span>
+            </button>
+          </div>
+
+          <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.35rem;">
+            <div style="flex:1; display:flex; align-items:center; gap:0.35rem;">
+              <span style="font-size:0.8rem; font-weight:bold; color:#475569; white-space:nowrap;">薬品名直接指定:</span>
+              <input type="text" name="drugName" id="drugNameInput" class="filter-item" style="flex:1; padding:0.35rem 0.6rem; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:5px;"
+                     placeholder="薬品名の一部を入力（例: ユナシン、セフォセフ、カロナール、ロセフィン等）"
+                     value="<%= typeof specifiedDrugName !== 'undefined' ? specifiedDrugName : '' %>">
+            </div>
+            <div style="display:flex; align-items:center; gap:0.35rem;">
+              <span style="font-size:0.8rem; font-weight:bold; color:#475569; white-space:nowrap;">処方種別:</span>
+              <select name="rxType" style="padding:0.35rem 0.55rem; font-size:0.82rem; border:1px solid #cbd5e1; border-radius:5px; background:white;">
+                <option value="all" <%= (typeof selectedRxType === 'undefined' || selectedRxType === 'all') ? 'selected' : '' %>>すべて (内服・外用・注射)</option>
+                <option value="oral" <%= (typeof selectedRxType !== 'undefined' && selectedRxType === 'oral') ? 'selected' : '' %>>💊 内服・外用処方のみ</option>
+                <option value="iv" <%= (typeof selectedRxType !== 'undefined' && selectedRxType === 'iv') ? 'selected' : '' %>>💉 点滴・注射指示のみ</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 絞り込みフィルター (患者・期間・オーダー種別・職種) -->
+        <div class="filters-grid" style="margin-top:0.4rem;">
+          <!-- 対象患者 (カルテ選択患者に固定・選択不可) -->
+          <div class="filter-item">
+            <label>👤 対象患者 (カルテ固定):</label>
+            <% 
+              let fixedPatientText = '全患者（指定なし）';
+              let fixedPatientId = selectedTargetId || '';
+              if (selectedTargetId && targetPeople && targetPeople.length > 0) {
+                const foundP = targetPeople.find(t => t._id.toString() === selectedTargetId || t.customId === selectedTargetId);
+                if (foundP) {
+                  fixedPatientText = `[${foundP.customId}] ${foundP.name} 様 (${foundP.department || '病棟'})`;
+                  fixedPatientId = foundP._id;
+                }
+              }
+            %>
+            <div style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:0.42rem 0.65rem; border-radius:5px; font-weight:bold; font-size:0.84rem; display:flex; align-items:center; gap:0.4rem; box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);" title="対象患者はカルテ画面で選択中の患者に固定されています（検索画面内での変更はできません）">
+              <span style="font-size:0.95rem;">🔒</span>
+              <span style="color:#0f172a;"><%= fixedPatientText %></span>
+              <span style="font-size:0.68rem; color:#0369a1; background:#bae6fd; padding:0.05rem 0.35rem; border-radius:3px; margin-left:auto;">患者固定</span>
+            </div>
+            <input type="hidden" name="targetId" id="targetPersonSelect" value="<%= fixedPatientId %>">
+          </div>
+
+          <!-- 期間指定 -->
+          <div class="filter-item">
+            <label for="datePeriodSelect">📅 期間絞り込み:</label>
+            <select name="period" id="datePeriodSelect" onchange="onPeriodChange(this.value)">
+              <option value="all" <%= (typeof selectedPeriod === 'undefined' || selectedPeriod === 'all') ? 'selected' : '' %>>全期間</option>
+              <option value="7d" <%= (typeof selectedPeriod !== 'undefined' && selectedPeriod === '7d') ? 'selected' : '' %>>直近 1週間</option>
+              <option value="1m" <%= (typeof selectedPeriod !== 'undefined' && selectedPeriod === '1m') ? 'selected' : '' %>>直近 1ヶ月</option>
+              <option value="3m" <%= (typeof selectedPeriod !== 'undefined' && selectedPeriod === '3m') ? 'selected' : '' %>>直近 3ヶ月</option>
+              <option value="1y" <%= (typeof selectedPeriod !== 'undefined' && selectedPeriod === '1y') ? 'selected' : '' %>>直近 1年</option>
+              <option value="custom" <%= (typeof selectedPeriod !== 'undefined' && selectedPeriod === 'custom') ? 'selected' : '' %>>日付範囲指定...</option>
+            </select>
+          </div>
+
+          <!-- 開始日/終了日 (カスタム用) -->
+          <div class="filter-item" id="customDateRangeBox" style="display:<%= (typeof selectedPeriod !== 'undefined' && selectedPeriod === 'custom') ? 'flex' : 'none' %>;">
+            <label>期間指定 (開始〜終了):</label>
+            <div style="display:flex; gap:0.25rem; align-items:center;">
+              <input type="date" name="startDate" value="<%= typeof startDate !== 'undefined' ? startDate : '' %>" style="flex:1;">
+              <span>〜</span>
+              <input type="date" name="endDate" value="<%= typeof endDate !== 'undefined' ? endDate : '' %>" style="flex:1;">
+            </div>
+          </div>
+
+          <!-- オーダー種別 -->
+          <div class="filter-item">
+            <label for="orderTypeSelect">📋 記録・指示種別:</label>
+            <select name="orderType" id="orderTypeSelect">
+              <option value="all" <%= (typeof selectedOrderType === 'undefined' || selectedOrderType === 'all') ? 'selected' : '' %>>全記録・全指示</option>
+              <option value="prescription" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'prescription') ? 'selected' : '' %>>💊 処方オーダー</option>
+              <option value="iv" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'iv') ? 'selected' : '' %>>💉 点滴・注射指示</option>
+              <option value="radiology" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'radiology') ? 'selected' : '' %>>🩻 放射線科オーダー</option>
+              <option value="lab" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'lab') ? 'selected' : '' %>>🔬 臨床検査オーダー</option>
+              <option value="meal" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'meal') ? 'selected' : '' %>>🍱 食事選択オーダー</option>
+              <option value="rehab" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'rehab') ? 'selected' : '' %>>🏃 リハビリ指示</option>
+              <option value="soap" <%= (typeof selectedOrderType !== 'undefined' && selectedOrderType === 'soap') ? 'selected' : '' %>>📋 カルテ経過記録 (SOAP等)</option>
+            </select>
+          </div>
+
+          <!-- 記載職種 -->
+          <div class="filter-item">
+            <label for="authorDeptSelect">🩺 記載職種:</label>
+            <select name="authorDept" id="authorDeptSelect">
+              <option value="ALL">すべての職種</option>
+              <option value="医師" <%= (typeof selectedAuthorDept !== 'undefined' && selectedAuthorDept === '医師') ? 'selected' : '' %>>👨‍⚕️ 医師</option>
+              <option value="看護師" <%= (typeof selectedAuthorDept !== 'undefined' && selectedAuthorDept === '看護師') ? 'selected' : '' %>>👩‍⚕️ 看護師</option>
+              <option value="薬剤師" <%= (typeof selectedAuthorDept !== 'undefined' && selectedAuthorDept === '薬剤師') ? 'selected' : '' %>>💊 薬剤師</option>
+              <option value="放射線技師" <%= (typeof selectedAuthorDept !== 'undefined' && selectedAuthorDept === '放射線技師') ? 'selected' : '' %>>🩻 放射線技師</option>
+              <option value="リハビリ" <%= (typeof selectedAuthorDept !== 'undefined' && selectedAuthorDept === 'リハビリ') ? 'selected' : '' %>>🏃 リハビリ科</option>
+              <option value="栄養士" <%= (typeof selectedAuthorDept !== 'undefined' && selectedAuthorDept === '栄養士') ? 'selected' : '' %>>🍱 栄養科</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="search-action-row">
+          <button type="button" class="btn-search-reset" onclick="resetSearchConditions()">
+            <span>🔄 条件クリア</span>
+          </button>
+          <button type="submit" class="btn-search-exec">
+            <span>🔍 この条件で検索する</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 検索結果セクション -->
+    <div class="results-section">
+      <!-- 検索サマリーバー -->
+      <div class="results-summary-bar">
+        <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+          <span style="font-weight:bold; color:#0f172a;">
+            📊 検索結果: <strong style="font-size:1.15rem; color:#0f766e;"><%= results ? results.length : 0 %></strong> 件
+          </span>
+          <div class="active-conditions-tags">
+            <% if (typeof queryText !== 'undefined' && queryText) { %>
+              <span class="condition-tag">キーワード: "<%= queryText %>"</span>
+            <% } %>
+            <% if (typeof remarksOnly !== 'undefined' && remarksOnly) { %>
+              <span class="condition-tag tag-rem">⚡ 備考欄のみ限定</span>
+            <% } %>
+            <% if (typeof selectedDrugCategory !== 'undefined' && selectedDrugCategory === 'antibiotics') { %>
+              <span class="condition-tag tag-ab">🛡️ 抗生剤・抗菌薬</span>
+            <% } else if (typeof selectedDrugCategory !== 'undefined' && selectedDrugCategory && selectedDrugCategory !== 'all') { %>
+              <span class="condition-tag tag-ab">薬効分類: <%= selectedDrugCategory %></span>
+            <% } %>
+            <% if (typeof specifiedDrugName !== 'undefined' && specifiedDrugName) { %>
+              <span class="condition-tag">薬品名: "<%= specifiedDrugName %>"</span>
+            <% } %>
+            <% if (typeof selectedTargetPersonName !== 'undefined' && selectedTargetPersonName) { %>
+              <span class="condition-tag">患者: <%= selectedTargetPersonName %></span>
+            <% } %>
+          </div>
+        </div>
+        <span style="font-size:0.75rem; color:#64748b;">新しい日時順に表示</span>
+      </div>
+
+      <!-- 結果カード一覧 -->
+      <% if (results && results.length > 0) { %>
+        <% results.forEach(item => { %>
+          <div class="result-card" id="card-<%= item._id %>">
+            <div class="result-card-header">
+              <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
+                <% 
+                  let badgeClass = 'cat-soap';
+                  let catText = item.category || '記事';
+                  if (catText.includes('処方')) badgeClass = 'cat-rx';
+                  else if (catText.includes('点滴') || catText.includes('注射')) badgeClass = 'cat-iv';
+                  else if (catText.includes('放射線')) badgeClass = 'cat-rad';
+                  else if (catText.includes('食事')) badgeClass = 'cat-meal';
+                  else if (catText.includes('リハビリ')) badgeClass = 'cat-rehab';
+                %>
+                <span class="badge-cat <%= badgeClass %>"><%= catText %></span>
+                <% if (item.isAntibiotic) { %>
+                  <span class="badge-cat" style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; font-weight:800;">🛡️ 抗生剤・抗菌薬</span>
+                <% } %>
+                <span class="result-title"><%- item.highlightedTitle %></span>
+              </div>
+              <div class="result-card-meta">
+                <span>🕒 <%= new Date(item.createdAt).toLocaleString('ja-JP', {year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}) %></span>
+              </div>
+            </div>
+
+            <!-- 患者情報 & 記載者情報 -->
+            <div style="display:flex; align-items:center; gap:0.8rem; font-size:0.82rem; background:#f8fafc; padding:0.35rem 0.6rem; border-radius:5px; border:1px solid #e2e8f0; flex-wrap:wrap;">
+              <% if (item.targetPerson) { %>
+                <span>👤 患者: <strong>[<%= item.targetPerson.customId || 'IDなし' %>] <%= item.targetPerson.name %> 様</strong> (<%= item.targetPerson.department || '病棟' %>)</span>
+              <% } else { %>
+                <span style="color:#64748b;">👤 患者: 未指定</span>
+              <% } %>
+              <span>🩺 担当/記載: <strong><%= item.author ? (item.author.userName || item.author.loginId) : '担当者' %></strong> (<%= item.author ? (item.author.department || '一般') : '' %>)</span>
+            </div>
+
+            <!-- 📝 オーダー備考欄ボックス (備考欄が存在またはマッチした場合に目立たせて表示) -->
+            <% if (item.orderRemarks && item.orderRemarks.length > 0) { %>
+              <div class="remarks-highlight-box">
+                <div class="remarks-label">
+                  <span>📝</span>
+                  <span>オーダー画面の備考欄 / 特記事項:</span>
+                </div>
+                <div>
+                  <% item.orderRemarks.forEach(rem => { %>
+                    <div style="font-weight:600;"><%- rem %></div>
+                  <% }); %>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- 💊 処方・指示薬剤ボックス (処方情報がある場合) -->
+            <% if (item.prescriptionMeds && item.prescriptionMeds.length > 0) { %>
+              <div class="meds-highlight-box">
+                <div class="meds-label">
+                  <span>💊</span>
+                  <span>処方・指示薬剤内容:</span>
+                </div>
+                <div>
+                  <% item.prescriptionMeds.forEach(med => { %>
+                    <div style="font-weight:600;"><%- med %></div>
+                  <% }); %>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- 過去記載本文プレビュー -->
+            <div class="content-snippet"><%- item.highlightedSnippet %></div>
+
+            <!-- カードフッター -->
+            <div class="result-card-footer">
+              <span style="color:#64748b;">記事ID: <code style="font-size:0.75rem;"><%= item._id %></code></span>
+              <div style="display:flex; gap:0.4rem;">
+                <% const pTargetId = item.targetPerson ? item.targetPerson._id : ''; %>
+                <a href="/articles<%= pTargetId ? `?targetId=${encodeURIComponent(pTargetId)}` : '' %>#article-<%= item._id %>" class="btn-open-article" title="電子カルテ入力画面でこの記事を開いて確認します">
+                  <span>📖</span>
+                  <span>カルテ記事を開く ↗</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <!-- 該当なしカード -->
+        <div class="no-results-card">
+          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔍</div>
+          <h3 style="margin: 0 0 0.4rem 0; color: #334155; font-size: 1.05rem;">指定された条件に一致する記事・オーダーは見つかりませんでした</h3>
+          <p style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
+            検索キーワードのスペルを変更するか、薬効分類（抗生剤等）や対象患者の条件を広げて再検索してください。<br>
+            「条件クリア」ボタンを押すことで、すべての記録・オーダーを再表示できます。
+          </p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <script>
+    // 薬効分類ピルボタン選択
+    function selectDrugCategory(cat, btn) {
+      document.getElementById('drugCategoryInput').value = cat;
+      document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // 備考欄のみチェックボックス変更
+    function onRemarksOnlyChange(checked) {
+      const incRem = document.querySelector('input[name="includeRemarks"]');
+      if (checked && incRem) {
+        incRem.checked = true;
+      }
+    }
+
+    // 期間変更イベント
+    function onPeriodChange(val) {
+      const box = document.getElementById('customDateRangeBox');
+      if (box) {
+        box.style.display = (val === 'custom') ? 'flex' : 'none';
+      }
+    }
+
+    // 検索条件リセット
+    function resetSearchConditions() {
+      const form = document.getElementById('advancedSearchForm');
+      if (!form) return;
+      document.getElementById('keywordInput').value = '';
+      document.getElementById('drugNameInput').value = '';
+      document.getElementById('drugCategoryInput').value = 'all';
+      // 患者は固定のためリセットしない
+      document.getElementById('datePeriodSelect').value = 'all';
+      document.getElementById('orderTypeSelect').value = 'all';
+      document.getElementById('authorDeptSelect').value = 'ALL';
+      document.getElementById('remarksOnlyChk').checked = false;
+      document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      const allPill = document.querySelector('.pill-btn');
+      if (allPill) allPill.classList.add('active');
+      const box = document.getElementById('customDateRangeBox');
+      if (box) box.style.display = 'none';
+      form.submit();
+    }
+  </script>
+</body>
+</html>
