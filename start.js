@@ -99,7 +99,7 @@ launchChild('オーダリング【受信側】(Port 5000)', receiverPath, ORDERI
 // 5. オーダリング【送信側】(Port 4000 / HTTPS 4443) 起動
 console.log('🚀 [3/3] オーダリング【送信側】医師・病棟入力 (Port 4000 / HTTPS 4443) を起動中...');
 const senderPath = path.join(ORDERING_DIR, 'sender', 'server.js');
-launchChild('オーダリング【送信側】(Port 4000)', senderPath, ORDERING_DIR, { PORT: '4000', HTTPS_PORT: '4443', USE_HTTPS: 'true' });
+launchChild('オーダリング【送信側】(Port 4000)', senderPath, ORDERING_DIR, { PORT: '4000', HTTPS_PORT: '4443', USE_HTTPS: 'true', INCIDENT_SYSTEM_URL: 'http://127.0.0.1:3000' });
 
 // 6. 安全な終了処理 (Ctrl+C 時)
 function shutdown() {

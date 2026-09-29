@@ -14,9 +14,9 @@ router.get('/login', redirectIfLoggedIn, (req, res) => {
   res.render('login');
 });
 
-// 2. 新規ユーザー登録画面
-router.get('/register', redirectIfLoggedIn, (req, res) => {
-  res.render('register');
+// 2. 新規ユーザー登録画面（一般画面からの新規登録は廃止・ログイン画面へ転送）
+router.get('/register', (req, res) => {
+  res.redirect('/login');
 });
 
 // 3. トップ画面（対象者管理画面を初期メニューとして表示）
@@ -340,7 +340,12 @@ router.get('/articles', async (req, res) => {
     }
 
     const isOverride = Boolean(req.session && req.session.isOverride);
-    const originalUser = (req.session && req.session.originalUser) ? req.session.originalUser : user;
+    const originalUser = (req.session && req.session.originalUser) ? req.session.originalUser : (req.user || user);
+    const targetIdQuery = typeof req.query.targetId === 'string' ? req.query.targetId.trim() : (typeof req.query.patientId === 'string' ? req.query.patientId.trim() : '');
+    let selectedTargetPerson = null;
+    if (targetIdQuery && targetIdQuery !== 'ALL') {
+      selectedTargetPerson = targetPeople.find(tp => tp._id.toString() === targetIdQuery || (tp.customId && tp.customId.toLowerCase() === targetIdQuery.toLowerCase()));
+    }
 
     res.render('articles', {
       user: currentAuthor ? (currentAuthor.userName || currentAuthor.loginId) : (user ? user.name : 'ゲスト'),
@@ -349,6 +354,8 @@ router.get('/articles', async (req, res) => {
       users,
       articles: treeOrderedArticles,
       targetPeople,
+      selectedTargetPerson,
+      targetId: targetIdQuery,
       searchQuery,
       isOverride,
       originalUser

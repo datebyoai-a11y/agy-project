@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>医療統合ポータル メニュー - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '統合ポータルメニュー' }) %>
+
+  <!-- ナビゲーションバー -->
+  <header class="navbar">
+    <a href="/menu" class="nav-brand">
+      <div class="brand-icon">🏥</div>
+      <div class="brand-text">
+        <h1>交雄会だて病院 医療統合ポータル</h1>
+        <p>Hospital Integrated Medical Portal System</p>
+      </div>
+    </a>
+
+    <div class="nav-user">
+      <div class="user-badge">
+        <% 
+          let deptClass = 'admin';
+          if (user.department === '医師') deptClass = 'doctor';
+          else if (user.department === '看護師') deptClass = 'nurse';
+          else if (user.department === '放射線技師') deptClass = 'radiology';
+          else if (user.department === 'リハビリ') deptClass = 'rehab';
+          else if (user.department === '薬剤師') deptClass = 'pharmacy';
+        %>
+        <span class="dept-pill <%= deptClass %>"><%= user.department %></span>
+        <span class="user-name"><%= user.userName %> 職員</span>
+        <span class="role-tag <%= user.role %>"><%= user.role === 'admin' ? '管理者' : '一般' %></span>
+      </div>
+
+      <a href="/logout" class="btn-logout">
+        🚪 ログアウト
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ページ見出し -->
+    <div class="page-header">
+      <div class="page-title">
+        <span>業務システムメニュー</span>
+      </div>
+      <p class="page-subtitle">
+        現在 <strong>「<%= user.department %>」</strong>（<%= user.role === 'admin' ? '管理者権限' : '一般権限' %>）としてログイン中です。パーミッションに応じた機能が表示されています。
+      </p>
+    </div>
+
+    <!-- カテゴリ別カード表示 -->
+    <% 
+      const categories = ['臨床・診療', '部門・実施', '医療安全', 'システム管理'];
+      categories.forEach(cat => {
+        const catMenus = menus.filter(m => m.category === cat);
+        if (catMenus.length > 0) {
+    %>
+      <div class="category-heading">
+        <span><%= cat %></span>
+      </div>
+
+      <div class="menu-grid">
+        <% catMenus.forEach(menu => { %>
+          <div class="menu-card <%= menu.canAccess ? 'authorized' : 'unauthorized' %>">
+            <div>
+              <div class="card-header">
+                <div class="card-icon"><%= menu.icon %></div>
+                <div class="card-titles">
+                  <h3 class="card-title"><%= menu.title %></h3>
+                  <p class="card-subtitle"><%= menu.subtitle %></p>
+                </div>
+              </div>
+
+              <!-- 権限ステータスバー -->
+              <div class="card-permission">
+                <span class="permission-text"><%= menu.permissionLabel %></span>
+                <% if (menu.canAccess) { %>
+                  <span class="status-badge accessible">利用可能</span>
+                <% } else { %>
+                  <span class="status-badge restricted">🔒 権限なし</span>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- アクションボタン -->
+            <div class="card-action">
+              <% if (menu.canAccess) { %>
+                <a href="<%= menu.url %>" class="btn btn-primary">
+                  <%= menu.title %> を開く ➔
+                </a>
+              <% } else { %>
+                <button class="btn" disabled>
+                  🔒 アクセス権限がありません
+                </button>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% 
+        }
+      }); 
+    %>
+
+  </main>
+
+  <script>
+    // ログアウトクリック時はセッション消滅
+    document.querySelectorAll('.btn-logout').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        sessionStorage.removeItem('portal_session_active');
+      });
+    });
+  </script>
+</body>
+</html>

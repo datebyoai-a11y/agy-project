@@ -10,7 +10,7 @@
 #   ./start.sh restart : すべてのシステムを再起動
 # ==============================================================================
 
-PROJECT_DIR="/home/a/Desktop/ai"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR" || exit 1
 
 ACTION="${1:-foreground}"

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アクセス権限エラー - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-card" style="text-align: center; padding: 3rem 2rem;">
+    <div style="font-size: 3.5rem; margin-bottom: 1rem;">🔒</div>
+    <h2 style="font-size: 1.5rem; color: var(--slate-900); margin-bottom: 0.5rem;">アクセス権限がありません</h2>
+    <p style="color: var(--slate-600); font-size: 0.95rem; margin-bottom: 2rem;">
+      現在のアカウント（<strong><%= user ? user.department : '未ログイン' %> / <%= user ? (user.role === 'admin' ? '管理者' : '一般') : '' %></strong>）では、この画面へのアクセスが制限されています。
+    </p>
+
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+      <a href="/menu" class="btn btn-primary" style="width: auto;">
+        🏠 メニューに戻る
+      </a>
+      <a href="/logout" class="btn btn-outline" style="width: auto;">
+        別のアカウントでログイン
+      </a>
+    </div>
+  </div>
+</body>
+</html>

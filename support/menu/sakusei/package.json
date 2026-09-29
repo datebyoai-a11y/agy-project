@@ -1,0 +1,17 @@
+{
+  "name": "hospital-menu-portal",
+  "version": "1.0.0",
+  "description": "交雄会だて病院 医療統合ポータル & 権限連動メニューシステム",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.19.0",
+    "mongoose": "^8.3.1"
+  }
+}

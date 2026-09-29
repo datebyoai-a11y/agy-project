@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>医療統合ポータル ログイン - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="login-body">
+
+  <div class="login-card">
+    <div class="login-header">
+      <div class="hospital-title">🏥 医療法人 交雄会 だて病院</div>
+      <h2>医療統合ポータル</h2>
+      <p>電子カルテ・オーダリング・医療安全 共通認証</p>
+    </div>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>✅</span>
+        <span><%= success %></span>
+      </div>
+    <% } %>
+
+    <form class="login-form" action="/login" method="POST">
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="login-error">
+          <span>⚠️</span>
+          <span><%= error %></span>
+        </div>
+      <% } %>
+
+      <div class="form-group">
+        <label class="form-label" for="loginId">ログインID（職員ID）</label>
+        <input 
+          type="text" 
+          id="loginId" 
+          name="loginId" 
+          class="form-input" 
+          placeholder="例: admin, dr_akamatsu, s" 
+          required 
+          autofocus
+          value="<%= typeof loginId !== 'undefined' ? loginId : '' %>"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">パスワード</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          class="form-input" 
+          placeholder="パスワードを入力" 
+          required
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">
+        🔐 ログイン
+      </button>
+    </form>
+
+    <!-- 🔑 パスワード変更トグルリンク -->
+    <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid var(--slate-200); padding-top: 1.25rem;">
+      <button type="button" onclick="togglePasswordChangePanel()" id="btnTogglePasswordChange" style="background: none; border: none; color: #0284c7; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: underline; display: inline-flex; align-items: center; gap: 0.35rem;">
+        🔑 パスワードの変更・設定はこちら
+      </button>
+    </div>
+
+    <!-- 🔑 パスワード変更パネル (初期非表示) -->
+    <div id="passwordChangePanel" style="display: none; margin-top: 1.25rem; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem; text-align: left;">
+      <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--slate-800); margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.4rem;">
+        <span>🔑 職員パスワード変更</span>
+      </h3>
+      <p style="font-size: 0.75rem; color: var(--slate-500); margin-bottom: 1rem; line-height: 1.4;">
+        ご自身のログインIDを入力し、新しいパスワードを設定してください。<br>
+        <strong style="color: #d97706;">※ 管理者によりパスワード初期化された場合は、「現在のパスワード」は空欄で構いません。</strong>
+      </p>
+
+      <form action="/change-password" method="POST">
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label class="form-label" style="font-size: 0.8rem;">ログインID（職員ID） *</label>
+          <input type="text" id="changeLoginId" name="loginId" class="form-input" style="font-size: 0.85rem; padding: 0.45rem 0.65rem;" placeholder="例: dr_akamatsu" required value="<%= typeof loginId !== 'undefined' ? loginId : '' %>">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label class="form-label" style="font-size: 0.8rem;">現在のパスワード <span style="font-weight: normal; color: var(--slate-400);">(初期化時は空欄可)</span></label>
+          <input type="password" id="currentPassword" name="currentPassword" class="form-input" style="font-size: 0.85rem; padding: 0.45rem 0.65rem;" placeholder="現在のパスワード (未設定時は不要)">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label class="form-label" style="font-size: 0.8rem;">新しいパスワード * <span style="font-weight: normal; color: var(--slate-400);">(4文字以上)</span></label>
+          <input type="password" id="newPassword" name="newPassword" class="form-input" style="font-size: 0.85rem; padding: 0.45rem 0.65rem;" placeholder="新しいパスワード" required minlength="4">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" style="font-size: 0.8rem;">新しいパスワード（確認用） *</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" style="font-size: 0.85rem; padding: 0.45rem 0.65rem;" placeholder="もう一度入力" required minlength="4">
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <button type="button" onclick="togglePasswordChangePanel()" class="btn btn-outline" style="width: auto; padding: 0.45rem 0.85rem; font-size: 0.8rem;">
+            閉じる
+          </button>
+          <button type="submit" class="btn btn-primary" style="width: auto; padding: 0.45rem 1.15rem; font-size: 0.8rem; background: #0284c7;">
+            💾 パスワードを変更する
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ログイン画面表示時に古いセッション状態をクリア
+    sessionStorage.removeItem('portal_session_active');
+
+    function togglePasswordChangePanel() {
+      const panel = document.getElementById('passwordChangePanel');
+      const isHidden = panel.style.display === 'none';
+      panel.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        const loginIdVal = document.getElementById('loginId').value;
+        if (loginIdVal) {
+          document.getElementById('changeLoginId').value = loginIdVal;
+        }
+      }
+    }
+
+    // エラーや初期化案内がある場合は最初から変更パネルを開いておく
+    <% if (typeof error !== 'undefined' && error && error.includes('初期化')) { %>
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('passwordChangePanel').style.display = 'block';
+      });
+    <% } %>
+
+    document.querySelector('.login-form').addEventListener('submit', function() {
+      sessionStorage.setItem('portal_session_active', '1');
+    });
+  </script>
+</body>
+</html>

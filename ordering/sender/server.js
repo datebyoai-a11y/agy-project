@@ -80,28 +80,75 @@ function saveSentOrders(orders) {
 
 let sentOrders = loadSentOrders();
 
-// 1. Web画面: オーダー作成・送信画面
-app.get('/', (req, res) => {
-  const hostHeader = req.headers.host || `localhost:${PORT}`;
-  const hostname = hostHeader.split(':')[0] || 'localhost';
-  const isEncrypted = req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
-  const currentProto = isEncrypted ? 'https' : 'http';
-  const receiverPort = isEncrypted ? (process.env.HTTPS_RECEIVER_PORT || 5443) : 5000;
+function getEraFromDate(dateStr) {
+  if (!dateStr) return '昭';
+  const y = parseInt(dateStr.slice(0, 4), 10);
+  if (isNaN(y)) return '昭';
+  if (y >= 2019) return `令${y - 2018}`;
+  if (y >= 1989) return `平${y - 1988}`;
+  if (y >= 1926) return `昭${y - 1925}`;
+  if (y >= 1912) return `大${y - 1911}`;
+  return `明${y - 1867}`;
+}
 
-  const queryPatientId = String(req.query.patientId || req.query.targetId || req.query.id || '').trim();
-  const queryPatientName = String(req.query.patientName || req.query.name || '').trim();
-  const queryPatientDept = String(req.query.patientDept || req.query.dept || '').trim();
-  const queryOrderType = String(req.query.orderType || req.query.order || '').trim();
+// 🏥 MongoDB (Port 3000 /api/orders/patients) から集中管理された患者マスタを取得
+async function getMergedPatients(queryPatientId = '', queryPatientName = '', queryPatientDept = '') {
+  let list = [];
 
-  let patientList = [...SamplePatients];
+  // 1. MongoDB 患者マスタ (Port 3000) から最新データを取得 (最優先・正本)
+  try {
+    const carteHost = process.env.INCIDENT_SYSTEM_URL || 'http://127.0.0.1:3000';
+    const res = await fetch(`${carteHost.replace(/\/+$/, '')}/api/orders/patients`, {
+      signal: AbortSignal.timeout(2500)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.patients) && data.patients.length > 0) {
+        list = data.patients.map(cp => ({
+          id: cp.id || cp.patientId,
+          patientId: cp.patientId || cp.id,
+          name: cp.name,
+          kana: cp.kana || '',
+          age: (cp.age !== undefined && cp.age !== null) ? cp.age : 65,
+          gender: cp.gender || '男',
+          birthDate: cp.birthDate || '',
+          era: cp.birthDate ? getEraFromDate(cp.birthDate) : '昭',
+          ward: cp.ward || '外来',
+          room: cp.room || '',
+          department: cp.department || '内科',
+          infection: cp.infection || '無',
+          mobility: cp.mobility || '徒歩',
+          height: cp.height || 165,
+          weight: cp.weight || 60,
+          bloodType: cp.bloodType || '不明',
+          allergies: cp.allergies || 'なし',
+          keyPersonName: cp.keyPersonName || '',
+          keyPersonPhone: cp.keyPersonPhone || '',
+          keyPersonRelation: cp.keyPersonRelation || '',
+          keyPersonNotes: cp.keyPersonNotes || '',
+          examCategory: '一般診療'
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('[Sender] MongoDB患者マスタ取得失敗 (オフラインフォールバック):', err.message);
+  }
+
+  // 2. DB未接続等の場合のみ SamplePatients をフォールバック利用
+  if (list.length === 0) {
+    list = SamplePatients.map(p => ({ ...p }));
+  }
+
+  // 3. クエリパラメータで渡された患者の優先処理
   if (queryPatientId || queryPatientName) {
-    const existingIndex = patientList.findIndex(p => 
-      (queryPatientId && p.id.toLowerCase() === queryPatientId.toLowerCase()) ||
-      (queryPatientName && p.name === queryPatientName)
+    const normQName = (queryPatientName || '').replace(/[\s\u3000]+/g, '').toLowerCase();
+    const existingIndex = list.findIndex(p => 
+      (queryPatientId && p.id && p.id.toLowerCase() === queryPatientId.toLowerCase()) ||
+      (queryPatientName && p.name && p.name.replace(/[\s\u3000]+/g, '').toLowerCase() === normQName)
     );
-    if (existingIndex === -1 && (queryPatientId || queryPatientName)) {
+    if (existingIndex === -1) {
       // カルテから引き継がれた外部患者を先頭プリセットとして追加
-      patientList.unshift({
+      list.unshift({
         id: queryPatientId || 'EXT001',
         name: queryPatientName || 'カルテ連携患者',
         kana: '',
@@ -120,10 +167,30 @@ app.get('/', (req, res) => {
       });
     } else if (existingIndex > 0) {
       // 一致した患者を先頭に昇格
-      const matched = patientList.splice(existingIndex, 1)[0];
-      patientList.unshift(matched);
+      const matched = list.splice(existingIndex, 1)[0];
+      if (queryPatientId) matched.id = queryPatientId;
+      if (queryPatientName) matched.name = queryPatientName;
+      list.unshift(matched);
     }
   }
+
+  return list;
+}
+
+// 1. Web画面: オーダー作成・送信画面
+app.get('/', async (req, res) => {
+  const hostHeader = req.headers.host || `localhost:${PORT}`;
+  const hostname = hostHeader.split(':')[0] || 'localhost';
+  const isEncrypted = req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
+  const currentProto = isEncrypted ? 'https' : 'http';
+  const receiverPort = isEncrypted ? (process.env.HTTPS_RECEIVER_PORT || 5443) : 5000;
+
+  const queryPatientId = String(req.query.patientId || req.query.targetId || req.query.id || '').trim();
+  const queryPatientName = String(req.query.patientName || req.query.name || '').trim();
+  const queryPatientDept = String(req.query.patientDept || req.query.dept || '').trim();
+  const queryOrderType = String(req.query.orderType || req.query.order || '').trim();
+
+  const patientList = await getMergedPatients(queryPatientId, queryPatientName, queryPatientDept);
 
   const isEmbedded = String(req.query.embedded || req.query.embed || req.query.mode || '').toLowerCase() === '1' ||
                      String(req.query.embedded || req.query.embed || req.query.mode || '').toLowerCase() === 'true' ||
@@ -147,7 +214,7 @@ app.get('/', (req, res) => {
 });
 
 // 1-2. 病棟用 注射指示箋 入力画面 (インクリメンタル検索機能完備)
-app.get('/injection-sheet-form', (req, res) => {
+app.get('/injection-sheet-form', async (req, res) => {
   const hostHeader = req.headers.host || `localhost:${PORT}`;
   const hostname = hostHeader.split(':')[0] || 'localhost';
   const isEncrypted = req.socket.encrypted || (req.headers['x-forwarded-proto'] === 'https');
@@ -159,7 +226,7 @@ app.get('/injection-sheet-form', (req, res) => {
   const queryPatientDept = String(req.query.patientDept || req.query.dept || '').trim();
   const orderId = String(req.query.orderId || '').trim();
 
-  let patientList = [...SamplePatients];
+  const patientList = await getMergedPatients(queryPatientId, queryPatientName, queryPatientDept);
   let selectedPatient = patientList[0];
 
   if (queryPatientId || queryPatientName) {
@@ -295,6 +362,16 @@ app.post('/api/medicines/reload-from-excel', (req, res) => {
 });
 
 
+// 2-B. 患者マスタ一覧取得 API (外部連携・フロント用)
+app.get('/api/patients', async (req, res) => {
+  try {
+    const list = await getMergedPatients();
+    res.json({ success: true, count: list.length, patients: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 3. 送信履歴取得 API
 app.get('/api/orders/history', (req, res) => {
   res.json({
@@ -329,6 +406,12 @@ app.post('/api/orders/send', async (req, res) => {
     const reqHost = req.headers.host || `localhost:${req.socket.localPort || (isReqHttps ? HTTPS_PORT : HTTP_PORT)}`;
     const dynamicSenderHost = `${reqProto}://${reqHost}`;
 
+    const scheduledAtVal = details.scheduledAt || req.body.scheduledAt || req.body.orderDate || details.orderDate || now.toISOString();
+    const finalDetails = {
+      ...details,
+      scheduledAt: scheduledAtVal
+    };
+
     const orderPayload = {
       orderId,
       orderType,
@@ -344,7 +427,7 @@ app.post('/api/orders/send', async (req, res) => {
         name: doctorName,
         department: doctorDept
       },
-      details,
+      details: finalDetails,
       senderHost: dynamicSenderHost,
       senderUser: doctorName,
       orderDate: req.body.orderDate || req.body.details?.orderDate || now.toISOString(),
@@ -416,8 +499,7 @@ app.post('/api/orders/send', async (req, res) => {
 
     // 🏥 電子カルテ（incident-system: Port 3000）へも同時にカルテ記事として自動保存
     let carteSyncResult = null;
-    const clientHost = reqHost.split(':')[0] || 'localhost';
-    const incidentSystemHost = process.env.INCIDENT_SYSTEM_URL || `http://${clientHost}:3000`;
+    const incidentSystemHost = process.env.INCIDENT_SYSTEM_URL || 'http://127.0.0.1:3000';
     const incidentApiUrl = `${incidentSystemHost.replace(/\/+$/, '')}/api/orders/receive`;
 
     if (!finalUrl.includes(':3000')) {
@@ -550,6 +632,18 @@ app.post('/api/orders/:id/status-callback', (req, res) => {
     updatedAt: item.lastUpdated,
     orders: sentOrders
   });
+
+  // 🏥 電子カルテ（incident-system: Port 3000）へもステータス連動通知
+  const incidentSystemBase = (process.env.INCIDENT_SYSTEM_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  const carteCallbackUrl = `${incidentSystemBase}/api/orders/${orderId}/status-callback`;
+  fetch(carteCallbackUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId, status, actor, note, updatedAt, order }),
+    signal: AbortSignal.timeout(3000)
+  }).then(r => {
+    if (r.ok) console.log(`   ✅ [Sender->Carte] カルテへのステータス連動通知成功: [${orderId}] -> ${status}`);
+  }).catch(err => console.log(`   ℹ️ [Sender->Carte] カルテ連携通知スキップ: ${err.message}`));
 
   res.json({ success: true, message: '送信側のステータスを更新しました', status: item.status });
 });

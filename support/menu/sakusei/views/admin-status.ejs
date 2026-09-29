@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>システム稼働監視 - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: 'システム稼働監視' }) %>
+
+  <header class="navbar">
+    <a href="/menu" class="nav-brand">
+      <div class="brand-icon">🏥</div>
+      <div class="brand-text">
+        <h1>交雄会だて病院 医療統合ポータル</h1>
+        <p>システム稼働監視 & ネットワーク状態</p>
+      </div>
+    </a>
+    <div class="nav-user">
+      <a href="/menu" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem;">
+        🏠 メニューへ戻る
+      </a>
+      <a href="/logout" class="btn-logout">
+        🚪 ログアウト
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <h2 class="page-title">🌐 システム稼働 & 接続モニター</h2>
+      <p class="page-subtitle">院内各システム・データベース・外部トンネルの稼働状態をリアルタイム表示しています。</p>
+    </div>
+
+    <div class="menu-grid" style="grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));">
+      <!-- 電子カルテ -->
+      <div class="menu-card authorized">
+        <div class="card-header">
+          <div class="card-icon" style="background: #e0f2fe;">🩺</div>
+          <div class="card-titles">
+            <h3 class="card-title">電子カルテ (EMR)</h3>
+            <p class="card-subtitle">Port 3000</p>
+          </div>
+        </div>
+        <div class="card-permission">
+          <span class="permission-text">HTTP / Web</span>
+          <span class="status-badge accessible">● 稼働中 (Active)</span>
+        </div>
+        <a href="http://localhost:3000/" class="btn btn-outline">直接アクセス ➔</a>
+      </div>
+
+      <!-- オーダリング送信側 -->
+      <div class="menu-card authorized">
+        <div class="card-header">
+          <div class="card-icon" style="background: #e0e7ff;">📝</div>
+          <div class="card-titles">
+            <h3 class="card-title">オーダリング送信側</h3>
+            <p class="card-subtitle">Port 4000 / HTTPS 4443</p>
+          </div>
+        </div>
+        <div class="card-permission">
+          <span class="permission-text">医師・病棟入力</span>
+          <span class="status-badge accessible">● 稼働中 (Active)</span>
+        </div>
+        <a href="http://localhost:4000/" class="btn btn-outline">直接アクセス ➔</a>
+      </div>
+
+      <!-- オーダリング受信側 -->
+      <div class="menu-card authorized">
+        <div class="card-header">
+          <div class="card-icon" style="background: #ccfbf1;">📥</div>
+          <div class="card-titles">
+            <h3 class="card-title">オーダリング受信側</h3>
+            <p class="card-subtitle">Port 5000 / HTTPS 5443</p>
+          </div>
+        </div>
+        <div class="card-permission">
+          <span class="permission-text">各部門モニター</span>
+          <span class="status-badge accessible">● 稼働中 (Active)</span>
+        </div>
+        <a href="http://localhost:5000/" class="btn btn-outline">直接アクセス ➔</a>
+      </div>
+
+      <!-- データベース -->
+      <div class="menu-card authorized">
+        <div class="card-header">
+          <div class="card-icon" style="background: #dcfce7;">🍃</div>
+          <div class="card-titles">
+            <h3 class="card-title">MongoDB</h3>
+            <p class="card-subtitle">Port 27017 (incident_db)</p>
+          </div>
+        </div>
+        <div class="card-permission">
+          <span class="permission-text">ローカル隔離</span>
+          <span class="status-badge accessible">● 接続正常</span>
+        </div>
+        <div class="btn" style="background: var(--slate-100); color: var(--slate-600); cursor: default;">内部安全バインド</div>
+      </div>
+    </div>
+
+    <!-- 外部アクセス / Cloudflare Quick Tunnel 情報 -->
+    <div style="margin-top: 2.5rem; background: white; border-radius: 12px; border: 1px solid var(--slate-200); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>☁️ Cloudflare Tunnel (外部安全暗号化アクセス)</span>
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 1rem;">
+        ルーターのポートを開けずに、外部インターネットから暗号化通信で院内システムにアクセスするための接続状態です。
+      </p>
+
+      <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.85rem;">
+        <div><strong>SSH 待機ポート:</strong> 50022 (公開鍵認証限定・パスワード禁止)</div>
+        <div style="margin-top: 0.4rem;"><strong>侵入防止 (fail2ban):</strong> Port 50022 監視中 (Active)</div>
+        <div style="margin-top: 0.4rem;"><strong>自動常駐スクリプト:</strong> ~/start-trycloudflare.sh</div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,5 +1,2273 @@
 [
   {
+    "orderId": "RAD-20260928-7780",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 透視検査依頼書: PEG交換、消化管造影検査 (伊達　太郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1875",
+      "name": "伊達　太郎",
+      "department": "一般病棟",
+      "kana": "",
+      "gender": "男",
+      "era": "昭39",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "一般病棟",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "FLUORO",
+      "formName": "透視検査依頼書",
+      "examType": "透視検査 [PEG交換、消化管造影検査]",
+      "items": "PEG交換、消化管造影検査",
+      "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+      "materials": "ガストロボタン 24Fr 3.5cm",
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-28T12:00"
+    },
+    "orderDate": "2026-09-28T11:51",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T05:11:13.366Z",
+    "status": "COMPLETED",
+    "elapsedMs": 16,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-7780",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T05:11:13.372Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9f6f1e88d6b26c3340661",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T05:39:36.175Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-7780",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 透視検査依頼書: PEG交換、消化管造影検査 (伊達　太郎)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1875",
+        "name": "伊達　太郎",
+        "department": "一般病棟",
+        "kana": "",
+        "gender": "男",
+        "era": "昭39",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "一般病棟",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "FLUORO",
+        "formName": "透視検査依頼書",
+        "examType": "透視検査 [PEG交換、消化管造影検査]",
+        "items": "PEG交換、消化管造影検査",
+        "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+        "materials": "ガストロボタン 24Fr 3.5cm",
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-28T12:00",
+        "medicines": []
+      },
+      "orderDate": "2026-09-28T11:51",
+      "createdAt": "2026-09-28T05:11:13.366Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T05:11:13.372Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T05:11:13.372Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:18:46.933Z",
+          "actor": "部門モニター操作者",
+          "note": "受付"
+        },
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T05:18:50.086Z",
+          "actor": "テスト",
+          "note": "リセット"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:34:08.867Z",
+          "actor": "実施者（PC02）",
+          "terminal": "PC02",
+          "note": "受付済（PC02）"
+        },
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T05:34:14.776Z",
+          "actor": "テスト",
+          "terminal": "PC01",
+          "note": "リセット"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:39:32.315Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "受付"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:39:36.175Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "実施完了"
+        }
+      ],
+      "medicineMaster": null,
+      "medicineMasterList": []
+    }
+  },
+  {
+    "orderId": "RAD-20260928-5956",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 透視検査依頼書: PEG交換、消化管造影検査 (鈴木 一郎)",
+    "priority": "STAT",
+    "patient": {
+      "id": "P004",
+      "name": "鈴木 一郎",
+      "department": "外来",
+      "kana": "スズキ イチロウ",
+      "gender": "男",
+      "era": "昭39",
+      "birthDate": "1964-02-17",
+      "age": 62,
+      "height": 168,
+      "weight": 65,
+      "ward": "外来",
+      "room": "外来処置室",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "健診"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "FLUORO",
+      "formName": "透視検査依頼書",
+      "examType": "透視検査 [PEG交換、消化管造影検査]",
+      "items": "PEG交換、消化管造影検査",
+      "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+      "materials": "ガストロボタン 24Fr 3.5cm",
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-28T12:00"
+    },
+    "orderDate": "2026-09-28T11:51",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T05:10:22.192Z",
+    "status": "COMPLETED",
+    "elapsedMs": 13,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-5956",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T05:10:22.199Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9f6bee88d6b26c3340625",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T05:19:43.243Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-5956",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 透視検査依頼書: PEG交換、消化管造影検査 (鈴木 一郎)",
+      "priority": "STAT",
+      "patient": {
+        "id": "P004",
+        "name": "鈴木 一郎",
+        "department": "外来",
+        "kana": "スズキ イチロウ",
+        "gender": "男",
+        "era": "昭39",
+        "birthDate": "1964-02-17",
+        "age": 62,
+        "height": 168,
+        "weight": 65,
+        "ward": "外来",
+        "room": "外来処置室",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "健診"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "FLUORO",
+        "formName": "透視検査依頼書",
+        "examType": "透視検査 [PEG交換、消化管造影検査]",
+        "items": "PEG交換、消化管造影検査",
+        "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+        "materials": "ガストロボタン 24Fr 3.5cm",
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-28T12:00"
+      },
+      "orderDate": "2026-09-28T11:51",
+      "createdAt": "2026-09-28T05:10:22.192Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T05:10:22.199Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T05:10:22.199Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:19:41.142Z",
+          "actor": "部門モニター操作者",
+          "note": "受付"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:19:43.243Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260928-9108",
+    "orderType": "RADIOLOGY",
+    "title": "【急ぎ】腹部造影CT検査オーダー",
+    "priority": "URGENT",
+    "patient": {
+      "id": "1875",
+      "name": "伊達　太郎",
+      "department": "しおかぜ"
+    },
+    "doctor": {
+      "name": "医師 田中",
+      "department": "消化器内科"
+    },
+    "details": {
+      "examType": "腹部造影CT",
+      "modality": "CT",
+      "contrast": "造影あり",
+      "portable": "放射線科CT室",
+      "scheduledAt": "2026-09-28T15:00:00.000Z",
+      "purpose": "急性腹症精査・虫垂炎疑い",
+      "remarks": "ヨード造影剤アレルギー歴なし確認済"
+    },
+    "orderDate": "2026-09-28T04:12:45.004Z",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T04:12:45.004Z",
+    "status": "COMPLETED",
+    "elapsedMs": 46,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-9108",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T04:12:45.040Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9e93de88d6b26c333f89f",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T04:12:56.373Z",
+    "lastActor": "技師 高橋",
+    "lastNote": "造影CT撮影完了、有害事象なし、PACS送信済",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-9108",
+      "orderType": "RADIOLOGY",
+      "title": "【急ぎ】腹部造影CT検査オーダー",
+      "priority": "URGENT",
+      "patient": {
+        "id": "1875",
+        "name": "伊達　太郎",
+        "department": "しおかぜ"
+      },
+      "doctor": {
+        "name": "医師 田中",
+        "department": "消化器内科"
+      },
+      "details": {
+        "examType": "腹部造影CT",
+        "modality": "CT",
+        "contrast": "造影あり",
+        "portable": "放射線科CT室",
+        "scheduledAt": "2026-09-28T15:00:00.000Z",
+        "purpose": "急性腹症精査・虫垂炎疑い",
+        "remarks": "ヨード造影剤アレルギー歴なし確認済"
+      },
+      "orderDate": "2026-09-28T04:12:45.004Z",
+      "createdAt": "2026-09-28T04:12:45.004Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T04:12:45.040Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T04:12:45.040Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T04:12:56.373Z",
+          "actor": "技師 高橋",
+          "note": "造影CT撮影完了、有害事象なし、PACS送信済"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260928-8516",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 透視検査依頼書: PEG交換 (鈴木 一郎)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "P004",
+      "name": "鈴木 一郎",
+      "department": "外来",
+      "kana": "スズキ イチロウ",
+      "gender": "男",
+      "era": "昭39",
+      "birthDate": "1964-02-17",
+      "age": 62,
+      "height": 168,
+      "weight": 65,
+      "ward": "外来",
+      "room": "外来処置室",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "健診"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "FLUORO",
+      "formName": "透視検査依頼書",
+      "examType": "透視検査 [PEG交換]",
+      "items": "PEG交換",
+      "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+      "materials": "ガストロボタン 24Fr 3.5cm",
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-28T12:00"
+    },
+    "orderDate": "2026-09-28T11:51",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T04:01:17.580Z",
+    "status": "COMPLETED",
+    "elapsedMs": 227,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-8516",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T04:01:17.804Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9e68dda1a6de308a01a1c",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T04:32:18.445Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-8516",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 透視検査依頼書: PEG交換 (鈴木 一郎)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "P004",
+        "name": "鈴木 一郎",
+        "department": "外来",
+        "kana": "スズキ イチロウ",
+        "gender": "男",
+        "era": "昭39",
+        "birthDate": "1964-02-17",
+        "age": 62,
+        "height": 168,
+        "weight": 65,
+        "ward": "外来",
+        "room": "外来処置室",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "健診"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "FLUORO",
+        "formName": "透視検査依頼書",
+        "examType": "透視検査 [PEG交換]",
+        "items": "PEG交換",
+        "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+        "materials": "ガストロボタン 24Fr 3.5cm",
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-28T12:00"
+      },
+      "orderDate": "2026-09-28T11:51",
+      "createdAt": "2026-09-28T04:01:17.580Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T04:01:17.804Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T04:01:17.804Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T04:32:18.445Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260928-4331",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 上肢、下肢 [単純] (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "一般病棟",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "一般病棟",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [上肢、下肢]",
+      "contrast": "単純",
+      "dynamic": "",
+      "parts": "上肢、下肢",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "骨折　疑い",
+      "remarks": "骨折　疑い",
+      "scheduledAt": "2026-09-28T12:00"
+    },
+    "orderDate": "2026-09-28T11:51",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T03:58:01.954Z",
+    "status": "COMPLETED",
+    "elapsedMs": 14,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-4331",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T03:58:01.964Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9e5c9da1a6de308a018c7",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T03:59:28.021Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-4331",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 ＣＴ検査依頼書: 上肢、下肢 [単純] (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "一般病棟",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "一般病棟",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "CT",
+        "formName": "ＣＴ検査依頼書",
+        "examType": "ＣＴ検査 [上肢、下肢]",
+        "contrast": "単純",
+        "dynamic": "",
+        "parts": "上肢、下肢",
+        "medication": "",
+        "conditions": "120kV / 200mA / 0.5sec",
+        "elecImageAdd": true,
+        "purpose": "骨折　疑い",
+        "remarks": "骨折　疑い",
+        "scheduledAt": "2026-09-28T12:00",
+        "medicines": []
+      },
+      "orderDate": "2026-09-28T11:51",
+      "createdAt": "2026-09-28T03:58:01.954Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T03:58:01.964Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T03:58:01.964Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T03:58:24.597Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T03:59:28.021Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ],
+      "medicineMaster": null,
+      "medicineMasterList": []
+    }
+  },
+  {
+    "orderId": "RAD-20260928-1536",
+    "orderType": "RADIOLOGY",
+    "title": "【至急】胸部ポータブルX線撮影オーダー",
+    "priority": "STAT",
+    "patient": {
+      "id": "1875",
+      "name": "伊達　太郎",
+      "department": "しおかぜ"
+    },
+    "doctor": {
+      "name": "医師 田中",
+      "department": "呼吸器内科"
+    },
+    "details": {
+      "examType": "胸部単純X線",
+      "modality": "X-Ray",
+      "portable": "病室ポータブル",
+      "contrast": "単純",
+      "scheduledAt": "2026-09-28T14:30:00.000Z",
+      "purpose": "急性呼吸不全疑い・肺炎精査",
+      "remarks": "至急撮影願います。酸素投与中。"
+    },
+    "orderDate": "2026-09-28T03:05:51.109Z",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T03:05:51.109Z",
+    "status": "COMPLETED",
+    "elapsedMs": 35,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-1536",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T03:05:51.138Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9d98fda1a6de308a00a9c",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T03:06:01.550Z",
+    "lastActor": "技師 佐藤",
+    "lastNote": "病室にてポータブル撮影実施完了。PACS画像送信済。",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-1536",
+      "orderType": "RADIOLOGY",
+      "title": "【至急】胸部ポータブルX線撮影オーダー",
+      "priority": "STAT",
+      "patient": {
+        "id": "1875",
+        "name": "伊達　太郎",
+        "department": "しおかぜ"
+      },
+      "doctor": {
+        "name": "医師 田中",
+        "department": "呼吸器内科"
+      },
+      "details": {
+        "examType": "胸部単純X線",
+        "modality": "X-Ray",
+        "portable": "病室ポータブル",
+        "contrast": "単純",
+        "scheduledAt": "2026-09-28T14:30:00.000Z",
+        "purpose": "急性呼吸不全疑い・肺炎精査",
+        "remarks": "至急撮影願います。酸素投与中。"
+      },
+      "orderDate": "2026-09-28T03:05:51.109Z",
+      "createdAt": "2026-09-28T03:05:51.109Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T03:05:51.138Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T03:05:51.138Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T03:06:01.550Z",
+          "actor": "技師 佐藤",
+          "note": "病室にてポータブル撮影実施完了。PACS画像送信済。"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260928-5642",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 胸部(肺・横隔)、腹部(肝・胆・膵・腎) [造影] (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [胸部(肺・横隔)、腹部(肝・胆・膵・腎)]",
+      "contrast": "造影",
+      "dynamic": "3phase",
+      "parts": "胸部(肺・横隔)、腹部(肝・胆・膵・腎)",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-30T11:00"
+    },
+    "orderDate": "2026-09-28T10:36",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T02:19:19.704Z",
+    "status": "COMPLETED",
+    "elapsedMs": 13,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-5642",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T02:19:19.715Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9cea790a970788286e589",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T02:49:43.770Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-5642",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 ＣＴ検査依頼書: 胸部(肺・横隔)、腹部(肝・胆・膵・腎) [造影] (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "CT",
+        "formName": "ＣＴ検査依頼書",
+        "examType": "ＣＴ検査 [胸部(肺・横隔)、腹部(肝・胆・膵・腎)]",
+        "contrast": "造影",
+        "dynamic": "3phase",
+        "parts": "胸部(肺・横隔)、腹部(肝・胆・膵・腎)",
+        "medication": "",
+        "conditions": "120kV / 200mA / 0.5sec",
+        "elecImageAdd": true,
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-30T11:00"
+      },
+      "orderDate": "2026-09-28T10:36",
+      "createdAt": "2026-09-28T02:19:19.704Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T02:19:19.715Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T02:19:19.715Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T02:49:43.770Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "IV-20260928-5598",
+    "orderType": "IV",
+    "title": "【急ぎ】生食点滴指示",
+    "priority": "URGENT",
+    "patient": {
+      "id": "1875",
+      "name": "伊達　太郎",
+      "department": "しおかぜ"
+    },
+    "doctor": {
+      "name": "医師 田中",
+      "department": "内科"
+    },
+    "details": {
+      "scheduledAt": "2026-09-29T09:00:00.000Z",
+      "medicine": "生理食塩液 500mL",
+      "rate": "100mL/h",
+      "route": "末梢静脈",
+      "remarks": "脱水予防のため"
+    },
+    "orderDate": "2026-09-28T02:09:41.095Z",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T02:09:41.095Z",
+    "status": "COMPLETED",
+    "elapsedMs": 8,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "IV-20260928-5598",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T02:09:41.099Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9cc6590a970788286e389",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T03:07:45.579Z",
+    "lastActor": "看護師 佐々木",
+    "lastNote": "生食500mL 滴下開始確認。刺入部異常なし。",
+    "receiverOrder": {
+      "orderId": "IV-20260928-5598",
+      "orderType": "IV",
+      "title": "【急ぎ】生食点滴指示",
+      "priority": "URGENT",
+      "patient": {
+        "id": "1875",
+        "name": "伊達　太郎",
+        "department": "しおかぜ"
+      },
+      "doctor": {
+        "name": "医師 田中",
+        "department": "内科"
+      },
+      "details": {
+        "scheduledAt": "2026-09-29T09:00:00.000Z",
+        "medicine": "生理食塩液 500mL",
+        "rate": "100mL/h",
+        "route": "末梢静脈",
+        "remarks": "脱水予防のため"
+      },
+      "orderDate": "2026-09-28T02:09:41.095Z",
+      "createdAt": "2026-09-28T02:09:41.095Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T02:09:41.099Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T02:09:41.099Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T03:07:45.579Z",
+          "actor": "看護師 佐々木",
+          "note": "生食500mL 滴下開始確認。刺入部異常なし。"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "PRE-20260928-6115",
+    "orderType": "PRESCRIPTION",
+    "title": "【至急】アモキシシリン処方オーダー",
+    "priority": "STAT",
+    "patient": {
+      "id": "1875",
+      "name": "伊達　太郎",
+      "department": "しおかぜ"
+    },
+    "doctor": {
+      "name": "医師 田中",
+      "department": "内科"
+    },
+    "details": {
+      "scheduledAt": "2026-09-30T14:00:00.000Z",
+      "medicines": [
+        {
+          "name": "アモキシシリンカプセル250mg",
+          "dosage": "1回1C 1日3回 毎食後",
+          "days": 5
+        }
+      ],
+      "remarks": "発熱及び扁桃炎のため至急投与開始"
+    },
+    "orderDate": "2026-09-28T02:09:23.230Z",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T02:09:23.230Z",
+    "status": "COMPLETED",
+    "elapsedMs": 361,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "PRE-20260928-6115",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T02:09:23.586Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9cc5390a970788286e383",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T03:07:37.039Z",
+    "lastActor": "薬剤師 高橋",
+    "lastNote": "処方鑑査OK、調剤完了、病棟へ出庫済",
+    "receiverOrder": {
+      "orderId": "PRE-20260928-6115",
+      "orderType": "PRESCRIPTION",
+      "title": "【至急】アモキシシリン処方オーダー",
+      "priority": "STAT",
+      "patient": {
+        "id": "1875",
+        "name": "伊達　太郎",
+        "department": "しおかぜ"
+      },
+      "doctor": {
+        "name": "医師 田中",
+        "department": "内科"
+      },
+      "details": {
+        "scheduledAt": "2026-09-30T14:00:00.000Z",
+        "medicines": [
+          {
+            "name": "アモキシシリンカプセル250mg",
+            "dosage": "1回1C 1日3回 毎食後",
+            "days": 5
+          }
+        ],
+        "remarks": "発熱及び扁桃炎のため至急投与開始"
+      },
+      "orderDate": "2026-09-28T02:09:23.230Z",
+      "createdAt": "2026-09-28T02:09:23.230Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T02:09:23.586Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T02:09:23.586Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T03:07:37.039Z",
+          "actor": "薬剤師 高橋",
+          "note": "処方鑑査OK、調剤完了、病棟へ出庫済"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260928-4547",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 頭部、胸部(肺・横隔) [単純] (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [頭部、胸部(肺・横隔)]",
+      "contrast": "単純",
+      "dynamic": "",
+      "parts": "頭部、胸部(肺・横隔)",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-30T11:00"
+    },
+    "orderDate": "2026-09-28T10:36",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T01:39:38.356Z",
+    "status": "ACCEPTED",
+    "elapsedMs": 7,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-4547",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T01:39:38.360Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9c55a1486b0eb9cd584cc",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "receiverOrder": {
+      "orderId": "RAD-20260928-4547",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 ＣＴ検査依頼書: 頭部、胸部(肺・横隔) [単純] (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "CT",
+        "formName": "ＣＴ検査依頼書",
+        "examType": "ＣＴ検査 [頭部、胸部(肺・横隔)]",
+        "contrast": "単純",
+        "dynamic": "",
+        "parts": "頭部、胸部(肺・横隔)",
+        "medication": "",
+        "conditions": "120kV / 200mA / 0.5sec",
+        "elecImageAdd": true,
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-30T11:00"
+      },
+      "orderDate": "2026-09-28T10:36",
+      "createdAt": "2026-09-28T01:39:38.356Z",
+      "status": "ACCEPTED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T01:39:38.360Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T01:39:38.360Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:52:58.055Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "受付"
+        }
+      ]
+    },
+    "lastActor": "部門モニター操作者",
+    "lastNote": "受付",
+    "lastUpdated": "2026-09-28T05:52:58.055Z"
+  },
+  {
+    "orderId": "RAD-20260928-7582",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 診療Ｘ線照射録: ①胸部[正(臥位)]  (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "XRAY",
+      "formName": "診療Ｘ線照射録",
+      "examType": "一般Ｘ線 [①胸部[正(臥位)]]",
+      "xraySites": "①胸部[正(臥位)]",
+      "sitesList": [
+        "①胸部[正(臥位)]"
+      ],
+      "portable": "一般撮影室",
+      "isPortable": false,
+      "technician": "放射線技師",
+      "media": "DVD作成:未 / 画像取込:未",
+      "dvdMedia": "未",
+      "imgImport": "未",
+      "conditions": "75kV / 100mA / 20msec",
+      "elecArchive": true,
+      "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+      "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+      "scheduledAt": "2026-09-30T11:00"
+    },
+    "orderDate": "2026-09-28T10:36",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-28T01:39:20.051Z",
+    "status": "COMPLETED",
+    "elapsedMs": 17,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260928-7582",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-28T01:39:20.065Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab9c5481486b0eb9cd584c6",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T05:40:39.360Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260928-7582",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 診療Ｘ線照射録: ①胸部[正(臥位)]  (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "XRAY",
+        "formName": "診療Ｘ線照射録",
+        "examType": "一般Ｘ線 [①胸部[正(臥位)]]",
+        "xraySites": "①胸部[正(臥位)]",
+        "sitesList": [
+          "①胸部[正(臥位)]"
+        ],
+        "portable": "一般撮影室",
+        "isPortable": false,
+        "technician": "放射線技師",
+        "media": "DVD作成:未 / 画像取込:未",
+        "dvdMedia": "未",
+        "imgImport": "未",
+        "conditions": "75kV / 100mA / 20msec",
+        "elecArchive": true,
+        "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+        "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+        "scheduledAt": "2026-09-30T11:00"
+      },
+      "orderDate": "2026-09-28T10:36",
+      "createdAt": "2026-09-28T01:39:20.051Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-28T01:39:20.065Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-28T01:39:20.065Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:11:59.505Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:40:39.360Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260925-5182",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "XRAY",
+      "formName": "診療Ｘ線照射録",
+      "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+      "xraySites": "①胸部[正(立位)・側(R-L)]",
+      "sitesList": [
+        "①胸部[正(立位)・側(R-L)]"
+      ],
+      "portable": "一般撮影室",
+      "isPortable": false,
+      "technician": "放射線技師",
+      "media": "DVD作成:未 / 画像取込:未",
+      "dvdMedia": "未",
+      "imgImport": "未",
+      "conditions": "75kV / 100mA / 20msec",
+      "elecArchive": true,
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-25T12:00"
+    },
+    "orderDate": "2026-09-25T11:10",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-25T02:10:36.069Z",
+    "status": "COMPLETED",
+    "elapsedMs": 8,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260925-5182",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-25T02:10:36.072Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab5d81c1486b0eb9cd5169c",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T05:12:02.883Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260925-5182",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "XRAY",
+        "formName": "診療Ｘ線照射録",
+        "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+        "xraySites": "①胸部[正(立位)・側(R-L)]",
+        "sitesList": [
+          "①胸部[正(立位)・側(R-L)]"
+        ],
+        "portable": "一般撮影室",
+        "isPortable": false,
+        "technician": "放射線技師",
+        "media": "DVD作成:未 / 画像取込:未",
+        "dvdMedia": "未",
+        "imgImport": "未",
+        "conditions": "75kV / 100mA / 20msec",
+        "elecArchive": true,
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-25T12:00"
+      },
+      "orderDate": "2026-09-25T11:10",
+      "createdAt": "2026-09-25T02:10:36.069Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-25T02:10:36.072Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-25T02:10:36.072Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:11:47.688Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:12:02.883Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260925-8315",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "XRAY",
+      "formName": "診療Ｘ線照射録",
+      "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+      "xraySites": "①胸部[正(立位)・側(R-L)]",
+      "sitesList": [
+        "①胸部[正(立位)・側(R-L)]"
+      ],
+      "portable": "一般撮影室",
+      "isPortable": false,
+      "technician": "放射線技師",
+      "media": "DVD作成:未 / 画像取込:未",
+      "dvdMedia": "未",
+      "imgImport": "未",
+      "conditions": "75kV / 100mA / 20msec",
+      "elecArchive": true,
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-25T12:00"
+    },
+    "orderDate": "2026-09-25T11:10",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-25T02:10:30.844Z",
+    "status": "COMPLETED",
+    "elapsedMs": 18,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260925-8315",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-25T02:10:30.855Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab5d8161486b0eb9cd51692",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T05:20:18.887Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260925-8315",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "XRAY",
+        "formName": "診療Ｘ線照射録",
+        "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+        "xraySites": "①胸部[正(立位)・側(R-L)]",
+        "sitesList": [
+          "①胸部[正(立位)・側(R-L)]"
+        ],
+        "portable": "一般撮影室",
+        "isPortable": false,
+        "technician": "放射線技師",
+        "media": "DVD作成:未 / 画像取込:未",
+        "dvdMedia": "未",
+        "imgImport": "未",
+        "conditions": "75kV / 100mA / 20msec",
+        "elecArchive": true,
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-25T12:00"
+      },
+      "orderDate": "2026-09-25T11:10",
+      "createdAt": "2026-09-25T02:10:30.844Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-25T02:10:30.855Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-25T02:10:30.855Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:11:54.407Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:20:18.887Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260925-8454",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (あいうえお)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1234",
+      "name": "あいうえお",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "XRAY",
+      "formName": "診療Ｘ線照射録",
+      "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+      "xraySites": "①胸部[正(立位)・側(R-L)]",
+      "sitesList": [
+        "①胸部[正(立位)・側(R-L)]"
+      ],
+      "portable": "一般撮影室",
+      "isPortable": false,
+      "technician": "放射線技師",
+      "media": "DVD作成:未 / 画像取込:未",
+      "dvdMedia": "未",
+      "imgImport": "未",
+      "conditions": "75kV / 100mA / 20msec",
+      "elecArchive": true,
+      "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+      "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+      "scheduledAt": "2026-09-25T12:00"
+    },
+    "orderDate": "2026-09-25T11:10",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-25T02:10:25.024Z",
+    "status": "COMPLETED",
+    "elapsedMs": 38,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260925-8454",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-25T02:10:25.058Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab5d8111486b0eb9cd51688",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T05:40:15.681Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260925-8454",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]  (あいうえお)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "あいうえお",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "XRAY",
+        "formName": "診療Ｘ線照射録",
+        "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]]",
+        "xraySites": "①胸部[正(立位)・側(R-L)]",
+        "sitesList": [
+          "①胸部[正(立位)・側(R-L)]"
+        ],
+        "portable": "一般撮影室",
+        "isPortable": false,
+        "technician": "放射線技師",
+        "media": "DVD作成:未 / 画像取込:未",
+        "dvdMedia": "未",
+        "imgImport": "未",
+        "conditions": "75kV / 100mA / 20msec",
+        "elecArchive": true,
+        "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+        "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可。酸素吸入配慮。",
+        "scheduledAt": "2026-09-25T12:00"
+      },
+      "orderDate": "2026-09-25T11:10",
+      "createdAt": "2026-09-25T02:10:25.024Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-25T02:10:25.058Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-25T02:10:25.058Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:11:56.856Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:40:15.681Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "REH-20260924-8271",
+    "orderType": "REHAB",
+    "title": "REHABオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "1875",
+      "name": "伊達　太郎",
+      "department": "しおかぜ"
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "rehabType": "PT (理学療法)",
+      "purpose": "歩行訓練・ADL向上テスト",
+      "remarks": "連携疎通テストオーダー"
+    },
+    "orderDate": "2026-09-24",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-24T06:58:59.596Z",
+    "status": "RECEIVED",
+    "elapsedMs": 126,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "REH-20260924-8271",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-24T06:58:59.704Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab4ca33c89b3ec916f26ba0",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    }
+  },
+  {
+    "orderId": "REH-20260924-8681",
+    "orderType": "REHAB",
+    "title": "🏃 リハビリ指示書: PT (理学療法)、OT (作業療法) [ROM・バランス・筋力] (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "formName": "リハビリテーション指示書",
+      "location": "ベッドサイド、リハビリテーション室",
+      "admitDate": "2026-09-01",
+      "orderDate": "2026-09-15",
+      "diagnoses": [
+        {
+          "name": "脳梗塞後遺症 (右不全片麻痺)",
+          "onsetDate": "2026-08-15"
+        },
+        {
+          "name": "廃用症候群・誤嚥性肺炎後",
+          "onsetDate": "2026-08-28"
+        }
+      ],
+      "contraindications": "収縮期血圧180以上または脈拍110以上で中止、起立時ふらつき注意",
+      "therapyTypes": "PT (理学療法)、OT (作業療法)",
+      "goals": "ROM、バランス、筋力、基本動作、ADL(日常)、移乗、歩行、ADL自立度",
+      "physicals": "",
+      "remarks": "病棟内での歩行器歩行自立、およびトイレ移乗動作の安定化を目指す",
+      "scheduledAt": "2026-09-24T16:00"
+    },
+    "orderDate": "2026-09-24T15:41",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-24T06:41:42.794Z",
+    "status": "COMPLETED",
+    "elapsedMs": 9,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "REH-20260924-8681",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-24T06:41:42.801Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab4c626fbe37ca7c7bc2051",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-24T06:42:06.954Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "REH-20260924-8681",
+      "orderType": "REHAB",
+      "title": "🏃 リハビリ指示書: PT (理学療法)、OT (作業療法) [ROM・バランス・筋力] (asfsad)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "23",
+        "name": "asfsad",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "formName": "リハビリテーション指示書",
+        "location": "ベッドサイド、リハビリテーション室",
+        "admitDate": "2026-09-01",
+        "orderDate": "2026-09-15",
+        "diagnoses": [
+          {
+            "name": "脳梗塞後遺症 (右不全片麻痺)",
+            "onsetDate": "2026-08-15"
+          },
+          {
+            "name": "廃用症候群・誤嚥性肺炎後",
+            "onsetDate": "2026-08-28"
+          }
+        ],
+        "contraindications": "収縮期血圧180以上または脈拍110以上で中止、起立時ふらつき注意",
+        "therapyTypes": "PT (理学療法)、OT (作業療法)",
+        "goals": "ROM、バランス、筋力、基本動作、ADL(日常)、移乗、歩行、ADL自立度",
+        "physicals": "",
+        "remarks": "病棟内での歩行器歩行自立、およびトイレ移乗動作の安定化を目指す",
+        "scheduledAt": "2026-09-24T16:00"
+      },
+      "orderDate": "2026-09-24T15:41",
+      "createdAt": "2026-09-24T06:41:42.794Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-24T06:41:42.801Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-24T06:41:42.801Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-24T06:42:01.213Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-24T06:42:06.954Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260924-4382",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 頸部、胸部(肺・横隔) [単純] (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [頸部、胸部(肺・横隔)]",
+      "contrast": "単純",
+      "dynamic": "",
+      "parts": "頸部、胸部(肺・横隔)",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "",
+      "remarks": "",
+      "scheduledAt": "2026-09-24T15:00"
+    },
+    "orderDate": "2026-09-24T14:35",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-24T06:39:52.702Z",
+    "status": "COMPLETED",
+    "elapsedMs": 21,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260924-4382",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-24T06:39:52.708Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab4c5b8fbe37ca7c7bc1fb9",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-24T06:40:43.131Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260924-4382",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 ＣＴ検査依頼書: 頸部、胸部(肺・横隔) [単純] (asfsad)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "23",
+        "name": "asfsad",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "CT",
+        "formName": "ＣＴ検査依頼書",
+        "examType": "ＣＴ検査 [頸部、胸部(肺・横隔)]",
+        "contrast": "単純",
+        "dynamic": "",
+        "parts": "頸部、胸部(肺・横隔)",
+        "medication": "",
+        "conditions": "120kV / 200mA / 0.5sec",
+        "elecImageAdd": true,
+        "purpose": "",
+        "remarks": "",
+        "scheduledAt": "2026-09-24T15:00"
+      },
+      "orderDate": "2026-09-24T14:35",
+      "createdAt": "2026-09-24T06:39:52.702Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-24T06:39:52.708Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-24T06:39:52.708Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-24T06:40:34.936Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-24T06:40:43.131Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    }
+  },
+  {
+    "orderId": "RAD-20260924-1249",
+    "orderType": "RADIOLOGY",
+    "title": "🩻 ＣＴ検査依頼書: 頸部、胸部(肺・横隔) [単純] (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "subType": "CT",
+      "formName": "ＣＴ検査依頼書",
+      "examType": "ＣＴ検査 [頸部、胸部(肺・横隔)]",
+      "contrast": "単純",
+      "dynamic": "",
+      "parts": "頸部、胸部(肺・横隔)",
+      "medication": "",
+      "conditions": "120kV / 200mA / 0.5sec",
+      "elecImageAdd": true,
+      "purpose": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "remarks": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+      "scheduledAt": "2026-09-24T15:00"
+    },
+    "orderDate": "2026-09-24T14:35",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-24T06:39:47.766Z",
+    "status": "RECEIVED",
+    "elapsedMs": 11,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "RAD-20260924-1249",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-24T06:39:47.775Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab4c5b3fbe37ca7c7bc1faf",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    }
+  },
+  {
+    "orderId": "IV-20260924-6437",
+    "orderType": "IV",
+    "title": "IVオーダー (undefined)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "一般病棟",
+      "ward": "しおかぜ",
+      "room": "302号室",
+      "gender": "男",
+      "age": 65
+    },
+    "doctor": {
+      "name": "担当医",
+      "department": "内科"
+    },
+    "details": {
+      "route": "DIV",
+      "medicine": "メロペネム静注用0.25g「NP」 1管 + アレビアチン注250mg5mL 1管",
+      "medicines": [
+        {
+          "no": 1,
+          "medicine": "メロペネム静注用0.25g「NP」 1管",
+          "dosage": "生理食塩液100ｍL「VTRS」 1袋",
+          "route": "DIV",
+          "startDate": "2026-09-24",
+          "remarks": ""
+        },
+        {
+          "no": 2,
+          "medicine": "アレビアチン注250mg5mL 1管",
+          "dosage": "生理食塩液100ｍL「VTRS」 1袋",
+          "route": "DIV",
+          "startDate": "2026-09-24",
+          "remarks": ""
+        }
+      ],
+      "startDate": "2026-09-24",
+      "endDate": "2026-10-08",
+      "scheduleDays": "2026-09-24 〜 2026-10-08 (15日間)",
+      "pharmacistChecked": true,
+      "remarks": "注射指示箋(原本様式)より一括送信 [開始日: 2026-09-24]"
+    },
+    "orderDate": "2026-09-24",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-24T06:38:23.785Z",
+    "status": "RECEIVED",
+    "elapsedMs": 21,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "IV-20260924-6437",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-24T06:38:23.797Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab4c55ffbe37ca7c7bc1f3e",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    }
+  },
+  {
+    "orderId": "MEA-20260924-8447",
+    "orderType": "MEAL",
+    "title": "🍱 食事指示: 嚥下食 (とろみ対応) [夕食より開始] (asfsad)",
+    "priority": "ROUTINE",
+    "patient": {
+      "id": "23",
+      "name": "asfsad",
+      "department": "しおかぜ",
+      "kana": "",
+      "gender": "男",
+      "era": "昭21",
+      "birthDate": "",
+      "age": 65,
+      "height": 165,
+      "weight": 60,
+      "ward": "しおかぜ",
+      "room": "",
+      "infection": "無",
+      "mobility": "徒歩",
+      "examCategory": "一般診療"
+    },
+    "doctor": {
+      "name": "北島 先生 (内科)",
+      "department": "内科"
+    },
+    "details": {
+      "mealType": "嚥下食 (とろみ対応)",
+      "timing": "夕食より開始",
+      "allergies": "甲殻類アレルギー (エビ・カニ禁止)",
+      "remarks": "スプーン・フォーク提供希望、お茶にとろみ中度付加",
+      "scheduledAt": "2026-09-24T14:00"
+    },
+    "orderDate": "2026-09-24T13:39",
+    "targetUrl": "http://localhost:5000/api/orders/receive",
+    "sentAt": "2026-09-24T04:40:21.852Z",
+    "status": "COMPLETED",
+    "elapsedMs": 35,
+    "statusCode": 201,
+    "success": true,
+    "errorMessage": "",
+    "receiverResponse": {
+      "success": true,
+      "message": "オーダーを正常に受信しました",
+      "orderId": "MEA-20260924-8447",
+      "status": "RECEIVED",
+      "receivedAt": "2026-09-24T04:40:21.876Z"
+    },
+    "carteSync": {
+      "success": true,
+      "articleId": "6ab4a9b5ec1a6482ba7c612f",
+      "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "receiverOrder": {
+      "orderId": "MEA-20260924-8447",
+      "orderType": "MEAL",
+      "title": "🍱 食事指示: 嚥下食 (とろみ対応) [夕食より開始] (asfsad)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "23",
+        "name": "asfsad",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "mealType": "嚥下食 (とろみ対応)",
+        "timing": "夕食より開始",
+        "allergies": "甲殻類アレルギー (エビ・カニ禁止)",
+        "remarks": "スプーン・フォーク提供希望、お茶にとろみ中度付加",
+        "scheduledAt": "2026-09-24T14:00"
+      },
+      "orderDate": "2026-09-24T13:39",
+      "createdAt": "2026-09-24T04:40:21.852Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-24T04:40:21.876Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-24T04:40:21.876Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-24T04:40:58.521Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-24T04:41:07.017Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
+    },
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "lastUpdated": "2026-09-24T04:41:07.017Z"
+  },
+  {
     "orderId": "IV-20260923-8686",
     "orderType": "IV",
     "title": "IVオーダー (undefined)",
@@ -476,7 +2744,7 @@
     "orderDate": "2026-09-24T00:05",
     "targetUrl": "http://localhost:5000/api/orders/receive",
     "sentAt": "2026-09-23T15:06:51.118Z",
-    "status": "RECEIVED",
+    "status": "COMPLETED",
     "elapsedMs": 6,
     "statusCode": 201,
     "success": true,
@@ -492,6 +2760,68 @@
       "success": true,
       "articleId": "6ab3eb0b93424e1bc7e4ba85",
       "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-24T04:40:40.341Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "MEA-20260923-1720",
+      "orderType": "MEAL",
+      "title": "🍱 食事指示: 全粥食 [夕食より開始] (かきくけこ)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "34127",
+        "name": "かきくけこ",
+        "department": "しおかぜ",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "しおかぜ",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "mealType": "全粥食",
+        "timing": "夕食より開始",
+        "allergies": "甲殻類アレルギー (エビ・カニ禁止)",
+        "remarks": "スプーン・フォーク提供希望、お茶にとろみ中度付加",
+        "scheduledAt": "2026-09-24T01:00"
+      },
+      "orderDate": "2026-09-24T00:05",
+      "createdAt": "2026-09-23T15:06:51.118Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-23T15:06:51.123Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-23T15:06:51.123Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-24T04:40:28.908Z",
+          "actor": "部門モニター操作者",
+          "note": "受付済"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-24T04:40:40.341Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
     }
   },
   {
@@ -534,7 +2864,7 @@
     "orderDate": "2026-09-24T00:02",
     "targetUrl": "http://localhost:5000/api/orders/receive",
     "sentAt": "2026-09-23T15:02:47.873Z",
-    "status": "RECEIVED",
+    "status": "COMPLETED",
     "elapsedMs": 19,
     "statusCode": 201,
     "success": true,
@@ -550,6 +2880,66 @@
       "success": true,
       "articleId": "6ab3ea1793424e1bc7e4b947",
       "message": "オーダリング指示をカルテ記事として正常に保存しました"
+    },
+    "lastUpdated": "2026-09-28T04:32:12.808Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260923-5622",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 透視検査依頼書: PEG交換、消化管造影検査 (カルテ連携患者)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "1234",
+        "name": "カルテ連携患者",
+        "department": "一般病棟",
+        "kana": "",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "",
+        "age": 65,
+        "height": 165,
+        "weight": 60,
+        "ward": "一般病棟",
+        "room": "",
+        "infection": "無",
+        "mobility": "徒歩",
+        "examCategory": "一般診療"
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "FLUORO",
+        "formName": "透視検査依頼書",
+        "examType": "透視検査 [PEG交換、消化管造影検査]",
+        "items": "PEG交換、消化管造影検査",
+        "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+        "materials": "ガストロボタン 24Fr 3.5cm",
+        "purpose": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認",
+        "remarks": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認",
+        "scheduledAt": "2026-09-24T01:00"
+      },
+      "orderDate": "2026-09-24T00:02",
+      "createdAt": "2026-09-23T15:02:47.873Z",
+      "status": "COMPLETED",
+      "senderHost": "http://localhost:4000",
+      "receivedAt": "2026-09-23T15:02:47.888Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-23T15:02:47.888Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T04:32:12.808Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
     }
   },
   {
@@ -2053,7 +4443,7 @@
     },
     "targetUrl": "http://localhost:5000/api/orders/receive",
     "sentAt": "2026-09-15T09:30:34.916Z",
-    "status": "RECEIVED",
+    "status": "COMPLETED",
     "elapsedMs": 51,
     "statusCode": 201,
     "success": true,
@@ -2064,6 +4454,74 @@
       "orderId": "RAD-20260915-5609",
       "status": "RECEIVED",
       "receivedAt": "2026-09-15T09:30:34.958Z"
+    },
+    "lastUpdated": "2026-09-28T05:03:56.492Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260915-5609",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 診療Ｘ線照射録: ①胸部[正(立位)・側(R-L)]、③腰椎[正・側] [ポータブル:302号室] (安部 光良)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "P001",
+        "name": "安部 光良",
+        "department": "しおかぜ",
+        "kana": "アベ テルヨシ",
+        "gender": "男",
+        "era": "昭21",
+        "birthDate": "1946-12-06",
+        "age": 70,
+        "height": 164,
+        "weight": 58,
+        "ward": "しおかぜ",
+        "room": "302号室",
+        "infection": "無",
+        "mobility": "車椅子",
+        "examCategory": "入院時検査"
+      },
+      "doctor": {
+        "name": "北島 先生",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "XRAY",
+        "formName": "診療Ｘ線照射録",
+        "examType": "一般Ｘ線 [①胸部[正(立位)・側(R-L)]、③腰椎[正・側]]",
+        "xraySites": "①胸部[正(立位)・側(R-L)]、③腰椎[正・側]",
+        "sitesList": [
+          "①胸部[正(立位)・側(R-L)]",
+          "③腰椎[正・側]"
+        ],
+        "portable": "302号室",
+        "isPortable": true,
+        "technician": "放射線技師",
+        "media": "DVD作成:未 / 画像取込:未",
+        "dvdMedia": "未",
+        "imgImport": "未",
+        "conditions": "75kV / 100mA / 20msec",
+        "elecArchive": true,
+        "purpose": "肺炎治療後の経過観察、立位困難時は座位撮影可",
+        "remarks": "肺炎治療後の経過観察、立位困難時は座位撮影可",
+        "scheduledAt": "2026-09-15T09:30:34.862Z"
+      },
+      "status": "COMPLETED",
+      "senderHost": "https://localhost:4000",
+      "receivedAt": "2026-09-15T09:30:34.958Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-15T09:30:34.958Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:03:56.492Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
     }
   },
   {
@@ -2330,7 +4788,7 @@
     },
     "targetUrl": "http://localhost:5000/api/orders/receive",
     "sentAt": "2026-09-15T06:44:53.977Z",
-    "status": "RECEIVED",
+    "status": "COMPLETED",
     "elapsedMs": 8,
     "statusCode": 201,
     "success": true,
@@ -2341,6 +4799,62 @@
       "orderId": "RAD-20260915-8416",
       "status": "RECEIVED",
       "receivedAt": "2026-09-15T06:44:53.982Z"
+    },
+    "lastUpdated": "2026-09-28T04:32:21.022Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260915-8416",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 透視検査依頼書: PEG交換 (佐藤 花子)",
+      "priority": "URGENT",
+      "patient": {
+        "id": "P003",
+        "name": "佐藤 花子",
+        "department": "一般病棟",
+        "kana": "サトウ ハナコ",
+        "gender": "女",
+        "age": 89,
+        "era": "昭12",
+        "birthDate": "1937-08-23",
+        "ward": "一般病棟",
+        "room": "412号室",
+        "mobility": "ベッド",
+        "infection": "有(MRSA)",
+        "height": 148,
+        "weight": 42
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "FLUORO",
+        "formName": "透視検査依頼書",
+        "examType": "透視検査 [PEG交換]",
+        "items": "PEG交換",
+        "medications": "キシロカインゼリー2% 10ml、生食 20ml",
+        "materials": "ガストロボタン 24Fr 3.5cm",
+        "purpose": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認",
+        "remarks": "定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認"
+      },
+      "status": "COMPLETED",
+      "senderHost": "https://localhost:4000",
+      "receivedAt": "2026-09-15T06:44:53.982Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-15T06:44:53.982Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T04:32:21.022Z",
+          "actor": "部門モニター操作者",
+          "note": "実施完了"
+        }
+      ]
     }
   },
   {
@@ -2381,7 +4895,7 @@
     },
     "targetUrl": "http://localhost:5000/api/orders/receive",
     "sentAt": "2026-09-15T06:44:53.921Z",
-    "status": "RECEIVED",
+    "status": "COMPLETED",
     "elapsedMs": 38,
     "statusCode": 201,
     "success": true,
@@ -2392,6 +4906,71 @@
       "orderId": "RAD-20260915-6037",
       "status": "RECEIVED",
       "receivedAt": "2026-09-15T06:44:53.953Z"
+    },
+    "lastUpdated": "2026-09-28T05:53:23.712Z",
+    "lastActor": "部門モニター操作者",
+    "lastNote": "実施完了",
+    "receiverOrder": {
+      "orderId": "RAD-20260915-6037",
+      "orderType": "RADIOLOGY",
+      "title": "🩻 ＣＴ検査依頼書: 胸部(肺・横隔)、腹部(肝・胆・膵・腎) [単純] (安部 光良)",
+      "priority": "ROUTINE",
+      "patient": {
+        "id": "P001",
+        "name": "安部 光良",
+        "department": "一般病棟",
+        "kana": "アベ テルヨシ",
+        "gender": "男",
+        "age": 70,
+        "era": "昭21",
+        "birthDate": "1946-12-06",
+        "ward": "しおかぜ",
+        "room": "302号室",
+        "mobility": "車椅子",
+        "infection": "無",
+        "height": 164,
+        "weight": 58
+      },
+      "doctor": {
+        "name": "北島 先生 (内科)",
+        "department": "内科"
+      },
+      "details": {
+        "subType": "CT",
+        "formName": "ＣＴ検査依頼書",
+        "examType": "ＣＴ検査 [胸部(肺・横隔)、腹部(肝・胆・膵・腎)]",
+        "contrast": "単純",
+        "parts": "胸部(肺・横隔)、腹部(肝・胆・膵・腎)",
+        "conditions": "120kV / 200mA / 0.5sec",
+        "elecImageAdd": true,
+        "purpose": "発熱・咳嗽持続のため肺炎疑い、胸部精査",
+        "remarks": "発熱・咳嗽持続のため肺炎疑い、胸部精査"
+      },
+      "status": "COMPLETED",
+      "senderHost": "https://localhost:4000",
+      "receivedAt": "2026-09-15T06:44:53.953Z",
+      "executionHistory": [
+        {
+          "status": "RECEIVED",
+          "timestamp": "2026-09-15T06:44:53.953Z",
+          "actor": "受信サーバー (Receiver)",
+          "note": "オーダーを受信・登録しました"
+        },
+        {
+          "status": "ACCEPTED",
+          "timestamp": "2026-09-28T05:53:21.657Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "受付"
+        },
+        {
+          "status": "COMPLETED",
+          "timestamp": "2026-09-28T05:53:23.712Z",
+          "actor": "部門モニター操作者",
+          "terminal": "PC01",
+          "note": "実施完了"
+        }
+      ]
     }
   },
   {

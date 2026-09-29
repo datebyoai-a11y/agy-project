@@ -296,10 +296,10 @@
       padding: 0 0 42px 0;
     }
 
-    /* 📌 スクロール時も常時最上部に固定されるヘッダーエリア */
+    /* 📌 スクロール時も常時最上部に固定されるヘッダーエリア (最上部共通リボンの下: 38px) */
     .sticky-top-header {
       position: sticky;
-      top: 0;
+      top: 38px;
       z-index: 1000;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
@@ -1856,6 +1856,9 @@
   </style>
 </head>
 <body>
+  <!-- 🏥 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '電子カルテ・記事作成' }) %>
+
   <!-- 📌 電子カルテ トップリボン (対象者、入力者、オーダリング移行、メニューのみ) -->
   <div class="sticky-top-header">
     <div class="carte-top-header">
@@ -1863,15 +1866,16 @@
       <% 
         const activeTarget = (typeof selectedTargetPerson !== 'undefined' && selectedTargetPerson) 
           ? selectedTargetPerson 
-          : ((targetPeople && targetPeople.length > 0) ? targetPeople[0] : null);
+          : null;
       %>
       <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:nowrap;">
         <span style="font-weight:bold; font-size:0.85rem; color:#e0f2fe; display:flex; align-items:center; gap:0.25rem; white-space:nowrap;">
           <span>🎯</span> 対象者:
         </span>
-        <!-- セレクトボックスは非表示にしてJSの患者情報連携を維持 (ユーザーは選択不可・固定表示) -->
-        <select id="headerTargetFilter" class="target-filter-select" onchange="onCarteTargetSelect(this.value)" style="display:none;" title="カルテの対象患者">
-          <option value="ALL" <%= (!activeTarget) ? 'selected' : '' %>>🌐 全患者（すべての記事）</option>
+        <!-- 患者切り替えセレクター -->
+        <select id="headerTargetFilter" class="target-filter-select" onchange="onCarteTargetSelect(this.value)" 
+                style="background:#0f172a; color:#fef08a; font-weight:bold; border:1px solid #38bdf8; border-radius:5px; padding:0.22rem 0.5rem; font-size:0.85rem; cursor:pointer; outline:none; max-width:220px;" title="カルテの対象患者を選択">
+          <option value="ALL" <%= (!activeTarget || (typeof targetId !== 'undefined' && targetId === 'ALL')) ? 'selected' : '' %>>🌐 全患者（すべての記事）</option>
           <% if (targetPeople && targetPeople.length > 0) { %>
             <% targetPeople.forEach(tp => { %>
               <% const isSelected = activeTarget && (activeTarget._id.toString() === tp._id.toString() || activeTarget.customId === tp.customId); %>
@@ -1880,8 +1884,13 @@
           <% } %>
         </select>
 
-        <!-- 表示のみの固定対象者バッジ -->
-        <div class="patient-header-badge" id="cartePatientBadge" style="cursor:default; user-select:text;" title="カルテ対象患者 (固定表示)">
+        <button type="button" id="btnToggleAllPatients" onclick="onCarteTargetSelect(currentSelectedTargetId === 'ALL' ? (document.getElementById('headerTargetFilter').options[1]?.value || 'ALL') : 'ALL')"
+                style="background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:0.22rem 0.55rem; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;" title="全患者の記事を一括表示 / 患者絞り込みを切り替え">
+          <span>🌐 全患者表示</span>
+        </button>
+
+        <!-- 表示バッジ (サマリー) -->
+        <div class="patient-header-badge" id="cartePatientBadge" style="cursor:default; user-select:text;" title="カルテ対象患者">
           <span style="font-size:1.1rem;">👤</span>
           <div style="display:flex; align-items:center; gap:0.4rem;">
             <span class="p-id" id="cartePatientId" style="font-family:monospace; font-weight:bold; color:#fef08a;">
@@ -1932,6 +1941,12 @@
           <span id="ribbonSearchArrow" style="font-size:0.65rem; transition:transform 0.2s ease;">▼</span>
         </button>
 
+        <!-- 🏥 統合ポータルへ戻る (Port 8000) -->
+        <a id="btnPortalTop" href="http://localhost:8000/menu" style="background:#4f46e5; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="医療統合ポータルメニュー (Port 8000) へ戻ります">
+          <span>🏥</span>
+          <span>ポータル (8000)</span>
+        </a>
+
         <!-- 🚀 オーダリング移行 (Port 4000) -->
         <a id="btnOrderingTop" href="http://localhost:4000/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面 (Port 4000) を現在選択中の患者を引き継いで開きます">
           <span>🚀</span>
@@ -1957,11 +1972,18 @@
             </div>
 
             <div class="gear-section-label">ナビゲーション</div>
-            <a href="/" class="gear-dropdown-item">
-              <span class="item-icon">🏠</span>
+            <a href="http://localhost:8000/menu" class="gear-dropdown-item" style="background:#eef2ff;">
+              <span class="item-icon">🏥</span>
               <div class="item-info">
-                <div class="item-title">メニュー画面に戻る</div>
-                <div class="item-desc">メインポータルへ戻る</div>
+                <div class="item-title" style="color:#4f46e5; font-weight:bold;">統合ポータルメニュー (Port 8000)</div>
+                <div class="item-desc">病院統合ポータルのメインメニューへ戻る</div>
+              </div>
+            </a>
+            <a href="/" class="gear-dropdown-item">
+              <span class="item-icon">📋</span>
+              <div class="item-info">
+                <div class="item-title">旧カルテメニュー画面</div>
+                <div class="item-desc">インシデント旧メニューへ移動</div>
               </div>
             </a>
 
@@ -2221,16 +2243,16 @@
             <div style="display:flex; align-items:center; gap:0.25rem; flex:1;">
               <span style="font-size:0.75rem; font-weight:bold; color:#475569; white-space:nowrap;">🩺 職種:</span>
               <select id="leftDeptFilterSelect" onchange="filterArticlesByDept(this.value)" style="flex:1; max-width:170px; padding:0.2rem 0.35rem; font-size:0.75rem; font-weight:bold; border:1px solid #cbd5e1; border-radius:4px; background:#ffffff; color:#0f172a; cursor:pointer;" title="職種でカルテ記事を絞り込み">
-                <option value="ALL">🌐 全体（すべての職種）</option>
-                <option value="医師" <%= (currentUserDept === '医師') ? 'selected' : '' %>>👨‍⚕️ 医師のみ</option>
-                <option value="看護師" <%= (currentUserDept === '看護師') ? 'selected' : '' %>>👩‍⚕️ 看護師のみ</option>
-                <option value="薬剤師" <%= (currentUserDept === '薬剤師') ? 'selected' : '' %>>💊 薬剤師のみ</option>
-                <option value="放射線技師" <%= (currentUserDept === '放射線技師') ? 'selected' : '' %>>🩻 放射線技師のみ</option>
-                <option value="リハビリ" <%= (currentUserDept === 'リハビリ' || currentUserDept.includes('リハビリ') || currentUserDept.includes('療法')) ? 'selected' : '' %>>🏃 リハビリのみ</option>
-                <option value="介護士" <%= (currentUserDept === '介護士') ? 'selected' : '' %>>🤝 介護士のみ</option>
-                <option value="栄養士" <%= (currentUserDept === '栄養士') ? 'selected' : '' %>>🍱 栄養士のみ</option>
-                <option value="事務" <%= (currentUserDept === '事務') ? 'selected' : '' %>>🏢 事務のみ</option>
-                <option value="医療安全管理室" <%= (currentUserDept === '医療安全管理室') ? 'selected' : '' %>>🛡️ 医療安全管理室</option>
+                <option value="ALL" selected>🌐 全体（すべての職種）</option>
+                <option value="医師">👨‍⚕️ 医師のみ</option>
+                <option value="看護師">👩‍⚕️ 看護師のみ</option>
+                <option value="薬剤師">💊 薬剤師のみ</option>
+                <option value="放射線技師">🩻 放射線技師のみ</option>
+                <option value="リハビリ">🏃 リハビリのみ</option>
+                <option value="介護士">🤝 介護士のみ</option>
+                <option value="栄養士">🍱 栄養士のみ</option>
+                <option value="事務">🏢 事務のみ</option>
+                <option value="医療安全管理室">🛡️ 医療安全管理室</option>
               </select>
             </div>
             <span style="font-size:0.72rem; color:#64748b; white-space:nowrap;">表示: <strong id="visibleCount" style="color:#0284c7;"><%= articles ? articles.length : 0 %></strong>件</span>
@@ -2330,6 +2352,13 @@
                   const cTitle = c.title || '';
                   return cDept === '放射線技師' || cCat.includes('放射線検査') || cCat.includes('ポータブル撮影') || cCat.includes('撮影実施') || cTitle.includes('放射線技師') || cTitle.includes('撮影実施');
                 });
+
+                // 🌟 オーダリング実施ステータス連動判定 (未撮影/未調剤 -> 撮影実施済/鑑査調剤済)
+                const isRxCompleted = hasPharmacyCheck || art.orderStatus === 'COMPLETED' || (art.orderExecution && art.orderExecution.status === 'COMPLETED');
+                const isRxAccepted = !isRxCompleted && (art.orderStatus === 'ACCEPTED' || (art.orderExecution && art.orderExecution.status === 'ACCEPTED'));
+
+                const isRadCompleted = hasRadiologyCheck || art.orderStatus === 'COMPLETED' || (art.orderExecution && art.orderExecution.status === 'COMPLETED');
+                const isRadAccepted = !isRadCompleted && (art.orderStatus === 'ACCEPTED' || (art.orderExecution && art.orderExecution.status === 'ACCEPTED'));
 
                 // カードの境界線・背景色
                 let cardBorderLeft = isQuotedCorrection ? '#f59e0b' : (isQuoted ? '#f59e0b' : '#0284c7');
@@ -2439,15 +2468,19 @@
                       <span style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">📝 引用記事 (最新)</span>
                     <% } else if (isPrescriptionOrder) { %>
                       <span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">💊 処方オーダー</span>
-                      <% if (hasPharmacyCheck) { %>
-                        <span style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">✅ 鑑査調剤済</span>
+                      <% if (isRxCompleted) { %>
+                        <span style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;" title="<%= (art.orderExecution && art.orderExecution.actor) ? `調剤担当: ${art.orderExecution.actor}` : '鑑査調剤済' %>">✅ 鑑査調剤済</span>
+                      <% } else if (isRxAccepted) { %>
+                        <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">🟡 調剤受付済</span>
                       <% } else { %>
                         <span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">⏳ 未鑑査・未調剤</span>
                       <% } %>
                     <% } else if (isRadiologyOrder) { %>
                       <span style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">🩻 放射線オーダー</span>
-                      <% if (hasRadiologyCheck) { %>
-                        <span style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">✅ 撮影実施済</span>
+                      <% if (isRadCompleted) { %>
+                        <span style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;" title="<%= (art.orderExecution && art.orderExecution.actor) ? `撮影担当: ${art.orderExecution.actor}` : '撮影実施済' %>">✅ 撮影実施済</span>
+                      <% } else if (isRadAccepted) { %>
+                        <span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">🟡 撮影受付済</span>
                       <% } else { %>
                         <span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">⏳ 未撮影</span>
                       <% } %>
@@ -2486,22 +2519,30 @@
 
                     <!-- 💊 処方オーダーに対する薬剤師 鑑査・調剤確認ダイレクトボタン -->
                     <% if (isPrescriptionOrder) { %>
-                      <button type="button" 
-                              onclick="startOrderExecution('<%= art._id %>', 'pharmacy', '<%= safeTitleForQuote %>')"
-                              style="background:#0284c7; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;"
-                              title="この処方オーダーに対して薬剤師の鑑査・調剤確認（対になる子記事）を作成">
-                        💊 鑑査・実施確認
-                      </button>
+                      <% if (!isRxCompleted) { %>
+                        <button type="button" 
+                                onclick="startOrderExecution('<%= art._id %>', 'pharmacy', '<%= safeTitleForQuote %>')"
+                                style="background:#0284c7; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;"
+                                title="この処方オーダーに対して薬剤師の鑑査・調剤確認（対になる子記事）を作成">
+                          💊 鑑査・実施確認
+                        </button>
+                      <% } else { %>
+                        <span style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:0.65rem; font-weight:bold; padding:0.1rem 0.4rem; border-radius:3px;">✅ 調剤完了</span>
+                      <% } %>
                     <% } %>
 
                     <!-- 🩻 放射線オーダーに対する技師 撮影実施確認ダイレクトボタン -->
                     <% if (isRadiologyOrder) { %>
-                      <button type="button" 
-                              onclick="startOrderExecution('<%= art._id %>', 'radiology', '<%= safeTitleForQuote %>')"
-                              style="background:#7c3aed; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;"
-                              title="この放射線オーダーに対して放射線技師の撮影実施確認（対になる子記事）を作成">
-                        🩻 撮影実施確認
-                      </button>
+                      <% if (!isRadCompleted) { %>
+                        <button type="button" 
+                                onclick="startOrderExecution('<%= art._id %>', 'radiology', '<%= safeTitleForQuote %>')"
+                                style="background:#7c3aed; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;"
+                                title="この放射線オーダーに対して放射線技師の撮影実施確認（対になる子記事）を作成">
+                          🩻 撮影実施確認
+                        </button>
+                      <% } else { %>
+                        <span style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:0.65rem; font-weight:bold; padding:0.1rem 0.4rem; border-radius:3px;">✅ 撮影完了</span>
+                      <% } %>
                     <% } %>
 
                     <!-- 過去記事は編集・削除不可。修正は引用ツリー形式 -->
@@ -3803,10 +3844,10 @@
         const idText = document.getElementById('cartePatientId')?.textContent?.trim();
         const nameText = document.getElementById('cartePatientName')?.textContent?.trim();
         if (idText && idText !== '未選択' && idText !== '0000000001') {
-          patientCustomId = idText;
+          patientCustomId = idText.replace(/^\[|\]$/g, '').trim();
         }
         if (nameText && nameText !== '未選択' && nameText !== '全患者（すべての記事）') {
-          patientName = nameText;
+          patientName = nameText.replace(/\s*様$/, '').trim();
         }
       }
 
@@ -3873,8 +3914,23 @@
 
     // 💉 注射指示箋 (インクリメンタル検索対応) のURL生成
     function getInjectionSheetUrl() {
-      const patientCustomId = document.getElementById('selectedPersonCode')?.value || (currentPerson && currentPerson.id) || currentTargetPersonId || '';
-      const patientName = currentTargetPersonName || (currentPerson && currentPerson.name) || '';
+      let patientCustomId = document.getElementById('selectedPersonCode')?.value || (currentPerson && currentPerson.id) || currentTargetPersonId || '';
+      let patientName = currentTargetPersonName || (currentPerson && currentPerson.name) || '';
+
+      if (!patientCustomId) {
+        const idText = document.getElementById('cartePatientId')?.textContent?.trim();
+        const nameText = document.getElementById('cartePatientName')?.textContent?.trim();
+        if (idText && idText !== '未選択' && idText !== '0000000001') {
+          patientCustomId = idText.replace(/^\[|\]$/g, '').trim();
+        }
+        if (nameText && nameText !== '未選択' && nameText !== '全患者（すべての記事）') {
+          patientName = nameText.replace(/\s*様$/, '').trim();
+        }
+      }
+
+      patientCustomId = String(patientCustomId || '').replace(/^\[|\]$/g, '').trim();
+      patientName = String(patientName || '').replace(/\s*様$/, '').trim();
+
       const isHttps = window.location.protocol === 'https:';
       const senderPort = isHttps ? 4443 : 4000;
       const protocol = isHttps ? 'https:' : 'http:';
@@ -4835,9 +4891,23 @@
       } else if (isQuotedCorrection) {
         badgeType = '<span style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">📝 引用記事 (最新)</span>';
       } else if (isPrescriptionOrder) {
-        badgeType = '<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">💊 処方オーダー</span><span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">⏳ 未鑑査・未調剤</span>';
+        const isRxCompleted = (art.orderStatus === 'COMPLETED') || (art.orderExecution && art.orderExecution.status === 'COMPLETED');
+        const isRxAccepted = !isRxCompleted && (art.orderStatus === 'ACCEPTED' || (art.orderExecution && art.orderExecution.status === 'ACCEPTED'));
+        const rxBadge = isRxCompleted
+          ? '<span style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">✅ 鑑査調剤済</span>'
+          : (isRxAccepted
+              ? '<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">🟡 調剤受付済</span>'
+              : '<span style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">⏳ 未鑑査・未調剤</span>');
+        badgeType = `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">💊 処方オーダー</span>${rxBadge}`;
       } else if (isRadiologyOrder) {
-        badgeType = '<span style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">🩻 放射線オーダー</span><span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">⏳ 未撮影</span>';
+        const isRadCompleted = (art.orderStatus === 'COMPLETED') || (art.orderExecution && art.orderExecution.status === 'COMPLETED');
+        const isRadAccepted = !isRadCompleted && (art.orderStatus === 'ACCEPTED' || (art.orderExecution && art.orderExecution.status === 'ACCEPTED'));
+        const radBadge = isRadCompleted
+          ? '<span style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">✅ 撮影実施済</span>'
+          : (isRadAccepted
+              ? '<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">🟡 撮影受付済</span>'
+              : '<span style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.65rem; font-weight:bold; padding:0.05rem 0.35rem; border-radius:3px;">⏳ 未撮影</span>');
+        badgeType = `<span style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-size:0.68rem; padding:0.05rem 0.4rem; border-radius:3px; font-weight:bold;">🩻 放射線オーダー</span>${radBadge}`;
       } else if (isQuoted) {
         badgeType = '<span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:0.65rem; padding:0.05rem 0.35rem; border-radius:3px; font-weight:bold;">↳ 追記</span>';
       } else {
@@ -4846,9 +4916,19 @@
 
       let directOrderBtn = '';
       if (isPrescriptionOrder && !isPharmacyExecution) {
-        directOrderBtn = `<button type="button" onclick="startOrderExecution('${art._id}', 'pharmacy', '${safeTitle}')" style="background:#0284c7; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;" title="この処方オーダーに対して薬剤師の鑑査・調剤確認（対になる子記事）を作成">💊 鑑査・実施確認</button>`;
+        const isRxCompleted = (art.orderStatus === 'COMPLETED') || (art.orderExecution && art.orderExecution.status === 'COMPLETED');
+        if (!isRxCompleted) {
+          directOrderBtn = `<button type="button" onclick="startOrderExecution('${art._id}', 'pharmacy', '${safeTitle}')" style="background:#0284c7; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;" title="この処方オーダーに対して薬剤師の鑑査・調剤確認（対になる子記事）を作成">💊 鑑査・実施確認</button>`;
+        } else {
+          directOrderBtn = `<span style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; font-size:0.65rem; font-weight:bold; padding:0.1rem 0.4rem; border-radius:3px;">✅ 調剤完了</span>`;
+        }
       } else if (isRadiologyOrder && !isRadiologyExecution) {
-        directOrderBtn = `<button type="button" onclick="startOrderExecution('${art._id}', 'radiology', '${safeTitle}')" style="background:#7c3aed; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;" title="この放射線オーダーに対して放射線技師の撮影実施確認（対になる子記事）を作成">🩻 撮影実施確認</button>`;
+        const isRadCompleted = (art.orderStatus === 'COMPLETED') || (art.orderExecution && art.orderExecution.status === 'COMPLETED');
+        if (!isRadCompleted) {
+          directOrderBtn = `<button type="button" onclick="startOrderExecution('${art._id}', 'radiology', '${safeTitle}')" style="background:#7c3aed; border:none; color:white; padding:0.12rem 0.45rem; border-radius:3px; font-size:0.7rem; font-weight:bold; cursor:pointer;" title="この放射線オーダーに対して放射線技師の撮影実施確認（対になる子記事）を作成">🩻 撮影実施確認</button>`;
+        } else {
+          directOrderBtn = `<span style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:0.65rem; font-weight:bold; padding:0.1rem 0.4rem; border-radius:3px;">✅ 撮影完了</span>`;
+        }
       }
 
       let quoteHeader = '';
@@ -5529,7 +5609,7 @@
 
     // フィルタリング状態管理
     let currentSelectedTargetId = 'ALL';
-    let currentSelectedDeptFilter = '<%= currentUserDept || "ALL" %>';
+    let currentSelectedDeptFilter = 'ALL';
     let currentSelectedCatFilter = 'ALL';
 
     // 17. 最新記事（タイムラインの一番上）にフォーカスする関数
@@ -5575,8 +5655,14 @@
         const matchesTarget = (currentSelectedTargetId === 'ALL') || (currentSelectedTargetId === itemTargetId);
 
         // 2. 職種・部署一致判定（部分一致含む柔軟な判定）
+        // ※ 指示オーダー（処方・点滴・放射線・食事・リハビリ等）は多職種連携で全員が確認すべき情報のため職種フィルタで除外しない
         let matchesDept = true;
-        if (currentSelectedDeptFilter !== 'ALL') {
+        const isOrderItem = item.getAttribute('data-is-prescription') === 'true' ||
+                            item.getAttribute('data-is-radiology') === 'true' ||
+                            itemCat.includes('オーダー') || itemCat.includes('指示') ||
+                            itemCat.includes('点滴') || itemCat.includes('処方') || itemCat.includes('食事') || itemCat.includes('リハビリ');
+
+        if (!isOrderItem && currentSelectedDeptFilter !== 'ALL') {
           if (currentSelectedDeptFilter === 'リハビリ') {
             matchesDept = (itemDept === 'リハビリ') || itemDept.includes('リハビリ') || itemDept.includes('療法');
           } else {
@@ -5925,6 +6011,8 @@
         const filterSelect = document.getElementById('headerTargetFilter');
         if (filterSelect && filterSelect.value && filterSelect.value !== 'ALL') {
           onCarteTargetSelect(filterSelect.value);
+        } else {
+          onCarteTargetSelect('ALL');
         }
       }
       
@@ -5933,6 +6021,19 @@
 
       // ページ読み込み完了時に左側タイムラインを一番下（最新記事）へ自動スクロール
       scrollToLatestArticle();
+
+      // 🌟 オーダリング受信側の最新実施ステータス（未撮影->撮影実施済など）をバックグラウンドで自動連動
+      setTimeout(() => {
+        fetch('/api/orders/sync-from-receiver')
+          .then(r => r.json())
+          .then(data => {
+            if (data.success && data.syncedCount > 0) {
+              console.log('✅ オーダーステータス自動同期完了:', data.message);
+              checkNewArticles();
+            }
+          })
+          .catch(() => {});
+      }, 1000);
 
       // 🔔 定期ポーリング開始（3.5秒ごと）＆ タブ復帰時（focus）に即座に新着チェック
       setInterval(checkNewArticles, 3500);

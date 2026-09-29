@@ -4,28 +4,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { JWT_SECRET } = require('../middleware/auth');
 
-// ユーザー新規登録処理
+// ユーザー新規登録処理（ログイン画面からの自己登録は廃止）
 router.post('/register', async (req, res) => {
-  try {
-    const { loginId, userName, password } = req.body;
-
-    if (!loginId || !userName || !password) {
-      return res.send('<script>alert("すべての項目を入力してください。"); window.history.back();</script>');
-    }
-
-    const existingUser = await User.findOne({ loginId });
-    if (existingUser) {
-      return res.send('<script>alert("このログイン名はすでに使用されています。"); window.history.back();</script>');
-    }
-
-    // パスワードはUserモデルのpre('save')で自動的にbcryptハッシュ化されます
-    const newUser = new User({ loginId, userName, password });
-    await newUser.save();
-
-    res.send('<script>alert("ユーザー登録が完了しました！ログインしてください。"); window.location.href="/login";</script>');
-  } catch (err) {
-    res.status(500).send('ユーザー登録エラー: ' + err.message);
-  }
+  return res.status(403).send('<script>alert("セキュリティ保護のため、ログイン画面からの新規登録は受け付けておりません。アカウント発行はシステム管理者へご依頼ください。"); window.location.href="/login";</script>');
 });
 
 // ログイン処理（bcryptパスワード照合 & JWTトークン発行）
@@ -47,10 +28,10 @@ router.post('/login', async (req, res) => {
         { expiresIn: '8h' }
       );
 
-      // HTTP-only Cookie に保存
+      // HTTP-only Cookie に保存 (ブラウザ終了時に自動消滅)
       res.cookie('token', token, {
         httpOnly: true,
-        maxAge: 8 * 60 * 60 * 1000 // 8時間
+        sameSite: 'lax'
       });
 
       // セッションにも保存
@@ -75,6 +56,61 @@ router.get('/logout', (req, res) => {
     req.session.destroy();
   }
   res.redirect('/login');
+});
+
+// 🔑 SSO (Single Sign-On) ログイン受付エンドポイント
+router.get('/sso-login', async (req, res) => {
+  try {
+    const { token, redirect } = req.query;
+    if (!token) {
+      return res.redirect('/login?error=' + encodeURIComponent('SSO認証トークンが指定されていません。'));
+    }
+
+    // JWTトークンの検証
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // ユーザー検索（_id または loginId）
+    let user = null;
+    if (decoded.userId) {
+      user = await User.findById(decoded.userId);
+    }
+    if (!user && decoded.loginId) {
+      user = await User.findOne({ loginId: decoded.loginId });
+    }
+
+    if (!user) {
+      return res.redirect('/login?error=' + encodeURIComponent('該当する職員アカウントが見つかりません。'));
+    }
+
+    // 正規セッショントークン生成 (8時間)
+    const sessionToken = jwt.sign(
+      { userId: user._id, loginId: user.loginId, userName: user.userName },
+      JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    // 認証クッキーの設定 (ブラウザ終了時に自動消滅)
+    res.cookie('token', sessionToken, {
+      httpOnly: true,
+      sameSite: 'lax'
+    });
+
+    // セッションの設定
+    if (req.session) {
+      req.session.user = {
+        id: user.loginId,
+        name: user.userName
+      };
+    }
+
+    // 安全なリダイレクト先決定 (オープンリダイレクト脆弱性防止)
+    const targetUrl = (typeof redirect === 'string' && redirect.startsWith('/')) ? redirect : '/articles';
+    console.log(`🔑 [SSO ログイン成功] ${user.userName} (${user.loginId}) ➔ ${targetUrl}`);
+    return res.redirect(targetUrl);
+  } catch (err) {
+    console.error('⚠️ [SSO 認証失敗]:', err.message);
+    return res.redirect('/login?error=' + encodeURIComponent('SSO認証に失敗しました: ' + err.message));
+  }
 });
 
 module.exports = router;

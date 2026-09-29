@@ -544,6 +544,12 @@
     .priority-badge.URGENT { background: #ffedd5; color: #ea580c; border: 1px solid #fdba74; }
     .priority-badge.ROUTINE { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
 
+    .sched-cell {
+      font-size: 0.74rem;
+      font-weight: bold;
+      color: #0f172a;
+    }
+
     .time-cell {
       font-family: monospace;
       font-size: 0.74rem;
@@ -622,6 +628,24 @@
     .status-badge.ACCEPTED { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
     .status-badge.IN_PROGRESS { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
     .status-badge.COMPLETED { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+    /* 3枠モダリティ専用: クリック可能なステータスバッジ (受信 ➔ 受付 ➔ 完了) */
+    .rad-clickable-status {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.18rem;
+    }
+    .rad-clickable-status:hover {
+      filter: brightness(0.92);
+      transform: scale(1.06);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+    .rad-clickable-status:active {
+      transform: scale(0.95);
+    }
 
     /* =========================================================
        右列: 選択オーダーの詳細パネル
@@ -1369,6 +1393,244 @@
         flex: 0 0 45%;
       }
     }
+    /* =========================================================
+       🩻 放射線科 モダリティ別 3枠ビュー (CT / 透視 / X線)
+       ========================================================= */
+    .radiology-modality-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .rad-modality-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.35rem 0.65rem;
+      background: #f1f5f9;
+      border-bottom: 1px solid #cbd5e1;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .rad-view-toggle-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s;
+    }
+    .rad-view-toggle-btn:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+    .rad-view-toggle-btn.active {
+      background: #6d28d9;
+      color: white;
+      border-color: #5b21b6;
+    }
+
+    .rad-modality-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+      padding: 0.5rem;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* 各枠 (カラム) の基本スタイル */
+    .rad-col-frame {
+      display: flex;
+      flex-direction: column;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 2px solid transparent;
+      background: white;
+      min-height: 0;
+    }
+
+    /* 1. 💻 CT枠 (ブルー / シアン系) */
+    .rad-col-ct {
+      border-color: #0284c7;
+      background: #f0f9ff;
+    }
+    .rad-col-ct .rad-col-header {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: white;
+    }
+    .rad-col-ct .rad-badge-pill {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+
+    /* 2. 📺 透視枠 (エメラルド / グリーン系) */
+    .rad-col-fluoro {
+      border-color: #059669;
+      background: #ecfdf5;
+    }
+    .rad-col-fluoro .rad-col-header {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+    }
+    .rad-col-fluoro .rad-badge-pill {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    /* 3. 🩻 X線枠 (バイオレット / パープル系) */
+    .rad-col-xray {
+      border-color: #7c3aed;
+      background: #faf5ff;
+    }
+    .rad-col-xray .rad-col-header {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: white;
+    }
+    .rad-col-xray .rad-badge-pill {
+      background: #ede9fe;
+      color: #5b21b6;
+      border: 1px solid #ddd6fe;
+    }
+
+    .rad-col-header {
+      padding: 0.45rem 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .rad-badge-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 9999px;
+      line-height: 1.2;
+    }
+
+    .rad-col-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.45rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      min-height: 0;
+    }
+
+    /* オーダーカード */
+    .rad-order-card {
+      background: white;
+      border-radius: 6px;
+      padding: 0.45rem 0.55rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.75rem;
+      position: relative;
+    }
+    .rad-order-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      border-color: #94a3b8;
+    }
+    .rad-order-card.status-COMPLETED {
+      opacity: 0.65;
+      background: #f8fafc;
+    }
+    .rad-col-ct .rad-order-card {
+      border-left-color: #0284c7;
+    }
+    .rad-col-fluoro .rad-order-card {
+      border-left-color: #059669;
+    }
+    .rad-col-xray .rad-order-card {
+      border-left-color: #7c3aed;
+    }
+
+    .rad-order-card.selected-rad-card {
+      outline: 2px solid #0284c7;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+    }
+    .rad-col-fluoro .rad-order-card.selected-rad-card {
+      outline-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.25);
+    }
+    .rad-col-xray .rad-order-card.selected-rad-card {
+      outline-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
+    }
+
+    .rad-card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.3rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.7rem;
+    }
+
+    .rad-card-patient {
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.2rem;
+    }
+
+    .rad-card-exam {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.3rem;
+      line-height: 1.35;
+      background: #f8fafc;
+      padding: 0.25rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      word-break: break-word;
+    }
+
+    .rad-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #64748b;
+      font-size: 0.68rem;
+      padding-top: 0.25rem;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    /* 空状態メッセージ */
+    .rad-col-empty {
+      text-align: center;
+      padding: 2rem 0.5rem;
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
   </style>
 </head>
 <body>
@@ -1384,6 +1646,20 @@
       <% } %>
     </div>
     <div class="header-links">
+      <!-- 💻 操作PC端末選択 -->
+      <div style="display:flex; align-items:center; gap:0.35rem; background:rgba(255,255,255,0.18); padding:0.25rem 0.55rem; border-radius:5px; border:1px solid rgba(255,255,255,0.3); font-size:0.78rem;">
+        <span style="color:#fef08a; font-weight:bold;">💻 操作PC:</span>
+        <select id="terminalSelect" onchange="changeTerminal(this.value)" style="background:#0f172a; color:#38bdf8; font-weight:bold; font-size:0.78rem; border:1px solid #38bdf8; border-radius:4px; padding:0.18rem 0.4rem; cursor:pointer;" title="現在の操作端末（履歴タイムラインに『実施完了（PC〇〇）』等で記録されます）">
+          <option value="PC01" selected>PC01 (放射線受付)</option>
+          <option value="PC02">PC02 (CT操作室)</option>
+          <option value="PC03">PC03 (透視室)</option>
+          <option value="PC04">PC04 (一般撮影室)</option>
+          <option value="PC05">PC05 (病棟端末)</option>
+          <option value="CUSTOM">✏️ 自由入力...</option>
+        </select>
+        <span id="customTerminalDisplay" style="display:none; color:#f8fafc; font-weight:bold; font-size:0.75rem;"></span>
+      </div>
+
       <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="app_ordering_sender" style="background:#f59e0b; color:#0f172a; font-weight:bold; padding:0.35rem 0.85rem; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem;">
         <span>✏️</span> <span>新規オーダー入力画面へ (Port 4000)</span>
       </a>
@@ -1413,13 +1689,25 @@
         <button type="button" class="filter-btn active" onclick="filterType('ALL', this)">全部門 <span class="status-count-badge" id="countAll"><%= orders.length %></span></button>
         <button type="button" class="filter-btn" onclick="filterType('PRESCRIPTION', this)">💊 薬剤部 (処方)</button>
         <button type="button" class="filter-btn" onclick="filterType('IV', this)">💉 処置室/病棟 (注射)</button>
-        <button type="button" class="filter-btn" onclick="filterType('RADIOLOGY', this)">🩻 放射線科 (CT/透視/X線)</button>
+        <button type="button" class="filter-btn" id="filterBtn_RADIOLOGY" onclick="filterType('RADIOLOGY', this)">🩻 放射線科 (CT/透視/X線)</button>
         <button type="button" class="filter-btn" onclick="filterType('LAB_EXAM', this)">🔬 検査部 (生理/検体)</button>
         <button type="button" class="filter-btn" onclick="filterType('REHAB', this)">🏃 リハビリ科</button>
         <button type="button" class="filter-btn" onclick="filterType('MEAL', this)">🍱 栄養管理室</button>
       </div>
 
-      <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.78rem; color:#64748b;">
+      <div style="display:flex; align-items:center; gap:0.6rem; font-size:0.78rem; color:#64748b; flex-wrap:wrap;">
+        <!-- 実施日・優先度 ソートコントロール -->
+        <div style="display:flex; align-items:center; gap:0.35rem; background:#f1f5f9; padding:0.2rem 0.5rem; border-radius:5px; border:1px solid #cbd5e1;">
+          <span style="font-size:0.75rem; font-weight:bold; color:#334155;">⇅ 並び替え:</span>
+          <select id="orderSortSelect" onchange="changeSortMode(this.value)" style="font-size:0.75rem; padding:0.18rem 0.4rem; border-radius:4px; border:1px solid #94a3b8; background:white; font-weight:bold; color:#0f172a; cursor:pointer;" title="オーダー一覧のソート条件">
+            <option value="SCHEDULED_ASC" selected>📅 実施予定日 (早い順・直近優先)</option>
+            <option value="SCHEDULED_DESC">📅 実施予定日 (遅い順・未来)</option>
+            <option value="PRIORITY_DESC">🚨 優先度順 (至急・緊急優先)</option>
+            <option value="RECEIVED_DESC">📥 受信時刻 (新しい順)</option>
+            <option value="RECEIVED_ASC">📥 受信時刻 (古い順)</option>
+          </select>
+        </div>
+
         <label style="display:flex; align-items:center; gap:0.25rem; cursor:pointer;">
           <input type="checkbox" id="autoPollToggle" checked>
           <span>🔄 3秒自動更新</span>
@@ -1434,32 +1722,46 @@
          縦2列 スプリットビュー (ドラッグで境界調整可能)
          ======================================================= -->
     <div class="split-layout" id="splitLayout">
-      <!-- 左列: オーダー一覧テーブル (行を多数とるスリム設計) -->
+      <!-- 左列: オーダー一覧テーブル & 放射線科3枠モダリティビュー -->
       <div class="left-column" id="leftColumn">
         <div class="pane-header">
           <div style="display:flex; align-items:center; gap:0.4rem;">
-            <span>📥 受信オーダー一覧</span>
-            <span style="font-size:0.72rem; color:#64748b;">(行クリックで右側に詳細表示 / 指示詳細はホバーで全文)</span>
+            <span id="leftPaneTitleText">📥 受信オーダー一覧</span>
+            <span style="font-size:0.72rem; color:#64748b;" id="leftPaneSubText">(列見出しクリックでソート切替 / 行クリックで右側に詳細)</span>
           </div>
-          <span style="font-size:0.72rem; color:#64748b;" id="listCountSummary">表示: <%= orders.length %>件</span>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <!-- 🩻 放射線科専用: 3枠モダリティ別 ↔ リスト表示 切替トグル -->
+            <div id="radViewToggleBox" style="display:none; align-items:center; gap:0.25rem;">
+              <button type="button" id="btnRadModeKanban" class="rad-view-toggle-btn active" onclick="setRadViewMode('KANBAN')" title="モダリティ別3枠（CT/透視/X線）表示">
+                📊 3枠モダリティ別
+              </button>
+              <button type="button" id="btnRadModeList" class="rad-view-toggle-btn" onclick="setRadViewMode('LIST')" title="従来の全一覧テーブル表示">
+                📋 リスト表示
+              </button>
+            </div>
+            <span style="font-size:0.72rem; color:#64748b;" id="listCountSummary">表示: <%= orders.length %>件</span>
+          </div>
         </div>
 
-        <div class="table-scroll-area">
+        <!-- 1. 通常のテーブル表示エリア -->
+        <div class="table-scroll-area" id="normalTableArea">
           <table class="orders-table" id="ordersTable">
             <colgroup>
-              <col style="width: 54px;">
-              <col style="width: 68px;">
-              <col style="width: 110px;">
-              <col style="width: 65px;">
-              <col style="width: 110px;">
-              <col style="width: 80px;">
-              <col style="width: auto;">
-              <col style="width: 65px;">
+              <col style="width: 58px;"> <!-- 優先度 -->
+              <col style="width: 105px;"> <!-- 実施予定日時 -->
+              <col style="width: 75px;"> <!-- 受信時刻 -->
+              <col style="width: 105px;"> <!-- オーダーID -->
+              <col style="width: 65px;"> <!-- 種別 -->
+              <col style="width: 110px;"> <!-- 患者情報 -->
+              <col style="width: 75px;"> <!-- 指示医 -->
+              <col style="width: auto;"> <!-- 指示詳細 -->
+              <col style="width: 62px;"> <!-- 状態 -->
             </colgroup>
             <thead>
               <tr>
-                <th style="text-align: center;">優先度</th>
-                <th>受信時刻</th>
+                <th id="th_PRIORITY" style="text-align: center; cursor: pointer; user-select: none;" onclick="toggleSort('PRIORITY')" title="クリックで優先度順（至急優先）に並び替え">優先度 <span id="sortIcon_PRIORITY"></span></th>
+                <th id="th_SCHEDULED" style="cursor: pointer; user-select: none; background: #e0f2fe; color: #0369a1;" onclick="toggleSort('SCHEDULED')" title="クリックで実施予定日時順に並び替え (早い順/遅い順)">📅 実施予定日時 <span id="sortIcon_SCHEDULED">▲</span></th>
+                <th id="th_RECEIVED" style="cursor: pointer; user-select: none;" onclick="toggleSort('RECEIVED')" title="クリックで受信日時順に並び替え">受信時刻 <span id="sortIcon_RECEIVED"></span></th>
                 <th>オーダーID</th>
                 <th>種別</th>
                 <th>患者情報</th>
@@ -1472,6 +1774,52 @@
               <!-- JSで初期化・動的レンダリング -->
             </tbody>
           </table>
+        </div>
+
+        <!-- 2. 🩻 放射線科専用 モダリティ別 3枠ビュー エリア (CT / 透視 / X線) -->
+        <div class="radiology-modality-wrapper" id="radModalityArea" style="display: none;">
+          <div class="rad-modality-header-bar">
+            <span style="font-weight: 700; color: #334155; display: flex; align-items: center; gap: 0.35rem;">
+              🩻 放射線科 モダリティ別受信ボード
+            </span>
+            <span style="color: #64748b; font-size: 0.72rem;">
+              未実施オーダーのみ表示中（カード選択で右側に詳細表示 / 実施完了で一覧から自動非表示）
+            </span>
+          </div>
+          <div class="rad-modality-grid">
+            <!-- 枠1: 💻 CT検査 (ブルー) -->
+            <div class="rad-col-frame rad-col-ct">
+              <div class="rad-col-header">
+                <span>💻 CT検査</span>
+                <span class="rad-badge-pill" id="badgeCountCT">0件</span>
+              </div>
+              <div class="rad-col-body" id="radColBody_CT">
+                <!-- 動的注入 -->
+              </div>
+            </div>
+
+            <!-- 枠2: 📺 透視検査 (エメラルド) -->
+            <div class="rad-col-frame rad-col-fluoro">
+              <div class="rad-col-header">
+                <span>📺 透視検査 (PEG/造影)</span>
+                <span class="rad-badge-pill" id="badgeCountFLUORO">0件</span>
+              </div>
+              <div class="rad-col-body" id="radColBody_FLUORO">
+                <!-- 動的注入 -->
+              </div>
+            </div>
+
+            <!-- 枠3: 🩻 一般X線 (パープル) -->
+            <div class="rad-col-frame rad-col-xray">
+              <div class="rad-col-header">
+                <span>🩻 一般X線 (ポータブル/XP)</span>
+                <span class="rad-badge-pill" id="badgeCountXRAY">0件</span>
+              </div>
+              <div class="rad-col-body" id="radColBody_XRAY">
+                <!-- 動的注入 -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2031,10 +2379,177 @@
       return html;
     }
 
-    function getPriorityBadgeJs(priority) {
-      if (priority === 'STAT') return '<span class="priority-badge STAT">🚨至急</span>';
-      if (priority === 'URGENT') return '<span class="priority-badge URGENT">⚡早急</span>';
-      return '<span class="priority-badge ROUTINE">通常</span>';
+    function getPriorityBadgeJs(priority, isLarge = false) {
+      const p = priority || 'ROUTINE';
+      if (p === 'STAT') {
+        return isLarge
+          ? '<span class="priority-badge STAT" style="font-size:0.85rem; padding:0.25rem 0.65rem; border-radius:4px; font-weight:bold; box-shadow:0 1px 3px rgba(220,38,38,0.3);">🚨 至急 (STAT)</span>'
+          : '<span class="priority-badge STAT">🚨至急</span>';
+      }
+      if (p === 'URGENT') {
+        return isLarge
+          ? '<span class="priority-badge URGENT" style="font-size:0.85rem; padding:0.25rem 0.65rem; border-radius:4px; font-weight:bold; box-shadow:0 1px 3px rgba(234,88,12,0.3);">⚡ 急ぎ (URGENT)</span>'
+          : '<span class="priority-badge URGENT">⚡早急</span>';
+      }
+      return isLarge
+        ? '<span class="priority-badge ROUTINE" style="font-size:0.85rem; padding:0.25rem 0.65rem; border-radius:4px; font-weight:bold;">通常 (ROUTINE)</span>'
+        : '<span class="priority-badge ROUTINE">通常</span>';
+    }
+
+    // 実施予定日時の抽出ヘルパー
+    function getOrderScheduledDate(order) {
+      if (!order) return null;
+      const details = order.details || {};
+      const raw = details.scheduledAt || details.startDate || order.orderDate || order.receivedAt || order.createdAt;
+      if (!raw) return null;
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    // 実施予定日時のテーブル用コンパクト表示
+    function formatScheduledDateJs(order) {
+      if (!order) return '<span style="color:#94a3b8;">-</span>';
+      const details = order.details || {};
+      const raw = details.scheduledAt || details.startDate || order.orderDate;
+      const priority = order.priority || 'ROUTINE';
+
+      if (!raw) {
+        if (priority === 'STAT') return '<span style="color:#dc2626; font-weight:bold; font-size:0.75rem;">🚨至急即時</span>';
+        return '<span style="color:#64748b; font-size:0.75rem;">即時実施</span>';
+      }
+
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) {
+        return `<span style="font-size:0.75rem; color:#0369a1; font-weight:bold;">${escapeHtml(String(raw))}</span>`;
+      }
+
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const m = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      const hours = d.getHours().toString().padStart(2, '0');
+      const mins = d.getMinutes().toString().padStart(2, '0');
+      const timeStr = `${hours}:${mins}`;
+
+      const isDateOnly = (typeof raw === 'string' && !raw.includes('T') && !raw.includes(':'));
+
+      let displayHtml = '';
+      if (isDateOnly) {
+        displayHtml = isToday
+          ? `<span style="color:#16a34a; font-weight:bold;">本日 (${m}/${day})</span>`
+          : `<span style="color:#0369a1; font-weight:bold;">${m}/${day}</span>`;
+      } else {
+        displayHtml = isToday
+          ? `<span style="color:#ea580c; font-weight:bold;">本日 ${timeStr}</span>`
+          : `<span style="color:#0369a1; font-weight:bold;">${m}/${day} ${timeStr}</span>`;
+      }
+
+      if (priority === 'STAT') {
+        displayHtml = `<span style="color:#dc2626; font-weight:bold; font-size:0.68rem; display:block;">🚨 STAT</span>` + displayHtml;
+      }
+
+      return displayHtml;
+    }
+
+    // 右ペイン用の詳細予定日時フォーマット
+    function getScheduledDateDetailJs(order) {
+      if (!order) return '未指定';
+      const details = order.details || {};
+      const raw = details.scheduledAt || details.startDate || order.orderDate;
+      if (!raw) {
+        return order.priority === 'STAT' ? '🚨 至急即時実施' : '指示通り即時実施';
+      }
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) {
+        return escapeHtml(String(raw));
+      }
+      const y = d.getFullYear();
+      const m = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      const h = d.getHours().toString().padStart(2, '0');
+      const min = d.getMinutes().toString().padStart(2, '0');
+      const isDateOnly = (typeof raw === 'string' && !raw.includes('T') && !raw.includes(':'));
+      if (isDateOnly) {
+        return `${y}年${m}月${day}日 (開始日)`;
+      }
+      return `${y}年${m}月${day}日 ${h}:${min}`;
+    }
+
+    // =========================================================
+    // ソート管理機能 (実施予定日 / 優先度 / 受信時刻)
+    // =========================================================
+    let currentSortMode = 'SCHEDULED_ASC'; // デフォルト: 実施予定日が早い順（直近・今日実施のものが上）
+
+    function sortOrders(ordersList) {
+      const list = [...ordersList];
+      list.sort((a, b) => {
+        if (currentSortMode === 'SCHEDULED_ASC') {
+          // 実施予定日が早い順（STATは最優先）
+          if (a.priority === 'STAT' && b.priority !== 'STAT') return -1;
+          if (b.priority === 'STAT' && a.priority !== 'STAT') return 1;
+          const da = getOrderScheduledDate(a);
+          const db = getOrderScheduledDate(b);
+          if (da && db) return da.getTime() - db.getTime();
+          if (da && !db) return -1;
+          if (!da && db) return 1;
+          return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+        } else if (currentSortMode === 'SCHEDULED_DESC') {
+          const da = getOrderScheduledDate(a);
+          const db = getOrderScheduledDate(b);
+          if (da && db) return db.getTime() - da.getTime();
+          if (da && !db) return 1;
+          if (!da && db) return -1;
+          return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+        } else if (currentSortMode === 'PRIORITY_DESC') {
+          const prioScore = p => p === 'STAT' ? 3 : (p === 'URGENT' ? 2 : 1);
+          const diff = prioScore(b.priority) - prioScore(a.priority);
+          if (diff !== 0) return diff;
+          const da = getOrderScheduledDate(a);
+          const db = getOrderScheduledDate(b);
+          if (da && db) return da.getTime() - db.getTime();
+          return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+        } else if (currentSortMode === 'RECEIVED_ASC') {
+          return new Date(a.receivedAt).getTime() - new Date(b.receivedAt).getTime();
+        } else {
+          // RECEIVED_DESC
+          return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+        }
+      });
+      return list;
+    }
+
+    function changeSortMode(newMode) {
+      currentSortMode = newMode;
+      const select = document.getElementById('orderSortSelect');
+      if (select && select.value !== newMode) select.value = newMode;
+      updateSortHeaderIcons();
+      renderOrdersTable(currentOrders);
+    }
+
+    function toggleSort(col) {
+      if (col === 'SCHEDULED') {
+        changeSortMode(currentSortMode === 'SCHEDULED_ASC' ? 'SCHEDULED_DESC' : 'SCHEDULED_ASC');
+      } else if (col === 'RECEIVED') {
+        changeSortMode(currentSortMode === 'RECEIVED_DESC' ? 'RECEIVED_ASC' : 'RECEIVED_DESC');
+      } else if (col === 'PRIORITY') {
+        changeSortMode(currentSortMode === 'PRIORITY_DESC' ? 'SCHEDULED_ASC' : 'PRIORITY_DESC');
+      }
+    }
+
+    function updateSortHeaderIcons() {
+      const schedIcon = document.getElementById('sortIcon_SCHEDULED');
+      const rcvIcon = document.getElementById('sortIcon_RECEIVED');
+      const prioIcon = document.getElementById('sortIcon_PRIORITY');
+      const schedTh = document.getElementById('th_SCHEDULED');
+      const rcvTh = document.getElementById('th_RECEIVED');
+      const prioTh = document.getElementById('th_PRIORITY');
+
+      if (schedIcon) schedIcon.textContent = currentSortMode === 'SCHEDULED_ASC' ? '▲' : (currentSortMode === 'SCHEDULED_DESC' ? '▼' : '');
+      if (schedTh) schedTh.style.background = currentSortMode.startsWith('SCHEDULED') ? '#e0f2fe' : '';
+      if (rcvIcon) rcvIcon.textContent = currentSortMode === 'RECEIVED_DESC' ? '▼' : (currentSortMode === 'RECEIVED_ASC' ? '▲' : '');
+      if (rcvTh) rcvTh.style.background = currentSortMode.startsWith('RECEIVED') ? '#e0f2fe' : '';
+      if (prioIcon) prioIcon.textContent = currentSortMode === 'PRIORITY_DESC' ? '▼' : '';
+      if (prioTh) prioTh.style.background = currentSortMode.startsWith('PRIORITY') ? '#e0f2fe' : '';
     }
 
     function getTypeBadgeJs(type) {
@@ -2081,6 +2596,15 @@
           row.classList.add('selected-row');
         } else {
           row.classList.remove('selected-row');
+        }
+      });
+
+      // 🩻 放射線科3枠モダリティカードのハイライト更新
+      document.querySelectorAll('.rad-order-card').forEach(card => {
+        if (card.getAttribute('data-order-id') === orderId) {
+          card.classList.add('selected-rad-card');
+        } else {
+          card.classList.remove('selected-rad-card');
         }
       });
 
@@ -2303,9 +2827,9 @@
               <span>🩻 診療Ｘ線照射録 (だて病院 写真6様式)</span>
               <span class="med-tag med-tag-ok">一般撮影 / ポータブル</span>
             </div>
-            <div class="detail-grid-3" style="font-size:0.76rem;">
+            <div class="${details.technician ? 'detail-grid-3' : 'detail-grid-2'}" style="font-size:0.76rem;">
               <div><span style="color:#64748b;">場所:</span> <strong>${escapeHtml(details.portable || '一般撮影室')}</strong></div>
-              <div><span style="color:#64748b;">技師:</span> <strong>${escapeHtml(details.technician || '担当技師')}</strong></div>
+              ${details.technician ? `<div><span style="color:#64748b;">技師:</span> <strong>${escapeHtml(details.technician)}</strong></div>` : ''}
               <div><span style="color:#64748b;">媒体:</span> <strong>${escapeHtml(details.media || '-')}</strong></div>
             </div>
             <div style="margin-top:0.4rem; background:white; border:1px solid #bbf7d0; border-radius:5px; padding:0.4rem 0.6rem;">
@@ -2330,12 +2854,54 @@
         </div>
       ` : '';
 
-      const historyHtml = (order.executionHistory || []).map(h => `
-        <div class="timeline-item">
-          <span><strong>${escapeHtml(h.actor || '')}</strong>: ${escapeHtml(h.note || h.status)}</span>
-          <span style="font-family:monospace; color:#94a3b8;">${formatTimeJs(h.timestamp)}</span>
-        </div>
-      `).join('');
+      const historyHtml = (order.executionHistory || []).map(h => {
+        const term = h.terminal || (h.actor && h.actor.match(/PC[\w-]+/)?.[0]) || (h.note && h.note.match(/PC[\w-]+/)?.[0]) || '';
+        let noteText = h.note || h.status;
+
+        // 過去データ等で noteText に PC 表記がない場合も「受付済（PC〇〇）」「実施完了（PC〇〇）」形式で自然に表示
+        if (term && !noteText.includes('PC')) {
+          if (noteText.includes('受付')) {
+            noteText = `受付済（${term}）`;
+          } else if (noteText.includes('実施') || noteText.includes('完了')) {
+            noteText = `実施完了（${term}）`;
+          } else {
+            noteText = `${noteText}（${term}）`;
+          }
+        }
+
+        const terminalBadge = term ? `
+          <span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-size:0.68rem; font-weight:bold; padding:0.08rem 0.35rem; border-radius:3px; display:inline-flex; align-items:center; gap:0.2rem;" title="操作端末: ${escapeHtml(term)}">
+            💻 <strong>${escapeHtml(term)}</strong>
+          </span>
+        ` : '';
+
+        const statusBadge = getStatusBadgeJs(h.status);
+
+        return `
+          <div class="timeline-item" style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0.55rem; background:#f8fafc; border-radius:5px; margin-bottom:0.3rem; border:1px solid #e2e8f0; border-left:4px solid ${h.status === 'COMPLETED' ? '#10b981' : (h.status === 'ACCEPTED' ? '#f59e0b' : '#0284c7')};">
+            <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
+              ${statusBadge}
+              <span style="font-weight:bold; color:#0f172a; font-size:0.8rem;">${escapeHtml(noteText)}</span>
+              ${terminalBadge}
+              <span style="font-size:0.72rem; color:#64748b;">(操作: ${escapeHtml(h.actor || '操作者')})</span>
+            </div>
+            <span style="font-family:monospace; color:#64748b; font-size:0.72rem; white-space:nowrap;">🕒 ${formatTimeJs(h.timestamp)}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 🩻 放射線科オーダーの場合のモダリティバッジ (CT / 透視 / X線)
+      let radModalityBadge = '';
+      if (order.orderType === 'RADIOLOGY') {
+        const cat = getRadiologyCategory(order);
+        if (cat === 'CT') {
+          radModalityBadge = `<span style="background:#0284c7; color:white; font-size:0.75rem; font-weight:bold; padding:0.15rem 0.55rem; border-radius:4px; box-shadow:0 1px 2px rgba(2,132,199,0.3);">💻 CT検査</span>`;
+        } else if (cat === 'FLUORO') {
+          radModalityBadge = `<span style="background:#059669; color:white; font-size:0.75rem; font-weight:bold; padding:0.15rem 0.55rem; border-radius:4px; box-shadow:0 1px 2px rgba(5,150,105,0.3);">📺 透視検査 (PEG/造影)</span>`;
+        } else {
+          radModalityBadge = `<span style="background:#7c3aed; color:white; font-size:0.75rem; font-weight:bold; padding:0.15rem 0.55rem; border-radius:4px; box-shadow:0 1px 2px rgba(124,58,237,0.3);">🩻 一般X線 (ポータブル/XP)</span>`;
+        }
+      }
 
       contentEl.innerHTML = `
         <!-- 上部ヘッダー & アクションバー -->
@@ -2343,16 +2909,20 @@
           <div class="detail-title-group">
             <h2>
               <span>${getTypeBadgeJs(order.orderType)}</span>
+              ${radModalityBadge}
               <span>[${order.orderId}]</span>
               <span style="font-size:0.9rem; color:#475569; font-weight:normal;">${escapeHtml(order.title || '')}</span>
             </h2>
-            <div class="detail-meta-line">
+            <div class="detail-meta-line" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-top:0.35rem;">
+              <span>${getPriorityBadgeJs(order.priority, true)}</span>
+              <span style="display:inline-flex; align-items:center; gap:0.35rem; background:#e0f2fe; color:#0369a1; padding:0.2rem 0.6rem; border-radius:4px; font-weight:bold; font-size:0.82rem; border:1px solid #bae6fd;">
+                📅 実施予定日時: <strong>${getScheduledDateDetailJs(order)}</strong>
+              </span>
               ${order.orderDate ? `<span>指示日時: <strong style="color:#0284c7;">${escapeHtml(order.orderDate)}</strong></span><span>•</span>` : ''}
               <span>受信: <strong>${new Date(order.receivedAt).toLocaleString('ja-JP')}</strong></span>
               <span>•</span>
               <span>送信元: <strong>${escapeHtml(order.senderHost || '電子カルテ')}</strong></span>
               <span>•</span>
-              ${getPriorityBadgeJs(order.priority)}
               ${getStatusBadgeJs(order.status)}
             </div>
           </div>
@@ -2454,6 +3024,182 @@
     }
 
     // =========================================================
+    // 🩻 放射線科 モダリティ判定 (CT / 透視 / X線)
+    // =========================================================
+    function getRadiologyCategory(order) {
+      if (!order || order.orderType !== 'RADIOLOGY') return 'OTHER';
+      const details = order.details || {};
+      const text = `${order.title || ''} ${details.examType || ''} ${details.modality || ''} ${details.purpose || ''} ${details.remarks || ''}`;
+
+      // 1. CT判定 (CT, ＣＴ, Computed Tomography, 断層)
+      if (text.includes('CT') || text.includes('ＣＴ') || text.includes('Computed Tomography') || text.includes('断層')) {
+        return 'CT';
+      }
+
+      // 2. 透視判定 (透視, Fluoro, FLUORO, PEG, 消化管造影, TV, 胃透視, 注腸, 内視鏡的透視)
+      if (text.includes('透視') || text.includes('Fluoro') || text.includes('FLUORO') || text.includes('PEG') || text.includes('消化管造影') || text.includes('TV')) {
+        return 'FLUORO';
+      }
+
+      // 3. X線判定 (X線, Ｘ線, XP, X-Ray, 一般撮影, ポータブル, 胸部, 腹部, 骨, レントゲン, 照射録)
+      return 'XRAY';
+    }
+
+    // 放射線科ビューモード ('KANBAN': 3枠モダリティ別, 'LIST': リスト表示)
+    let currentRadViewMode = 'KANBAN';
+
+    function setRadViewMode(mode) {
+      currentRadViewMode = mode;
+      const btnKanban = document.getElementById('btnRadModeKanban');
+      const btnList = document.getElementById('btnRadModeList');
+      if (btnKanban && btnList) {
+        if (mode === 'KANBAN') {
+          btnKanban.classList.add('active');
+          btnList.classList.remove('active');
+        } else {
+          btnKanban.classList.remove('active');
+          btnList.classList.add('active');
+        }
+      }
+      renderOrdersTable(currentOrders);
+    }
+
+    // =========================================================
+    // 🩻 放射線科 3枠モダリティ別ボード描画 (CT / 透視 / X線)
+    // =========================================================
+    function renderRadiology3Columns(orders) {
+      const normalArea = document.getElementById('normalTableArea');
+      const radArea = document.getElementById('radModalityArea');
+      const radToggleBox = document.getElementById('radViewToggleBox');
+      const leftPaneTitle = document.getElementById('leftPaneTitleText');
+      const leftPaneSub = document.getElementById('leftPaneSubText');
+
+      if (radToggleBox) radToggleBox.style.display = 'inline-flex';
+      if (normalArea) normalArea.style.display = 'none';
+      if (radArea) radArea.style.display = 'flex';
+      if (leftPaneTitle) leftPaneTitle.textContent = '🩻 放射線科 モダリティ別一覧 (3枠)';
+      if (leftPaneSub) leftPaneSub.textContent = '(未実施オーダーのみ表示 / 完了データは非表示)';
+
+      const radOrders = orders.filter(o => o.orderType === 'RADIOLOGY');
+      // ３枠モダリティ別では完了済みを除外して未完了（未撮影・受付中など）のみを表示
+      const activeRadOrders = radOrders.filter(o => o.status !== 'COMPLETED');
+      const sorted = sortOrders(activeRadOrders);
+
+      const ctOrders = sorted.filter(o => getRadiologyCategory(o) === 'CT');
+      const fluoroOrders = sorted.filter(o => getRadiologyCategory(o) === 'FLUORO');
+      const xrayOrders = sorted.filter(o => getRadiologyCategory(o) === 'XRAY');
+
+      // 枠ヘッダー件数バッジ更新 (表示対象＝未完了件数)
+      const badgeCT = document.getElementById('badgeCountCT');
+      const badgeFLUORO = document.getElementById('badgeCountFLUORO');
+      const badgeXRAY = document.getElementById('badgeCountXRAY');
+      if (badgeCT) badgeCT.textContent = `${ctOrders.length}件`;
+      if (badgeFLUORO) badgeFLUORO.textContent = `${fluoroOrders.length}件`;
+      if (badgeXRAY) badgeXRAY.textContent = `${xrayOrders.length}件`;
+
+      const listCountSummary = document.getElementById('listCountSummary');
+      if (listCountSummary) {
+        listCountSummary.textContent = `未実施: ${activeRadOrders.length}件 / 全${radOrders.length}件`;
+      }
+
+      // 各枠のカード描画関数
+      function renderColCards(list, containerId, modalityLabel) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (list.length === 0) {
+          container.innerHTML = `<div class="rad-col-empty">現在、${modalityLabel}の未実施オーダーはありません</div>`;
+          return;
+        }
+
+        container.innerHTML = list.map(order => {
+          const isSelected = (order.orderId === selectedOrderId);
+          const priorityBadge = getPriorityBadgeJs(order.priority);
+
+          // 🩻 モダリティ別カード右上のワンクリックステータス遷移（受信 ➔ 受付 ➔ 完了）
+          let statusBadgeHtml = '';
+          if (order.status === 'RECEIVED') {
+            statusBadgeHtml = `
+              <span class="status-badge RECEIVED rad-clickable-status"
+                    onclick="advanceRadOrderStatus(event, '${order.orderId}', 'RECEIVED')"
+                    title="クリックで【受付】に進める"
+                    role="button"
+                    tabindex="0">📥受信 <span style="font-size:0.58rem; opacity:0.8;">▶</span></span>
+            `;
+          } else if (order.status === 'ACCEPTED' || order.status === 'IN_PROGRESS') {
+            statusBadgeHtml = `
+              <span class="status-badge ACCEPTED rad-clickable-status"
+                    onclick="advanceRadOrderStatus(event, '${order.orderId}', 'ACCEPTED')"
+                    title="クリックで【完了】にする"
+                    role="button"
+                    tabindex="0">🟡受付 <span style="font-size:0.58rem; opacity:0.8;">▶</span></span>
+            `;
+          } else {
+            statusBadgeHtml = getStatusBadgeJs(order.status);
+          }
+
+          const schedHtml = formatScheduledDateJs(order);
+          const patientName = escapeHtml(order.patient ? order.patient.name : '未指定');
+          const patientId = escapeHtml(order.patient ? order.patient.id : '');
+          const wardDept = escapeHtml(order.patient?.department || order.patient?.ward || '');
+          const examSummary = escapeHtml(order.details?.examType || order.title || '放射線検査');
+          const portableInfo = order.details?.portable ? `<span style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; padding:0.05rem 0.35rem; border-radius:3px; font-size:0.65rem; font-weight:bold;">${escapeHtml(order.details.portable)}</span>` : '';
+          const contrastInfo = order.details?.contrast ? `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:0.05rem 0.35rem; border-radius:3px; font-size:0.65rem; font-weight:bold;">${escapeHtml(order.details.contrast)}</span>` : '';
+          const doctorName = escapeHtml(order.doctor ? order.doctor.name : '担当医');
+
+          return `
+            <div class="rad-order-card ${isSelected ? 'selected-rad-card' : ''}"
+                 data-order-id="${order.orderId}"
+                 onclick="selectOrder('${order.orderId}')">
+              <div class="rad-card-meta">
+                <div style="display:flex; align-items:center; gap:0.25rem;">
+                  ${priorityBadge}
+                  <span style="font-weight:700; color:#334155; font-size:0.7rem;">${order.orderId}</span>
+                </div>
+                <div>${statusBadgeHtml}</div>
+              </div>
+
+              <div class="rad-card-patient">
+                <span>👤 ${patientName} 様</span>
+                <span style="font-size:0.7rem; color:#64748b; font-weight:normal;">[${patientId}] ${wardDept}</span>
+              </div>
+
+              <div class="rad-card-exam">
+                <div style="display:flex; align-items:center; gap:0.25rem; flex-wrap:wrap; margin-bottom:0.15rem;">
+                  ${portableInfo}
+                  ${contrastInfo}
+                </div>
+                <div>${examSummary}</div>
+                ${order.details?.purpose ? `<div style="font-size:0.68rem; color:#64748b; font-weight:normal; margin-top:0.15rem;">目的: ${escapeHtml(order.details.purpose)}</div>` : ''}
+              </div>
+
+              <div class="rad-card-footer">
+                <span>📅 <strong>${schedHtml}</strong></span>
+                <span>👨‍⚕️ ${doctorName}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      renderColCards(ctOrders, 'radColBody_CT', 'CT検査');
+      renderColCards(fluoroOrders, 'radColBody_FLUORO', '透視検査');
+      renderColCards(xrayOrders, 'radColBody_XRAY', '一般X線');
+
+      // 選択中オーダーの追従
+      if (!selectedOrderId || !sorted.some(o => o.orderId === selectedOrderId)) {
+        if (sorted.length > 0) {
+          selectOrder(sorted[0].orderId);
+        } else {
+          renderRightPane(null);
+        }
+      } else {
+        const currentSelected = sorted.find(o => o.orderId === selectedOrderId);
+        renderRightPane(currentSelected);
+      }
+    }
+
+    // =========================================================
     // テーブル行の描画（左ペイン: 行を多数とるコンパクト表示）
     // =========================================================
     function renderOrdersTable(orders) {
@@ -2462,19 +3208,46 @@
       const countBadge = document.getElementById('countAll');
       if (countBadge) countBadge.textContent = orders.length;
 
+      // 🩻 放射線科かつ3枠モダリティ別モードの場合の分岐
+      const radToggleBox = document.getElementById('radViewToggleBox');
+      const normalArea = document.getElementById('normalTableArea');
+      const radArea = document.getElementById('radModalityArea');
+      const leftPaneTitle = document.getElementById('leftPaneTitleText');
+      const leftPaneSub = document.getElementById('leftPaneSubText');
+
+      if (currentFilterType === 'RADIOLOGY') {
+        if (radToggleBox) radToggleBox.style.display = 'inline-flex';
+        if (currentRadViewMode === 'KANBAN') {
+          renderRadiology3Columns(orders);
+          return;
+        } else {
+          if (normalArea) normalArea.style.display = 'block';
+          if (radArea) radArea.style.display = 'none';
+          if (leftPaneTitle) leftPaneTitle.textContent = '📥 受信オーダー一覧 [放射線科]';
+          if (leftPaneSub) leftPaneSub.textContent = '(列見出しクリックでソート切替 / 行クリックで右側に詳細)';
+        }
+      } else {
+        if (radToggleBox) radToggleBox.style.display = 'none';
+        if (normalArea) normalArea.style.display = 'block';
+        if (radArea) radArea.style.display = 'none';
+        if (leftPaneTitle) leftPaneTitle.textContent = '📥 受信オーダー一覧';
+        if (leftPaneSub) leftPaneSub.textContent = '(列見出しクリックでソート切替 / 行クリックで右側に詳細)';
+      }
+
       let visibleCount = 0;
       const filtered = orders.filter(order => {
         return (currentFilterType === 'ALL' || order.orderType === currentFilterType);
       });
+      const sorted = sortOrders(filtered);
 
       if (countSummary) {
-        countSummary.textContent = `表示: ${filtered.length}件 / 全${orders.length}件`;
+        countSummary.textContent = `表示: ${sorted.length}件 / 全${orders.length}件`;
       }
 
-      if (filtered.length === 0) {
+      if (sorted.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="text-align:center; padding:3rem 1rem; color:#64748b;">
+            <td colspan="9" style="text-align:center; padding:3rem 1rem; color:#64748b;">
               <div style="font-size:1.8rem; margin-bottom:0.3rem;">📭</div>
               <strong>オーダーはありません</strong>
             </td>
@@ -2484,7 +3257,7 @@
         return;
       }
 
-      const rowsHtml = filtered.map(order => {
+      const rowsHtml = sorted.map(order => {
         const isSelected = (order.orderId === selectedOrderId);
         const timeStr = formatTimeJs(order.receivedAt);
         const summary = getOrderSummaryJs(order);
@@ -2493,6 +3266,7 @@
         const priorityBadge = getPriorityBadgeJs(order.priority);
         const typeBadge = getTypeBadgeJs(order.orderType);
         const statusBadge = getStatusBadgeJs(order.status);
+        const schedHtml = formatScheduledDateJs(order);
         const patientName = escapeHtml(order.patient ? order.patient.name : '未指定');
         const patientId = escapeHtml(order.patient ? order.patient.id : '');
         const doctorName = escapeHtml(order.doctor ? order.doctor.name : '医師');
@@ -2504,9 +3278,10 @@
               data-status="${order.status}"
               onclick="selectOrder('${order.orderId}')">
             <td style="text-align: center;">${priorityBadge}</td>
+            <td style="text-align: center; background: #f0f9ff; padding: 0.35rem 0.25rem; white-space: nowrap;">${schedHtml}</td>
             <td class="time-cell">
               <div style="font-weight:bold;">${timeStr}</div>
-              ${order.orderDate ? `<div style="font-size:0.7rem; color:#0284c7; line-height:1.2; white-space:nowrap;" title="医師指示日時: ${escapeHtml(order.orderDate)}">📋 ${escapeHtml(order.orderDate)}</div>` : ''}
+              ${order.orderDate ? `<div style="font-size:0.68rem; color:#64748b; line-height:1.2; white-space:nowrap;" title="医師指示日時: ${escapeHtml(order.orderDate)}">📋 ${escapeHtml(order.orderDate)}</div>` : ''}
             </td>
             <td class="order-id-cell">${order.orderId}</td>
             <td>${typeBadge}</td>
@@ -2532,17 +3307,18 @@
       attachTooltipEvents();
 
       // 選択中オーダーが現在も存在するか確認。なければ1件目を自動選択
-      if (!selectedOrderId || !filtered.some(o => o.orderId === selectedOrderId)) {
-        if (filtered.length > 0) {
-          selectOrder(filtered[0].orderId);
+      if (!selectedOrderId || !sorted.some(o => o.orderId === selectedOrderId)) {
+        if (sorted.length > 0) {
+          selectOrder(sorted[0].orderId);
         } else {
           renderRightPane(null);
         }
       } else {
         // 現在選択中のオーダーの最新情報を右ペインに反映
-        const currentSelected = filtered.find(o => o.orderId === selectedOrderId);
+        const currentSelected = sorted.find(o => o.orderId === selectedOrderId);
         renderRightPane(currentSelected);
       }
+      updateSortHeaderIcons();
     }
 
     // =========================================================
@@ -2601,17 +3377,106 @@
     }
 
     // =========================================================
-    // ステータス更新 (受付 / 完了)
+    // 🩻 放射線3枠モダリティ専用: カード右上ステータス直接遷移 (受信 ➔ 受付 ➔ 完了)
+    // =========================================================
+    async function advanceRadOrderStatus(event, orderId, currentStatus) {
+      if (event) {
+        event.stopPropagation();
+        if (event.currentTarget) {
+          event.currentTarget.style.pointerEvents = 'none';
+          event.currentTarget.style.opacity = '0.6';
+          event.currentTarget.textContent = '更新中...';
+        }
+      }
+      selectOrder(orderId);
+
+      let nextStatus = '';
+      let note = '';
+      if (currentStatus === 'RECEIVED') {
+        nextStatus = 'ACCEPTED';
+        note = '受付済';
+      } else if (currentStatus === 'ACCEPTED' || currentStatus === 'IN_PROGRESS') {
+        nextStatus = 'COMPLETED';
+        note = '実施完了';
+      } else {
+        return;
+      }
+
+      await updateOrderStatus(orderId, nextStatus, note);
+    }
+
+    // =========================================================
+    // 💻 操作PC端末管理 (PC01, PC02, CT室, 透視室 等の識別・永続化)
+    // =========================================================
+    function getClientTerminalId() {
+      return localStorage.getItem('receiver_terminal_id') || 'PC01';
+    }
+
+    function changeTerminal(val) {
+      if (val === 'CUSTOM') {
+        const current = getClientTerminalId();
+        const customName = prompt('操作PC端末名を入力してください (例: PC06, CT操作室, 透視室):', current);
+        if (customName && customName.trim()) {
+          const clean = customName.trim();
+          localStorage.setItem('receiver_terminal_id', clean);
+          updateTerminalUi(clean);
+        } else {
+          updateTerminalUi(getClientTerminalId());
+        }
+      } else {
+        localStorage.setItem('receiver_terminal_id', val);
+        updateTerminalUi(val);
+      }
+    }
+
+    function updateTerminalUi(termId) {
+      const sel = document.getElementById('terminalSelect');
+      const customSpan = document.getElementById('customTerminalDisplay');
+      if (!sel) return;
+      let found = false;
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === termId) {
+          sel.selectedIndex = i;
+          found = true;
+          break;
+        }
+      }
+      if (!found && customSpan) {
+        sel.value = 'CUSTOM';
+        customSpan.style.display = 'inline';
+        customSpan.textContent = `[${termId}]`;
+      } else if (customSpan) {
+        customSpan.style.display = 'none';
+      }
+    }
+
+    // =========================================================
+    // ステータス更新 (受付 / 完了) - 操作PC情報を付与
     // =========================================================
     async function updateOrderStatus(orderId, status, note) {
       try {
+        const terminal = getClientTerminalId();
+        const actorName = `実施者（${terminal}）`;
+
+        let formattedNote = note || '';
+        if (status === 'ACCEPTED') {
+          formattedNote = `受付済（${terminal}）`;
+        } else if (status === 'COMPLETED') {
+          formattedNote = `実施完了（${terminal}）`;
+        } else if (note && !note.includes(terminal)) {
+          formattedNote = `${note}（${terminal}）`;
+        } else if (!formattedNote) {
+          formattedNote = `実施（${terminal}）`;
+        }
+
         const res = await fetch(`/api/orders/${orderId}/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             status,
-            actor: '部門モニター操作者',
-            note: note || ''
+            actor: actorName,
+            terminal: terminal,
+            note: formattedNote
           })
         });
         if (res.ok) {
@@ -3324,11 +4189,13 @@
 
     // 初回初期化
     document.addEventListener('DOMContentLoaded', () => {
+      updateTerminalUi(getClientTerminalId());
       renderOrdersTable(currentOrders);
       initSplitResizer();
       const soundCheck = document.getElementById('soundAlertToggle');
       if (soundCheck) soundCheck.checked = isSoundEnabled;
     });
+    updateTerminalUi(getClientTerminalId());
     renderOrdersTable(currentOrders);
     initSplitResizer();
   </script>

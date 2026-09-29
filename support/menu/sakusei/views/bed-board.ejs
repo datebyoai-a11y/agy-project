@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>病棟・ベッドボード管理 - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .board-container {
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+
+    /* 上部統計カード */
+    .board-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .board-stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .board-stat-icon {
+      font-size: 2rem;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+    .board-stat-num {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--slate-900);
+      line-height: 1.2;
+    }
+    .board-stat-label {
+      font-size: 0.8rem;
+      color: var(--slate-500);
+      font-weight: 600;
+    }
+
+    /* 病棟切り替えタブ */
+    .ward-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--slate-200);
+      padding-bottom: 0.5rem;
+    }
+    .ward-tab-btn {
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px 8px 0 0;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      color: var(--slate-600);
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      border-bottom: none;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .ward-tab-btn.active {
+      background: #0284c7;
+      color: white;
+      border-color: #0284c7;
+      box-shadow: 0 -2px 6px rgba(2, 132, 199, 0.2);
+    }
+
+    /* 部屋・ベッドグリッド */
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+    .room-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .room-header {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--slate-200);
+      padding: 0.6rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .room-number {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .room-badge {
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    /* ベッドスロット */
+    .bed-slot-list {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      flex: 1;
+    }
+    .bed-slot {
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--slate-200);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .bed-slot:hover {
+      box-shadow: var(--shadow-sm);
+    }
+    
+    /* 入床中のベッド */
+    .bed-occupied {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+    .bed-info-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .bed-label {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #0f766e;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .bed-patient-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .bed-patient-sub {
+      font-size: 0.74rem;
+      color: var(--slate-600);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* 空床のベッド */
+    .bed-empty {
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+    }
+    .bed-empty:hover {
+      background: #f1f5f9;
+      border-color: #0284c7;
+    }
+    .bed-empty-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100000;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+    .modal-box {
+      background: white;
+      max-width: 500px;
+      margin: 2rem auto;
+      border-radius: 14px;
+      padding: 1.75rem;
+      box-shadow: var(--shadow-lg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '病棟・ベッドボード管理' }) %>
+
+  <!-- ナビゲーションバー -->
+  <header class="navbar">
+    <a href="/menu" class="nav-brand">
+      <div class="brand-icon">🛏️</div>
+      <div class="brand-text">
+        <h1>交雄会だて病院 医療統合ポータル</h1>
+        <p>病棟・病床稼働マップ (ベッドボード)</p>
+      </div>
+    </a>
+    <div class="nav-user">
+      <div class="user-badge">
+        <span class="dept-pill"><%= user.department %></span>
+        <span class="user-name"><%= user.userName %> 職員</span>
+      </div>
+      <a href="/patients" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem; font-size: 0.82rem;">
+        🏥 患者情報一覧
+      </a>
+      <a href="/menu" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem; font-size: 0.82rem;">
+        🏠 メニューへ戻る
+      </a>
+    </div>
+  </header>
+
+  <main class="board-container">
+
+    <% if (success) { %>
+      <div class="alert alert-success" style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: #dcfce7; color: #166534; border-radius: 8px;">
+        ✅ <%= success %>
+      </div>
+    <% } %>
+    <% if (error) { %>
+      <div class="alert alert-danger" style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: #fee2e2; color: #991b1b; border-radius: 8px;">
+        ⚠️ <%= error %>
+      </div>
+    <% } %>
+
+    <!-- 1. 病棟統計サマリー -->
+    <div class="board-stats">
+      <div class="board-stat-card">
+        <div class="board-stat-icon" style="background:#e0f2fe; color:#0369a1;">🛏️</div>
+        <div>
+          <div class="board-stat-num"><%= stats.totalBeds %> <span style="font-size:0.9rem; font-weight:normal;">床</span></div>
+          <div class="board-stat-label">病棟総病床数</div>
+        </div>
+      </div>
+      <div class="board-stat-card">
+        <div class="board-stat-icon" style="background:#dcfce7; color:#15803d;">👤</div>
+        <div>
+          <div class="board-stat-num" style="color:#15803d;"><%= stats.occupiedCount %> <span style="font-size:0.9rem; font-weight:normal;">名</span></div>
+          <div class="board-stat-label">現在入床患者</div>
+        </div>
+      </div>
+      <div class="board-stat-card">
+        <div class="board-stat-icon" style="background:#fef3c7; color:#b45309;">✨</div>
+        <div>
+          <div class="board-stat-num" style="color:#b45309;"><%= stats.emptyCount %> <span style="font-size:0.9rem; font-weight:normal;">床</span></div>
+          <div class="board-stat-label">空床数（受入可能）</div>
+        </div>
+      </div>
+      <div class="board-stat-card">
+        <div class="board-stat-icon" style="background:#f3e8ff; color:#7e22ce;">📊</div>
+        <div>
+          <div class="board-stat-num" style="color:#7e22ce;"><%= stats.occupancyRate %> <span style="font-size:0.9rem; font-weight:normal;">%</span></div>
+          <div class="board-stat-label">病床稼働率</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⚠️ ベッド外・一時待機エリア (ステージングトレイ) -->
+    <% const stList = typeof stagingPatients !== 'undefined' ? stagingPatients : []; %>
+    <div id="stagingAreaCard" style="background: <%= stList.length > 0 ? '#fffbeb' : '#f8fafc' %>; border: 2px <%= stList.length > 0 ? 'solid #f59e0b' : 'dashed var(--slate-300)' %>; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: <%= stList.length > 0 ? '0 4px 12px rgba(245, 158, 11, 0.15)' : 'none' %>;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.4rem;"><%= stList.length > 0 ? '🚨' : '🛏️' %></span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: <%= stList.length > 0 ? '#92400e' : 'var(--slate-700)' %>;">
+              ベッド外・一時待機エリア（ベッド移動・配置待機トレイ）
+            </h3>
+            <p style="margin: 0.15rem 0 0 0; font-size: 0.78rem; color: <%= stList.length > 0 ? '#b45309' : 'var(--slate-500)' %>;">
+              <% if (stList.length > 0) { %>
+                <strong style="color: #b91c1c;">⚠️ 現在 <%= stList.length %> 名がベッド外に一時待機しています。すべての待機患者をベッドまたは外来へ配置するまで画面遷移はロックされます。</strong>
+              <% } else { %>
+                ベッド移動や入替え時、一時的にベッド外へ退避させた患者がここに待機します（現在待機患者はいません）。
+              <% } %>
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <% if (stList.length > 0) { %>
+            <span style="background: #b91c1c; color: white; padding: 0.35rem 0.85rem; border-radius: 9999px; font-weight: 800; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+              🔒 画面遷移ロック中 (<%= stList.length %>名待機)
+            </span>
+          <% } else { %>
+            <span style="background: #e2e8f0; color: #475569; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem;">
+              待機者なし（通常状態）
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <% if (stList.length > 0) { %>
+        <!-- 待機中患者カード一覧 -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-top: 0.85rem;">
+          <% stList.forEach(sp => { %>
+            <div style="background: white; border: 1px solid #fcd34d; border-radius: 10px; padding: 0.85rem 1rem; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: 800; font-size: 0.95rem; color: #1e293b;">
+                  [<%= sp.patientId %>] <%= sp.name %> 様
+                </div>
+                <div style="font-size: 0.75rem; color: var(--slate-500); margin-top: 0.15rem;">
+                  <%= sp.age !== null ? sp.age + '歳' : '' %> (<%= sp.gender %>) ・ <%= sp.department || '内科' %>
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.35rem;">
+                <button type="button" onclick="openMoveModal('<%= sp.patientId %>', '<%= sp.name %>', '<%= sp.age !== null ? sp.age : '' %>', '<%= selectedWard %>', '')" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; background: #0284c7;" title="この患者を病室ベッドへ配置">
+                  🛏️ ベッド配置
+                </button>
+                <form action="/api/bed-board/assign" method="POST" onsubmit="return confirm('患者 [<%= sp.name %>] を外来へ移動（待機解除）しますか？');" style="margin: 0;">
+                  <input type="hidden" name="patientId" value="<%= sp.patientId %>">
+                  <input type="hidden" name="action" value="discharge">
+                  <input type="hidden" name="currentWard" value="<%= selectedWard %>">
+                  <button type="submit" class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.75rem; color: #64748b;" title="外来へ移動">
+                    外来
+                  </button>
+                </form>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- 2. 病棟切り替えタブ -->
+    <div class="ward-tabs">
+      <% Object.keys(bedMaster).forEach(wKey => { %>
+        <a href="/bed-board?ward=<%= encodeURIComponent(wKey) %>" class="ward-tab-btn <%= selectedWard === wKey ? 'active' : '' %>">
+          <span><%= wKey.includes('しおかぜ') ? '🌊' : '🌲' %></span>
+          <span><%= bedMaster[wKey].name %></span>
+        </a>
+      <% }); %>
+    </div>
+
+    <!-- 3. 病室・ベッド一覧グリッド -->
+    <div class="rooms-grid">
+      <% currentWardMaster.rooms.forEach(room => { %>
+        <div class="room-card">
+          <div class="room-header">
+            <div class="room-number">
+              <span>🚪</span> <%= room.roomNo %> 号室
+            </div>
+            <span class="room-badge"><%= room.type %> (<%= room.beds.length %>床)</span>
+          </div>
+
+          <div class="bed-slot-list">
+            <% room.beds.forEach(bedId => { %>
+              <% 
+                // この病室・ベッドに割り当てられている患者を検索
+                const occupant = patients.find(p => p.ward && p.ward.includes(currentWardMaster.wardKey.slice(0, 4)) && p.room === bedId);
+              %>
+              <% if (occupant) { %>
+                <!-- 入床中スロット -->
+                <div class="bed-slot bed-occupied">
+                  <div class="bed-info-main">
+                    <div class="bed-label">
+                      <span>🛏️ <%= bedId %></span>
+                      <span class="dept-pill" style="font-size:0.68rem; padding:0.1rem 0.35rem;"><%= occupant.department || '内科' %></span>
+                    </div>
+                    <div class="bed-patient-name">
+                      [<%= occupant.patientId %>] <%= occupant.name %> 様
+                    </div>
+                    <div class="bed-patient-sub">
+                      <span><%= occupant.age !== null ? occupant.age + '歳' : '' %> (<%= occupant.gender %>)</span>
+                      <span>・ ADL: <%= occupant.mobility || '徒歩' %></span>
+                      <% if (occupant.infection && occupant.infection !== '無') { %>
+                        <span style="color:#b91c1c; font-weight:bold;">⚠️ <%= occupant.infection %></span>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                    <button type="button" 
+                            onclick="openMoveModal('<%= occupant.patientId %>', '<%= occupant.name %>', '<%= occupant.age !== null ? occupant.age : '' %>', '<%= occupant.ward || currentWardMaster.wardKey %>', '<%= bedId %>')" 
+                            class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.75rem; border-color:#0284c7; color:#0284c7;">
+                      🔀 部屋変更
+                    </button>
+                    <form action="/api/bed-board/assign" method="POST" onsubmit="return confirm('患者 [<%= occupant.name %>] を一時退避エリア（ベッド外）へ退避しますか？\n（ベッドが空床になり、他の患者を配置できるようになります。待機患者がいる間は画面遷移が制限されます）');" style="margin:0;">
+                      <input type="hidden" name="patientId" value="<%= occupant.patientId %>">
+                      <input type="hidden" name="action" value="stage">
+                      <input type="hidden" name="currentWard" value="<%= selectedWard %>">
+                      <button type="submit" class="btn" style="background:#fef3c7; color:#b45309; padding:0.22rem 0.45rem; font-size:0.71rem; border:1px solid #fde68a; border-radius:4px; cursor:pointer; width:100%;" title="ベッド入替え作業のために一時的にベッド外へ退避">
+                        ⚠️ 一時退避
+                      </button>
+                    </form>
+                    <form action="/api/bed-board/assign" method="POST" onsubmit="return confirm('患者 [<%= occupant.name %>] をベッドから退室（外来へ移動）させますか？');" style="margin:0;">
+                      <input type="hidden" name="patientId" value="<%= occupant.patientId %>">
+                      <input type="hidden" name="action" value="discharge">
+                      <input type="hidden" name="currentWard" value="<%= selectedWard %>">
+                      <button type="submit" class="btn" style="background:#fee2e2; color:#991b1b; padding:0.22rem 0.45rem; font-size:0.71rem; border:none; border-radius:4px; cursor:pointer; width:100%;">
+                        🚪 退室
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              <% } else { %>
+                <!-- 空床スロット -->
+                <div class="bed-slot bed-empty">
+                  <div class="bed-empty-label">
+                    <span>🛏️ <%= bedId %></span>
+                    <span style="font-size:0.75rem; color:#10b981; font-weight:bold;">（空床）</span>
+                  </div>
+                  <button type="button" onclick="openAssignModal('<%= currentWardMaster.wardKey %>', '<%= bedId %>')" 
+                          class="btn btn-primary" style="padding:0.3rem 0.7rem; font-size:0.75rem; background:#0d9488;">
+                    ＋ 患者を割当
+                  </button>
+                </div>
+              <% } %>
+            <% }); %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+  </main>
+
+  <!-- 🔀 1. 部屋変更・病床移動モーダル（病棟・病室を選択する画面） -->
+  <div id="moveModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 520px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size:1.2rem; font-weight:800; color:#0f172a; margin:0; display:flex; align-items:center; gap:0.4rem;">
+          <span>🔀</span> 患者の部屋変更・病床移動
+        </h3>
+        <button type="button" onclick="closeMoveModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--slate-400);">&times;</button>
+      </div>
+
+      <form action="/api/bed-board/assign" method="POST">
+        <input type="hidden" name="currentWard" value="<%= selectedWard %>">
+        <input type="hidden" name="patientId" id="movePatientId">
+
+        <!-- 対象患者カード（変更不可・固定） -->
+        <div style="background:#f1f5f9; border-radius:10px; padding:0.85rem 1rem; margin-bottom:1.25rem; border:1px solid #cbd5e1;">
+          <div style="font-size:0.72rem; color:var(--slate-500); font-weight:700;">移動対象患者</div>
+          <div style="font-size:1.05rem; font-weight:800; color:#0f172a; margin:0.25rem 0;" id="movePatientDisplay">
+            --
+          </div>
+          <div style="font-size:0.8rem; color:#0284c7; display:flex; align-items:center; gap:0.35rem;">
+            <span>📍 現在の病室:</span>
+            <strong id="moveCurrentLocation" style="color:#0f172a;">--</strong>
+          </div>
+        </div>
+
+        <!-- 移動先病棟の選択 -->
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label class="form-label" style="font-weight:bold; font-size:0.85rem; color:#334155;">
+            移動先病棟を選択 *
+          </label>
+          <select id="moveTargetWard" name="ward" class="form-input" required onchange="updateMoveRoomOptions()" style="font-size:0.9rem;">
+            <% Object.keys(bedMaster).forEach(wKey => { %>
+              <option value="<%= wKey %>" <%= selectedWard === wKey ? 'selected' : '' %>>
+                <%= bedMaster[wKey].name %>
+              </option>
+            <% }); %>
+            <option value="医療療養病棟">4F 医療療養病棟</option>
+            <option value="プライム病棟">5F プライム病棟</option>
+            <option value="集中治療室">集中治療室 (ICU)</option>
+            <option value="一時待機">⚠️ 一時待機エリア（ベッド外退避・入替え）</option>
+            <option value="外来">外来（退院・病室解放）</option>
+          </select>
+        </div>
+
+        <!-- 移動先病室・ベッドの選択 -->
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label class="form-label" style="font-weight:bold; font-size:0.85rem; color:#334155;">
+            移動先病室・ベッドを選択 *
+          </label>
+          <select id="moveTargetRoom" name="room" class="form-input" required style="font-size:0.9rem;">
+            <!-- JSで動的に空床・病室ベッドを生成 -->
+          </select>
+          <small style="color:var(--slate-500); font-size:0.75rem; display:block; margin-top:0.35rem;">
+            ※ 【空床】と表示されているベッドを選択するとスムーズに移動できます。
+          </small>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+          <button type="button" onclick="closeMoveModal()" class="btn btn-outline" style="width:auto; padding:0.5rem 1.25rem;">
+            キャンセル
+          </button>
+          <button type="submit" class="btn btn-primary" style="width:auto; padding:0.5rem 1.5rem; background:#0284c7; font-weight:bold;">
+            💾 この部屋・ベッドへ移動する
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 🛏️ 2. 空床への新規患者割当モーダル（空床ベッドをクリックした時） -->
+  <div id="assignModal" class="modal-overlay">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-size:1.15rem; font-weight:800; color:#0f172a; margin:0; display:flex; align-items:center; gap:0.4rem;">
+          <span>🛏️</span> 空床への患者割り当て
+        </h3>
+        <button type="button" onclick="closeAssignModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--slate-400);">&times;</button>
+      </div>
+
+      <form action="/api/bed-board/assign" method="POST">
+        <input type="hidden" name="currentWard" value="<%= selectedWard %>">
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label class="form-label" style="font-weight:bold; font-size:0.85rem; color:#475569;">割り当て先ベッド</label>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="modalWard" name="ward" class="form-input" readonly style="background:#f1f5f9; font-weight:bold; width:55%;">
+            <input type="text" id="modalRoom" name="room" class="form-input" readonly style="background:#f1f5f9; font-weight:bold; width:45%;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label class="form-label" style="font-weight:bold; font-size:0.85rem; color:#475569;">入床させる患者を選択 *</label>
+          <select id="modalPatientSelect" name="patientId" class="form-input" required style="font-size:0.9rem;">
+            <option value="">-- 入床させる患者を選択してください --</option>
+            <% if (stList.length > 0) { %>
+              <optgroup label="🚨 一時待機中の患者（最優先で配置してください）">
+                <% stList.forEach(p => { %>
+                  <option value="<%= p.patientId %>" style="font-weight: bold; color: #b91c1c;">
+                    ⚠️ [待機中] <%= p.name %> (<%= p.age !== null ? p.age + '歳' : '' %>) - ID: <%= p.patientId %>
+                  </option>
+                <% }); %>
+              </optgroup>
+            <% } %>
+            <optgroup label="その他の登録患者">
+              <% patients.forEach(p => { %>
+                <% if (!stList.some(sp => sp.patientId === p.patientId)) { %>
+                  <option value="<%= p.patientId %>">
+                    [<%= p.patientId %>] <%= p.name %> (<%= p.age !== null ? p.age + '歳' : '' %>) - 現在: <%= p.ward || '外来' %> <%= p.room || '未割当' %>
+                  </option>
+                <% } %>
+              <% }); %>
+            </optgroup>
+          </select>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+          <button type="button" onclick="closeAssignModal()" class="btn btn-outline" style="width:auto; padding:0.45rem 1rem;">
+            キャンセル
+          </button>
+          <button type="submit" class="btn btn-primary" style="width:auto; padding:0.45rem 1.25rem; background:#0d9488;">
+            💾 このベッドに割り当て
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const BED_MASTER_DATA = <%- JSON.stringify(bedMaster) %>;
+    const ALL_PATIENTS = <%- JSON.stringify(patients) %>;
+    const STAGING_PATIENTS = <%- JSON.stringify(stList) %>;
+
+    // 🔀 部屋変更モーダルを開く（患者固定、移動先病棟・病室を選択）
+    function openMoveModal(patientId, name, age, currentWard, currentRoom) {
+      document.getElementById('movePatientId').value = patientId;
+      document.getElementById('movePatientDisplay').innerText = `[${patientId}] ${name} 様 ${age ? '(' + age + '歳)' : ''}`;
+      document.getElementById('moveCurrentLocation').innerText = `${currentWard || '外来'} ${currentRoom || '未入床'}`;
+
+      // 現在の病棟を初期選択
+      const wardSelect = document.getElementById('moveTargetWard');
+      if (currentWard && BED_MASTER_DATA[currentWard]) {
+        wardSelect.value = currentWard;
+      } else if (currentWard === '一時待機') {
+        wardSelect.value = '<%= selectedWard %>'; // 待機患者は現在の表示病棟を初期選択
+      }
+      
+      // 病室リストを生成
+      updateMoveRoomOptions();
+
+      document.getElementById('moveModal').style.display = 'block';
+    }
+
+    function closeMoveModal() {
+      document.getElementById('moveModal').style.display = 'none';
+    }
+
+    // 移動先病棟が変更された時に、病室・ベッド選択肢を動的更新
+    function updateMoveRoomOptions() {
+      const wardSelect = document.getElementById('moveTargetWard');
+      const roomSelect = document.getElementById('moveTargetRoom');
+      const targetWard = wardSelect.value;
+      const currentPatientId = document.getElementById('movePatientId').value;
+
+      roomSelect.innerHTML = '';
+
+      if (targetWard === '一時待機') {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '⚠️ 一時待機エリア（ベッド外へ退避・入替え待機）';
+        roomSelect.appendChild(opt);
+        roomSelect.required = false;
+        return;
+      }
+
+      if (targetWard === '外来') {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- 外来（病室割り当てなし・退室）--';
+        roomSelect.appendChild(opt);
+        roomSelect.required = false;
+        return;
+      }
+
+      roomSelect.required = true;
+      const wardMaster = BED_MASTER_DATA[targetWard];
+      
+      if (!wardMaster || !wardMaster.rooms) {
+        // マスタ未定義病棟の場合は自由テキスト入力または汎用選択肢
+        const rooms = ['101', '102', '103', '201', '202', '301', '302', '401', '402'];
+        rooms.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r + '号室';
+          opt.textContent = `🚪 ${r}号室`;
+          roomSelect.appendChild(opt);
+        });
+        return;
+      }
+
+      const emptyGroup = document.createElement('optgroup');
+      emptyGroup.label = '✨ 空床ベッド（推奨・即時移動可能）';
+
+      const occupiedGroup = document.createElement('optgroup');
+      occupiedGroup.label = '⚠️ 現在入床中ベッド（入床中患者は外来へ退避）';
+
+      let hasEmpty = false;
+      let hasOccupied = false;
+
+      wardMaster.rooms.forEach(room => {
+        room.beds.forEach(bedId => {
+          const occ = ALL_PATIENTS.find(p => p.ward && p.ward.includes(targetWard.slice(0, 4)) && p.room === bedId);
+          const opt = document.createElement('option');
+          opt.value = bedId;
+
+          if (!occ) {
+            opt.textContent = `🛏️ ${bedId} 【空床】 (${room.roomNo}号室 ${room.type})`;
+            emptyGroup.appendChild(opt);
+            hasEmpty = true;
+          } else if (occ.patientId === currentPatientId) {
+            opt.textContent = `🛏️ ${bedId} 【現在のベッド】 (${room.roomNo}号室)`;
+            opt.selected = true;
+            emptyGroup.appendChild(opt);
+            hasEmpty = true;
+          } else {
+            opt.textContent = `🛏️ ${bedId} (入床中: [${occ.patientId}] ${occ.name} 様)`;
+            occupiedGroup.appendChild(opt);
+            hasOccupied = true;
+          }
+        });
+      });
+
+      if (hasEmpty) roomSelect.appendChild(emptyGroup);
+      if (hasOccupied) roomSelect.appendChild(occupiedGroup);
+    }
+
+    // 🛏️ 空床への割当モーダル（ベッド固定、患者を選択）
+    function openAssignModal(ward, room) {
+      document.getElementById('modalWard').value = ward;
+      document.getElementById('modalRoom').value = room;
+      document.getElementById('modalPatientSelect').value = '';
+      document.getElementById('assignModal').style.display = 'block';
+    }
+
+    function closeAssignModal() {
+      document.getElementById('assignModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+      const moveModal = document.getElementById('moveModal');
+      const assignModal = document.getElementById('assignModal');
+      if (event.target === moveModal) moveModal.style.display = 'none';
+      if (event.target === assignModal) assignModal.style.display = 'none';
+    };
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeMoveModal();
+        closeAssignModal();
+      }
+    });
+
+    // 🔒 ベッド外一時待機中の画面遷移禁止ロック機能
+    const hasStagingPatients = <%= (typeof stList !== 'undefined' && stList.length > 0) ? 'true' : 'false' %>;
+
+    // 1. ブラウザの閉じる/戻る/リロード操作をブロック
+    window.addEventListener('beforeunload', function(e) {
+      if (hasStagingPatients) {
+        e.preventDefault();
+        e.returnValue = 'ベッド外に一時待機中の患者がいます。すべての待機患者をベッドまたは外来へ配置完了するまで移動できません。';
+        return e.returnValue;
+      }
+    });
+
+    // 2. ページ内のすべてのリンク（メニュー、他病棟タブ、リボンなど）のクリックをインターセプト
+    if (hasStagingPatients) {
+      document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (link) {
+          const href = link.getAttribute('href');
+          if (href && href !== '#' && !href.startsWith('javascript:')) {
+            e.preventDefault();
+            e.stopPropagation();
+            alert('🚨 【画面遷移ロック中】\n\nベッド外（一時待機エリア）に患者が待機しています。\n患者の安全確保のため、すべての待機患者をベッドまたは外来へ配置完了するまで他の画面へ移動することはできません。\n\n一時待機エリアの「🛏️ ベッド配置」ボタンから空床へ割り当ててください。');
+          }
+        }
+      }, true);
+    }
+  </script>
+</body>
+</html>

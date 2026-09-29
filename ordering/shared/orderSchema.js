@@ -33,8 +33,8 @@ const OrderPriority = {
 
 // サンプル患者マスタ (だて病院様式準拠プリセット)
 const SamplePatients = [
-  { id: 'P001', name: '安部 光良', kana: 'アベ テルヨシ', age: 70, gender: '男', birthDate: '1946-12-06', era: '昭21', ward: 'しおかぜ', room: '302号室', department: '内科', infection: '無', mobility: '車椅子', height: 164, weight: 58, examCategory: '入院時検査' },
-  { id: 'P002', name: '山田 太郎', kana: 'ヤマダ タロウ', age: 45, gender: '男', birthDate: '1981-05-12', era: '昭56', ward: 'うみかぜ', room: '205号室', department: '外科', infection: '無', mobility: '徒歩', height: 172, weight: 68, examCategory: '一般診療' },
+  { id: 'P001', name: '安部 光良', kana: 'アベ テルヨシ', age: 70, gender: '男', birthDate: '1946-12-06', era: '昭21', ward: '外来', room: '', department: '内科', infection: '無', mobility: '車椅子', height: 164, weight: 58, examCategory: '入院時検査' },
+  { id: 'P002', name: '山田 太郎', kana: 'ヤマダ タロウ', age: 45, gender: '男', birthDate: '1981-05-12', era: '昭56', ward: 'うみかぜ病棟', room: '302-A', department: '外科', infection: '無', mobility: '徒歩', height: 172, weight: 68, examCategory: '一般診療' },
   { id: 'P003', name: '佐藤 花子', kana: 'サトウ ハナコ', age: 89, gender: '女', birthDate: '1937-08-23', era: '昭12', ward: '医療', room: '412号室', department: '総合診療科', infection: '有(MRSA)', mobility: 'ベッド', height: 148, weight: 42, examCategory: '一般診療' },
   { id: 'P004', name: '鈴木 一郎', kana: 'スズキ イチロウ', age: 62, gender: '男', birthDate: '1964-02-17', era: '昭39', ward: '外来', room: '外来処置室', department: '循環器内科', infection: '無', mobility: '徒歩', height: 168, weight: 65, examCategory: '健診' },
   { id: 'P005', name: '高橋 五郎', kana: 'タカハシ ゴロウ', age: 81, gender: '男', birthDate: '1945-11-30', era: '昭20', ward: 'プライム', room: '501号室', department: '整形外科', infection: '無', mobility: 'ストレッチャー', height: 160, weight: 52, examCategory: '入院時検査' }

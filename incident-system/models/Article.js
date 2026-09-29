@@ -46,6 +46,15 @@ const ArticleSchema = new mongoose.Schema({
     scheduledAt: { type: Date }     // 検査予定日時
   },
 
+  // オーダリング実施ステータス連動情報
+  orderStatus: { type: String, default: 'ORDERED' }, // ORDERED, RECEIVED, ACCEPTED, COMPLETED, CANCELLED
+  orderExecution: {
+    status: { type: String },         // RECEIVED, ACCEPTED, COMPLETED
+    actor: { type: String },          // 実施・受付担当者
+    note: { type: String },           // 実施メモ
+    completedAt: { type: Date }       // 実施完了・更新日時
+  },
+
   // 別ホストとの同期ステータス情報
   remoteSync: {
     isRemoteOrder: { type: Boolean, default: false }, // 外部ホスト受信フラグ

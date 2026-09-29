@@ -21,7 +21,11 @@ app.use(session({
   secret: 'incident-secret-key-2026',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 8 * 60 * 60 * 1000 }
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax'
+    // maxAge を設定せずブラウザ終了時に自動破棄
+  }
 }));
 
 // テンプレートエンジン設定
@@ -37,7 +41,9 @@ app.use('/api', require('./routes/authRoutes'));
 const publicPaths = [
   '/login',
   '/register',
+  '/api/sso-login',
   '/api/orders/receive',
+  '/api/orders/patients',
   '/api/iv-orders/receive',
   '/api/meal-orders/receive',
   '/api/radiology-orders/receive'
@@ -45,6 +51,13 @@ const publicPaths = [
 
 const requireAuth = (req, res, next) => {
   if (publicPaths.includes(req.path)) {
+    return next();
+  }
+  // オーダリングシステム連携（オーダー受信・ステータス更新・マスタ同期・コールバック）
+  if (req.path.startsWith('/api/orders/') ||
+      req.path.startsWith('/api/iv-orders/receive') ||
+      req.path.startsWith('/api/meal-orders/receive') ||
+      req.path.startsWith('/api/radiology-orders/receive')) {
     return next();
   }
   return authenticateToken(req, res, next);
@@ -79,4 +92,19 @@ app.use('/', viewRoutes);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`インシデント管理システム サーバー起動中: http://localhost:${PORT}`);
+
+  // 起動後、オーダリング受信側(Port 5000)から既存完了オーダーステータスを自動連動同期
+  setTimeout(async () => {
+    try {
+      const syncRes = await fetch(`http://localhost:${PORT}/api/orders/sync-from-receiver`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      if (syncRes.ok) {
+        const syncData = await syncRes.json();
+        console.log(`[カルテ起動時同期] オーダリング実施ステータス自動連動完了: ${syncData.message}`);
+      }
+    } catch (e) {
+      // 受信側がまだ立ち上がっていない場合はスキップ
+    }
+  }, 4000);
 });

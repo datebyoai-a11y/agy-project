@@ -1379,6 +1379,16 @@
       <button type="button" onclick="setQuickStartDate(1)" class="btn-date-quick" title="明日に設定">明日</button>
     </div>
 
+    <!-- 優先度セレクター -->
+    <div style="display:flex; align-items:center; gap:0.35rem; background:rgba(255,255,255,0.12); padding:0.18rem 0.5rem; border-radius:5px;">
+      <span style="font-size:0.75rem; color:#fef08a; font-weight:bold;">⚡ 優先度:</span>
+      <select id="sheetPrioritySelect" style="font-size:0.78rem; font-weight:bold; padding:0.18rem 0.4rem; border-radius:4px; border:1px solid #94a3b8; background:#0f172a; color:white; cursor:pointer;">
+        <option value="ROUTINE" selected>通常 (ROUTINE)</option>
+        <option value="URGENT">⚡ 急ぎ (URGENT)</option>
+        <option value="STAT">🚨 至急 (STAT)</option>
+      </select>
+    </div>
+
     <!-- 右側アクションボタン群 -->
     <div class="actions">
       <!-- 薬品検索モーダルを開くボタン -->
@@ -3031,9 +3041,12 @@
         return;
       }
 
+      const medSummary = data.medicines.map(m => m.medicine).filter(Boolean).join(' + ');
+      const priority = document.getElementById('sheetPrioritySelect')?.value || 'ROUTINE';
       const orderPayload = {
         orderType: 'IV',
-        priority: 'ROUTINE',
+        title: `💉 注射指示: ${medSummary} (${data.patientName || data.patientId})`,
+        priority: priority,
         orderDate: data.startDate || new Date().toISOString().split('T')[0],
         patient: {
           id: data.patientId,
@@ -3054,6 +3067,7 @@
           startDate: data.startDate,
           endDate: data.endDate,
           scheduleDays: `${data.startDate} 〜 ${data.endDate} (15日間)`,
+          scheduledAt: data.startDate || new Date().toISOString().split('T')[0],
           pharmacistChecked: true,
           remarks: `注射指示箋(原本様式)より一括送信 [開始日: ${data.startDate || '即時'}]`
         }

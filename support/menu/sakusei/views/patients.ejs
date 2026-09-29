@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>患者情報登録・管理 - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .patient-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--slate-500);
+      margin-top: 0.2rem;
+    }
+
+    .filter-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--slate-200);
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-input {
+      padding: 0.5rem 0.85rem;
+      border: 1px solid var(--slate-300);
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .patient-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--slate-200);
+    }
+    .patient-table th, .patient-table td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--slate-200);
+      font-size: 0.85rem;
+    }
+    .patient-table th {
+      background: var(--slate-100);
+      font-weight: 700;
+      color: var(--slate-700);
+      white-space: nowrap;
+    }
+    .patient-table tr:hover {
+      background: var(--slate-50);
+    }
+
+    .infection-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .infection-none { background: #dcfce7; color: #166534; }
+    .infection-alert { background: #fee2e2; color: #991b1b; animation: pulse 2s infinite; }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+    }
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.85rem;
+    }
+    .readonly-input {
+      background-color: #f1f5f9 !important;
+      color: #334155 !important;
+      cursor: not-allowed !important;
+      border-color: #cbd5e1 !important;
+    }
+    /* スピンボタン（上下矢印▲▼）を完全に消去 */
+    .no-spin::-webkit-outer-spin-button,
+    .no-spin::-webkit-inner-spin-button,
+    input[type="number"].no-spin::-webkit-outer-spin-button,
+    input[type="number"].no-spin::-webkit-inner-spin-button {
+      -webkit-appearance: none !important;
+      margin: 0 !important;
+    }
+    .no-spin {
+      -moz-appearance: textfield !important;
+    }
+
+    /* 🏥 全画面モーダルスタイル */
+    .fullscreen-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #f8fafc;
+      z-index: 999999;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    .fullscreen-modal-header {
+      background: white;
+      border-bottom: 1px solid var(--slate-200);
+      padding: 1rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .fullscreen-modal-body {
+      max-width: 1320px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 2rem 3rem 2rem;
+      box-sizing: border-box;
+    }
+    .fullscreen-modal-footer {
+      background: white;
+      border-top: 1px solid var(--slate-200);
+      padding: 1rem 2.5rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      position: sticky;
+      bottom: 0;
+      z-index: 50;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
+    }
+    .patient-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 980px) {
+      .patient-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .patient-form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid var(--slate-200);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-section-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      border-left: 4px solid var(--primary);
+      padding-left: 0.6rem;
+      margin-top: 0;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--slate-50);
+      padding-top: 0.45rem;
+      padding-bottom: 0.45rem;
+      border-radius: 0 6px 6px 0;
+    }
+    .memo-badge {
+      display: inline-block;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.75rem;
+      color: var(--slate-600);
+      background: var(--slate-100);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '患者情報登録・管理' }) %>
+
+  <header class="navbar">
+    <a href="/menu" class="nav-brand">
+      <div class="brand-icon">🏥</div>
+      <div class="brand-text">
+        <h1>交雄会だて病院 医療統合ポータル</h1>
+        <p>患者情報登録・管理マスタ</p>
+      </div>
+    </a>
+    <div class="nav-user">
+      <div class="user-badge">
+        <span class="dept-pill"><%= user.department %></span>
+        <span class="user-name"><%= user.userName %> 職員</span>
+      </div>
+      <a href="/bed-board" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem; border-color: #0284c7; color: #0284c7;">
+        🛏️ ベッドボード
+      </a>
+      <a href="/menu" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem;">
+        🏠 メニューへ戻る
+      </a>
+      <a href="/logout" class="btn-logout">
+        🚪 ログアウト
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h2 class="page-title">🏥 患者情報登録・管理</h2>
+        <p class="page-subtitle">電子カルテ・オーダリングシステム共通の患者基本情報マスタの登録・参照・管理画面です。生年月日から年齢は自動計算されます。</p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="/bed-board" class="btn btn-outline" style="width: auto; padding: 0.6rem 1rem; border-color: #0284c7; color: #0284c7; font-weight: 600;" title="病棟・病室・ベッド割り当てと稼働状況を視覚的に管理">
+          🛏️ 病棟・ベッドボード管理
+        </a>
+        <form action="/patients/seed-samples" method="POST" style="margin: 0;">
+          <button type="submit" class="btn btn-outline" style="width: auto; padding: 0.6rem 1rem;" title="P001〜P005の標準患者を一括投入">
+            📥 サンプル患者一括登録
+          </button>
+        </form>
+        <button onclick="openPatientModal()" class="btn btn-primary" style="width: auto; padding: 0.6rem 1.25rem;">
+          ＋ 新規患者登録
+        </button>
+      </div>
+    </div>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        ✅ <%= success %>
+      </div>
+    <% } %>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        ⚠️ <%= error %>
+      </div>
+    <% } %>
+
+    <!-- 📊 統計カード -->
+    <div class="patient-stats">
+      <div class="stat-card">
+        <div class="stat-val"><%= patients.length %></div>
+        <div class="stat-label">総登録患者数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #0284c7;">
+          <%= patients.filter(p => p.ward && p.ward !== '外来').length %>
+        </div>
+        <div class="stat-label">入院患者数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #10b981;">
+          <%= patients.filter(p => !p.ward || p.ward === '外来').length %>
+        </div>
+        <div class="stat-label">外来患者数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: #ef4444;">
+          <%= patients.filter(p => p.infection && p.infection !== '無').length %>
+        </div>
+        <div class="stat-label">感染症アラート</div>
+      </div>
+    </div>
+
+    <!-- 🔍 検索・絞り込みバー -->
+    <div class="filter-bar">
+      <span>🔍 絞り込み:</span>
+      <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="患者ID・氏名・カナ検索..." class="filter-input" style="flex: 1; min-width: 180px;">
+      
+      <select id="wardFilter" onchange="filterTable()" class="filter-input">
+        <option value="">すべての病棟</option>
+        <option value="しおかぜ">しおかぜ病棟</option>
+        <option value="うみかぜ">うみかぜ病棟</option>
+        <option value="医療">医療療養病棟</option>
+        <option value="プライム">プライム病棟</option>
+        <option value="外来">外来</option>
+      </select>
+
+      <select id="deptFilter" onchange="filterTable()" class="filter-input">
+        <option value="">すべての診療科</option>
+        <option value="内科">内科</option>
+        <option value="外科">外科</option>
+        <option value="整形外科">整形外科</option>
+        <option value="総合診療科">総合診療科</option>
+        <option value="循環器内科">循環器内科</option>
+      </select>
+
+      <button onclick="resetFilter()" class="btn btn-outline" style="width: auto; padding: 0.45rem 0.8rem; font-size: 0.8rem;">
+        クリア
+      </button>
+    </div>
+
+    <!-- 📋 患者一覧テーブル -->
+    <table class="patient-table" id="patientsTable">
+      <thead>
+        <tr>
+          <th>患者ID</th>
+          <th>氏名 (カナ)</th>
+          <th>年齢 / 性別</th>
+          <th>病棟 / 病室</th>
+          <th>連絡先 / 住所</th>
+          <th>キーパーソン</th>
+          <th>診療科 / 感染症</th>
+          <th>特記 / メモ</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (patients.length === 0) { %>
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--slate-500);">
+              登録されている患者データがありません。「＋ 新規患者登録」または「サンプル患者一括登録」を行ってください。
+            </td>
+          </tr>
+        <% } %>
+        <% patients.forEach(p => { %>
+          <tr data-ward="<%= p.ward %>" data-dept="<%= p.department %>">
+            <td><strong><%= p.patientId %></strong></td>
+            <td>
+              <div><%= p.name %></div>
+              <div style="font-size: 0.72rem; color: var(--slate-500);"><%= p.kana || '-' %></div>
+            </td>
+            <td>
+              <strong><%= p.age !== null ? p.age + '歳' : '-' %></strong>
+              <div style="font-size: 0.75rem; color: var(--slate-500);">(<%= p.gender %>)</div>
+              <% if (p.birthDate) { %>
+                <div style="font-size: 0.7rem; color: var(--slate-400);"><%= p.birthDate %></div>
+              <% } %>
+            </td>
+            <td>
+              <div>
+                <a href="/bed-board?ward=<%= encodeURIComponent(p.ward && p.ward.includes('うみかぜ') ? 'うみかぜ病棟' : 'しおかぜ病棟') %>" style="color: #0284c7; text-decoration: none; font-weight: 600;" title="ベッドボードで配置を確認・変更">
+                  🛏️ <%= p.ward || '外来' %>
+                </a>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--slate-500);"><%= p.room || '-' %></div>
+            </td>
+            <td>
+              <div>📞 <%= p.phoneNumber || '-' %></div>
+              <% if (p.address || p.postalCode) { %>
+                <div style="font-size: 0.73rem; color: var(--slate-500); max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="〒<%= p.postalCode %> <%= p.address %>">
+                  <% if (p.postalCode) { %>〒<%= p.postalCode %><% } %> <%= p.address %>
+                </div>
+              <% } %>
+            </td>
+            <td>
+              <% if (p.keyPersonName) { %>
+                <div>👤 <strong><%= p.keyPersonName %></strong> <span style="font-size: 0.72rem; color: var(--slate-500);">(<%= p.keyPersonRelation || '関係者' %>)</span></div>
+                <% if (p.keyPersonPhone) { %>
+                  <div style="font-size: 0.72rem; color: var(--slate-600);">📞 <%= p.keyPersonPhone %></div>
+                <% } %>
+                <% if (p.keyPersonNotes) { %>
+                  <div style="font-size: 0.7rem; color: #0284c7; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.15rem;" title="備考: <%= p.keyPersonNotes %>">
+                    📝 <%= p.keyPersonNotes %>
+                  </div>
+                <% } %>
+              <% } else { %>
+                <span style="color: var(--slate-400); font-size: 0.75rem;">未登録</span>
+              <% } %>
+            </td>
+            <td>
+              <div><span class="dept-pill doctor" style="font-size: 0.72rem;"><%= p.department %></span></div>
+              <div style="margin-top: 0.2rem;">
+                <% if (p.infection && p.infection !== '無') { %>
+                  <span class="infection-badge infection-alert" style="font-size: 0.7rem;">⚠️ <%= p.infection %></span>
+                <% } else { %>
+                  <span class="infection-badge infection-none" style="font-size: 0.7rem;">感染症無</span>
+                <% } %>
+              </div>
+            </td>
+            <td>
+              <% if (p.memo) { %>
+                <div class="memo-badge" title="個別メモ: <%= p.memo %>">📝 <%= p.memo %></div>
+              <% } %>
+              <% if (p.allergies && p.allergies !== 'なし') { %>
+                <div style="font-size: 0.73rem; color: #dc2626; font-weight: 600; margin-top: 0.15rem;">⚠️ <%= p.allergies %></div>
+              <% } %>
+              <% if (!p.memo && (!p.allergies || p.allergies === 'なし')) { %>
+                <span style="color: var(--slate-400); font-size: 0.75rem;">-</span>
+              <% } %>
+            </td>
+            <td style="white-space: nowrap;">
+              <button onclick='selectPatientForRibbon(<%= JSON.stringify(p) %>)' class="btn btn-primary" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #0284c7;" title="この患者を共通リボンの対象患者に選択">
+                📌 選択
+              </button>
+              <button onclick='editPatient(<%= JSON.stringify(p) %>)' class="btn btn-outline" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                ✏️ 編集
+              </button>
+              <form action="/patients/delete/<%= p._id %>" method="POST" style="display: inline;" onsubmit="return confirm('患者 [<%= p.name %> (<%= p.patientId %>)] を削除してもよろしいですか？');">
+                <button type="submit" class="btn btn-logout" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                  🗑️
+                </button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <!-- 🏥 患者登録・編集 全画面モーダル -->
+    <div id="patientModal" class="fullscreen-modal">
+      <form id="patientForm" action="/patients/create" method="POST" style="display: flex; flex-direction: column; min-height: 100vh;">
+        <!-- ヘッダーバー (上部固定) -->
+        <div class="fullscreen-modal-header">
+          <div>
+            <h3 id="modalTitle" style="font-size: 1.35rem; font-weight: 800; margin: 0; color: var(--slate-900);">🏥 新規患者登録</h3>
+            <p style="font-size: 0.83rem; color: var(--slate-500); margin: 0.2rem 0 0 0;">
+              登録された患者情報は、電子カルテ（Port 3000）およびオーダリング（Port 4000/5000）と自動連動されます。年齢は生年月日から自動計算されます。
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.75rem; align-items: center;">
+            <button type="button" onclick="closePatientModal()" class="btn btn-outline" style="width: auto; padding: 0.5rem 1.25rem;">
+              ✕ 閉じる (Esc)
+            </button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitTop" style="width: auto; padding: 0.5rem 1.75rem; font-weight: 700;">
+              💾 保存する
+            </button>
+          </div>
+        </div>
+
+        <!-- 本文コンテナ (2カラムグリッド) -->
+        <div class="fullscreen-modal-body">
+          <div class="patient-form-grid">
+            <!-- ⬅️ 左カラム: 基本情報・連絡先・キーパーソン -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <!-- カード1: 患者基本情報 -->
+              <div class="patient-form-card">
+                <div class="form-section-title">
+                  <span>👤 患者基本情報</span>
+                  <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: normal;">* は必須項目</span>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">患者ID (診察券番号) *</label>
+                    <input type="text" id="patientId" name="patientId" class="form-input" required placeholder="例: P006, 10023">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">患者氏名 (漢字) *</label>
+                    <input type="text" id="name" name="name" class="form-input" required placeholder="例: 伊達 幸雄">
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">フリガナ (全角カナ)</label>
+                    <input type="text" id="kana" name="kana" class="form-input" placeholder="例: ダテ ユキオ">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">性別 *</label>
+                    <select id="gender" name="gender" class="form-input" required>
+                      <option value="男">男</option>
+                      <option value="女">女</option>
+                      <option value="その他">その他</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">生年月日</label>
+                    <input type="date" id="birthDate" name="birthDate" class="form-input" oninput="calculateAge()" onchange="calculateAge()">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">
+                      年齢
+                      <span style="font-size: 0.75rem; color: #0284c7; font-weight: normal;">(生年月日から自動計算・直接編集不可)</span>
+                    </label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                      <input type="text" id="age" name="age" class="form-input readonly-input no-spin" readonly placeholder="生年月日から自動計算" tabindex="-1" style="padding-right: 2.5rem; font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+                      <span style="position: absolute; right: 0.85rem; color: var(--slate-500); font-weight: 700; font-size: 0.85rem; pointer-events: none;">歳</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- カード2: 連絡先・現住所 -->
+              <div class="patient-form-card">
+                <div class="form-section-title">
+                  <span>🏠 連絡先・現住所情報</span>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">郵便番号</label>
+                    <input type="text" id="postalCode" name="postalCode" class="form-input" placeholder="例: 052-0012">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">本人電話番号</label>
+                    <input type="text" id="phoneNumber" name="phoneNumber" class="form-input" placeholder="例: 0142-23-1111 / 090-1234-5678">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">現住所</label>
+                  <input type="text" id="address" name="address" class="form-input" placeholder="例: 北海道伊達市松ヶ枝町9-1 ○○マンション201">
+                </div>
+              </div>
+
+              <!-- カード3: 緊急連絡先（キーパーソン） -->
+              <div class="patient-form-card">
+                <div class="form-section-title">
+                  <span>👥 緊急連絡先（キーパーソン）</span>
+                </div>
+
+                <div class="form-grid-3">
+                  <div class="form-group">
+                    <label class="form-label">キーパーソン氏名</label>
+                    <input type="text" id="keyPersonName" name="keyPersonName" class="form-input" placeholder="例: 伊達 花子">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">続柄</label>
+                    <input type="text" id="keyPersonRelation" name="keyPersonRelation" class="form-input" placeholder="例: 配偶者、長男、施設担当者">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">電話番号</label>
+                    <input type="text" id="keyPersonPhone" name="keyPersonPhone" class="form-input" placeholder="例: 090-9876-5432">
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 0.85rem;">
+                  <label class="form-label">キーパーソン備考</label>
+                  <textarea id="keyPersonNotes" name="keyPersonNotes" class="form-input" rows="2" placeholder="連絡可能時間帯、遠方在住、キーパーソン選定の背景、留意事項など"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- ➡️ 右カラム: 診療病棟・身体医療・特記事項メモ -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <!-- カード4: 診療科・病棟・病室 -->
+              <div class="patient-form-card">
+                <div class="form-section-title">
+                  <span>🛏️ 診療科・病棟・病室</span>
+                  <a href="/bed-board" style="font-size: 0.8rem; color: #0284c7; text-decoration: underline; font-weight: normal;">
+                    🛏️ ベッドボードで空床確認・割当
+                  </a>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">病棟</label>
+                    <select id="ward" name="ward" class="form-input" onchange="onWardChange()">
+                      <option value="外来">外来 (未入床)</option>
+                      <% if (typeof bedMaster !== 'undefined' && bedMaster) { %>
+                        <% Object.keys(bedMaster).forEach(wKey => { %>
+                          <option value="<%= wKey %>"><%= bedMaster[wKey].name %></option>
+                        <% }); %>
+                      <% } else { %>
+                        <option value="しおかぜ病棟">4F しおかぜ病棟 (24床)</option>
+                        <option value="うみかぜ病棟">3F うみかぜ病棟 (24床)</option>
+                      <% } %>
+                      <option value="医療療養病棟">4F 医療療養病棟</option>
+                      <option value="プライム病棟">5F プライム病棟</option>
+                      <option value="集中治療室">集中治療室 (ICU)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                      <span>病室 (部屋・ベッド)</span>
+                      <span id="emptyBedCountBadge" style="font-size:0.72rem; color:#0f766e; font-weight:bold; background:#ccfbf1; padding:0.12rem 0.5rem; border-radius:4px; display:none;">
+                        ✨ 空床
+                      </span>
+                    </label>
+
+                    <div style="display: flex; gap: 0.45rem;">
+                      <!-- 1. 空床から選べるドロップダウン -->
+                      <select id="roomSelect" class="form-input" style="flex: 1.15; font-size: 0.83rem;" onchange="onRoomSelectChange(this)" title="選択した病棟の空床ベッドから選択">
+                        <option value="">-- 空床から選択 --</option>
+                      </select>
+
+                      <!-- 2. インクリメンタル絞り込み・直接入力対応入力欄 -->
+                      <div style="flex: 0.85; position: relative;">
+                        <input type="text" id="room" name="room" list="roomDatalist" class="form-input" placeholder="部屋・ベッド (絞込)" autocomplete="off" oninput="onRoomInputChange(this)">
+                        <datalist id="roomDatalist">
+                          <!-- JSで動的に空床オプションを追加 -->
+                        </datalist>
+                      </div>
+                    </div>
+                    <small style="color: var(--slate-500); font-size: 0.71rem; display: block; margin-top: 0.3rem;">
+                      ※ ドロップダウンで空床を直接選択、または入力欄でインクリメンタル絞込・手動指定できます。
+                    </small>
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">主科・診療科</label>
+                    <select id="department" name="department" class="form-input">
+                      <option value="内科">内科</option>
+                      <option value="外科">外科</option>
+                      <option value="整形外科">整形外科</option>
+                      <option value="総合診療科">総合診療科</option>
+                      <option value="循環器内科">循環器内科</option>
+                      <option value="小児科">小児科</option>
+                      <option value="リハビリ科">リハビリ科</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">血液型</label>
+                    <select id="bloodType" name="bloodType" class="form-input">
+                      <option value="不明">不明</option>
+                      <option value="A型">A型</option>
+                      <option value="B型">B型</option>
+                      <option value="O型">O型</option>
+                      <option value="AB型">AB型</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- カード5: 身体・医療・感染症 -->
+              <div class="patient-form-card">
+                <div class="form-section-title">
+                  <span>🩺 身体状況・医療・感染症</span>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">感染症情報</label>
+                    <select id="infection" name="infection" class="form-input">
+                      <option value="無">無</option>
+                      <option value="有(MRSA)">有(MRSA)</option>
+                      <option value="有(COVID-19)">有(COVID-19)</option>
+                      <option value="有(緑膿菌)">有(緑膿菌)</option>
+                      <option value="有(その他)">有(その他)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">ADL・移動能力</label>
+                    <select id="mobility" name="mobility" class="form-input">
+                      <option value="徒歩">徒歩</option>
+                      <option value="車椅子">車椅子</option>
+                      <option value="ベッド">ベッド移動</option>
+                      <option value="ストレッチャー">ストレッチャー</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-grid-2">
+                  <div class="form-group">
+                    <label class="form-label">身長 (cm)</label>
+                    <input type="number" step="0.1" id="height" name="height" class="form-input" placeholder="例: 165.0">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">体重 (kg)</label>
+                    <input type="number" step="0.1" id="weight" name="weight" class="form-input" placeholder="例: 58.5">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">アレルギー歴（薬剤・食物など）</label>
+                  <input type="text" id="allergies" name="allergies" class="form-input" placeholder="例: ペニシリン系、造影剤、なし">
+                </div>
+              </div>
+
+              <!-- カード6: 特記事項 & 個別メモ -->
+              <div class="patient-form-card">
+                <div class="form-section-title">
+                  <span>📝 特記事項 & 個別メモ</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">特記事項・既往歴・申し送り</label>
+                  <textarea id="notes" name="notes" class="form-input" rows="3" placeholder="注意事項や申し送り事項があれば記入"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">個別メモ欄</label>
+                  <textarea id="memo" name="memo" class="form-input" rows="3" placeholder="ケア上の留意点、家族の希望、個別連絡メモなど"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- フッターバー (下部固定) -->
+        <div class="fullscreen-modal-footer">
+          <button type="button" onclick="closePatientModal()" class="btn btn-outline" style="width: auto; padding: 0.6rem 1.75rem;">
+            キャンセル (Esc)
+          </button>
+          <button type="submit" class="btn btn-primary" id="btnSubmit" style="width: auto; padding: 0.6rem 2.25rem; font-weight: 700;">
+            💾 保存する
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // 🛏️ サーバーから渡されたベッドマスタおよび全患者データ
+    const BED_MASTER_DATA = <%- JSON.stringify(typeof bedMaster !== 'undefined' ? bedMaster : {}) %>;
+    const ALL_PATIENTS = <%- JSON.stringify(patients) %>;
+    let currentEditingPatientId = null;
+
+    // 病棟名表記の正規化・マスタキー照合
+    function getMasterWardKey(wardStr) {
+      if (!wardStr || wardStr === '外来') return null;
+      for (const key of Object.keys(BED_MASTER_DATA)) {
+        if (wardStr === key || wardStr.includes(key) || key.includes(wardStr)) {
+          return key;
+        }
+      }
+      return null;
+    }
+
+    // 空床の算出 (自患者は占有から除外)
+    function getAvailableBeds(wardKey, excludePatientId) {
+      const wardData = BED_MASTER_DATA[wardKey];
+      if (!wardData || !wardData.rooms) return [];
+
+      const occupiedBeds = new Set();
+      ALL_PATIENTS.forEach(p => {
+        if (excludePatientId && p.patientId === excludePatientId) return;
+        const pWardKey = getMasterWardKey(p.ward);
+        if (pWardKey === wardKey && p.room) {
+          occupiedBeds.add(p.room.trim());
+        }
+      });
+
+      const availableRooms = [];
+      wardData.rooms.forEach(r => {
+        const emptyBedsInRoom = [];
+        (r.beds || []).forEach(b => {
+          if (!occupiedBeds.has(b)) {
+            emptyBedsInRoom.push(b);
+          }
+        });
+        if (emptyBedsInRoom.length > 0) {
+          availableRooms.push({
+            roomNo: r.roomNo,
+            type: r.type,
+            beds: emptyBedsInRoom
+          });
+        }
+      });
+      return availableRooms;
+    }
+
+    // 病棟選択変更時の空床リスト動的生成 & バッジ更新
+    function onWardChange(preferredRoom) {
+      const wardVal = document.getElementById('ward').value;
+      const roomSelect = document.getElementById('roomSelect');
+      const roomInput = document.getElementById('room');
+      const roomDatalist = document.getElementById('roomDatalist');
+      const badge = document.getElementById('emptyBedCountBadge');
+
+      const wardKey = getMasterWardKey(wardVal);
+
+      roomSelect.innerHTML = '<option value="">-- 空床から選択 --</option>';
+      roomDatalist.innerHTML = '';
+
+      if (!wardKey) {
+        badge.style.display = 'none';
+        if (wardVal === '外来') {
+          roomSelect.disabled = true;
+          roomInput.placeholder = '外来 (病室割当なし)';
+          if (preferredRoom === undefined) roomInput.value = '';
+        } else {
+          roomSelect.disabled = false;
+          roomInput.placeholder = '部屋・ベッド番号を入力';
+        }
+        return;
+      }
+
+      roomSelect.disabled = false;
+      roomInput.placeholder = '部屋・ベッド (絞込/直接入力)';
+
+      const availableRooms = getAvailableBeds(wardKey, currentEditingPatientId);
+      let totalEmptyBeds = 0;
+
+      // 編集中の患者が現在この病棟に設定済みのベッドがあれば「現在のベッド」として選択肢に追加
+      if (currentEditingPatientId) {
+        const editingP = ALL_PATIENTS.find(p => p.patientId === currentEditingPatientId);
+        if (editingP && getMasterWardKey(editingP.ward) === wardKey && editingP.room) {
+          const currentBed = editingP.room;
+          const opt = document.createElement('option');
+          opt.value = currentBed;
+          opt.textContent = `⭐ 現在のベッド: ${currentBed}`;
+          roomSelect.appendChild(opt);
+        }
+      }
+
+      availableRooms.forEach(r => {
+        const optGroup = document.createElement('optgroup');
+        optGroup.label = `${r.roomNo}号室 (${r.type})`;
+
+        r.beds.forEach(bed => {
+          totalEmptyBeds++;
+          // ドロップダウン用 option
+          const opt = document.createElement('option');
+          opt.value = bed;
+          opt.textContent = `${bed} (${r.type})`;
+          optGroup.appendChild(opt);
+
+          // datalist 用 option (インクリメンタル検索用)
+          const dlOpt = document.createElement('option');
+          dlOpt.value = bed;
+          dlOpt.textContent = `${r.roomNo}号室 ${r.type}`;
+          roomDatalist.appendChild(dlOpt);
+        });
+
+        roomSelect.appendChild(optGroup);
+      });
+
+      // 空床バッジの更新
+      badge.style.display = 'inline-block';
+      if (totalEmptyBeds > 0) {
+        badge.textContent = `✨ 空床: ${totalEmptyBeds}床`;
+        badge.style.background = '#ccfbf1';
+        badge.style.color = '#0f766e';
+      } else {
+        badge.textContent = `⚠️ 満床 (0床)`;
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#b91c1c';
+      }
+
+      // 値の復元・同期
+      const targetRoom = preferredRoom !== undefined ? preferredRoom : roomInput.value;
+      if (targetRoom) {
+        roomInput.value = targetRoom;
+        let matched = false;
+        for (let i = 0; i < roomSelect.options.length; i++) {
+          if (roomSelect.options[i].value === targetRoom) {
+            roomSelect.selectedIndex = i;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          roomSelect.value = '';
+        }
+      } else {
+        roomSelect.value = '';
+      }
+    }
+
+    // 空床ドロップダウン選択時の処理
+    function onRoomSelectChange(sel) {
+      const roomInput = document.getElementById('room');
+      if (sel.value) {
+        roomInput.value = sel.value;
+      }
+    }
+
+    // インクリメンタル入力欄変更時のドロップダウン同期
+    function onRoomInputChange(inp) {
+      const roomSelect = document.getElementById('roomSelect');
+      const val = inp.value.trim();
+      let matched = false;
+      for (let i = 0; i < roomSelect.options.length; i++) {
+        if (roomSelect.options[i].value && roomSelect.options[i].value.toLowerCase() === val.toLowerCase()) {
+          roomSelect.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        roomSelect.value = '';
+      }
+    }
+
+    function openPatientModal() {
+      currentEditingPatientId = null;
+      document.getElementById('modalTitle').innerText = '🏥 新規患者登録';
+      document.getElementById('patientForm').action = '/patients/create';
+      document.getElementById('btnSubmitTop').innerText = '💾 登録する';
+      document.getElementById('btnSubmit').innerText = '💾 登録する';
+      document.getElementById('patientForm').reset();
+      document.getElementById('patientId').readOnly = false;
+      document.getElementById('age').value = '';
+      document.getElementById('postalCode').value = '';
+      document.getElementById('address').value = '';
+      document.getElementById('phoneNumber').value = '';
+      document.getElementById('keyPersonName').value = '';
+      document.getElementById('keyPersonPhone').value = '';
+      document.getElementById('keyPersonRelation').value = '';
+      document.getElementById('keyPersonNotes').value = '';
+      document.getElementById('memo').value = '';
+      document.getElementById('ward').value = '外来';
+      document.getElementById('room').value = '';
+      onWardChange();
+      document.getElementById('patientModal').style.display = 'block';
+    }
+
+    function closePatientModal() {
+      document.getElementById('patientModal').style.display = 'none';
+    }
+
+    function editPatient(patient) {
+      currentEditingPatientId = patient.patientId;
+      document.getElementById('modalTitle').innerText = '✏️ 患者情報編集 [' + patient.name + ']';
+      document.getElementById('patientForm').action = '/patients/update/' + patient._id;
+      document.getElementById('btnSubmitTop').innerText = '💾 更新する';
+      document.getElementById('btnSubmit').innerText = '💾 更新する';
+
+      document.getElementById('patientId').value = patient.patientId || '';
+      document.getElementById('patientId').readOnly = true;
+      document.getElementById('name').value = patient.name || '';
+      document.getElementById('kana').value = patient.kana || '';
+      document.getElementById('birthDate').value = patient.birthDate || '';
+      
+      // 年齢の反映（生年月日があれば再計算、なければ保存値）
+      calculateAge();
+      if (!document.getElementById('age').value && patient.age !== null && patient.age !== undefined) {
+        document.getElementById('age').value = patient.age;
+      }
+
+      document.getElementById('gender').value = patient.gender || '男';
+      document.getElementById('postalCode').value = patient.postalCode || '';
+      document.getElementById('address').value = patient.address || '';
+      document.getElementById('phoneNumber').value = patient.phoneNumber || '';
+      document.getElementById('keyPersonName').value = patient.keyPersonName || '';
+      document.getElementById('keyPersonPhone').value = patient.keyPersonPhone || '';
+      document.getElementById('keyPersonRelation').value = patient.keyPersonRelation || '';
+      document.getElementById('keyPersonNotes').value = patient.keyPersonNotes || '';
+
+      document.getElementById('ward').value = patient.ward || '外来';
+      document.getElementById('room').value = patient.room || '';
+      onWardChange(patient.room || '');
+
+      document.getElementById('department').value = patient.department || '内科';
+      document.getElementById('bloodType').value = patient.bloodType || '不明';
+      document.getElementById('infection').value = patient.infection || '無';
+      document.getElementById('mobility').value = patient.mobility || '徒歩';
+      document.getElementById('height').value = patient.height !== null ? patient.height : '';
+      document.getElementById('weight').value = patient.weight !== null ? patient.weight : '';
+      document.getElementById('allergies').value = patient.allergies || 'なし';
+      document.getElementById('notes').value = patient.notes || '';
+      document.getElementById('memo').value = patient.memo || '';
+
+      document.getElementById('patientModal').style.display = 'block';
+    }
+
+    // 生年月日から年齢を自動計算
+    function calculateAge() {
+      const bDate = document.getElementById('birthDate').value;
+      const ageInput = document.getElementById('age');
+      if (!bDate) {
+        ageInput.value = '';
+        return;
+      }
+      const birth = new Date(bDate);
+      if (isNaN(birth.getTime())) {
+        ageInput.value = '';
+        return;
+      }
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        calculatedAge--;
+      }
+      if (calculatedAge >= 0 && calculatedAge < 130) {
+        ageInput.value = calculatedAge;
+      } else {
+        ageInput.value = '';
+      }
+    }
+
+    function filterTable() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const ward = document.getElementById('wardFilter').value;
+      const dept = document.getElementById('deptFilter').value;
+      const rows = document.querySelectorAll('#patientsTable tbody tr');
+
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        const rWard = r.getAttribute('data-ward') || '';
+        const rDept = r.getAttribute('data-dept') || '';
+
+        const matchQ = text.includes(q);
+        const matchWard = !ward || rWard.includes(ward);
+        const matchDept = !dept || rDept.includes(dept);
+
+        if (matchQ && matchWard && matchDept) {
+          r.style.display = '';
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+
+    function resetFilter() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('wardFilter').value = '';
+      document.getElementById('deptFilter').value = '';
+      filterTable();
+    }
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('patientModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const modal = document.getElementById('patientModal');
+        if (modal && modal.style.display !== 'none') {
+          closePatientModal();
+        }
+      }
+    });
+
+    function selectPatientForRibbon(patient) {
+      const patientData = {
+        patientId: patient.patientId,
+        name: patient.name,
+        dob: patient.birthDate || '',
+        age: patient.age !== null ? patient.age : '',
+        ward: patient.ward || ''
+      };
+      localStorage.setItem('koyukai_current_patient', JSON.stringify(patientData));
+      if (typeof applyRibbonPatient === 'function') {
+        applyRibbonPatient(patientData);
+      }
+    }
+  </script>
+</body>
+</html>

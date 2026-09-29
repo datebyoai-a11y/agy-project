@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>職員一覧 - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .matrix-table, .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--slate-200);
+      margin-bottom: 1.5rem;
+    }
+    .matrix-table th, .matrix-table td,
+    .user-table th, .user-table td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--slate-200);
+      font-size: 0.85rem;
+    }
+    .matrix-table th, .user-table th {
+      background: var(--slate-100);
+      font-weight: 700;
+      color: var(--slate-700);
+      white-space: nowrap;
+    }
+    .matrix-table td.center {
+      text-align: center;
+      font-size: 1.1rem;
+    }
+    .matrix-table tr:hover, .user-table tr:hover {
+      background: var(--slate-50);
+    }
+
+    /* 権限トグルボタン */
+    .btn-perm-toggle {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-perm-toggle:hover {
+      background: var(--slate-200);
+      transform: scale(1.15);
+    }
+    .btn-perm-toggle.granted { color: #10b981; }
+    .btn-perm-toggle.locked { color: #94a3b8; }
+
+    /* グレーアウトボタン */
+    .btn-disabled {
+      background: #cbd5e1 !important;
+      color: #64748b !important;
+      border: 1px solid #94a3b8 !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+      opacity: 0.65 !important;
+      transform: none !important;
+    }
+
+    .badge-menu {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin: 0.1rem;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .badge-menu.emr { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+    .badge-menu.patient_management { background: #cffafe; color: #0e7490; border-color: #a5f3fc; }
+    .badge-menu.bed_board { background: #ccfbf1; color: #0f766e; border-color: #99f6e4; }
+    .badge-menu.order_sender { background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; }
+    .badge-menu.order_receiver { background: #ccfbf1; color: #0f766e; border-color: #99f6e4; }
+    .badge-menu.incident_report { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .badge-menu.safety_analytics { background: #fae8ff; color: #86198f; border-color: #f5d0fe; }
+    .badge-menu.user_management { background: #ffe4e6; color: #be123c; border-color: #fecdd3; }
+    .badge-menu.system_status { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+      background: var(--slate-50);
+      padding: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--slate-200);
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '職員一覧' }) %>
+
+  <header class="navbar">
+    <a href="/menu" class="nav-brand">
+      <div class="brand-icon">👥</div>
+      <div class="brand-text">
+        <h1>交雄会だて病院 医療統合ポータル</h1>
+        <p>職員一覧 & 職種ー権限管理マスタ</p>
+      </div>
+    </a>
+    <div class="nav-user">
+      <a href="/menu" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem;">
+        🏠 メニューへ戻る
+      </a>
+      <a href="/logout" class="btn-logout">
+        🚪 ログアウト
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h2 class="page-title">👥 職員一覧 (<%= users.length %> 名)</h2>
+        <p class="page-subtitle">
+          当院所属の職員アカウント一覧です。権限のある管理者は「職種ー権限管理」ボタンから職種ごとの権限雛形マトリクスを設定できます。
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+          <button type="button" onclick="openRoleMatrixModal()" class="btn btn-outline" style="width: auto; padding: 0.6rem 1.25rem; font-weight: 700; border-color: #0284c7; color: #0284c7;" title="職種ごとの標準利用権限マトリクスを開いて設定">
+            ⚙️ 職種ー権限管理
+          </button>
+          <button type="button" onclick="openNewUserModal()" class="btn btn-primary" style="width: auto; padding: 0.6rem 1.25rem;">
+            ＋ 新規職員アカウント登録
+          </button>
+        <% } else { %>
+          <button type="button" class="btn btn-disabled" disabled style="width: auto; padding: 0.6rem 1.25rem;" title="🔒 職種ー権限管理を開くには管理者権限が必要です">
+            🔒 職種ー権限管理
+          </button>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        ✅ <%= success %>
+      </div>
+    <% } %>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        ⚠️ <%= error %>
+      </div>
+    <% } %>
+
+    <!-- 🔍 職員絞り込みバー -->
+    <div style="background: white; border-radius: 12px; padding: 0.85rem 1.25rem; border: 1px solid var(--slate-200); margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: center; box-shadow: var(--shadow-sm); flex-wrap: wrap;">
+      <span>🔍 絞り込み:</span>
+      <input type="text" id="userSearchInput" onkeyup="filterUserTable()" placeholder="氏名・ログインID検索..." class="form-input" style="flex: 1; min-width: 180px; padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+      <select id="userDeptFilter" onchange="filterUserTable()" class="form-input" style="width: auto; padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+        <option value="">すべての職種</option>
+        <option value="医師">医師</option>
+        <option value="看護師">看護師</option>
+        <option value="放射線技師">放射線技師</option>
+        <option value="リハビリ">リハビリ</option>
+        <option value="薬剤師">薬剤師</option>
+        <option value="管理栄養士">管理栄養士</option>
+        <option value="一般">事務・医事課</option>
+        <option value="医療安全管理室">医療安全管理室</option>
+      </select>
+    </div>
+
+    <!-- 👥 職員一覧テーブル -->
+    <table class="user-table" id="usersTable">
+      <thead>
+        <tr>
+          <th>ログインID</th>
+          <th>職員氏名</th>
+          <th>所属職種</th>
+          <th>権限ロール</th>
+          <th>利用許可メニュー</th>
+          <th>登録日</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+          <tr data-dept="<%= u.department %>">
+            <td>
+              <strong><%= u.loginId %></strong>
+              <% if (!u.password || u.isPasswordReset) { %>
+                <div>
+                  <span style="font-size: 0.68rem; color: #b45309; background: #fef3c7; border: 1px solid #fde68a; padding: 0.1rem 0.35rem; border-radius: 4px; display: inline-block; margin-top: 0.15rem; font-weight: bold;">
+                    ⚠️ パスワード未設定(初期化済)
+                  </span>
+                </div>
+              <% } %>
+            </td>
+            <td><%= u.userName %></td>
+            <td>
+              <% 
+                let deptClass = 'admin';
+                if (u.department === '医師') deptClass = 'doctor';
+                else if (u.department === '看護師') deptClass = 'nurse';
+                else if (u.department === '放射線技師') deptClass = 'radiology';
+                else if (u.department === 'リハビリ') deptClass = 'rehab';
+                else if (u.department === '薬剤師') deptClass = 'pharmacy';
+              %>
+              <span class="dept-pill <%= deptClass %>"><%= u.department %></span>
+            </td>
+            <td>
+              <span class="role-tag <%= u.role %>">
+                <%= u.role === 'admin' ? '👑 管理者' : '一般ユーザー' %>
+              </span>
+            </td>
+            <td>
+              <% if (u.role === 'admin') { %>
+                <span class="badge-menu safety_analytics">👑 全システム利用可能 (管理者)</span>
+              <% } else { 
+                const effectiveMenus = (u.allowedMenus && u.allowedMenus.length > 0) 
+                  ? u.allowedMenus 
+                  : (roleTemplates[u.department] ? roleTemplates[u.department].menus : ['incident_report']);
+                effectiveMenus.forEach(mId => {
+                  const mObj = menus.find(m => m.id === mId);
+              %>
+                <span class="badge-menu <%= mId %>"><%= mObj ? mObj.shortName : mId %></span>
+              <% }); } %>
+            </td>
+            <td style="color: var(--slate-500); font-size: 0.85rem;">
+              <%= u.createdAt ? new Date(u.createdAt).toLocaleDateString('ja-JP') : '-' %>
+            </td>
+            <td style="white-space: nowrap;">
+              <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <button onclick='openEditUserModal(<%= JSON.stringify(u) %>)' class="btn btn-outline" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                  ✏️ 編集
+                </button>
+                
+                <form action="/admin/users/reset-password/<%= u._id %>" method="POST" style="display: inline;" onsubmit="return confirm('職員 [<%= u.userName %> (<%= u.loginId %>)] のパスワードを消去して初期化しますか？\n\n初期化後、本人はログイン画面の「パスワード変更」から新しいパスワードを直接設定できるようになります。');">
+                  <button type="submit" class="btn btn-outline" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #b45309; border-color: #f59e0b;" title="パスワードを消去して初期化">
+                    🔑 初期化
+                  </button>
+                </form>
+
+                <% if (u.loginId !== 'admin' && u._id.toString() !== user._id.toString()) { %>
+                  <form action="/admin/users/delete/<%= u._id %>" method="POST" style="display: inline;" onsubmit="return confirm('職員 [<%= u.userName %> (<%= u.loginId %>)] を削除してもよろしいですか？');">
+                    <button type="submit" class="btn btn-logout" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                      🗑️ 削除
+                    </button>
+                  </form>
+                <% } %>
+              <% } else { %>
+                <span style="color: var(--slate-400); font-size: 0.75rem;">閲覧のみ</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+
+    <!-- ⚙️ 職種ー権限管理モーダル（ボタンから開く） -->
+    <div id="roleMatrixModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; padding: 1.5rem; overflow-y: auto;">
+      <div style="background: white; max-width: 1050px; margin: 1.5rem auto; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <h3 style="font-size: 1.35rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <span>📋 職種ー権限管理（権限雛形マトリクス）</span>
+          </h3>
+          <button type="button" onclick="closeRoleMatrixModal()" style="background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--slate-400);">&times;</button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 1.5rem;">
+          職種ごとの標準利用権限マトリクスです。<strong>アイコンをクリックすると、ADMINが直接「権限付与(✅)」と「権限削除(🔒)」を即時切り替えられます。</strong>
+        </p>
+
+        <div style="overflow-x: auto;">
+          <table class="matrix-table" style="margin-bottom: 1rem;">
+            <thead>
+              <tr>
+                <th>対象職種</th>
+                <th>職務概要</th>
+                <% menus.forEach(m => { %>
+                  <th style="text-align: center;">
+                    <%= m.shortName %><br>
+                    <% if (m.port) { %>
+                      <small style="font-weight: normal; color: var(--slate-500);">Port <%= m.port %></small>
+                    <% } %>
+                  </th>
+                <% }); %>
+                <th>標準Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% 
+                const roleKeys = ['医師', '看護師', '放射線技師', 'リハビリ', '薬剤師', '管理栄養士', '一般', '医療安全管理室'];
+                roleKeys.forEach(key => {
+                  const tmpl = roleTemplates[key];
+                  if (tmpl) {
+              %>
+                <tr>
+                  <td>
+                    <strong><%= tmpl.name %></strong>
+                  </td>
+                  <td style="color: var(--slate-600); font-size: 0.78rem;">
+                    <%= tmpl.description %>
+                  </td>
+
+                  <% menus.forEach(m => { 
+                      const hasMenu = tmpl.menus.includes(m.id);
+                  %>
+                    <td class="center">
+                      <button 
+                        class="btn-perm-toggle <%= hasMenu ? 'granted' : 'locked' %>"
+                        onclick="togglePermission('<%= key %>', '<%= m.id %>', this)"
+                        title="<%= tmpl.name %> に対する <%= m.shortName %> の権限を切り替え"
+                      >
+                        <%= hasMenu ? '✅' : '🔒' %>
+                      </button>
+                    </td>
+                  <% }); %>
+
+                  <td>
+                    <span class="role-tag <%= tmpl.defaultRole %>">
+                      <%= tmpl.defaultRole === 'admin' ? '管理者' : '一般' %>
+                    </span>
+                  </td>
+                </tr>
+              <% 
+                  }
+                }); 
+              %>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+          <button type="button" onclick="closeRoleMatrixModal()" class="btn btn-outline" style="width: auto; padding: 0.5rem 1.25rem;">
+            閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🌟 3. 新規職員登録モーダル（職種選択で雛形自動連動） -->
+    <div id="newUserModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; padding: 2rem; overflow-y: auto;">
+      <div style="background: white; max-width: 540px; margin: 2rem auto; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
+        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>👤 新規職員アカウント登録</span>
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 1.5rem;">
+          職種を選択すると、対応する「権限雛形」が自動的にメニューに反映されます。
+        </p>
+
+        <form action="/admin/users/create" method="POST">
+          <div class="form-group">
+            <label class="form-label">ログインID（半角英数） *</label>
+            <input type="text" name="loginId" class="form-input" required placeholder="例: dr_yamada, nurse_sato">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">職員氏名 *</label>
+            <input type="text" name="userName" class="form-input" required placeholder="例: 山田 太郎">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">初期パスワード *</label>
+            <input type="password" name="password" class="form-input" required placeholder="パスワードを入力">
+          </div>
+
+          <!-- 職種選択（雛形トリガー） -->
+          <div class="form-group">
+            <label class="form-label">所属職種（雛形テンプレート） *</label>
+            <select id="departmentSelect" name="department" class="form-input" onchange="applyTemplate()" required>
+              <option value="医師">🩺 医師 (カルテ・患者・処方・指示・進捗確認)</option>
+              <option value="看護師" selected>👩‍⚕️ 看護師 (カルテ・患者・病棟指示・受取・報告)</option>
+              <option value="放射線技師">☢️ 放射線技師 (検査モニター・カルテ閲覧・患者)</option>
+              <option value="リハビリ">🏃 リハビリ職 (指示受取・実施・カルテ閲覧・患者)</option>
+              <option value="薬剤師">💊 薬剤師 (調剤鑑査モニター・報告・患者)</option>
+              <option value="管理栄養士">🥗 管理栄養士 (配膳管理モニター・報告・患者)</option>
+              <option value="一般">💼 事務・医事課 (患者情報登録管理・報告)</option>
+              <option value="医療安全管理室">👑 医療安全管理室 / 管理者 (全館フル権限)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">権限ロール</label>
+            <select id="roleSelect" name="role" class="form-input" required>
+              <option value="user" selected>一般ユーザー (user)</option>
+              <option value="admin">管理者 (admin - 全システム利用可能)</option>
+            </select>
+          </div>
+
+          <!-- 権限メニュー個別チェックボックス（雛形連動） -->
+          <div class="form-group">
+            <label class="form-label">
+              利用可能メニュー
+              <small style="color: var(--primary); font-weight: normal;">（職種雛形に応じて自動選択されます。個別調整も可能）</small>
+            </label>
+
+            <div class="checkbox-grid">
+              <% menus.forEach(m => { %>
+                <label class="checkbox-item">
+                  <input type="checkbox" name="allowedMenus" value="<%= m.id %>" id="chk_<%= m.id %>">
+                  <span><%= m.icon %> <%= m.shortName %></span>
+                </label>
+              <% }); %>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 1.75rem;">
+            <button type="submit" class="btn btn-primary">
+              💾 職員を登録する
+            </button>
+            <button type="button" onclick="closeNewUserModal()" class="btn btn-outline">
+              キャンセル
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 🌟 4. 職員情報・権限編集モーダル -->
+    <div id="editUserModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; padding: 2rem; overflow-y: auto;">
+      <div style="background: white; max-width: 540px; margin: 2rem auto; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg);">
+        <h3 id="editModalTitle" style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;">✏️ 職員情報・権限編集</h3>
+        <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 1.5rem;">
+          職員の所属職種や利用可能メニュー権限を変更・保存します。
+        </p>
+
+        <form id="editUserForm" action="" method="POST">
+          <div class="form-group">
+            <label class="form-label">ログインID</label>
+            <input type="text" id="editLoginId" class="form-input" readonly style="background: var(--slate-100);">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">職員氏名 *</label>
+            <input type="text" id="editUserName" name="userName" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">新しいパスワード (変更する場合のみ入力)</label>
+            <input type="password" name="password" class="form-input" placeholder="変更しない場合は空欄">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">所属職種 *</label>
+            <select id="editDepartmentSelect" name="department" class="form-input" required>
+              <option value="医師">医師</option>
+              <option value="看護師">看護師</option>
+              <option value="放射線技師">放射線技師</option>
+              <option value="リハビリ">リハビリ</option>
+              <option value="薬剤師">薬剤師</option>
+              <option value="管理栄養士">管理栄養士</option>
+              <option value="一般">一般・事務</option>
+              <option value="医療安全管理室">医療安全管理室</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">権限ロール</label>
+            <select id="editRoleSelect" name="role" class="form-input" required>
+              <option value="user">一般ユーザー (user)</option>
+              <option value="admin">管理者 (admin)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">利用可能メニュー個別設定</label>
+            <div class="checkbox-grid">
+              <% menus.forEach(m => { %>
+                <label class="checkbox-item">
+                  <input type="checkbox" name="allowedMenus" value="<%= m.id %>" id="edit_chk_<%= m.id %>">
+                  <span><%= m.icon %> <%= m.shortName %></span>
+                </label>
+              <% }); %>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; margin-top: 1.75rem;">
+            <button type="submit" class="btn btn-primary">
+              💾 変更を保存する
+            </button>
+            <button type="button" onclick="closeEditUserModal()" class="btn btn-outline">
+              キャンセル
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const TEMPLATES = <%- JSON.stringify(roleTemplates) %>;
+
+    // 🌟 マトリクス上の権限トグル（クリックで付与・削除）
+    async function togglePermission(roleKey, menuId, btn) {
+      try {
+        const res = await fetch('/admin/templates/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roleKey, menuId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const hasMenu = data.menus.includes(menuId);
+          btn.innerHTML = hasMenu ? '✅' : '🔒';
+          btn.className = 'btn-perm-toggle ' + (hasMenu ? 'granted' : 'locked');
+          // ローカルテンプレートも更新
+          if (TEMPLATES[roleKey]) {
+            TEMPLATES[roleKey].menus = data.menus;
+          }
+        }
+      } catch (err) {
+        alert('権限の更新に失敗しました: ' + err.message);
+      }
+    }
+
+    function openNewUserModal() {
+      document.getElementById('newUserModal').style.display = 'block';
+      applyTemplate();
+    }
+
+    function closeNewUserModal() {
+      document.getElementById('newUserModal').style.display = 'none';
+    }
+
+    function applyTemplate() {
+      const dept = document.getElementById('departmentSelect').value;
+      const tmpl = TEMPLATES[dept];
+      if (!tmpl) return;
+
+      document.getElementById('roleSelect').value = tmpl.defaultRole;
+
+      const allCheckboxes = document.querySelectorAll('#newUserModal input[name="allowedMenus"]');
+      allCheckboxes.forEach(cb => {
+        cb.checked = tmpl.menus.includes(cb.value);
+      });
+    }
+
+    function openEditUserModal(user) {
+      document.getElementById('editModalTitle').innerText = '✏️ 職員情報・権限編集 [' + user.userName + ']';
+      document.getElementById('editUserForm').action = '/admin/users/update/' + user._id;
+      document.getElementById('editLoginId').value = user.loginId;
+      document.getElementById('editUserName').value = user.userName;
+      document.getElementById('editDepartmentSelect').value = user.department || '一般';
+      document.getElementById('editRoleSelect').value = user.role || 'user';
+
+      // 許可メニューチェックボックスの反映
+      const userMenus = (user.allowedMenus && user.allowedMenus.length > 0) 
+        ? user.allowedMenus 
+        : (TEMPLATES[user.department] ? TEMPLATES[user.department].menus : ['incident_report']);
+
+      const allCheckboxes = document.querySelectorAll('#editUserModal input[name="allowedMenus"]');
+      allCheckboxes.forEach(cb => {
+        cb.checked = userMenus.includes(cb.value);
+      });
+
+      document.getElementById('editUserModal').style.display = 'block';
+    }
+
+    function closeEditUserModal() {
+      document.getElementById('editUserModal').style.display = 'none';
+    }
+
+    function openRoleMatrixModal() {
+      document.getElementById('roleMatrixModal').style.display = 'block';
+    }
+
+    function closeRoleMatrixModal() {
+      document.getElementById('roleMatrixModal').style.display = 'none';
+    }
+
+    function filterUserTable() {
+      const q = (document.getElementById('userSearchInput').value || '').toLowerCase();
+      const dept = document.getElementById('userDeptFilter').value;
+      const rows = document.querySelectorAll('#usersTable tbody tr');
+
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        const rDept = r.getAttribute('data-dept') || '';
+        const matchQ = text.includes(q);
+        const matchDept = !dept || rDept === dept;
+
+        if (matchQ && matchDept) {
+          r.style.display = '';
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+
+    window.onclick = function(event) {
+      const matrixModal = document.getElementById('roleMatrixModal');
+      const newModal = document.getElementById('newUserModal');
+      const editModal = document.getElementById('editUserModal');
+      if (event.target === matrixModal) matrixModal.style.display = 'none';
+      if (event.target === newModal) newModal.style.display = 'none';
+      if (event.target === editModal) editModal.style.display = 'none';
+    };
+  </script>
+</body>
+</html>

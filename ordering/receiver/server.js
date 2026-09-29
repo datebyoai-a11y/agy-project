@@ -212,11 +212,18 @@ app.post('/api/orders/receive', (req, res) => {
     const now = new Date();
 
     const orderId = data.orderId || generateOrderId(data.orderType || 'ORD');
+    const rawDetails = data.details || {};
+    const scheduledAtVal = rawDetails.scheduledAt || data.scheduledAt || rawDetails.startDate || data.orderDate || now.toISOString();
+    const finalDetails = {
+      ...rawDetails,
+      scheduledAt: scheduledAtVal
+    };
+
     const orderRecord = {
       orderId,
       orderType: data.orderType || 'GENERAL',
       title: data.title || `${data.orderType || '一般'}オーダー`,
-      priority: data.priority || 'ROUTINE',
+      priority: data.priority || rawDetails.priority || 'ROUTINE',
       patient: data.patient || {
         id: data.targetCustomId || 'UNKNOWN',
         name: data.targetName || '未指定患者',
@@ -226,8 +233,8 @@ app.post('/api/orders/receive', (req, res) => {
         name: data.senderUser || '送信元医師',
         department: data.senderDept || '診療科'
       },
-      details: data.details || {},
-      orderDate: data.orderDate || data.details?.orderDate || data.createdAt || now.toISOString(),
+      details: finalDetails,
+      orderDate: data.orderDate || rawDetails.orderDate || data.createdAt || now.toISOString(),
       createdAt: data.createdAt || now.toISOString(),
       status: 'RECEIVED',
       senderHost: data.senderHost || req.headers['host'] || req.ip,
@@ -245,7 +252,7 @@ app.post('/api/orders/receive', (req, res) => {
     receivedOrders.unshift(orderRecord);
     saveOrders(receivedOrders);
 
-    console.log(`\n📥 [Receiver] 新着オーダー受信: [${orderRecord.orderId}] ${orderRecord.title} (患者: ${orderRecord.patient.name})`);
+    console.log(`\n📥 [Receiver] 新着オーダー受信: [${orderRecord.orderId}] ${orderRecord.title} (患者: ${orderRecord.patient.name}) 優先度: ${orderRecord.priority}, 実施予定: ${orderRecord.details.scheduledAt}`);
 
     res.status(201).json({
       success: true,
@@ -263,7 +270,7 @@ app.post('/api/orders/receive', (req, res) => {
 // 5. incident-system互換: 点滴オーダー受信 (POST /api/iv-orders/receive)
 app.post('/api/iv-orders/receive', (req, res) => {
   try {
-    const { orderId, targetCustomId, targetName, targetDepartment, scheduledAt, medicine, dose, rate, route, remarks, senderHost, senderUser } = req.body;
+    const { orderId, targetCustomId, targetName, targetDepartment, scheduledAt, medicine, dose, rate, route, remarks, senderHost, senderUser, priority } = req.body;
     const now = new Date();
     const finalOrderId = orderId || generateOrderId('IV');
 
@@ -271,7 +278,7 @@ app.post('/api/iv-orders/receive', (req, res) => {
       orderId: finalOrderId,
       orderType: 'IV',
       title: `💉 点滴指示: ${medicine || '点滴輸液'} (${targetName || targetCustomId || '患者'})`,
-      priority: 'ROUTINE',
+      priority: priority || 'ROUTINE',
       patient: {
         id: targetCustomId || 'P000',
         name: targetName || '対象者',
@@ -305,7 +312,7 @@ app.post('/api/iv-orders/receive', (req, res) => {
     receivedOrders.unshift(orderRecord);
     saveOrders(receivedOrders);
 
-    console.log(`\n💉 [Receiver: 薬剤部] 点滴オーダー受信: [${orderRecord.orderId}] ${medicine} (患者: ${targetName})`);
+    console.log(`\n💉 [Receiver: 薬剤部] 点滴オーダー受信: [${orderRecord.orderId}] ${medicine} (患者: ${targetName}) 優先度: ${orderRecord.priority}`);
 
     res.status(201).json({
       success: true,
@@ -323,7 +330,7 @@ app.post('/api/iv-orders/receive', (req, res) => {
 // 6. incident-system互換: 放射線オーダー受信 (POST /api/radiology-orders/receive)
 app.post('/api/radiology-orders/receive', (req, res) => {
   try {
-    const { orderId, targetCustomId, targetName, targetDepartment, scheduledAt, examType, modality, contrast, portable, purpose, remarks, senderHost, senderUser } = req.body;
+    const { orderId, targetCustomId, targetName, targetDepartment, scheduledAt, examType, modality, contrast, portable, purpose, remarks, senderHost, senderUser, priority } = req.body;
     const now = new Date();
     const finalOrderId = orderId || generateOrderId('RAD');
 
@@ -331,7 +338,7 @@ app.post('/api/radiology-orders/receive', (req, res) => {
       orderId: finalOrderId,
       orderType: 'RADIOLOGY',
       title: `🩻 放射線科検査指示: ${examType || 'X線撮影'} (${targetName || targetCustomId || '患者'})`,
-      priority: 'ROUTINE',
+      priority: priority || 'ROUTINE',
       patient: {
         id: targetCustomId || 'P000',
         name: targetName || '対象者',
@@ -366,7 +373,7 @@ app.post('/api/radiology-orders/receive', (req, res) => {
     receivedOrders.unshift(orderRecord);
     saveOrders(receivedOrders);
 
-    console.log(`\n🩻 [Receiver: 放射線科] 検査オーダー受信: [${orderRecord.orderId}] ${examType} (患者: ${targetName})`);
+    console.log(`\n🩻 [Receiver: 放射線科] 検査オーダー受信: [${orderRecord.orderId}] ${examType} (患者: ${targetName}) 優先度: ${orderRecord.priority}`);
 
     res.status(201).json({
       success: true,
@@ -384,7 +391,7 @@ app.post('/api/radiology-orders/receive', (req, res) => {
 // 7. incident-system互換: 食事オーダー受信 (POST /api/meal-orders/receive)
 app.post('/api/meal-orders/receive', (req, res) => {
   try {
-    const { orderId, targetCustomId, targetName, targetDepartment, scheduledAt, mealType, timing, stapleFood, sideDish, allergies, remarks, senderHost, senderUser } = req.body;
+    const { orderId, targetCustomId, targetName, targetDepartment, scheduledAt, mealType, timing, stapleFood, sideDish, allergies, remarks, senderHost, senderUser, priority } = req.body;
     const now = new Date();
     const finalOrderId = orderId || generateOrderId('MEAL');
 
@@ -392,7 +399,7 @@ app.post('/api/meal-orders/receive', (req, res) => {
       orderId: finalOrderId,
       orderType: 'MEAL',
       title: `🍱 食事指示: ${mealType || '常食'} (${targetName || targetCustomId || '患者'})`,
-      priority: 'ROUTINE',
+      priority: priority || 'ROUTINE',
       patient: {
         id: targetCustomId || 'P000',
         name: targetName || '対象者',
@@ -444,7 +451,7 @@ app.post('/api/meal-orders/receive', (req, res) => {
 
 // 8. 部門実施確認・ステータス更新 API (POST /api/orders/:id/status)
 app.post('/api/orders/:id/status', (req, res) => {
-  const { status, actor, note } = req.body;
+  const { status, actor, note, terminal } = req.body;
   const order = receivedOrders.find(o => o.orderId === req.params.id);
   if (!order) {
     return res.status(404).json({ success: false, error: 'オーダーが見つかりません' });
@@ -453,22 +460,38 @@ app.post('/api/orders/:id/status', (req, res) => {
   const now = new Date();
   order.status = status;
   order.executionHistory = order.executionHistory || [];
+
+  const termName = terminal || (actor && actor.match(/PC[\w-]+/)?.[0]) || 'PC01';
+  const effectiveActor = actor || `実施者（${termName}）`;
+  const effectiveNote = note || (status === 'COMPLETED' ? `実施完了（${termName}）` : (status === 'ACCEPTED' ? `受付済（${termName}）` : `実施（${termName}）`));
+
   order.executionHistory.push({
     status,
     timestamp: now.toISOString(),
-    actor: actor || '部門担当者',
-    note: note || ''
+    actor: effectiveActor,
+    terminal: termName,
+    note: effectiveNote
   });
 
   saveOrders(receivedOrders);
-  console.log(`\n⚙️ [Receiver] ステータス更新: [${order.orderId}] -> ${status} (${actor || '担当者'})`);
+  console.log(`\n⚙️ [Receiver] ステータス更新: [${order.orderId}] -> ${status} (${effectiveActor}: ${effectiveNote})`);
 
-  // 🔔 送信元サーバー (order.senderHost) への自動コールバック通知
+  // 🔔 送信元サーバー (order.senderHost) および電子カルテ (incident-system: Port 3000) への自動ステータス通知
+  const payload = JSON.stringify({
+    orderId: order.orderId,
+    status,
+    actor: effectiveActor,
+    terminal: termName,
+    note: effectiveNote,
+    updatedAt: now.toISOString(),
+    order
+  });
+
+  const targetsToTry = [];
+
+  // 1. 送信元ホスト (オーダリング送信側: Port 4000)
   if (order.senderHost) {
     let callbackBase = order.senderHost.replace(/\/+$/, '');
-    
-    // 互換性補正: もし https://...:4000 だった場合は http://...:4000 または https://...:4443 を試す
-    const targetsToTry = [];
     if (callbackBase.startsWith('https://') && callbackBase.endsWith(':4000')) {
       targetsToTry.push(callbackBase.replace('https://', 'http://'));
       targetsToTry.push(callbackBase.replace(':4000', ':4443'));
@@ -478,41 +501,59 @@ app.post('/api/orders/:id/status', (req, res) => {
         targetsToTry.push(callbackBase.replace('https://', 'http://'));
       }
     }
-
-    const payload = JSON.stringify({
-      orderId: order.orderId,
-      status,
-      actor: actor || '部門担当者',
-      note: note || '',
-      updatedAt: now.toISOString(),
-      order
-    });
-
-    (async () => {
-      for (const base of targetsToTry) {
-        const callbackUrl = `${base}/api/orders/${order.orderId}/status-callback`;
-        try {
-          console.log(`   📡 送信元へステータス通知中: ${callbackUrl} (${status})`);
-          const cbRes = await fetch(callbackUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload,
-            signal: AbortSignal.timeout(3000)
-          });
-          if (cbRes.ok) {
-            console.log(`   ✅ [Receiver] 送信元へのステータス通知成功: [${order.orderId}] -> ${status}`);
-            break;
-          } else {
-            console.log(`   ⚠️ [Receiver] 送信元通知 HTTP ${cbRes.status}`);
-          }
-        } catch (err) {
-          console.log(`   ℹ️ [Receiver] コールバック試行エラー (${base}): ${err.message}`);
-        }
-      }
-    })();
+  } else {
+    targetsToTry.push('http://localhost:4000');
   }
 
+  // 2. 🏥 電子カルテ（incident-system: Port 3000）への連動通知先を追加
+  const incidentSystemBase = (process.env.INCIDENT_SYSTEM_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  targetsToTry.push(incidentSystemBase);
+
+  // 重複除去
+  const uniqueHosts = [...new Set(targetsToTry)];
+
+  (async () => {
+    for (const base of uniqueHosts) {
+      const callbackUrl = `${base}/api/orders/${order.orderId}/status-callback`;
+      try {
+        console.log(`   📡 ステータス通知送信中: ${callbackUrl} (${status})`);
+        const cbRes = await fetch(callbackUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          signal: AbortSignal.timeout(3000)
+        });
+        if (cbRes.ok) {
+          console.log(`   ✅ [Receiver] ステータス通知成功: [${order.orderId}] -> ${base} (${status})`);
+        } else {
+          console.log(`   ⚠️ [Receiver] 通知応答 HTTP ${cbRes.status} (${base})`);
+        }
+      } catch (err) {
+        console.log(`   ℹ️ [Receiver] コールバック試行エラー (${base}): ${err.message}`);
+      }
+    }
+  })();
+
   res.json({ success: true, message: 'ステータスを更新しました', order });
+});
+
+// 8-A2. 電子カルテへ全オーダーステータス一括連動同期 API (POST /api/orders/sync-to-carte)
+app.post('/api/orders/sync-to-carte', async (req, res) => {
+  try {
+    const incidentSystemBase = (process.env.INCIDENT_SYSTEM_URL || 'http://localhost:3000').replace(/\/+$/, '');
+    const carteSyncUrl = `${incidentSystemBase}/api/orders/sync-from-receiver`;
+    console.log(`\n🔄 [Receiver] 電子カルテへ全オーダーステータス一括同期を要求: ${carteSyncUrl}`);
+
+    const syncRes = await fetch(carteSyncUrl, { signal: AbortSignal.timeout(6000) });
+    if (syncRes.ok) {
+      const syncData = await syncRes.json();
+      res.json({ success: true, ...syncData });
+    } else {
+      res.status(syncRes.status).json({ success: false, error: '電子カルテ一括同期エラー: HTTP ' + syncRes.status });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // 8-B. 💉 注射指示箋 編集・実施確認保存 API (POST /api/orders/:id/injection-sheet)

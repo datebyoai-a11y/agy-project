@@ -1988,12 +1988,41 @@
         </div>
       </details>
 
-      <!-- 2. だて病院 共通患者情報セクション (表示のみ・選択不可) -->
+      <!-- 2. だて病院 共通患者情報セクション -->
       <div class="patient-master-card" style="background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #0284c7; border-radius:6px; padding:0.5rem 0.75rem; display:flex; flex-direction:column; gap:0.35rem;">
-        <div class="patient-master-header" style="margin-bottom:0.15rem; padding-bottom:0.25rem; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-          <div class="patient-master-title" style="font-size:0.85rem; font-weight:bold; color:#0369a1; display:flex; align-items:center; gap:0.35rem;">
-            <span>👤 対象患者情報</span>
-            <span style="font-size:0.72rem; color:#64748b; font-weight:normal;">(引き継ぎ対象者・表示のみ / 選択不可)</span>
+        <div class="patient-master-header" style="margin-bottom:0.15rem; padding-bottom:0.35rem; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+          <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+            <div class="patient-master-title" style="font-size:0.85rem; font-weight:bold; color:#0369a1; display:flex; align-items:center; gap:0.35rem;">
+              <span>👤 対象患者選択:</span>
+            </div>
+            <!-- 患者切り替えセレクター -->
+            <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)" style="font-weight:bold; font-size:0.85rem; padding:0.2rem 0.5rem; background:#0f172a; color:#fef08a; border:1px solid #0284c7; border-radius:4px; max-width:250px; cursor:pointer;" title="指示対象の患者を選択">
+              <% patients.forEach((p, idx) => { %>
+                <option value="<%= p.id %>"
+                        <%= idx === 0 ? 'selected' : '' %>
+                        data-id="<%= p.id %>"
+                        data-name="<%= p.name %>"
+                        data-kana="<%= p.kana || '' %>"
+                        data-age="<%= p.age || '' %>"
+                        data-gender="<%= p.gender || '男' %>"
+                        data-birthdate="<%= p.birthDate || '' %>"
+                        data-era="<%= p.era || '昭' %>"
+                        data-ward="<%= p.ward || 'しおかぜ' %>"
+                        data-room="<%= p.room || '' %>"
+                        data-dept="<%= p.department || '内科' %>"
+                        data-infection="<%= p.infection || '無' %>"
+                        data-mobility="<%= p.mobility || '徒歩' %>"
+                        data-height="<%= p.height || '' %>"
+                        data-weight="<%= p.weight || '' %>"
+                        data-examcategory="<%= p.examCategory || '一般診療' %>">[<%= p.id %>] <%= p.name %></option>
+              <% }); %>
+              <option value="CUSTOM">✏️ 手動入力</option>
+            </select>
+            <% if (typeof initialPatientId !== 'undefined' && initialPatientId) { %>
+              <span style="font-size:0.72rem; color:#16a34a; background:#dcfce7; padding:0.12rem 0.45rem; border-radius:3px; font-weight:bold; border:1px solid #86efac;">
+                🔗 電子カルテ連携中
+              </span>
+            <% } %>
           </div>
           <span class="hospital-stamp-label" style="font-size:0.7rem; color:#0284c7; background:#e0f2fe; padding:0.1rem 0.4rem; border-radius:3px; font-weight:bold;">だて病院 診療録・指示票様式</span>
         </div>
@@ -2029,27 +2058,6 @@
 
         <!-- 内部保持用の隠しフォーム群 (submitOrderやJS連携用・非表示) -->
         <div style="display:none;" aria-hidden="true">
-          <select id="patientSelect" class="form-control" onchange="onPatientSelectChange(this)">
-            <% patients.forEach(p => { %>
-              <option value="<%= p.id %>"
-                      data-id="<%= p.id %>"
-                      data-name="<%= p.name %>"
-                      data-kana="<%= p.kana || '' %>"
-                      data-age="<%= p.age || '' %>"
-                      data-gender="<%= p.gender || '男' %>"
-                      data-birthdate="<%= p.birthDate || '' %>"
-                      data-era="<%= p.era || '昭' %>"
-                      data-ward="<%= p.ward || 'しおかぜ' %>"
-                      data-room="<%= p.room || '' %>"
-                      data-dept="<%= p.department || '内科' %>"
-                      data-infection="<%= p.infection || '無' %>"
-                      data-mobility="<%= p.mobility || '徒歩' %>"
-                      data-height="<%= p.height || '' %>"
-                      data-weight="<%= p.weight || '' %>"
-                      data-examcategory="<%= p.examCategory || '一般診療' %>">[<%= p.id %>] <%= p.name %></option>
-            <% }); %>
-            <option value="CUSTOM">✏️ 手動入力</option>
-          </select>
           <input type="text" id="patientIdInput" value="<%= patients[0].id %>">
           <input type="text" id="patientNameInput" value="<%= patients[0].name %>">
           <input type="text" id="patientKanaInput" value="<%= patients[0].kana || '' %>">
@@ -2435,13 +2443,9 @@
             <span class="photo-form-badge">写真6準拠 (一般撮影・ポータブル・撮影条件)</span>
           </div>
 
-          <!-- ヘッダーメタ情報: 技師・ポータブル・媒体連携 -->
+          <!-- ヘッダーメタ情報: 撮影場所(ポータブル)・媒体連携 -->
           <div class="form-row" style="background:#f0fdf4; padding:0.5rem 0.65rem; border:1px solid #bbf7d0; border-radius:6px; margin-bottom:0.6rem; align-items:center;">
             <div class="form-group" style="flex:1;">
-              <label class="form-label" for="xrayTechnician">🧑‍🔬 担当技師 (技師印):</label>
-              <input type="text" id="xrayTechnician" class="form-control" value="放射線技師" placeholder="技師名">
-            </div>
-            <div class="form-group" style="flex:1.2;">
               <label class="form-label">🛏️ 撮影場所・ポータブル:</label>
               <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.8rem;">
                 <label style="cursor:pointer; display:flex; align-items:center; gap:0.25rem; font-weight:bold;">
@@ -2455,7 +2459,7 @@
                 </div>
               </div>
             </div>
-            <div class="form-group" style="flex:1.3;">
+            <div class="form-group" style="flex:1.2;">
               <label class="form-label">💿 他院紹介用DVD作成・画像取込:</label>
               <div style="display:flex; gap:0.6rem; font-size:0.76rem;">
                 <div>
@@ -3930,7 +3934,6 @@
 
           const isPortable = document.getElementById('xrayPortableCheck').checked;
           const portableRoom = isPortable ? (document.getElementById('xrayPortableRoom').value.trim() || room || '病室') : '無 (撮影室)';
-          const technician = document.getElementById('xrayTechnician').value.trim() || '放射線技師';
           const dvdMedia = document.querySelector('input[name="xrayDvd"]:checked')?.value || '未';
           const imgImport = document.querySelector('input[name="xrayImgImport"]:checked')?.value || '未';
           const kv = document.getElementById('xrayKv').value.trim();
@@ -3949,7 +3952,6 @@
             sitesList: sites,
             portable: isPortable ? `${portableRoom}号室` : '一般撮影室',
             isPortable,
-            technician,
             media: `DVD作成:${dvdMedia} / 画像取込:${imgImport}`,
             dvdMedia,
             imgImport,
