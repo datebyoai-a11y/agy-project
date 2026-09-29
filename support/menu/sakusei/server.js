@@ -353,9 +353,17 @@ app.get('/sso/launch', requireAuth, async (req, res) => {
     const appKey = req.query.app || 'articles';
 
     // 宛先パスのマッピング
-    let targetPath = '/articles';
+    let targetPath = '/target-people';
     if (appKey === 'emr' || appKey === 'articles') {
-      targetPath = '/articles';
+      const patientId = req.query.patientId || req.query.targetId;
+      if (patientId) {
+        targetPath = `/articles?targetId=${encodeURIComponent(patientId)}`;
+      } else {
+        // 先に患者を選ぶため、カルテ側の対象者一覧へ遷移
+        targetPath = '/target-people';
+      }
+    } else if (appKey === 'target_people') {
+      targetPath = '/target-people';
     } else if (appKey === 'dashboard') {
       targetPath = '/dashboard';
     } else if (appKey === 'incident_report') {
@@ -404,10 +412,12 @@ app.get('/menu', requireAuth, async (req, res) => {
   const user = req.session.user;
   const activeTemplates = await getActiveRoleTemplates();
   const authorizedMenus = getAuthorizedMenus(user, activeTemplates);
+  const patients = await Patient.find({}).sort({ patientId: 1 }).lean();
 
   res.render('menu', {
     user,
-    menus: authorizedMenus
+    menus: authorizedMenus,
+    patients: patients || []
   });
 });
 

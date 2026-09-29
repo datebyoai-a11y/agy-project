@@ -410,7 +410,13 @@
               <% } %>
             </td>
             <td style="white-space: nowrap;">
-              <button onclick='selectPatientForRibbon(<%= JSON.stringify(p) %>)' class="btn btn-primary" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #0284c7;" title="この患者を共通リボンの対象患者に選択">
+              <a href="/sso/launch?app=articles&patientId=<%= encodeURIComponent(p.patientId) %>" 
+                 onclick='try{localStorage.setItem("koyukai_current_patient", JSON.stringify({patientId:"<%= p.patientId %>", name:"<%= p.name %>", age:"<%= p.age %>", gender:"<%= p.gender %>", birthDate:"<%= p.birthDate || "" %>"}));}catch(_){}'
+                 class="btn btn-primary" style="width: auto; padding: 0.3rem 0.65rem; font-size: 0.75rem; background: #0284c7; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;" 
+                 title="<%= p.name %> 様の電子カルテ・記事作成画面を開く">
+                🩺 カルテ
+              </a>
+              <button onclick='selectPatientForRibbon(<%= JSON.stringify(p) %>)' class="btn btn-outline" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="この患者を共通リボンの対象患者に選択">
                 📌 選択
               </button>
               <button onclick='editPatient(<%= JSON.stringify(p) %>)' class="btn btn-outline" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;">

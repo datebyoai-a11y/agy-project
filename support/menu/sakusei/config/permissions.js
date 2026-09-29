@@ -8,7 +8,7 @@ const MENUS = [
     id: 'emr',
     title: '電子カルテ・記事作成',
     shortName: '電子カルテ',
-    subtitle: '患者基本情報・診察記事入力・バイタル記録・処方・指示オーダー (SSO自動ログイン)',
+    subtitle: '対象患者を選択して診察記事入力・バイタル記録・処方・指示オーダー (SSO自動ログイン)',
     url: '/sso/launch?app=articles',
     port: 3000,
     icon: '🩺',

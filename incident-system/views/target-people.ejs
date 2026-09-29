@@ -489,12 +489,24 @@
   </style>
 </head>
 <body>
+  <!-- 🏥 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '電子カルテ：対象患者選択' }) %>
+
   <!-- 📌 固定ヘッダーエリア -->
   <div class="sticky-top-header">
     <header>
-      <h1>インシデント管理システム</h1>
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span style="font-size:1.3rem;">🩺</span>
+        <div>
+          <h1 style="margin:0; font-size:1.05rem;">電子カルテ：対象患者選択</h1>
+          <div style="font-size:0.75rem; color:#94a3b8;">カルテ・記事作成を行う患者を選択してください</div>
+        </div>
+      </div>
       
       <div class="top-status-bar">
+        <a href="http://localhost:8000/menu" class="btn" style="background:#3b82f6; color:white; border:none; padding:0.25rem 0.65rem; border-radius:4px; text-decoration:none; font-size:0.8rem; font-weight:bold; display:inline-flex; align-items:center; gap:0.3rem;">
+          🏠 ポータルメニュー
+        </a>
         <div class="status-chip">
           👤 ログイン中: <strong><%= user %></strong>
         </div>
@@ -704,7 +716,9 @@
                   <td style="text-align: right;">
                     <div class="action-btns">
                       <!-- 💡 対象者限定記事ページへジャンプ＆入力欄フォーカス -->
-                      <a href="/articles?targetId=<%= t._id %>" class="btn btn-sm btn-accent" title="<%= t.name %> さん限定のカルテ画面を開く">
+                      <a href="/articles?targetId=<%= t._id %>" 
+                         onclick='try{localStorage.setItem("koyukai_current_patient", JSON.stringify({patientId:"<%= t.customId %>", name:"<%= t.name %>"}));}catch(_){}'
+                         class="btn btn-sm btn-accent" style="font-weight:bold; font-size:0.85rem;" title="<%= t.name %> さん限定のカルテ画面を開く">
                         💬 診療記事・カルテへ ➔
                       </a>
                       <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('<%= t._id %>', '<%= t.customId %>', '<%= t.name %>', '<%= t.department || '' %>')">

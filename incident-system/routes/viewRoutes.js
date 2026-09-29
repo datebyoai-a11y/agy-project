@@ -53,7 +53,17 @@ router.get('/dashboard', async (req, res) => {
 // 4.5. 記事管理画面
 router.get('/articles', async (req, res) => {
   try {
+    const targetIdQuery = typeof req.query.targetId === 'string' ? req.query.targetId.trim() : (typeof req.query.patientId === 'string' ? req.query.patientId.trim() : '');
     const searchQuery = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
+    const isExplicitAll = req.query.view === 'all' || targetIdQuery === 'ALL';
+    const isSpecificOrder = Boolean(req.query.order);
+
+    // 🔒 医療安全ガード: 患者未選択かつ全体閲覧指定でない場合、まず患者選択画面へ案内
+    if (!targetIdQuery && !searchQuery && !isExplicitAll && !isSpecificOrder) {
+      console.log('⚠️ [カルテ安全ガード] 患者未選択アクセスのため、対象者選択画面(/target-people)へ遷移します。');
+      return res.redirect('/target-people');
+    }
+
     const targetPeople = await TargetPerson.find().sort({ customId: 1 });
     const users = await User.find({}, 'userName loginId department').sort({ userName: 1, loginId: 1 });
     const articleFilter = {};
@@ -341,7 +351,6 @@ router.get('/articles', async (req, res) => {
 
     const isOverride = Boolean(req.session && req.session.isOverride);
     const originalUser = (req.session && req.session.originalUser) ? req.session.originalUser : (req.user || user);
-    const targetIdQuery = typeof req.query.targetId === 'string' ? req.query.targetId.trim() : (typeof req.query.patientId === 'string' ? req.query.patientId.trim() : '');
     let selectedTargetPerson = null;
     if (targetIdQuery && targetIdQuery !== 'ALL') {
       selectedTargetPerson = targetPeople.find(tp => tp._id.toString() === targetIdQuery || (tp.customId && tp.customId.toLowerCase() === targetIdQuery.toLowerCase()));
