@@ -20,6 +20,9 @@ const Article = require('/home/a/Desktop/ai/agy-project/incident-system/models/A
 const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
 const User = require('/home/a/Desktop/ai/agy-project/incident-system/models/User');
 
+// 🛡️ PGP 真正性保証モジュール
+const pgpSigner = require('./utils/pgpSigner');
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -241,6 +244,15 @@ app.post('/api/radiology-orders', async (req, res) => {
       elecImgAdd: (elecImgAdd === 'true' || elecImgAdd === true)
     });
 
+    // 🛡️ 3. PGP電子署名 (真正性・完全性・改ざん防止の暗号学的保証)
+    try {
+      const pgpSignatureData = await pgpSigner.signRadiologyOrder(newOrder);
+      newOrder.pgp = pgpSignatureData;
+      console.log(`🛡️ [PGP] オーダー [${orderNumber}] に真正性保証署名を付与しました (KeyID: ${pgpSignatureData.keyId})`);
+    } catch (pgpErr) {
+      console.error('⚠️ [PGP] 電子署名生成エラー:', pgpErr);
+    }
+
     // 4. 🏥 incident-system の Article コレクションにも同時記録（電子カルテ連携）
     try {
       // 対象者 (TargetPerson) の取得または作成
@@ -268,8 +280,9 @@ app.post('/api/radiology-orders', async (req, res) => {
 ・照射部位: ${partsList.join(', ')} ${partsDetail ? ' / ' + partsDetail : ''}
 ${medications ? '・使用薬剤: ' + medications + '\n' : ''}${materials ? '・使用材料: ' + materials + '\n' : ''}・検査目的: ${purpose}
 ・特記事項: ${remarks || '特記なし'}
+・🛡️ PGP電子署名: 真正性保証済 (KeyID: ${newOrder.pgp?.keyId || '--'}, SHA256: ${(newOrder.pgp?.payloadHash || '').slice(0, 16)}...)
 --------------------------------------------------
-※正・控え2枚組帳票にて印刷出力可能 (RADオーダーシステム連携済)`;
+※A4 1枚(A5正副2分割)・PGP電子署名&検証QRコード付き帳票出力可能`;
 
       const newArticle = new Article({
         title: articleTitle,
@@ -324,10 +337,32 @@ ${medications ? '・使用薬剤: ' + medications + '\n' : ''}${materials ? '・
  */
 app.get('/print/:id', async (req, res) => {
   try {
-    const order = await RadiologyOrder.findById(req.params.id).lean();
-    if (!order) {
+    let orderDoc = await RadiologyOrder.findById(req.params.id);
+    if (!orderDoc) {
       return res.status(404).send('指定された放射線オーダー伝票が見つかりません。');
     }
+
+    // PGP未署名の場合は自動署名して永続化
+    if (!orderDoc.pgp || !orderDoc.pgp.isSigned) {
+      try {
+        orderDoc.pgp = await pgpSigner.signRadiologyOrder(orderDoc);
+        await orderDoc.save();
+      } catch (signErr) {
+        console.warn('⚠️ [PGP] 署名自動補完警告:', signErr.message);
+      }
+    }
+
+    const order = orderDoc.toObject();
+
+    // 真正性検証の実行
+    const pgpVerification = await pgpSigner.verifyRadiologyOrder(order);
+
+    // 検証用URL & QRコード生成
+    const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+    const host = req.headers['x-forwarded-host'] || req.get('host') || 'localhost:8000';
+    const prefix = req.headers['x-forwarded-prefix'] || '';
+    const verifyUrl = `${proto}://${host}${prefix}/radiology/verify/${order._id}`;
+    const qrCodeDataUrl = await pgpSigner.generateVerificationQr(verifyUrl);
 
     // 印刷回数のインクリメント
     await RadiologyOrder.findByIdAndUpdate(req.params.id, {
@@ -340,7 +375,10 @@ app.get('/print/:id', async (req, res) => {
 
     res.render('print', {
       order,
-      autoprint: req.query.autoprint === '1'
+      autoprint: req.query.autoprint === '1',
+      qrCodeDataUrl,
+      verifyUrl,
+      pgpVerification
     });
   } catch (err) {
     console.error('[Radiology] 印刷プレビューエラー:', err);
@@ -349,7 +387,69 @@ app.get('/print/:id', async (req, res) => {
 });
 
 /**
- * 📜 4. 履歴一覧 API (GET /api/orders)
+ * 🛡️ 4. PGP 真正性検証証明ページ (GET /verify/:id)
+ */
+app.get('/verify/:id', async (req, res) => {
+  try {
+    let orderDoc = await RadiologyOrder.findById(req.params.id);
+    if (!orderDoc) {
+      return res.status(404).send('検証対象の放射線オーダー伝票が見つかりません。');
+    }
+
+    // PGP未署名の場合は自動署名
+    if (!orderDoc.pgp || !orderDoc.pgp.isSigned) {
+      orderDoc.pgp = await pgpSigner.signRadiologyOrder(orderDoc);
+      await orderDoc.save();
+    }
+
+    const order = orderDoc.toObject();
+    const verification = await pgpSigner.verifyRadiologyOrder(order);
+
+    res.render('verify', {
+      order,
+      verification
+    });
+  } catch (err) {
+    console.error('検証画面表示エラー:', err);
+    res.status(500).send('真正性検証画面の表示中にエラーが発生しました: ' + err.message);
+  }
+});
+
+/**
+ * 🔍 5. PGP 真正性検証 API (GET /api/verify/:id)
+ */
+app.get('/api/verify/:id', async (req, res) => {
+  try {
+    const orderDoc = await RadiologyOrder.findById(req.params.id);
+    if (!orderDoc) {
+      return res.status(404).json({ success: false, message: 'オーダーが見つかりません' });
+    }
+    const verification = await pgpSigner.verifyRadiologyOrder(orderDoc.toObject());
+    res.json({ success: true, verification });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * 🔑 6. PGP 公開鍵エクスポート (GET /public-key.asc & GET /api/public-key)
+ */
+app.get(['/public-key.asc', '/api/public-key'], async (req, res) => {
+  try {
+    const { armoredPublicKey, fingerprint, keyId } = await pgpSigner.getPublicKeyArmored();
+    if (req.path.endsWith('.asc')) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="koyukai_radiology_public_key.asc"');
+      return res.send(armoredPublicKey);
+    }
+    res.json({ success: true, keyId, fingerprint, publicKey: armoredPublicKey });
+  } catch (err) {
+    res.status(500).send('公開鍵の取得に失敗しました: ' + err.message);
+  }
+});
+
+/**
+ * 📜 7. 履歴一覧 API (GET /api/orders)
  */
 app.get('/api/orders', async (req, res) => {
   try {

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛡️ PGP真正性検証証明書 - だて病院 放射線科</title>
+  <base href="/radiology/">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", sans-serif;
+      padding: 1.5rem;
+      min-height: 100vh;
+    }
+    .cert-card {
+      max-width: 780px;
+      margin: 1.5rem auto;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .cert-header {
+      background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+    .cert-header.invalid {
+      background: linear-gradient(135deg, #991b1b 0%, #b91c1c 100%);
+    }
+    .cert-body {
+      padding: 2rem;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #dcfce7;
+      color: #166534;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 0.45rem 1.1rem;
+      border-radius: 9999px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .status-badge.invalid {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 0.75rem 1.5rem;
+      background: #0f172a;
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+    }
+    .info-label {
+      color: #94a3b8;
+      font-weight: 700;
+    }
+    .info-value {
+      color: #f8fafc;
+      font-weight: 600;
+      word-break: break-all;
+    }
+    .crypto-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #090d16;
+      border: 1px solid #1e293b;
+      padding: 0.85rem;
+      border-radius: 6px;
+      color: #38bdf8;
+      font-size: 0.82rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .hash-tag {
+      font-family: monospace;
+      background: #334155;
+      color: #facc15;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cert-card">
+    <!-- ヘッダー -->
+    <div class="cert-header <%= verification.isValid ? '' : 'invalid' %>">
+      <div>
+        <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.9;">
+          交雄会 だて病院 医療安全・情報管理室
+        </div>
+        <h1 style="font-size: 1.4rem; font-weight: 800; margin: 0.25rem 0 0 0; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🛡️</span> 放射線オーダー PGP真正性検証証明書
+        </h1>
+      </div>
+      <div>
+        <% if (verification.isValid) { %>
+          <div class="status-badge">
+            <span>✅</span> 真正性確認済 (Valid)
+          </div>
+        <% } else { %>
+          <div class="status-badge invalid">
+            <span>❌</span> 検証失敗 (Invalid)
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- 本文 -->
+    <div class="cert-body">
+
+      <!-- 検証サマリー -->
+      <div style="background: <%= verification.isValid ? '#064e3b' : '#7f1d1d' %>; padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid <%= verification.isValid ? '#059669' : '#dc2626' %>;">
+        <% if (verification.isValid) { %>
+          <div style="font-weight: 800; font-size: 1.05rem; color: #a7f3d0; margin-bottom: 0.3rem;">
+            暗号学的に真正性が保証されています（改ざんなし）
+          </div>
+          <div style="font-size: 0.85rem; color: #d1fae5; line-height: 1.6;">
+            本オーダーは発行医師および放射線科の秘密鍵によって正当に電子署名されており、発行時点から患者情報・検査部位・指示内容の改ざんが一切行われていないことがOpenPGP (Ed25519) 暗号アルゴリズムにより数学的に証明されました。
+          </div>
+        <% } else { %>
+          <div style="font-weight: 800; font-size: 1.05rem; color: #fecaca; margin-bottom: 0.3rem;">
+            ⚠️ 真正性の検証に失敗しました
+          </div>
+          <div style="font-size: 0.85rem; color: #fee2e2; line-height: 1.6;">
+            <%= verification.reason || 'オーダーデータが発行後に改ざんされたか、署名鍵が一致しません。直ちに放射線科または発行医師にご確認ください。' %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- オーダー対象情報 -->
+      <h3 style="font-size: 1rem; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 0.4rem; margin-bottom: 0.75rem;">
+        📋 検証対象オーダー概要
+      </h3>
+      <div class="info-grid">
+        <div class="info-label">伝票番号:</div>
+        <div class="info-value" style="font-family: monospace; font-size: 1.05rem; color: #38bdf8;">
+          <%= order.orderNumber %>
+        </div>
+
+        <div class="info-label">患者氏名:</div>
+        <div class="info-value">
+          <strong><%= order.patientName %></strong> 様 （ID: <span style="font-family: monospace;"><%= order.patientId %></span> / <%= order.gender %> / <%= order.ward || '外来' %>）
+        </div>
+
+        <div class="info-label">検査種別・部位:</div>
+        <div class="info-value">
+          [<%= order.formType %>] <%= order.examType %> 
+          <% if (order.parts && order.parts.length > 0) { %>
+            (<%= order.parts.join(', ') %>)
+          <% } %>
+        </div>
+
+        <div class="info-label">依頼医師:</div>
+        <div class="info-value">
+          <%= order.doctorName %> 先生 （<%= order.requestDepartment || '内科' %>）
+        </div>
+
+        <div class="info-label">指示・予定日時:</div>
+        <div class="info-value">
+          <%= new Date(order.scheduledDate || order.orderDate).toLocaleString('ja-JP') %>
+        </div>
+      </div>
+
+      <!-- PGP 暗号署名メタデータ -->
+      <h3 style="font-size: 1rem; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 0.4rem; margin: 1.5rem 0 0.75rem 0;">
+        🔐 OpenPGP 電子署名監査情報
+      </h3>
+      <div class="info-grid">
+        <div class="info-label">署名アルゴリズム:</div>
+        <div class="info-value">
+          <%= order.pgp?.algorithm || 'Ed25519 (OpenPGP)' %>
+        </div>
+
+        <div class="info-label">公開鍵 Key ID:</div>
+        <div class="info-value" style="font-family: monospace; color: #facc15;">
+          <%= order.pgp?.keyId || verification.keyId || '--' %>
+        </div>
+
+        <div class="info-label">Fingerprint:</div>
+        <div class="info-value" style="font-family: monospace; font-size: 0.8rem; letter-spacing: 0.5px;">
+          <%= order.pgp?.fingerprint || verification.fingerprint || '--' %>
+        </div>
+
+        <div class="info-label">電子署名日時:</div>
+        <div class="info-value">
+          <%= order.pgp?.signedAt ? new Date(order.pgp.signedAt).toLocaleString('ja-JP') : '--' %>
+        </div>
+
+        <div class="info-label">署名者識別子:</div>
+        <div class="info-value">
+          <%= order.pgp?.signer || '交雄会だて病院 放射線科' %>
+        </div>
+
+        <div class="info-label">SHA-256 ダイジェスト:</div>
+        <div class="info-value">
+          <span class="hash-tag"><%= order.pgp?.payloadHash || '--' %></span>
+        </div>
+      </div>
+
+      <!-- ASCII Armored PGP 署名 -->
+      <div style="margin-top: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+          <span style="font-size: 0.85rem; color: #94a3b8; font-weight: bold;">
+            📜 PGP 署名データ (ASCII Armored Detached Signature):
+          </span>
+          <button type="button" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.2rem 0.6rem;" onclick="navigator.clipboard.writeText(document.getElementById('pgpSigText').textContent); alert('PGP署名をクリップボードにコピーしました');">
+            📋 署名をコピー
+          </button>
+        </div>
+        <div class="crypto-code" id="pgpSigText"><%= order.pgp?.signature || '（署名データがありません）' %></div>
+      </div>
+
+      <!-- 操作ボタン -->
+      <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #334155; padding-top: 1.25rem;">
+        <div>
+          <a href="public-key.asc" target="_blank" class="btn btn-outline" style="font-size: 0.82rem;">
+            🔑 検証用公開鍵をダウンロード
+          </a>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="print/<%= order._id %>" class="btn btn-primary" style="font-size: 0.85rem;">
+            🖨️ A4帳票印刷プレビューへ
+          </a>
+          <a href="./" class="btn btn-outline" style="font-size: 0.85rem;">
+            オーダー入力画面へ
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

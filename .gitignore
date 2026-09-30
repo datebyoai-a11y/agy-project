@@ -20,3 +20,7 @@ mongodb/data/
 *.pid
 .launcher.pid
 .agents/
+
+# Security & Cryptographic Private Keys
+*private*.asc
+*private*.key

@@ -273,6 +273,15 @@
     </div>
 
     <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <% if (typeof pgpVerification !== 'undefined' && pgpVerification.isValid) { %>
+        <a href="verify/<%= order._id %>" target="_blank" class="btn-tool" style="background: #065f46; color: #a7f3d0; border: 1px solid #059669; font-size: 0.82rem; text-decoration: none;" title="クリックしてPGP電子署名真正性証明書を表示">
+          🛡️ PGP真正性保証 (改ざんなし / Valid)
+        </a>
+      <% } else if (typeof pgpVerification !== 'undefined') { %>
+        <a href="verify/<%= order._id %>" target="_blank" class="btn-tool" style="background: #7f1d1d; color: #fecaca; border: 1px solid #dc2626; font-size: 0.82rem; text-decoration: none;">
+          ⚠️ PGP検証エラー
+        </a>
+      <% } %>
       <button type="button" class="btn-tool btn-tool-primary" onclick="window.print()">
         🖨️ A4 1枚に印刷 (正・副 2分割)
       </button>
@@ -785,16 +794,34 @@
 
           <% } %>
 
-          <!-- 3. 最下部 (共通) -->
+          <!-- 3. 最下部 (共通): 伝票番号 & PGP真正性検証 & 病院名 -->
           <div class="slip-footer">
-            <div style="width: 25%; font-size: 7.5pt; color: #555;">
-              伝票番号: <span style="font-family: monospace; font-weight: bold;"><%= order.orderNumber %></span>
+            <div style="display: flex; align-items: center; gap: 5px; width: 36%;">
+              <% if (typeof qrCodeDataUrl !== 'undefined' && qrCodeDataUrl) { %>
+                <a href="<%= typeof verifyUrl !== 'undefined' ? verifyUrl : ('verify/' + order._id) %>" target="_blank" title="スマホ等でスキャンして真正性検証" style="display: block; line-height: 0;">
+                  <img src="<%= qrCodeDataUrl %>" alt="PGP検証QR" style="width: 13.5mm; height: 13.5mm; border: 1px solid #64748b; border-radius: 2px;">
+                </a>
+              <% } %>
+              <div style="font-size: 6.8pt; line-height: 1.3; color: #334155;">
+                <div>伝票番号: <strong style="font-family: monospace; font-size: 7.8pt;"><%= order.orderNumber %></strong></div>
+                <div style="color: #047857; font-weight: bold; display: flex; align-items: center; gap: 2px;">
+                  <span>🛡️</span> PGP真正性保証済
+                </div>
+                <div style="font-family: monospace; font-size: 6.2pt; color: #64748b;">
+                  KeyID: <%= order.pgp?.keyId || '--' %>
+                </div>
+              </div>
             </div>
+
             <div class="hospital-title">
               交雄会 だて病院
             </div>
-            <div style="width: 25%; text-align: right; font-size: 7.5pt; color: #555;">
-              <%= slip.subLabel %>
+
+            <div style="width: 32%; text-align: right; font-size: 7.5pt; color: #475569;">
+              <div><%= slip.subLabel %></div>
+              <div style="font-size: 6.2pt; color: #64748b; margin-top: 1px;">
+                <%= order.pgp?.signedAt ? new Date(order.pgp.signedAt).toLocaleDateString('ja-JP') + ' PGP署名' : '' %>
+              </div>
             </div>
           </div>
 

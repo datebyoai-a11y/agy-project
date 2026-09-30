@@ -89,6 +89,20 @@ const RadiologyOrderSchema = new mongoose.Schema({
     default: 'ORDERED' 
   }, // ORDERED(未受付), ACCEPTED/RECEIVED(受付済), COMPLETED(実施済), CANCELLED(中止)
 
+  // 🛡️ PGP電子署名・真正性保証 (Authenticity & Integrity Assurance)
+  pgp: {
+    isSigned: { type: Boolean, default: false },               // PGP署名済みフラグ
+    signature: { type: String, default: '' },                  // ASCII Armored PGP署名文字列
+    payloadHash: { type: String, default: '' },                // 対象ペイロードのSHA-256ハッシュ
+    canonicalPayload: { type: String, default: '' },           // 署名対象となった正規化データ(JSON文字列)
+    keyId: { type: String, default: '' },                      // 署名鍵のKey ID (例: 4bc55761c5899f82)
+    fingerprint: { type: String, default: '' },                // 署名鍵のFingerprint (40桁HEX)
+    signer: { type: String, default: '' },                     // 署名者情報 (例: 交雄会だて病院 放射線科 / 担当医)
+    signedAt: { type: Date, default: null },                   // 署名生成日時
+    algorithm: { type: String, default: 'Ed25519 (OpenPGP)' }, // 暗号アルゴリズム
+    verifiedAt: { type: Date, default: null }                  // 最終検証成功日時
+  },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
