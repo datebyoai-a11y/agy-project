@@ -75,16 +75,6 @@
       <input type="text" id="searchInput" placeholder="患者名・ID・部位・病棟で絞込...">
     </div>
 
-    <!-- 表示形式切り替え (Kanban / 一覧テーブル) -->
-    <div class="view-mode-group">
-      <button id="btnKanbanView" class="view-mode-btn active" title="モダリティ別 縦3列Kanban表示">
-        📊 縦3列Kanban
-      </button>
-      <button id="btnListView" class="view-mode-btn" title="全件テーブル一覧形式">
-        📋 一覧形式
-      </button>
-    </div>
-
     <!-- 更新ステータス -->
     <div class="header-actions">
       <div class="polling-indicator">
@@ -111,9 +101,7 @@
           </div>
         </div>
         <div class="col-badges">
-          <span class="badge-count pending" id="badgeXrayOrdered" title="未受付">0</span>
-          <span class="badge-count active" id="badgeXrayAccepted" title="受付済">0</span>
-          <span class="badge-count done" id="badgeXrayTotal" title="総件数">0</span>
+          <span class="badge-count col-count-badge" id="badgeXrayCount" title="下にある情報の件数">0件</span>
         </div>
       </div>
       <div class="col-body" id="xrayCardList">
@@ -132,9 +120,7 @@
           </div>
         </div>
         <div class="col-badges">
-          <span class="badge-count pending" id="badgeCtOrdered" title="未受付">0</span>
-          <span class="badge-count active" id="badgeCtAccepted" title="受付済">0</span>
-          <span class="badge-count done" id="badgeCtTotal" title="総件数">0</span>
+          <span class="badge-count col-count-badge" id="badgeCtCount" title="下にある情報の件数">0件</span>
         </div>
       </div>
       <div class="col-body" id="ctCardList">
@@ -153,9 +139,7 @@
           </div>
         </div>
         <div class="col-badges">
-          <span class="badge-count pending" id="badgeFluoroOrdered" title="未受付">0</span>
-          <span class="badge-count active" id="badgeFluoroAccepted" title="受付済">0</span>
-          <span class="badge-count done" id="badgeFluoroTotal" title="総件数">0</span>
+          <span class="badge-count col-count-badge" id="badgeFluoroCount" title="下にある情報の件数">0件</span>
         </div>
       </div>
       <div class="col-body" id="fluoroCardList">
@@ -173,24 +157,30 @@
           <span>📋</span>
           <span>放射線オーダー 一覧テーブル</span>
           <span id="tableCountBadge" class="brand-badge" style="background:#0284c7;">0件</span>
+          <span id="currentSortBadge" class="sort-status-badge" style="font-size: 0.78rem; color: #475569; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; margin-left: 10px;">
+            🔽 指示日時 (新しい順)
+          </span>
+          <button id="btnResetSort" class="btn-reset-sort" title="ソートを初期状態(新着順)に戻す" style="display: none; font-size: 0.75rem; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 8px; cursor: pointer; color: #64748b; margin-left: 6px;">
+            🔄 初期順に戻す
+          </button>
         </div>
         <div style="font-size: 0.8rem; color: var(--text-muted);">
-          ※未受付・受付済・実施済のすべてのオーダーを時系列一覧で管理できます。
+          ※項目名をクリックすると昇順・降順で並び替えできます。
         </div>
       </div>
       <div class="table-wrapper">
         <table class="orders-table">
           <thead>
             <tr>
-              <th style="width: 80px;">状態</th>
-              <th style="width: 95px;">区分</th>
-              <th style="width: 140px;">オーダー番号 / 時刻</th>
-              <th style="width: 180px;">患者情報</th>
-              <th>検査種別 / 部位 / 条件</th>
-              <th>検査目的・臨床所見</th>
-              <th style="width: 120px;">依頼医師</th>
-              <th style="width: 150px;">対応技師 / 日時</th>
-              <th style="width: 170px; text-align: center;">操作</th>
+              <th class="th-sortable" data-sort="status" style="width: 85px;" title="クリックで状態順に並び替え">状態 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable" data-sort="modality" style="width: 95px;" title="クリックで区分順に並び替え">区分 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable sorted-desc" data-sort="date" style="width: 155px;" title="クリックで指示日時順に並び替え">オーダー番号 / 時刻 <span class="sort-icon">▼</span></th>
+              <th class="th-sortable" data-sort="patient" style="width: 180px;" title="クリックで患者名順に並び替え">患者情報 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable" data-sort="exam" title="クリックで検査種別・部位順に並び替え">検査種別 / 部位 / 条件 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable" data-sort="purpose" title="クリックで目的順に並び替え">検査目的・臨床所見 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable" data-sort="doctor" style="width: 120px;" title="クリックで依頼医師順に並び替え">依頼医師 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable" data-sort="operator" style="width: 150px;" title="クリックで対応技師順に並び替え">対応技師 / 日時 <span class="sort-icon">↕️</span></th>
+              <th style="width: 160px; text-align: center;">操作</th>
             </tr>
           </thead>
           <tbody id="ordersTableBody">

@@ -407,6 +407,31 @@ body {
   border-color: #a7f3d0;
 }
 
+/* 🏷️ カラム件数バッジ (下にある情報の件数だけを表示) */
+.col-count-badge {
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+#colXray .col-count-badge {
+  background: #dcfce7;
+  color: var(--xray-accent-dark);
+  border: 1.5px solid var(--xray-accent);
+}
+#colCt .col-count-badge {
+  background: #fef9c3;
+  color: #a16207;
+  border: 1.5px solid var(--ct-accent-dark);
+}
+#colFluoro .col-count-badge {
+  background: #e0f2fe;
+  color: var(--fluoro-accent-dark);
+  border: 1.5px solid var(--fluoro-accent);
+}
+
 /* カードリスト領域 */
 .col-body {
   padding: 14px;
@@ -889,6 +914,45 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+/* ↕️ ソート可能ヘッダー */
+.orders-table th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.orders-table th.th-sortable:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.orders-table th.th-sortable.sorted-asc,
+.orders-table th.th-sortable.sorted-desc {
+  background: #dbeafe;
+  color: #1e40af;
+  border-bottom: 2px solid #3b82f6;
+}
+.sort-icon {
+  display: inline-block;
+  margin-left: 3px;
+  font-size: 0.72rem;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+.orders-table th.th-sortable:hover .sort-icon {
+  opacity: 0.8;
+}
+.orders-table th.th-sortable.sorted-asc .sort-icon,
+.orders-table th.th-sortable.sorted-desc .sort-icon {
+  opacity: 1;
+  font-weight: 900;
+  color: #1d4ed8;
+}
+
+/* ソートリセットボタン */
+.btn-reset-sort:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
 }
 
 .orders-table td {

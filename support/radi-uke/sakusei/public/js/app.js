@@ -22,8 +22,9 @@ const elListViewContainer = document.getElementById('listViewContainer');
 const elOrdersTableBody = document.getElementById('ordersTableBody');
 const elTableCountBadge = document.getElementById('tableCountBadge');
 
-const elBtnKanbanView = document.getElementById('btnKanbanView');
-const elBtnListView = document.getElementById('btnListView');
+// テーブルソート状態 (デフォルト: 指示日時 降順)
+let tableSortKey = 'date';
+let tableSortOrder = 'desc';
 
 const elXrayList = document.getElementById('xrayCardList');
 const elCtList = document.getElementById('ctCardList');
@@ -37,22 +38,16 @@ const elStatAccepted = document.getElementById('statAccepted');
 const elStatCompleted = document.getElementById('statCompleted');
 const elStatPortable = document.getElementById('statPortable');
 
-// カラム別カウントバッジ
-const elBadgeXrayOrdered = document.getElementById('badgeXrayOrdered');
-const elBadgeXrayAccepted = document.getElementById('badgeXrayAccepted');
-const elBadgeXrayTotal = document.getElementById('badgeXrayTotal');
-
-const elBadgeCtOrdered = document.getElementById('badgeCtOrdered');
-const elBadgeCtAccepted = document.getElementById('badgeCtAccepted');
-const elBadgeCtTotal = document.getElementById('badgeCtTotal');
-
-const elBadgeFluoroOrdered = document.getElementById('badgeFluoroOrdered');
-const elBadgeFluoroAccepted = document.getElementById('badgeFluoroAccepted');
-const elBadgeFluoroTotal = document.getElementById('badgeFluoroTotal');
+// カラム別件数バッジ (下にある情報の件数)
+const elBadgeXrayCount = document.getElementById('badgeXrayCount');
+const elBadgeCtCount = document.getElementById('badgeCtCount');
+const elBadgeFluoroCount = document.getElementById('badgeFluoroCount');
 
 // 初期ロード
 document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
+  setupTableSortListeners();
+  setViewMode('kanban');
   loadOrders();
   startPolling();
 });
@@ -65,7 +60,7 @@ function setupEventListeners() {
       e.target.classList.add('active');
       currentFilter = e.target.getAttribute('data-filter');
 
-      // 🌟 要望: 「すべて表示」の時は自動的に一覧テーブル形式にする
+      // 🌟 「すべて表示 (一覧)」の時は一覧テーブル形式にし、それ以外は縦3列Kanbanにする
       if (currentFilter === 'ALL') {
         setViewMode('list');
       } else {
@@ -75,18 +70,6 @@ function setupEventListeners() {
       loadOrders();
     });
   });
-
-  // 表示形式切り替えボタン
-  if (elBtnKanbanView) {
-    elBtnKanbanView.addEventListener('click', () => {
-      setViewMode('kanban');
-    });
-  }
-  if (elBtnListView) {
-    elBtnListView.addEventListener('click', () => {
-      setViewMode('list');
-    });
-  }
 
   // 検索入力
   let searchTimeout = null;
@@ -111,13 +94,88 @@ function setViewMode(mode) {
   if (mode === 'list') {
     if (elKanbanContainer) elKanbanContainer.style.display = 'none';
     if (elListViewContainer) elListViewContainer.style.display = 'block';
-    if (elBtnListView) elBtnListView.classList.add('active');
-    if (elBtnKanbanView) elBtnKanbanView.classList.remove('active');
   } else {
-    if (elKanbanContainer) elKanbanContainer.style.display = 'grid';
+    if (elKanbanContainer) {
+      elKanbanContainer.style.display = 'grid';
+      elKanbanContainer.className = 'kanban-container';
+    }
     if (elListViewContainer) elListViewContainer.style.display = 'none';
-    if (elBtnKanbanView) elBtnKanbanView.classList.add('active');
-    if (elBtnListView) elBtnListView.classList.remove('active');
+  }
+}
+
+// ↕️ テーブルカラムソートのイベントリスナー設定
+function setupTableSortListeners() {
+  const headers = document.querySelectorAll('.orders-table th.th-sortable');
+  headers.forEach(th => {
+    th.addEventListener('click', () => {
+      const sortKey = th.getAttribute('data-sort');
+      if (tableSortKey === sortKey) {
+        // 同じカラム: 昇順 ⇄ 降順 切り替え
+        tableSortOrder = (tableSortOrder === 'asc') ? 'desc' : 'asc';
+      } else {
+        // 別のカラム: 新規選択 (日付や状態は降順、それ以外は昇順初期値)
+        tableSortKey = sortKey;
+        tableSortOrder = (sortKey === 'date' || sortKey === 'status') ? 'desc' : 'asc';
+      }
+      updateSortHeaderIndicators();
+      renderTableView(currentOrders);
+    });
+  });
+
+  // リセットボタン
+  const btnReset = document.getElementById('btnResetSort');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      tableSortKey = 'date';
+      tableSortOrder = 'desc';
+      updateSortHeaderIndicators();
+      renderTableView(currentOrders);
+    });
+  }
+}
+
+// ソート矢印および表示バッジの更新
+function updateSortHeaderIndicators() {
+  const headers = document.querySelectorAll('.orders-table th.th-sortable');
+  const sortLabels = {
+    status: '状態',
+    modality: '区分',
+    date: '指示日時',
+    patient: '患者情報',
+    exam: '検査種別・部位',
+    purpose: '検査目的',
+    doctor: '依頼医師',
+    operator: '対応技師'
+  };
+
+  headers.forEach(th => {
+    const key = th.getAttribute('data-sort');
+    const icon = th.querySelector('.sort-icon');
+    th.classList.remove('sorted-asc', 'sorted-desc');
+
+    if (key === tableSortKey) {
+      if (tableSortOrder === 'asc') {
+        th.classList.add('sorted-asc');
+        if (icon) icon.textContent = '▲';
+      } else {
+        th.classList.add('sorted-desc');
+        if (icon) icon.textContent = '▼';
+      }
+    } else {
+      if (icon) icon.textContent = '↕️';
+    }
+  });
+
+  // バッジ更新
+  const badge = document.getElementById('currentSortBadge');
+  const btnReset = document.getElementById('btnResetSort');
+  const orderText = tableSortOrder === 'asc' ? '昇順 (古い/五十音順)' : '降順 (新しい順)';
+  const arrow = tableSortOrder === 'asc' ? '🔼' : '🔽';
+  if (badge) {
+    badge.textContent = `${arrow} ${sortLabels[tableSortKey] || tableSortKey} (${orderText})`;
+  }
+  if (btnReset) {
+    btnReset.style.display = (tableSortKey === 'date' && tableSortOrder === 'desc') ? 'none' : 'inline-block';
   }
 }
 
@@ -176,32 +234,24 @@ function updateStats(counts) {
   if (elStatAccepted) elStatAccepted.textContent = counts.accepted || 0;
   if (elStatCompleted) elStatCompleted.textContent = counts.completed || 0;
   if (elStatPortable) elStatPortable.textContent = counts.portable || 0;
-
-  // カラム別
-  if (counts.xray) {
-    if (elBadgeXrayOrdered) elBadgeXrayOrdered.textContent = counts.xray.ordered || 0;
-    if (elBadgeXrayAccepted) elBadgeXrayAccepted.textContent = counts.xray.accepted || 0;
-    if (elBadgeXrayTotal) elBadgeXrayTotal.textContent = counts.xray.total || 0;
-  }
-  if (counts.ct) {
-    if (elBadgeCtOrdered) elBadgeCtOrdered.textContent = counts.ct.ordered || 0;
-    if (elBadgeCtAccepted) elBadgeCtAccepted.textContent = counts.ct.accepted || 0;
-    if (elBadgeCtTotal) elBadgeCtTotal.textContent = counts.ct.total || 0;
-  }
-  if (counts.fluoro) {
-    if (elBadgeFluoroOrdered) elBadgeFluoroOrdered.textContent = counts.fluoro.ordered || 0;
-    if (elBadgeFluoroAccepted) elBadgeFluoroAccepted.textContent = counts.fluoro.accepted || 0;
-    if (elBadgeFluoroTotal) elBadgeFluoroTotal.textContent = counts.fluoro.total || 0;
-  }
 }
 
 // ==============================================================================
 // 📊 1. モダリティ別 縦3列 (Kanban) 描画
 // ==============================================================================
 function renderKanbanColumns(grouped) {
-  renderColumn(elXrayList, grouped.xray, '📷 一般撮影・X線の指示はありません');
-  renderColumn(elCtList, grouped.ct, '🌀 CT検査の指示はありません');
-  renderColumn(elFluoroList, grouped.fluoro, '📺 X線透視の指示はありません');
+  const xrayOrders = (grouped && grouped.xray) || [];
+  const ctOrders = (grouped && grouped.ct) || [];
+  const fluoroOrders = (grouped && grouped.fluoro) || [];
+
+  renderColumn(elXrayList, xrayOrders, '📷 一般撮影・X線の指示はありません');
+  renderColumn(elCtList, ctOrders, '🌀 CT検査の指示はありません');
+  renderColumn(elFluoroList, fluoroOrders, '📺 X線透視の指示はありません');
+
+  // 🌟 下にある情報の件数だけを表示
+  if (elBadgeXrayCount) elBadgeXrayCount.textContent = `${xrayOrders.length}件`;
+  if (elBadgeCtCount) elBadgeCtCount.textContent = `${ctOrders.length}件`;
+  if (elBadgeFluoroCount) elBadgeFluoroCount.textContent = `${fluoroOrders.length}件`;
 }
 
 function renderColumn(container, orders, emptyText) {
@@ -399,13 +449,75 @@ function renderTableView(orders) {
     return;
   }
 
-  // ステータス順・作成日時順ソート
-  const statusPriority = { 'ORDERED': 1, 'RECEIVED': 2, 'ACCEPTED': 2, 'COMPLETED': 3, 'CANCELLED': 4 };
+  // 選択されたソートキー・順序に応じた並び替え
   const sorted = [...orders].sort((a, b) => {
-    const pA = statusPriority[a.orderStatus] || 99;
-    const pB = statusPriority[b.orderStatus] || 99;
-    if (pA !== pB) return pA - pB;
-    return new Date(b.createdAt) - new Date(a.createdAt);
+    let cmp = 0;
+    switch (tableSortKey) {
+      case 'status': {
+        const priority = { 'ORDERED': 1, 'RECEIVED': 2, 'ACCEPTED': 2, 'COMPLETED': 3, 'CANCELLED': 4 };
+        const pA = priority[a.orderStatus] || 99;
+        const pB = priority[b.orderStatus] || 99;
+        cmp = pA - pB;
+        if (cmp === 0) {
+          cmp = new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        }
+        break;
+      }
+      case 'modality': {
+        const modPriority = { 'xray': 1, 'ct': 2, 'fluoro': 3 };
+        const mA = modPriority[getModalityKey(a)] || 99;
+        const mB = modPriority[getModalityKey(b)] || 99;
+        cmp = mA - mB;
+        if (cmp === 0) {
+          cmp = new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        }
+        break;
+      }
+      case 'patient': {
+        const nameA = (a.patientKana || a.patientName || '').trim();
+        const nameB = (b.patientKana || b.patientName || '').trim();
+        cmp = nameA.localeCompare(nameB, 'ja');
+        break;
+      }
+      case 'exam': {
+        const exA = `${a.examType || ''} ${a.partsDetail || ''}`.trim();
+        const exB = `${b.examType || ''} ${b.partsDetail || ''}`.trim();
+        cmp = exA.localeCompare(exB, 'ja');
+        break;
+      }
+      case 'purpose': {
+        const purA = `${a.purpose || ''} ${a.clinicalDiagnosis || ''}`.trim();
+        const purB = `${b.purpose || ''} ${b.clinicalDiagnosis || ''}`.trim();
+        cmp = purA.localeCompare(purB, 'ja');
+        break;
+      }
+      case 'doctor': {
+        const docA = (a.doctorName || '').trim();
+        const docB = (b.doctorName || '').trim();
+        cmp = docA.localeCompare(docB, 'ja');
+        break;
+      }
+      case 'operator': {
+        const opA = (a.completedBy || a.acceptedBy || '').trim();
+        const opB = (b.completedBy || b.acceptedBy || '').trim();
+        cmp = opA.localeCompare(opB, 'ja');
+        if (cmp === 0) {
+          const tA = new Date(a.completedAt || a.acceptedAt || 0).getTime();
+          const tB = new Date(b.completedAt || b.acceptedAt || 0).getTime();
+          cmp = tA - tB;
+        }
+        break;
+      }
+      case 'date':
+      default: {
+        const tA = new Date(a.createdAt || a.orderDate || 0).getTime();
+        const tB = new Date(b.createdAt || b.orderDate || 0).getTime();
+        cmp = tA - tB;
+        break;
+      }
+    }
+
+    return (tableSortOrder === 'desc') ? -cmp : cmp;
   });
 
   const rowsHtml = sorted.map(order => {
