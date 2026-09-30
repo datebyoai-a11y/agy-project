@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/ordering/">
   <title>注射指示箋 入力画面案 (原本様式忠実再現) - だて病院</title>
   <script>window.name = 'app_injection_sheet';</script>
   <style>
@@ -1392,11 +1393,17 @@
     <!-- 右側アクションボタン群 -->
     <div class="actions">
       <!-- 薬品検索モーダルを開くボタン -->
+      <a href="/menu" class="btn-action" style="background:#4f46e5; border-color:#6366f1; text-decoration:none;" title="医療統合ポータルメニューへ戻る">
+        <span>🏠</span> <span>ポータル</span>
+      </a>
+      <a href="/ordering/" class="btn-action" style="background:#0369a1; border-color:#38bdf8; text-decoration:none;" title="オーダー入力画面へ移動">
+        <span>📝</span> <span>オーダー入力</span>
+      </a>
       <button type="button" class="btn-action" onclick="openMedSearchModal()" style="background:#0284c7; border-color:#38bdf8;" title="薬品マスタからインクリメンタル検索して指示箋に入力">
         <span>🔍</span> <span>薬品検索</span>
       </button>
       <!-- 採用薬一覧へ飛ぶボタン -->
-      <a href="/medicines-list?cat=注射剤" target="app_medicines_list" class="btn-action" style="background:#334155; border-color:#475569;" title="検索機能付き採用薬一覧を開く">
+      <a href="medicines-list?cat=注射剤" target="app_medicines_list" class="btn-action" style="background:#334155; border-color:#475569;" title="検索機能付き採用薬一覧を開く">
         <span>📚</span> <span>採用薬</span>
       </a>
       <!-- 保存ボタン -->
@@ -1693,7 +1700,7 @@
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:0.6rem;">
-          <a href="/medicines-list?cat=注射剤" target="app_medicines_list" style="background:#0284c7; color:white; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:0.25rem;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
+          <a href="medicines-list?cat=注射剤" target="app_medicines_list" style="background:#0284c7; color:white; font-size:0.75rem; padding:0.25rem 0.6rem; border-radius:4px; text-decoration:none; font-weight:bold; display:inline-flex; align-items:center; gap:0.25rem;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
             <span>📚 採用薬一覧 ↗</span>
           </a>
           <button type="button" onclick="closeMedSearchModal()" style="background:none; border:none; color:#cbd5e1; font-size:1.3rem; line-height:1; cursor:pointer;" title="閉じる (Esc)">✕</button>
@@ -2166,7 +2173,7 @@
     // 起動時に全薬品データを取得＆キャッシュ（超高速検索のため）
     async function initMedicinesData() {
       try {
-        const res = await fetch('/api/medicines?limit=1000');
+        const res = await fetch('api/medicines?limit=1000');
         const data = await res.json();
         if (data.medicines && Array.isArray(data.medicines)) {
           cachedMedicines = data.medicines;
@@ -3076,7 +3083,7 @@
       try {
         setLatestNotice('オーダリングサーバーへ送信中...', 'info');
         // Port 4000 のオーダー送信 API
-        const res = await fetch('/api/orders/send', {
+        const res = await fetch('api/orders/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderPayload)

@@ -41,14 +41,46 @@
           <div class="card-icon" style="background: #e0f2fe;">🩺</div>
           <div class="card-titles">
             <h3 class="card-title">電子カルテ (EMR)</h3>
-            <p class="card-subtitle">Port 3000</p>
+            <p class="card-subtitle">Port 3000 (Proxy: /articles)</p>
           </div>
         </div>
         <div class="card-permission">
-          <span class="permission-text">HTTP / Web</span>
+          <span class="permission-text">HTTP / Web (SSO連携)</span>
           <span class="status-badge accessible">● 稼働中 (Active)</span>
         </div>
-        <a href="http://localhost:3000/" class="btn btn-outline">直接アクセス ➔</a>
+        <a href="/sso/launch?app=articles" class="btn btn-outline">カルテ画面を開く ➔</a>
+      </div>
+
+      <!-- 放射線科オーダー -->
+      <div class="menu-card authorized">
+        <div class="card-header">
+          <div class="card-icon" style="background: #f3e8ff;">🩻</div>
+          <div class="card-titles">
+            <h3 class="card-title">放射線科オーダー</h3>
+            <p class="card-subtitle">Port 8080 (Proxy: /radiology/)</p>
+          </div>
+        </div>
+        <div class="card-permission">
+          <span class="permission-text">原本様式印刷・SSO連携</span>
+          <span class="status-badge accessible">● 稼働中 (Active)</span>
+        </div>
+        <a href="/sso/launch?app=radiology" class="btn btn-outline">オーダー画面を開く ➔</a>
+      </div>
+
+      <!-- 放射線科 指示受け・実施モニター -->
+      <div class="menu-card authorized">
+        <div class="card-header">
+          <div class="card-icon" style="background: #e0f2fe;">📋</div>
+          <div class="card-titles">
+            <h3 class="card-title">放射線科 指示受けモニター</h3>
+            <p class="card-subtitle">Port 8081 (Proxy: /radi-uke/)</p>
+          </div>
+        </div>
+        <div class="card-permission">
+          <span class="permission-text">縦3列Kanban・受付実施済</span>
+          <span class="status-badge accessible">● 稼働中 (Active)</span>
+        </div>
+        <a href="/sso/launch?app=radi_uke" class="btn btn-outline">指示受け画面を開く ➔</a>
       </div>
 
       <!-- オーダリング送信側 -->
@@ -57,14 +89,14 @@
           <div class="card-icon" style="background: #e0e7ff;">📝</div>
           <div class="card-titles">
             <h3 class="card-title">オーダリング送信側</h3>
-            <p class="card-subtitle">Port 4000 / HTTPS 4443</p>
+            <p class="card-subtitle">Port 4000 (Proxy: /ordering/)</p>
           </div>
         </div>
         <div class="card-permission">
           <span class="permission-text">医師・病棟入力</span>
           <span class="status-badge accessible">● 稼働中 (Active)</span>
         </div>
-        <a href="http://localhost:4000/" class="btn btn-outline">直接アクセス ➔</a>
+        <a href="/ordering/" class="btn btn-outline">オーダー入力画面を開く ➔</a>
       </div>
 
       <!-- オーダリング受信側 -->
@@ -73,14 +105,14 @@
           <div class="card-icon" style="background: #ccfbf1;">📥</div>
           <div class="card-titles">
             <h3 class="card-title">オーダリング受信側</h3>
-            <p class="card-subtitle">Port 5000 / HTTPS 5443</p>
+            <p class="card-subtitle">Port 5000 (Proxy: /monitor/)</p>
           </div>
         </div>
         <div class="card-permission">
           <span class="permission-text">各部門モニター</span>
           <span class="status-badge accessible">● 稼働中 (Active)</span>
         </div>
-        <a href="http://localhost:5000/" class="btn btn-outline">直接アクセス ➔</a>
+        <a href="/monitor/" class="btn btn-outline">部門モニターを開く ➔</a>
       </div>
 
       <!-- データベース -->

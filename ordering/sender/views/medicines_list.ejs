@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/ordering/">
   <title>採用薬一覧 (検索機能付き) - 医療法人交雄会 だて病院</title>
   <script>window.name = 'app_medicines_list';</script>
   <style>
@@ -262,13 +263,16 @@
       <button type="button" onclick="reloadFromExcel()" class="btn-nav" style="background:#059669; border-color:#059669;" title="薬品集マスタ.xlsx から最新データを取り込み">
         <span>🔄</span> <span>エクセルから再取込</span>
       </button>
+      <a href="/menu" class="btn-nav" style="background:#4f46e5; border-color:#6366f1; color:white;" title="医療統合ポータルメニューへ戻る">
+        <span>🏠</span> <span>総合ポータル</span>
+      </a>
       <a href="javascript:void(0)" onclick="window.close()" class="btn-nav">
         ✕ ウィンドウを閉じる
       </a>
-      <a href="/injection-sheet-form" class="btn-nav" style="background:#059669; border-color:#059669; color:white;">
+      <a href="injection-sheet-form" class="btn-nav" style="background:#059669; border-color:#059669; color:white;">
         <span>💉</span> <span>注射指示箋へ</span>
       </a>
-      <a href="/" class="btn-nav" style="background:#0284c7; border-color:#0284c7; color:white;">
+      <a href="./" class="btn-nav" style="background:#0284c7; border-color:#0284c7; color:white;">
         <span>🚀</span> <span>オーダリング画面へ</span>
       </a>
     </div>
@@ -344,7 +348,7 @@
 
     async function loadMedicines() {
       try {
-        const res = await fetch('/api/medicines?limit=1000');
+        const res = await fetch('api/medicines?limit=1000');
         const data = await res.json();
         if (data.success && data.medicines) {
           allMedicines = data.medicines;
@@ -478,7 +482,7 @@
       if (!confirm('「薬品集マスタ.xlsx」から最新データを再取り込みしますか？')) return;
       showToast('⏳ エクセルファイルから薬品データを再取り込み中...');
       try {
-        const res = await fetch('/api/medicines/reload-from-excel', { method: 'POST' });
+        const res = await fetch('api/medicines/reload-from-excel', { method: 'POST' });
         const data = await res.json();
         if (data.success) {
           showToast(`✅ ${data.message} (${data.count}件)`);

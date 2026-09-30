@@ -1,0 +1,17 @@
+{
+  "name": "radiology-order-receiver",
+  "version": "1.0.0",
+  "description": "放射線科 指示受け・実施モニターシステム (縦3列モダリティ別 Kanban)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "radiology",
+    "receiver",
+    "kanban",
+    "medical"
+  ],
+  "author": "交雄会だて病院 医療安全・情報システム室",
+  "license": "ISC"
+}

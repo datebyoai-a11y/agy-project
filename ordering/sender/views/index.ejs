@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/ordering/">
   <title>医療法人 社団 交雄会 だて病院 - オーダリング指示発行システム</title>
   <!-- 🔒 多重起動防止・単一タブ排他制御 (1枚のみ起動可能) -->
   <script>
@@ -1916,11 +1917,13 @@
       </div>
     </div>
     <div class="header-links">
-      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 5443 : 5000 %>" target="app_ordering_receiver">📥 受信側モニター</a>
+      <a href="/menu" style="background:#4f46e5; color:white; border-color:#4f46e5; font-weight:bold;" title="医療統合ポータルメニューへ戻る">🏠 総合ポータル</a>
+      <a href="/monitor/" target="app_ordering_receiver" style="background:#0d9488; color:white; border-color:#0d9488; font-weight:bold;">📥 受信側モニター</a>
       <% const initPId = (typeof initialPatientId !== 'undefined' && initialPatientId) ? initialPatientId : ''; %>
       <% const initPName = (typeof initialPatientName !== 'undefined' && initialPatientName) ? initialPatientName : ''; %>
-      <a id="headerInjSheetLink" href="/injection-sheet-form<%= initPId ? `?patientId=${encodeURIComponent(initPId)}` : '' %>" target="app_injection_sheet" onclick="return openInjectionSheetWithCurrentPatient(event);" style="background:#059669; color:white; border-color:#059669; font-weight:bold;" title="注射指示箋を開く (インクリメンタル薬品検索完備・選択中の患者を引き継ぎます)">💉 注射指示箋 ↗</a>
-      <a id="headerCarteLink" href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles<%= initPId ? `?targetId=${encodeURIComponent(initPId)}` : '' %>" target="app_carte_articles" style="background:#0284c7; color:white; border-color:#0284c7; font-weight:bold;" title="電子カルテを開く (選択中の患者を引き継ぎます)">📋 電子カルテ <%= initPName ? `[${initPName}]` : '(Port 3000)' %></a>
+      <a id="headerInjSheetLink" href="injection-sheet-form<%= initPId ? `?patientId=${encodeURIComponent(initPId)}` : '' %>" target="app_injection_sheet" onclick="return openInjectionSheetWithCurrentPatient(event);" style="background:#059669; color:white; border-color:#059669; font-weight:bold;" title="注射指示箋を開く (インクリメンタル薬品検索完備・選択中の患者を引き継ぎます)">💉 注射指示箋 ↗</a>
+      <a id="headerCarteLink" href="/articles<%= initPId ? `?targetId=${encodeURIComponent(initPId)}` : '' %>" target="app_carte_articles" style="background:#0284c7; color:white; border-color:#0284c7; font-weight:bold;" title="電子カルテを開く (選択中の患者を引き継ぎます)">📋 電子カルテ <%= initPName ? `[${initPName}]` : '' %></a>
+      <a href="/radiology/<%= initPId ? `?patientId=${encodeURIComponent(initPId)}` : '' %>" target="app_radiology_order" style="background:#7c3aed; color:white; border-color:#7c3aed; font-weight:bold;" title="放射線科オーダーを開く">🩻 放射線オーダー</a>
       <button type="button" onclick="clearHistory()" style="background:rgba(255,255,255,0.18); color:white; border:none; padding:0.25rem 0.55rem; border-radius:4px; font-size:0.75rem; cursor:pointer;">
         履歴クリア
       </button>
@@ -2135,7 +2138,7 @@
             <button type="button" onclick="executeDoPrescription()" style="background:#0284c7; color:white; border:none; padding:0.25rem 0.65rem; border-radius:4px; font-weight:bold; font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem; box-shadow:0 1px 2px rgba(0,0,0,0.15);" title="この患者の前回処方内容をワンクリックで複製・反映">
               <span>🔁</span> <span>Do処方 (前回処方を反映)</span>
             </button>
-            <a href="/medicines-list?cat=内服薬" target="app_medicines_list" style="background:white; color:#0284c7; border:1px solid #7dd3fc; padding:0.25rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
+            <a href="medicines-list?cat=内服薬" target="app_medicines_list" style="background:white; color:#0284c7; border:1px solid #7dd3fc; padding:0.25rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.75rem; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く（既存タブがあれば再利用）">
               <span>📚</span> <span>採用薬一覧 ↗</span>
             </a>
             <span class="photo-form-badge">薬品集マスタ(607品目)連動</span>
@@ -2206,7 +2209,7 @@
             <button type="button" class="btn-inj-print" onclick="openInjectionSheetWithCurrentPatient()" style="padding:0.28rem 0.7rem; border-radius:4px; font-weight:bold; font-size:0.78rem; cursor:pointer; background:#0284c7; border:1px solid #0284c7; color:white; display:inline-flex; align-items:center; gap:0.3rem; box-shadow:0 1px 3px rgba(2,132,199,0.3);" title="インクリメンタル薬品検索・15日スケジュール指示対応の注射指示箋画面を開きます">
               <span>💉</span> <span>注射指示箋 (原本15日様式) を開く ↗</span>
             </button>
-            <a href="/medicines-list?cat=注射剤" target="app_medicines_list" style="padding:0.25rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.74rem; text-decoration:none; background:white; border:1px solid #7dd3fc; color:#0284c7; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く">
+            <a href="medicines-list?cat=注射剤" target="app_medicines_list" style="padding:0.25rem 0.55rem; border-radius:4px; font-weight:bold; font-size:0.74rem; text-decoration:none; background:white; border:1px solid #7dd3fc; color:#0284c7; display:inline-flex; align-items:center; gap:0.2rem;" title="検索機能付き採用薬一覧を開く">
               <span>📚</span> <span>採用薬一覧 ↗</span>
             </a>
           </div>
@@ -4115,7 +4118,7 @@
       btn.innerHTML = `<span>⏳ 送信中...</span>`;
 
       try {
-        const res = await fetch('/api/orders/send', {
+        const res = await fetch('api/orders/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -4651,7 +4654,7 @@
 
     async function pollHistory() {
       try {
-        const res = await fetch('/api/orders/history?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('api/orders/history?_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (data.success && data.orders) {
           renderHistory(data.orders);
@@ -4663,7 +4666,7 @@
 
     async function syncAllStatus() {
       try {
-        const res = await fetch('/api/orders/sync-all?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('api/orders/sync-all?_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (data.success) {
           renderHistory(data.orders);
@@ -4680,7 +4683,7 @@
       const badge = document.getElementById('sseStatusBadge');
       try {
         if (sseSource) sseSource.close();
-        sseSource = new EventSource('/api/orders/events');
+        sseSource = new EventSource('api/orders/events');
 
         sseSource.addEventListener('connected', () => {
           if (badge) {
@@ -4729,7 +4732,7 @@
 
     async function syncAllStatusSilently() {
       try {
-        const res = await fetch('/api/orders/sync-all?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('api/orders/sync-all?_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (data.success) {
           renderHistory(data.orders);
@@ -4768,7 +4771,7 @@
 
     async function checkRemoteStatus(orderId) {
       try {
-        const res = await fetch(`/api/orders/${orderId}/check-status?_t=` + Date.now(), { cache: 'no-store' });
+        const res = await fetch(`api/orders/${orderId}/check-status?_t=` + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (data.success) {
           showToast(`ℹ️ [${orderId}] 受信側の最新ステータス: ${data.status}`);
@@ -4784,7 +4787,7 @@
     async function clearHistory() {
       if (!confirm('送信履歴をクリアしますか？')) return;
       try {
-        const res = await fetch('/api/orders/clear-history', { method: 'POST' });
+        const res = await fetch('api/orders/clear-history', { method: 'POST' });
         if (res.ok) pollHistory();
       } catch (e) {
         alert('クリアエラー: ' + e.message);
@@ -4800,7 +4803,7 @@
 
     async function initMedicineMaster() {
       try {
-        const res = await fetch('/api/medicines?limit=1000');
+        const res = await fetch('api/medicines?limit=1000');
         const data = await res.json();
         if (data.success && data.medicines) {
           allMedicines = data.medicines;
@@ -6184,7 +6187,7 @@
       if (currentPName) query += `${query ? '&' : ''}patientName=${encodeURIComponent(currentPName)}`;
       if (currentDept) query += `${query ? '&' : ''}patientDept=${encodeURIComponent(currentDept)}`;
       if (currentStartDate) query += `${query ? '&' : ''}startDate=${encodeURIComponent(currentStartDate)}`;
-      const url = `/injection-sheet-form${query ? `?${query}` : ''}`;
+      const url = `injection-sheet-form${query ? `?${query}` : ''}`;
       window.open(url, 'app_injection_sheet');
       return false;
     }
@@ -6202,7 +6205,7 @@
       let query = `orderId=${encodeURIComponent(orderId || '')}`;
       if (pId) query += `&patientId=${encodeURIComponent(pId)}`;
       if (pName) query += `&patientName=${encodeURIComponent(pName)}`;
-      const url = `/injection-sheet-form?${query}`;
+      const url = `injection-sheet-form?${query}`;
       window.open(url, 'app_injection_sheet');
       return false;
     }

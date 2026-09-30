@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🩻 放射線科オーダー発行 (原本伝票レイアウト入力) - だて病院</title>
+  <base href="/radiology/">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ==========================================================================
+       📄 放射線科オーダー 原本用紙忠実再現レイアウト (画面入力用)
+       だて病院 放射線科伝票（CT / 透視 / 照射録）の実物写真を画面上に再現
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* 上部操作ナビゲーションバー */
+    .screen-header-bar {
+      background: #1e293b;
+      color: #ffffff;
+      padding: 0.5rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .header-left h1 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .header-badge {
+      background: #7c3aed;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: bold;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+    }
+    .header-links {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-nav-link {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 0.3rem 0.7rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background 0.15s;
+    }
+    .btn-nav-link:hover {
+      background: #475569;
+    }
+
+    /* コントロール・患者選択パネル */
+    .control-toolbar {
+      max-width: 980px;
+      margin: 0.85rem auto 0 auto;
+      padding: 0.6rem 1rem;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .patient-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex: 1;
+      min-width: 320px;
+    }
+    .patient-picker-label {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .patient-picker-select {
+      flex: 1;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1.5px solid #94a3b8;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .patient-picker-select:focus {
+      border-color: #2563eb;
+      background: #fff;
+    }
+    .action-button-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-act {
+      padding: 0.42rem 0.9rem;
+      font-size: 0.84rem;
+      font-weight: 700;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s;
+    }
+    .btn-act-outline {
+      background: white;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+    .btn-act-outline:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .btn-act-save {
+      background: #0284c7;
+      color: white;
+    }
+    .btn-act-save:hover {
+      background: #0369a1;
+    }
+    .btn-act-print {
+      background: #16a34a;
+      color: white;
+      box-shadow: 0 1px 2px rgba(22, 163, 74, 0.25);
+    }
+    .btn-act-print:hover {
+      background: #15803d;
+    }
+
+    /* 原本様式タブ切り替え */
+    .form-tabs-container {
+      max-width: 980px;
+      margin: 0.75rem auto 0 auto;
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+      border-bottom: 2px solid #000;
+      padding-bottom: 0;
+    }
+    .form-tab-btn {
+      padding: 0.55rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: 1.5px solid #cbd5e1;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      background: #e2e8f0;
+      color: #475569;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+      position: relative;
+      top: 2px;
+    }
+    .form-tab-btn:hover {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .form-tab-btn.active {
+      background: #ffffff;
+      color: #000000;
+      border-color: #000000;
+      border-bottom: 2px solid #ffffff;
+      top: 2px;
+      z-index: 2;
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.06);
+    }
+    .tab-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    .dot-ct { background: #facc15; }
+    .dot-fluoro { background: #0284c7; }
+    .dot-xray { background: #16a34a; }
+
+    /* プリセット候補チップバー */
+    .preset-toolbar {
+      max-width: 980px;
+      margin: 0.4rem auto 0.6rem auto;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+    }
+    .preset-chip {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 0.2rem 0.55rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-chip:hover {
+      background: #f1f5f9;
+      border-color: #64748b;
+      color: #0f172a;
+    }
+
+    /* ==========================================================================
+       📑 伝票用紙コンテナ (実物写真の再現)
+       ========================================================================== */
+    .paper-wrapper {
+      max-width: 980px;
+      margin: 0 auto 3rem auto;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+    .slip-paper {
+      width: 900px;
+      min-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1.5px solid #000000;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.06);
+      font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", "MS P明朝", serif;
+      color: #000000;
+      position: relative;
+    }
+
+    /* 最上部 カラーバー (写真再現) */
+    .slip-top-colorbar {
+      height: 24px;
+      width: 100%;
+      border-bottom: 1.5px solid #000000;
+    }
+    .colorbar-ct { background: #facc15; }
+    .colorbar-fluoro { background: #0284c7; }
+    .colorbar-xray { background: #16a34a; }
+
+    /* 用紙内部パディング */
+    .slip-body {
+      padding: 16px 20px 14px 20px;
+    }
+
+    /* 伝票共通テーブル罫線 */
+    .slip-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #000000;
+      table-layout: fixed;
+    }
+    .slip-table th, .slip-table td {
+      border: 1px solid #000000;
+      padding: 3px 5px;
+      font-size: 8.8pt;
+      vertical-align: middle;
+    }
+    .slip-table th {
+      background: #f8fafc;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* 伝票用インライン入力フィールド */
+    .slip-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: 9.5pt;
+      color: #000000;
+      outline: none;
+      padding: 1px 3px;
+      box-sizing: border-box;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .slip-input:focus {
+      background: #eff6ff;
+      box-shadow: 0 0 0 1.5px #2563eb inset;
+      border-radius: 2px;
+    }
+    .slip-input-bold {
+      font-weight: bold;
+      font-size: 10.5pt;
+    }
+    .slip-input-mono {
+      font-family: monospace;
+      font-size: 11pt;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .slip-underline-box {
+      border-bottom: 1px solid #000000;
+      display: flex;
+      align-items: baseline;
+      padding-bottom: 1px;
+    }
+
+    /* 丸囲み選択トグル (写真のボールペン丸囲み再現) */
+    .circle-opt {
+      display: inline-block;
+      padding: 0 4px;
+      margin: 0 1px;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 50%;
+      border: 1.5px solid transparent;
+      transition: all 0.12s;
+    }
+    .circle-opt:hover {
+      background: #e2e8f0;
+    }
+    .circle-opt.selected {
+      border: 1.5px solid #000000;
+      font-weight: bold;
+      background: transparent;
+    }
+
+    /* チェックボックストグル (レ点チェック) */
+    .chk-line {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+      padding: 1px 2px;
+      border-radius: 2px;
+      transition: background 0.12s;
+    }
+    .chk-line:hover {
+      background: #f1f5f9;
+    }
+    .chk-box-custom {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border: 1.2px solid #000000;
+      border-radius: 2px;
+      font-size: 9pt;
+      line-height: 1;
+      font-weight: bold;
+      background: #ffffff;
+      color: #000000;
+      flex-shrink: 0;
+    }
+    .chk-box-custom.checked::after {
+      content: "✓";
+    }
+
+    /* 最下部 病院名フッター */
+    .slip-footer {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 11pt;
+      letter-spacing: 5px;
+      font-weight: bold;
+    }
+
+    /* 下部固定フロート保存バー */
+    .bottom-float-bar {
+      max-width: 980px;
+      margin: 1.5rem auto 2.5rem auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🏥 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: '放射線科オーダー入力 (原本様式)' }) %>
+
+  <!-- ナビゲーションバー -->
+  <header class="screen-header-bar">
+    <div class="header-left">
+      <h1>🩻 放射線科オーダー発行 <span class="header-badge">原本用紙レイアウト</span></h1>
+      <span style="font-size: 0.8rem; color: #94a3b8;">交雄会だて病院 医療統合システム</span>
+    </div>
+    <div class="header-links">
+      <a href="/menu" class="btn-nav-link" title="医療統合ポータルへ戻る">🏠 総合ポータル</a>
+      <a href="/sso/launch?app=articles" class="btn-nav-link" title="電子カルテを開く">🩺 電子カルテ</a>
+      <a href="/sso/launch?app=monitor" class="btn-nav-link" title="放射線部門モニターを開く">📥 部門モニター</a>
+    </div>
+  </header>
+
+  <!-- 👤 患者選択 & アクションツールバー -->
+  <div class="control-toolbar">
+    <div class="patient-picker-group">
+      <span class="patient-picker-label">🎯 対象患者:</span>
+      <select id="patientSelectDropdown" class="patient-picker-select" onchange="onPatientSelectChange(this.value)">
+        <option value="">-- 患者を選択してください (未選択・手入力可) --</option>
+        <% if (typeof patients !== 'undefined' && patients && patients.length > 0) { %>
+          <% patients.forEach(p => { %>
+            <option value="<%= p.patientId %>" 
+                    data-id="<%= p.patientId %>"
+                    data-name="<%= p.name %>"
+                    data-kana="<%= p.kana || '' %>"
+                    data-age="<%= p.age !== null ? p.age : '' %>"
+                    data-gender="<%= p.gender || '男' %>"
+                    data-birth="<%= p.birthDate || '' %>"
+                    data-ward="<%= p.ward || '' %>"
+                    data-room="<%= p.room || '' %>"
+                    data-dept="<%= p.department || '内科' %>"
+                    data-mobility="<%= p.mobility || '徒歩' %>"
+                    data-infection="<%= p.infection || '無' %>"
+                    data-allergies="<%= p.allergies || 'なし' %>"
+                    <%= (selectedPatient && selectedPatient.patientId === p.patientId) ? 'selected' : '' %>>
+              [<%= p.patientId %>] <%= p.name %> 様 (<%= p.ward || '外来' %> / <%= p.age !== null ? p.age + '歳' : '-' %> / <%= p.gender %>)
+            </option>
+          <% }); %>
+        <% } %>
+      </select>
+    </div>
+
+    <div class="action-button-group">
+      <button type="button" class="btn-act btn-act-outline" onclick="resetForm()">
+        🔄 クリア
+      </button>
+      <button type="button" class="btn-act btn-act-save" onclick="submitOrderForm(0)">
+        💾 オーダー保存 (カルテ連携)
+      </button>
+      <button type="button" class="btn-act btn-act-print" onclick="submitOrderForm(1)">
+        🖨️ 発行して印刷 (A4 正・副) ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- 📑 原本様式タブ切り替え (CT / 透視 / 照射録) -->
+  <div class="form-tabs-container">
+    <button type="button" class="form-tab-btn active" id="tabBtn_CT" onclick="switchFormType('CT')">
+      <span class="tab-color-dot dot-ct"></span>
+      ＣＴ検査依頼書 (様式1)
+    </button>
+    <button type="button" class="form-tab-btn" id="tabBtn_FLUORO" onclick="switchFormType('FLUORO')">
+      <span class="tab-color-dot dot-fluoro"></span>
+      透視検査依頼書 (様式2)
+    </button>
+    <button type="button" class="form-tab-btn" id="tabBtn_XRAY" onclick="switchFormType('XRAY')">
+      <span class="tab-color-dot dot-xray"></span>
+      診療Ｘ線照射録 (様式3)
+    </button>
+  </div>
+
+  <!-- プリセット補助チップバー -->
+  <div class="preset-toolbar">
+    <span style="font-weight: bold; color: #475569;">💡 クイック入力:</span>
+    <span id="presets_CT" style="display: flex; gap: 0.35rem;">
+      <span class="preset-chip" onclick="applyCtPreset('chest')">胸部精査 (単純)</span>
+      <span class="preset-chip" onclick="applyCtPreset('abdo')">腹部・骨盤 (造影)</span>
+      <span class="preset-chip" onclick="applyCtPreset('head')">頭部打撲 (単純)</span>
+    </span>
+    <span id="presets_FLUORO" style="display: none; gap: 0.35rem;">
+      <span class="preset-chip" onclick="applyFluoroPreset('peg')">PEG胃瘻チューブ交換</span>
+      <span class="preset-chip" onclick="applyFluoroPreset('vf')">VF嚥下造影検査</span>
+    </span>
+    <span id="presets_XRAY" style="display: none; gap: 0.35rem;">
+      <span class="preset-chip" onclick="applyXrayPreset('chest')">胸部2方向 (立位/側面)</span>
+      <span class="preset-chip" onclick="applyXrayPreset('abdo')">腹部立位・臥位</span>
+      <span class="preset-chip" onclick="applyXrayPreset('lumbar')">腰椎正面・側面</span>
+    </span>
+  </div>
+
+  <!-- 🩻 メインフォーム -->
+  <form id="radiologyOrderForm" action="api/radiology-orders" method="POST">
+    <!-- 隠しフィールド (送信メタデータ) -->
+    <input type="hidden" name="formType" id="inputFormType" value="CT">
+    <input type="hidden" name="autoPrint" id="inputAutoPrint" value="0">
+    <input type="hidden" name="age" id="inputAge" value="<%= selectedPatient ? selectedPatient.age : '' %>">
+    <input type="hidden" name="gender" id="inputGender" value="<%= selectedPatient ? selectedPatient.gender : '男' %>">
+    <input type="hidden" name="ward" id="inputWard" value="<%= selectedPatient ? (selectedPatient.ward || '外来') : '外来' %>">
+    <input type="hidden" name="department" id="inputDepartment" value="<%= selectedPatient ? (selectedPatient.department || '内科') : '内科' %>">
+    <input type="hidden" name="mobility" id="inputMobility" value="<%= selectedPatient ? (selectedPatient.mobility || '徒歩') : '徒歩' %>">
+    <input type="hidden" name="infection" id="inputInfection" value="<%= selectedPatient ? (selectedPatient.infection || '無') : '無' %>">
+    <input type="hidden" name="scheduledDate" id="inputScheduledDate">
+
+    <div class="paper-wrapper">
+
+      <!-- ===================================================================== -->
+      <!-- 🟡 様式 1: ＣＴ検査依頼書 (写真原本再現) -->
+      <!-- ===================================================================== -->
+      <div id="paper_CT" class="slip-paper">
+        <!-- 上部黄色カラーバー -->
+        <div class="slip-top-colorbar colorbar-ct"></div>
+
+        <div class="slip-body">
+          <!-- 上段: 患者情報(左) & タイトル・基本情報テーブル(右) -->
+          <div style="display: flex; gap: 14px; margin-bottom: 8px;">
+
+            <!-- 左側: 患者情報 (実物写真通りの配置) -->
+            <div style="width: 44%; display: flex; flex-direction: column; justify-content: space-between; font-size: 9pt;">
+              
+              <!-- ID番号 -->
+              <div class="slip-underline-box" style="margin-bottom: 6px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">ID番号</span>
+                <input type="text" name="patientId" id="ct_patientId" class="slip-input slip-input-mono" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" placeholder="例: 1001" required>
+              </div>
+
+              <!-- 氏名(カナ) -->
+              <div class="slip-underline-box" style="margin-bottom: 6px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">氏名(カナ)</span>
+                <input type="text" name="patientName" id="ct_patientName" class="slip-input slip-input-bold" style="flex: 2;" value="<%= selectedPatient ? selectedPatient.name : '' %>" placeholder="氏名" required>
+                <span style="font-size: 8pt; color: #475569; margin: 0 2px;">(</span>
+                <input type="text" name="patientKana" id="ct_patientKana" class="slip-input" style="flex: 1.5; font-size: 8pt;" value="<%= selectedPatient ? selectedPatient.kana : '' %>" placeholder="カナ">
+                <span style="font-size: 8pt; color: #475569;">)</span>
+              </div>
+
+              <!-- 生年月日 & 性別 -->
+              <div class="slip-underline-box" style="margin-bottom: 6px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">生年月日</span>
+                <input type="text" name="birthDate" id="ct_birthDate" class="slip-input" style="flex: 1; font-size: 8.5pt;" value="<%= selectedPatient ? selectedPatient.birthDate : '' %>" placeholder="年　月　日">
+                <span style="font-weight: bold; margin-left: 6px; font-size: 8.5pt;">性別</span>
+                <div style="margin-left: 4px; display: inline-flex; align-items: center;">
+                  <span class="circle-opt <%= (!selectedPatient || selectedPatient.gender === '男') ? 'selected' : '' %>" id="ct_gender_M" onclick="setGender('男')">M</span>・
+                  <span class="circle-opt <%= (selectedPatient && selectedPatient.gender === '女') ? 'selected' : '' %>" id="ct_gender_F" onclick="setGender('女')">F</span>
+                </div>
+              </div>
+
+              <!-- 所属病棟 & 号室 -->
+              <div class="slip-underline-box">
+                <div style="display: inline-flex; align-items: center; font-size: 8.5pt;">
+                  <span class="circle-opt <%= (!selectedPatient || !selectedPatient.ward || selectedPatient.ward === '外来') ? 'selected' : '' %>" id="ct_ward_out" onclick="setWard('外来')">外来</span>・
+                  <span class="circle-opt <%= (selectedPatient && selectedPatient.ward && selectedPatient.ward === '病棟') ? 'selected' : '' %>" id="ct_ward_ward" onclick="setWard('病棟')">病棟</span>・
+                  <span class="circle-opt <%= (selectedPatient && selectedPatient.ward && selectedPatient.ward.includes('しおかぜ')) ? 'selected' : '' %>" id="ct_ward_shio" onclick="setWard('しおかぜ')">しおかぜ</span>・
+                  <span class="circle-opt <%= (selectedPatient && selectedPatient.ward && selectedPatient.ward.includes('うみかぜ')) ? 'selected' : '' %>" id="ct_ward_umi" onclick="setWard('うみかぜ')">うみかぜ</span>
+                </div>
+                <span style="margin-left: 4px;">（</span>
+                <input type="text" name="room" id="ct_room" class="slip-input slip-input-bold" style="width: 50px; text-align: center;" value="<%= selectedPatient ? selectedPatient.room : '' %>" placeholder="病室">
+                <span>）号室</span>
+              </div>
+
+            </div>
+
+            <!-- 右側: タイトル枠テーブル (実物写真の罫線再現) -->
+            <div style="width: 56%;">
+              <table class="slip-table">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 4px; background: #fff;">
+                    <span style="font-size: 14pt; font-weight: bold; letter-spacing: 6px;">ＣＴ検査依頼書</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th style="width: 16%;">検査日</th>
+                  <td style="width: 44%;">
+                    <div style="display: flex; align-items: center; font-size: 8.5pt; gap: 2px;">
+                      <input type="date" id="ct_date_picker" class="slip-input" style="width: 110px; font-size: 8pt;" onchange="syncDateTime()">
+                      <input type="time" id="ct_time_picker" class="slip-input" style="width: 70px; font-size: 8pt;" onchange="syncDateTime()">
+                    </div>
+                  </td>
+                  <th style="width: 14%;">医師</th>
+                  <td style="width: 26%;">
+                    <input type="text" name="doctorName" id="ct_doctorName" class="slip-input slip-input-bold" value="<%= (typeof user !== 'undefined' && user && user.userName) ? user.userName : '' %>" placeholder="担当医" required>
+                  </td>
+                </tr>
+                <tr>
+                  <th>感染症</th>
+                  <td>
+                    <span class="circle-opt <%= (!selectedPatient || !selectedPatient.infection || selectedPatient.infection === '無') ? 'selected' : '' %>" id="ct_inf_no" onclick="setInfection('無')">無</span>・
+                    <span class="circle-opt <%= (selectedPatient && selectedPatient.infection && selectedPatient.infection !== '無') ? 'selected' : '' %>" id="ct_inf_yes" onclick="setInfection('有')">有</span>
+                    <span>(</span>
+                    <input type="text" id="ct_infection_note" class="slip-input" style="width: 75px; font-size: 8pt;" value="<%= (selectedPatient && selectedPatient.infection !== '無') ? selectedPatient.infection : '' %>" placeholder="感染症名" oninput="if(this.value){setInfection(this.value);}">
+                    <span>)</span>
+                  </td>
+                  <th>技師</th>
+                  <td>
+                    <input type="text" class="slip-input" placeholder="技師名" style="font-size: 8pt;">
+                  </td>
+                </tr>
+                <tr>
+                  <th>移動</th>
+                  <td colspan="3" style="font-size: 8.5pt;">
+                    <span class="circle-opt <%= (!selectedPatient || !selectedPatient.mobility || selectedPatient.mobility === '徒歩') ? 'selected' : '' %>" id="ct_mob_walk" onclick="setMobility('徒歩')">徒歩</span>・
+                    <span class="circle-opt <%= (selectedPatient && selectedPatient.mobility === '車椅子') ? 'selected' : '' %>" id="ct_mob_wheel" onclick="setMobility('車椅子')">車椅子</span>・
+                    <span class="circle-opt <%= (selectedPatient && selectedPatient.mobility === 'ベッド') ? 'selected' : '' %>" id="ct_mob_bed" onclick="setMobility('ベッド')">ベッド</span>・
+                    <span class="circle-opt <%= (selectedPatient && selectedPatient.mobility === 'ストレッチャー') ? 'selected' : '' %>" id="ct_mob_stret" onclick="setMobility('ストレッチャー')">ストレッチャー</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th>体格</th>
+                  <td colspan="3" style="font-size: 8.5pt;">
+                    身長: <input type="text" name="height" class="slip-input" style="width: 45px; text-align: right;" placeholder="160"> cm　　
+                    体重: <input type="text" name="weight" class="slip-input" style="width: 45px; text-align: right;" placeholder="55"> kg　　
+                    依頼科: <input type="text" name="requestDepartment" id="ct_requestDept" class="slip-input" style="width: 80px;" value="<%= selectedPatient ? (selectedPatient.department || '内科') : '内科' %>" placeholder="内科">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- 下段: 部位リスト(左) & 条件・使用薬剤・目的(右) -->
+          <div style="display: flex; gap: 14px;">
+
+            <!-- 左側: 部位選択 9行テーブル (写真の原本様式忠実再現) -->
+            <div style="width: 44%;">
+              <table class="slip-table" style="height: 100%;">
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_head"></span>
+                      <input type="checkbox" name="ctParts" value="頭部" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_head')">
+                      <strong>頭部</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="詳細・部位指定">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_neck"></span>
+                      <input type="checkbox" name="ctParts" value="頸部" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_neck')">
+                      <strong>頸部</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="詳細・部位指定">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_chest"></span>
+                      <input type="checkbox" name="ctParts" value="胸部 (肺・横隔)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_chest')">
+                      <strong>胸部</strong>
+                      <span style="font-size: 8pt; color: #475569;">( 肺・横隔 )</span>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="詳細">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_abdo"></span>
+                      <input type="checkbox" name="ctParts" value="腹部 (肝・胆・膵・腎)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_abdo')">
+                      <strong>腹部</strong>
+                      <span style="font-size: 8pt; color: #475569;">( 肝・胆・膵・腎 )</span>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="詳細">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_pelvis"></span>
+                      <input type="checkbox" name="ctParts" value="骨盤腔" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_pelvis')">
+                      <strong>骨盤腔</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="詳細・部位指定">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_spine"></span>
+                      <input type="checkbox" name="ctParts" value="脊椎" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_spine')">
+                      <strong>脊椎</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="頸椎・胸椎・腰椎等">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_arm"></span>
+                      <input type="checkbox" name="ctParts" value="上肢" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_arm')">
+                      <strong>上肢</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="右・左・肩・肘・手等">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_leg"></span>
+                      <input type="checkbox" name="ctParts" value="下肢" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_leg')">
+                      <strong>下肢</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="右・左・股・膝・足等">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_ct_other"></span>
+                      <input type="checkbox" name="ctParts" value="その他" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_ct_other')">
+                      <strong>その他</strong>
+                      <span style="font-size: 8pt; margin-left: 2px;">(</span>
+                      <input type="text" name="ctPartsDetail" id="ctPartsDetail" class="slip-input" style="font-size: 8pt; flex: 1;" placeholder="その他部位の直接記入">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- 右側: 単純/造影・使用薬剤・撮影条件・目的 (写真通り) -->
+            <div style="width: 56%; display: flex; flex-direction: column;">
+              <table class="slip-table" style="flex: 1;">
+                <!-- 区分 & 使用薬剤 -->
+                <tr>
+                  <td style="width: 62%; vertical-align: top;">
+                    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                      <span class="circle-opt selected" id="opt_ct_simple" onclick="setCtContrast('単純')">単純</span>・
+                      <span class="circle-opt" id="opt_ct_contrast" onclick="setCtContrast('造影')">造影</span>
+                      <input type="hidden" name="ctContrast" id="inputCtContrast" value="単純">
+                      
+                      <span style="font-weight: bold; margin-left: 6px;">Dynamic</span>
+                      <label class="chk-line" style="display: inline-flex; font-size: 8pt;">
+                        <input type="checkbox" name="ctDynamicPhase" value="2phase" id="chk_ct_2p"> 2p
+                      </label>
+                      <label class="chk-line" style="display: inline-flex; font-size: 8pt;">
+                        <input type="checkbox" name="ctDynamicPhase" value="3phase" id="chk_ct_3p"> 3p
+                      </label>
+                    </div>
+                    <div style="font-size: 8pt; color: #64748b;">
+                      ※造影選択時は薬剤名・Dynamic相を自動連携
+                    </div>
+                  </td>
+                  <th rowspan="3" style="width: 12%; writing-mode: vertical-rl; padding: 4px 2px; font-size: 8pt;">
+                    使用薬剤
+                  </th>
+                  <td rowspan="3" style="width: 26%; vertical-align: top; padding: 2px;">
+                    <textarea name="ctMedications" id="ctMedications" class="slip-input" style="width: 100%; height: 75px; resize: none; font-size: 8pt;" placeholder="例: イオパミロン注300 (100mL)、生食"></textarea>
+                  </td>
+                </tr>
+                <!-- 撮影条件 -->
+                <tr>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 8.5pt;">
+                      <span>kV:</span><input type="text" name="ctKv" class="slip-input" style="width: 38px; text-align: center;" placeholder="120" value="">
+                      <span>mA:</span><input type="text" name="ctMa" class="slip-input" style="width: 38px; text-align: center;" placeholder="200" value="">
+                      <span>sec:</span><input type="text" name="ctSec" class="slip-input" style="width: 38px; text-align: center;" placeholder="0.5" value="">
+                    </div>
+                  </td>
+                </tr>
+                <!-- 電子画像管理加算 -->
+                <tr>
+                  <td>
+                    <label class="chk-line" style="font-size: 8.5pt;">
+                      <span class="chk-box-custom" id="chk_box_elec_ct"></span>
+                      <input type="checkbox" name="elecImgAdd" value="true" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_elec_ct')">
+                      <strong>電子画像管理加算</strong>
+                    </label>
+                  </td>
+                </tr>
+                <!-- 検査目的・臨床所見 -->
+                <tr>
+                  <td colspan="3" style="height: 52px; vertical-align: top; padding: 4px;">
+                    <div style="font-weight: bold; font-size: 8pt; color: #475569; margin-bottom: 2px;">検査目的:</div>
+                    <textarea name="ctPurpose" id="ctPurpose" class="slip-input" style="width: 100%; height: 38px; resize: none; font-size: 8.5pt;" placeholder="臨床所見・疑い病名・精査理由を直接記入"></textarea>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- 最下部 病院名 -->
+          <div class="slip-footer">交雄会 だて病院</div>
+
+        </div>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- 🔵 様式 2: 透視検査依頼書 (写真原本再現) -->
+      <!-- ===================================================================== -->
+      <div id="paper_FLUORO" class="slip-paper" style="display: none;">
+        <!-- 上部青色カラーバー -->
+        <div class="slip-top-colorbar colorbar-fluoro"></div>
+
+        <div class="slip-body">
+          <!-- 上段: 患者情報(左) & タイトル・基本情報テーブル(右) -->
+          <div style="display: flex; gap: 14px; margin-bottom: 8px;">
+
+            <!-- 左側: 患者情報 -->
+            <div style="width: 44%; display: flex; flex-direction: column; justify-content: space-between; font-size: 9pt;">
+              <div class="slip-underline-box" style="margin-bottom: 6px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">ID番号</span>
+                <input type="text" id="fl_patientId" class="slip-input slip-input-mono" placeholder="患者ID" oninput="syncPatientInputs('id', this.value)">
+              </div>
+              <div class="slip-underline-box" style="margin-bottom: 6px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">氏名(カナ)</span>
+                <input type="text" id="fl_patientName" class="slip-input slip-input-bold" style="flex: 2;" placeholder="氏名" oninput="syncPatientInputs('name', this.value)">
+                <span style="font-size: 8pt; color: #475569;">(</span>
+                <input type="text" id="fl_patientKana" class="slip-input" style="flex: 1.5; font-size: 8pt;" placeholder="カナ" oninput="syncPatientInputs('kana', this.value)">
+                <span style="font-size: 8pt; color: #475569;">)</span>
+              </div>
+              <div class="slip-underline-box" style="margin-bottom: 6px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">生年月日</span>
+                <input type="text" id="fl_birthDate" class="slip-input" style="flex: 1; font-size: 8.5pt;" placeholder="年　月　日" oninput="syncPatientInputs('birth', this.value)">
+                <span style="font-weight: bold; margin-left: 6px; font-size: 8.5pt;">性別</span>
+                <div style="margin-left: 4px; display: inline-flex; align-items: center;">
+                  <span class="circle-opt" id="fl_gender_M" onclick="setGender('男')">M</span>・
+                  <span class="circle-opt" id="fl_gender_F" onclick="setGender('女')">F</span>
+                </div>
+              </div>
+              <div class="slip-underline-box">
+                <div style="display: inline-flex; align-items: center; font-size: 8.5pt;">
+                  <span class="circle-opt" id="fl_ward_out" onclick="setWard('外来')">外来</span>・
+                  <span class="circle-opt" id="fl_ward_ward" onclick="setWard('病棟')">病棟</span>・
+                  <span class="circle-opt" id="fl_ward_shio" onclick="setWard('しおかぜ')">しおかぜ</span>・
+                  <span class="circle-opt" id="fl_ward_umi" onclick="setWard('うみかぜ')">うみかぜ</span>
+                </div>
+                <span style="margin-left: 4px;">（</span>
+                <input type="text" id="fl_room" class="slip-input slip-input-bold" style="width: 50px; text-align: center;" placeholder="病室" oninput="syncPatientInputs('room', this.value)">
+                <span>）号室</span>
+              </div>
+            </div>
+
+            <!-- 右側: タイトル枠テーブル -->
+            <div style="width: 56%;">
+              <table class="slip-table">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 4px; background: #fff;">
+                    <span style="font-size: 14pt; font-weight: bold; letter-spacing: 6px;">透視検査依頼書</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th style="width: 16%;">検査日</th>
+                  <td style="width: 44%;">
+                    <div style="display: flex; align-items: center; font-size: 8.5pt; gap: 2px;">
+                      <input type="date" id="fl_date_picker" class="slip-input" style="width: 110px; font-size: 8pt;" onchange="syncDateTime()">
+                      <input type="time" id="fl_time_picker" class="slip-input" style="width: 70px; font-size: 8pt;" onchange="syncDateTime()">
+                    </div>
+                  </td>
+                  <th style="width: 14%;">医師</th>
+                  <td style="width: 26%;">
+                    <input type="text" id="fl_doctorName" class="slip-input slip-input-bold" placeholder="担当医" oninput="syncPatientInputs('doc', this.value)">
+                  </td>
+                </tr>
+                <tr>
+                  <th>感染症</th>
+                  <td>
+                    <span class="circle-opt" id="fl_inf_no" onclick="setInfection('無')">無</span>・
+                    <span class="circle-opt" id="fl_inf_yes" onclick="setInfection('有')">有</span>
+                    <span>(</span>
+                    <input type="text" id="fl_infection_note" class="slip-input" style="width: 75px; font-size: 8pt;" placeholder="感染症名" oninput="if(this.value){setInfection(this.value);}">
+                    <span>)</span>
+                  </td>
+                  <th>技師</th>
+                  <td>
+                    <input type="text" class="slip-input" placeholder="技師名" style="font-size: 8pt;">
+                  </td>
+                </tr>
+                <tr>
+                  <th>移動</th>
+                  <td colspan="3" style="font-size: 8.5pt;">
+                    <span class="circle-opt" id="fl_mob_walk" onclick="setMobility('徒歩')">徒歩</span>・
+                    <span class="circle-opt" id="fl_mob_wheel" onclick="setMobility('車椅子')">車椅子</span>・
+                    <span class="circle-opt" id="fl_mob_bed" onclick="setMobility('ベッド')">ベッド</span>・
+                    <span class="circle-opt" id="fl_mob_stret" onclick="setMobility('ストレッチャー')">ストレッチャー</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th>医療材料</th>
+                  <td colspan="3">
+                    <input type="text" name="fluoroMaterials" id="fluoroMaterials" class="slip-input" placeholder="例: ガストロボタン 24Fr 3.5cm、交換用シリンジ、滅菌ガーゼ">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- 下段: 検査項目(左) & 使用薬剤(中) & 詳細(右) (写真の3列構成忠実再現) -->
+          <div style="display: flex; gap: 10px;">
+
+            <!-- 検査項目 (幅 26%) -->
+            <div style="width: 26%;">
+              <table class="slip-table" style="height: 100%;">
+                <tr><th style="font-size: 8pt; padding: 2px;">検査項目</th></tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_peg"></span>
+                      <input type="checkbox" name="fluoroExam" value="PEG交換" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_peg')">
+                      <strong>PEG交換</strong>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_vf"></span>
+                      <input type="checkbox" name="fluoroExam" value="VF検査" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_vf')">
+                      <strong>VF検査</strong>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_gi"></span>
+                      <input type="checkbox" name="fluoroExam" value="消化管造影検査" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_gi')">
+                      <strong>消化管造影検査</strong>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_simple"></span>
+                      <input type="checkbox" name="fluoroExam" value="単純透視" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_simple')">
+                      <strong>単純透視</strong>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_other"></span>
+                      <input type="checkbox" name="fluoroExam" value="その他" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_other')">
+                      <strong>その他</strong>
+                      <span style="font-size: 8pt;">(</span>
+                      <input type="text" class="slip-input" style="font-size: 8pt; width: 60px;" placeholder="項目">
+                      <span style="font-size: 8pt;">)</span>
+                    </label>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- 使用薬剤 (幅 42%) -->
+            <div style="width: 42%;">
+              <table class="slip-table" style="height: 100%;">
+                <tr><th style="font-size: 8pt; padding: 2px;">使用薬剤</th></tr>
+                <tr>
+                  <td style="padding: 1px 4px;">
+                    <label class="chk-line" style="justify-content: space-between;">
+                      <span style="display: flex; align-items: center; gap: 4px;">
+                        <span class="chk-box-custom" id="chk_box_fl_gastro"></span>
+                        <input type="checkbox" name="fluoroMed" value="ガストログラフィン 20ml" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_gastro')">
+                        ガストログラフィン
+                      </span>
+                      <span style="font-size: 8pt;">( 20 ml)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px;">
+                    <label class="chk-line" style="justify-content: space-between;">
+                      <span style="display: flex; align-items: center; gap: 4px;">
+                        <span class="chk-box-custom" id="chk_box_fl_xylo"></span>
+                        <input type="checkbox" name="fluoroMed" value="キシロカインゼリー2% 10ml" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_xylo')">
+                        キシロカインゼリー2%
+                      </span>
+                      <span style="font-size: 8pt;">( 10 ml)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px;">
+                    <label class="chk-line" style="justify-content: space-between;">
+                      <span style="display: flex; align-items: center; gap: 4px;">
+                        <span class="chk-box-custom" id="chk_box_fl_saline"></span>
+                        <input type="checkbox" name="fluoroMed" value="生理食塩水 20ml" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_saline')">
+                        生理食塩水
+                      </span>
+                      <span style="font-size: 8pt;">( 20 ml)</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_ba"></span>
+                      <input type="checkbox" name="fluoroMed" value="硫酸バリウム散98.8%ホリイ 300g" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_ba')">
+                      硫酸バリウム散98.8%ホリイ 300g
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_bameal"></span>
+                      <input type="checkbox" name="fluoroMed" value="バリコンミール 300g" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_bameal')">
+                      バリコンミール 300g
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_fl_baros"></span>
+                      <input type="checkbox" name="fluoroMed" value="バロス発泡顆粒-S 3.5g×2" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_fl_baros')">
+                      バロス発泡顆粒-S 3.5g×2
+                    </label>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- 詳細・検査目的 (幅 32%) -->
+            <div style="width: 32%;">
+              <table class="slip-table" style="height: 100%;">
+                <tr><th style="font-size: 8pt; padding: 2px;">詳細・検査目的</th></tr>
+                <tr>
+                  <td style="vertical-align: top; padding: 4px; height: 130px;">
+                    <textarea name="fluoroPurpose" id="fluoroPurpose" class="slip-input" style="width: 100%; height: 100%; resize: none; font-size: 8.5pt;" placeholder="臨床情報・胃瘻状態・検査目的を直接記入"></textarea>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- 最下部 病院名 -->
+          <div class="slip-footer">交雄会 だて病院</div>
+
+        </div>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- 🟢 様式 3: 診療Ｘ線照射録 (写真原本再現) -->
+      <!-- ===================================================================== -->
+      <div id="paper_XRAY" class="slip-paper" style="display: none;">
+        <!-- 上部緑色カラーバー -->
+        <div class="slip-top-colorbar colorbar-xray"></div>
+
+        <div class="slip-body">
+          <!-- 上段: 患者情報(左) & タイトル・基本情報テーブル(右) -->
+          <div style="display: flex; gap: 14px; margin-bottom: 8px;">
+
+            <!-- 左側: 患者情報 -->
+            <div style="width: 44%; display: flex; flex-direction: column; justify-content: space-between; font-size: 9pt;">
+              <div class="slip-underline-box" style="margin-bottom: 5px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">ID番号</span>
+                <input type="text" id="xr_patientId" class="slip-input slip-input-mono" placeholder="患者ID" oninput="syncPatientInputs('id', this.value)">
+              </div>
+              <div class="slip-underline-box" style="margin-bottom: 5px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">氏名(カナ)</span>
+                <input type="text" id="xr_patientName" class="slip-input slip-input-bold" style="flex: 2;" placeholder="氏名" oninput="syncPatientInputs('name', this.value)">
+                <span style="font-size: 8pt; color: #475569;">(</span>
+                <input type="text" id="xr_patientKana" class="slip-input" style="flex: 1.5; font-size: 8pt;" placeholder="カナ" oninput="syncPatientInputs('kana', this.value)">
+                <span style="font-size: 8pt; color: #475569;">)</span>
+              </div>
+              <div class="slip-underline-box" style="margin-bottom: 5px;">
+                <span style="font-weight: bold; width: 62px; font-size: 8.5pt;">生年月日</span>
+                <input type="text" id="xr_birthDate" class="slip-input" style="flex: 1; font-size: 8.5pt;" placeholder="年　月　日" oninput="syncPatientInputs('birth', this.value)">
+                <span style="font-weight: bold; margin-left: 6px; font-size: 8.5pt;">性別</span>
+                <div style="margin-left: 4px; display: inline-flex; align-items: center;">
+                  <span class="circle-opt" id="xr_gender_M" onclick="setGender('男')">M</span>・
+                  <span class="circle-opt" id="xr_gender_F" onclick="setGender('女')">F</span>
+                </div>
+              </div>
+              <div class="slip-underline-box" style="margin-bottom: 3px;">
+                <div style="display: inline-flex; align-items: center; font-size: 8pt;">
+                  <span class="circle-opt" id="xr_ward_out" onclick="setWard('外来')">外来</span>・
+                  <span class="circle-opt" id="xr_ward_med" onclick="setWard('医療')">医療</span>・
+                  <span class="circle-opt" id="xr_ward_shio" onclick="setWard('しおかぜ')">しおかぜ</span>・
+                  <span class="circle-opt" id="xr_ward_umi" onclick="setWard('うみかぜ')">うみかぜ</span>
+                </div>
+                <span style="margin-left: 4px;">（</span>
+                <input type="text" id="xr_room" class="slip-input slip-input-bold" style="width: 50px; text-align: center;" placeholder="病室" oninput="syncPatientInputs('room', this.value)">
+                <span>）号室</span>
+              </div>
+              <div style="font-size: 8pt; color: #475569; padding-left: 2px;">
+                プライム ・ 健診 ・ 入院時検査
+              </div>
+            </div>
+
+            <!-- 右側: タイトル枠テーブル -->
+            <div style="width: 56%;">
+              <table class="slip-table">
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 4px; background: #fff;">
+                    <span style="font-size: 14pt; font-weight: bold; letter-spacing: 6px;">診療Ｘ線照射録</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th style="width: 16%;">検査日</th>
+                  <td style="width: 44%;">
+                    <div style="display: flex; align-items: center; font-size: 8.5pt; gap: 2px;">
+                      <input type="date" id="xr_date_picker" class="slip-input" style="width: 110px; font-size: 8pt;" onchange="syncDateTime()">
+                      <input type="time" id="xr_time_picker" class="slip-input" style="width: 70px; font-size: 8pt;" onchange="syncDateTime()">
+                    </div>
+                  </td>
+                  <th style="width: 14%;">医師</th>
+                  <td style="width: 26%;">
+                    <input type="text" id="xr_doctorName" class="slip-input slip-input-bold" placeholder="担当医" oninput="syncPatientInputs('doc', this.value)">
+                  </td>
+                </tr>
+                <tr>
+                  <th>感染症</th>
+                  <td>
+                    <span class="circle-opt" id="xr_inf_no" onclick="setInfection('無')">無</span>・
+                    <span class="circle-opt" id="xr_inf_yes" onclick="setInfection('有')">有</span>
+                    <span>(</span>
+                    <input type="text" id="xr_infection_note" class="slip-input" style="width: 75px; font-size: 8pt;" placeholder="感染症名" oninput="if(this.value){setInfection(this.value);}">
+                    <span>)</span>
+                  </td>
+                  <th>技師</th>
+                  <td>
+                    <input type="text" class="slip-input" placeholder="技師名" style="font-size: 8pt;">
+                  </td>
+                </tr>
+                <tr>
+                  <th>移動</th>
+                  <td colspan="3" style="font-size: 8.5pt;">
+                    <span class="circle-opt" id="xr_mob_walk" onclick="setMobility('徒歩')">徒歩</span>・
+                    <span class="circle-opt" id="xr_mob_wheel" onclick="setMobility('車椅子')">車椅子</span>・
+                    <span class="circle-opt" id="xr_mob_bed" onclick="setMobility('ベッド')">ベッド</span>・
+                    <span class="circle-opt" id="xr_mob_stret" onclick="setMobility('ストレッチャー')">ストレッチャー</span>
+                  </td>
+                </tr>
+                <tr>
+                  <th>ポータブル</th>
+                  <td colspan="3" style="font-size: 8.5pt;">
+                    <label class="chk-line" style="display: inline-flex;">
+                      <span class="chk-box-custom" id="chk_box_xr_port"></span>
+                      <input type="checkbox" name="isPortable" value="true" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_port'); document.getElementById('xr_portable_box').style.display=this.checked?'inline-flex':'none';">
+                      <strong>ポータブル</strong>
+                    </label>
+                    <span id="xr_portable_box" style="display: none; align-items: center;">
+                      ( <input type="text" name="portableRoom" id="xr_portableRoom" class="slip-input" style="width: 50px; text-align: center;" placeholder="病室"> ) 号室
+                    </span>
+                    <span style="margin-left: 12px; font-weight: bold; color: #b91c1c;">至急</span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- 下段: 照射部位 ①〜⑩ (左) & 部位/条件/電子保存 記録表 (右) (写真再現) -->
+          <div style="display: flex; gap: 14px;">
+
+            <!-- 左側: 照射部位リスト (写真通りの①〜⑩) -->
+            <div style="width: 52%;">
+              <table class="slip-table" style="height: 100%;">
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_1"></span>
+                      <input type="checkbox" name="xrayParts" value="① 胸部 (立位 PA / 側面 R-L)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_1')">
+                      <strong>① 胸部</strong>　正 (立位・座位・臥位) ・ 側面 (R-L・L-R)
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_2"></span>
+                      <input type="checkbox" name="xrayParts" value="② 腹部 (立位 / 臥位)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_2')">
+                      <strong>② 腹部</strong>　正 (立位・座位・臥位)
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_3"></span>
+                      <input type="checkbox" name="xrayParts" value="③ 腰椎 (正面 / 側面)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_3')">
+                      <strong>③ 腰椎</strong>　正 ・ 側
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_4"></span>
+                      <input type="checkbox" name="xrayParts" value="④ 膝関節 (R/L 正面・側面)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_4')">
+                      <strong>④ 膝関節</strong>　R ・ L　正 ・ 側
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_5"></span>
+                      <input type="checkbox" name="xrayParts" value="⑤ 股関節 (R/L 正面・側面)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_5')">
+                      <strong>⑤ 股関節</strong>　R ・ L　正 ・ 側
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_6"></span>
+                      <input type="checkbox" name="xrayParts" value="⑥ 骨盤 (正面 / 斜位)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_6')">
+                      <strong>⑥ 骨盤</strong>　正 ・ 斜
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 8.2pt;">
+                    <label class="chk-line">
+                      <span class="chk-box-custom" id="chk_box_xr_7"></span>
+                      <input type="checkbox" name="xrayParts" value="⑦ 手 (リウマチ 2R 両/右/左)" style="display:none;" onchange="toggleCustomChk(this, 'chk_box_xr_7')">
+                      <strong>⑦ 手 (リウマチ) 2R</strong>　両 ・ 右 ・ 左
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px; font-size: 8.2pt;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <strong>⑧</strong>
+                      <input type="text" name="xrayPartsDetail" class="slip-input" style="font-size: 8pt;" placeholder="自由部位入力 (例: 頸椎4方向、肩関節、足関節)">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 1px 4px; font-size: 8.2pt;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                      <strong>⑨</strong>
+                      <input type="text" class="slip-input" style="font-size: 8pt;" placeholder="自由部位入力">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 4px; font-size: 7.8pt; background: #fafafa;">
+                    ※ 他院紹介用DVD作成・画像取り込み　
+                    <span class="circle-opt selected" id="opt_dvd_no" onclick="setXrayDvd('未')">未</span>・
+                    <span class="circle-opt" id="opt_dvd_yes" onclick="setXrayDvd('済')">済</span>
+                    <input type="hidden" name="xrayDvd" id="inputXrayDvd" value="未">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- 右側: 部位 / 撮影条件 / 電子保存 記録表 -->
+            <div style="width: 48%;">
+              <table class="slip-table" style="height: 100%;">
+                <tr style="background: #f8fafc; height: 18%;">
+                  <th style="width: 38%; font-size: 8pt;">部位</th>
+                  <th style="width: 38%; font-size: 8pt;">撮影条件</th>
+                  <th style="width: 24%; font-size: 8pt;">電子保存</th>
+                </tr>
+                <tr style="height: 20%;">
+                  <td>
+                    <input type="text" class="slip-input" style="font-size: 8pt; text-align: center;" placeholder="胸部など">
+                  </td>
+                  <td>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 2px; font-size: 8pt;">
+                      <input type="text" name="xrayKv" class="slip-input" style="width: 32px; text-align: center;" placeholder="kV">
+                      <input type="text" name="xrayMa" class="slip-input" style="width: 32px; text-align: center;" placeholder="mA">
+                      <input type="text" name="xraySec" class="slip-input" style="width: 32px; text-align: center;" placeholder="s">
+                    </div>
+                  </td>
+                  <td style="text-align: center;">
+                    <label class="chk-line" style="justify-content: center;">
+                      <input type="checkbox" name="elecImgAdd" value="true" checked>
+                    </label>
+                  </td>
+                </tr>
+                <tr style="height: 20%;">
+                  <td><input type="text" class="slip-input" style="font-size: 8pt; text-align: center;"></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+                <tr style="height: 20%;">
+                  <td><input type="text" class="slip-input" style="font-size: 8pt; text-align: center;"></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+                <!-- 検査目的 -->
+                <tr style="height: 22%;">
+                  <td colspan="3" style="vertical-align: top; padding: 3px;">
+                    <div style="font-weight: bold; font-size: 7.8pt; color: #475569;">検査目的・所見:</div>
+                    <input type="text" name="xrayPurpose" id="xrayPurpose" class="slip-input" style="font-size: 8.2pt;" placeholder="例: 術後経過観察、肺炎・心拡大否定">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+          </div>
+
+          <!-- 最下部 病院名 -->
+          <div class="slip-footer">交雄会 だて病院</div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 下部操作ボタンバー -->
+    <div class="bottom-float-bar">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.85rem; color: #64748b;">
+          ※「オーダー保存」で電子カルテと連携、「発行して印刷」で正・副2枚組A4伝票を印刷します
+        </span>
+      </div>
+      <div class="action-button-group">
+        <button type="button" class="btn-act btn-act-outline" onclick="resetForm()">
+          🔄 クリア
+        </button>
+        <button type="button" class="btn-act btn-act-save" onclick="submitOrderForm(0)">
+          💾 オーダー保存 (カルテ連携)
+        </button>
+        <button type="button" class="btn-act btn-act-print" onclick="submitOrderForm(1)">
+          🖨️ 発行して印刷 (A4 正・副) ➔
+        </button>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- ===================================================================== -->
+  <!-- 💻 スクリプト処理 (原本伝票連動 & データ同期) -->
+  <!-- ===================================================================== -->
+  <script>
+    // 様式切り替え (CT, FLUORO, XRAY)
+    function switchFormType(type) {
+      document.getElementById('inputFormType').value = type;
+
+      // タブボタンのアクティブ状態
+      document.querySelectorAll('.form-tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('tabBtn_' + type);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // 伝票用紙の表示切り替え
+      document.getElementById('paper_CT').style.display = (type === 'CT') ? 'block' : 'none';
+      document.getElementById('paper_FLUORO').style.display = (type === 'FLUORO') ? 'block' : 'none';
+      document.getElementById('paper_XRAY').style.display = (type === 'XRAY') ? 'block' : 'none';
+
+      // プリセットチップの表示切り替え
+      document.getElementById('presets_CT').style.display = (type === 'CT') ? 'flex' : 'none';
+      document.getElementById('presets_FLUORO').style.display = (type === 'FLUORO') ? 'flex' : 'none';
+      document.getElementById('presets_XRAY').style.display = (type === 'XRAY') ? 'flex' : 'none';
+    }
+
+    // カスタムチェックボックスのUIトグル
+    function toggleCustomChk(chk, boxId) {
+      const box = document.getElementById(boxId);
+      if (box) {
+        if (chk.checked) box.classList.add('checked');
+        else box.classList.remove('checked');
+      }
+    }
+
+    // 丸囲み選択肢の制御
+    function setGender(g) {
+      document.getElementById('inputGender').value = g;
+      ['ct', 'fl', 'xr'].forEach(prefix => {
+        const m = document.getElementById(`${prefix}_gender_M`);
+        const f = document.getElementById(`${prefix}_gender_F`);
+        if (m && f) {
+          m.classList.toggle('selected', g === '男');
+          f.classList.toggle('selected', g === '女');
+        }
+      });
+    }
+
+    function setWard(w) {
+      document.getElementById('inputWard').value = w;
+      ['ct', 'fl', 'xr'].forEach(prefix => {
+        const out = document.getElementById(`${prefix}_ward_out`);
+        const ward = document.getElementById(`${prefix}_ward_ward`);
+        const med = document.getElementById(`${prefix}_ward_med`);
+        const shio = document.getElementById(`${prefix}_ward_shio`);
+        const umi = document.getElementById(`${prefix}_ward_umi`);
+        if (out) out.classList.toggle('selected', w === '外来');
+        if (ward) ward.classList.toggle('selected', w === '病棟');
+        if (med) med.classList.toggle('selected', w === '医療');
+        if (shio) shio.classList.toggle('selected', w.includes('しおかぜ'));
+        if (umi) umi.classList.toggle('selected', w.includes('うみかぜ'));
+      });
+    }
+
+    function setMobility(m) {
+      document.getElementById('inputMobility').value = m;
+      ['ct', 'fl', 'xr'].forEach(prefix => {
+        const walk = document.getElementById(`${prefix}_mob_walk`);
+        const wheel = document.getElementById(`${prefix}_mob_wheel`);
+        const bed = document.getElementById(`${prefix}_mob_bed`);
+        const stret = document.getElementById(`${prefix}_mob_stret`);
+        if (walk) walk.classList.toggle('selected', m === '徒歩');
+        if (wheel) wheel.classList.toggle('selected', m === '車椅子');
+        if (bed) bed.classList.toggle('selected', m === 'ベッド');
+        if (stret) stret.classList.toggle('selected', m === 'ストレッチャー');
+      });
+    }
+
+    function setInfection(inf) {
+      document.getElementById('inputInfection').value = inf;
+      const isNone = (!inf || inf === '無');
+      ['ct', 'fl', 'xr'].forEach(prefix => {
+        const no = document.getElementById(`${prefix}_inf_no`);
+        const yes = document.getElementById(`${prefix}_inf_yes`);
+        const note = document.getElementById(`${prefix}_infection_note`);
+        if (no) no.classList.toggle('selected', isNone);
+        if (yes) yes.classList.toggle('selected', !isNone);
+        if (note && isNone) note.value = '';
+      });
+    }
+
+    function setCtContrast(c) {
+      document.getElementById('inputCtContrast').value = c;
+      const s = document.getElementById('opt_ct_simple');
+      const ct = document.getElementById('opt_ct_contrast');
+      if (s) s.classList.toggle('selected', c === '単純');
+      if (ct) ct.classList.toggle('selected', c === '造影');
+      if (c === '造影') {
+        const med = document.getElementById('ctMedications');
+        if (med && !med.value) med.value = 'イオパミロン注300 (100mL)、生理食塩水';
+        document.getElementById('chk_ct_2p').checked = true;
+      }
+    }
+
+    function setXrayDvd(dvd) {
+      document.getElementById('inputXrayDvd').value = dvd;
+      const no = document.getElementById('opt_dvd_no');
+      const yes = document.getElementById('opt_dvd_yes');
+      if (no) no.classList.toggle('selected', dvd === '未');
+      if (yes) yes.classList.toggle('selected', dvd === '済');
+    }
+
+    // 患者情報の各伝票間双方向同期
+    function syncPatientInputs(field, val) {
+      if (field === 'id') {
+        ['ct', 'fl', 'xr'].forEach(p => { const el = document.getElementById(`${p}_patientId`); if (el) el.value = val; });
+      } else if (field === 'name') {
+        ['ct', 'fl', 'xr'].forEach(p => { const el = document.getElementById(`${p}_patientName`); if (el) el.value = val; });
+      } else if (field === 'kana') {
+        ['ct', 'fl', 'xr'].forEach(p => { const el = document.getElementById(`${p}_patientKana`); if (el) el.value = val; });
+      } else if (field === 'birth') {
+        ['ct', 'fl', 'xr'].forEach(p => { const el = document.getElementById(`${p}_birthDate`); if (el) el.value = val; });
+      } else if (field === 'room') {
+        ['ct', 'fl', 'xr'].forEach(p => { const el = document.getElementById(`${p}_room`); if (el) el.value = val; });
+      } else if (field === 'doc') {
+        ['ct', 'fl', 'xr'].forEach(p => { const el = document.getElementById(`${p}_doctorName`); if (el) el.value = val; });
+      }
+    }
+
+    // 日時ピッカー同期
+    function syncDateTime() {
+      const activeType = document.getElementById('inputFormType').value;
+      const prefix = (activeType === 'CT') ? 'ct' : (activeType === 'FLUORO' ? 'fl' : 'xr');
+      const d = document.getElementById(`${prefix}_date_picker`)?.value;
+      const t = document.getElementById(`${prefix}_time_picker`)?.value;
+      if (d && t) {
+        document.getElementById('inputScheduledDate').value = `${d}T${t}`;
+      } else if (d) {
+        document.getElementById('inputScheduledDate').value = `${d}T09:00`;
+      }
+      // 他の用紙の日時も揃える
+      ['ct', 'fl', 'xr'].forEach(p => {
+        if (p !== prefix) {
+          const dp = document.getElementById(`${p}_date_picker`);
+          const tp = document.getElementById(`${p}_time_picker`);
+          if (dp && d) dp.value = d;
+          if (tp && t) tp.value = t;
+        }
+      });
+    }
+
+    // 患者選択ドロップダウン連動
+    function onPatientSelectChange(patientId) {
+      if (!patientId) {
+        clearAllPatientFields();
+        return;
+      }
+      const select = document.getElementById('patientSelectDropdown');
+      const opt = select.options[select.selectedIndex];
+      if (!opt) return;
+
+      const pData = {
+        patientId: opt.dataset.id || '',
+        name: opt.dataset.name || '',
+        kana: opt.dataset.kana || '',
+        age: opt.dataset.age || '',
+        gender: opt.dataset.gender || '男',
+        birthDate: opt.dataset.birth || '',
+        ward: opt.dataset.ward || '外来',
+        room: opt.dataset.room || '',
+        department: opt.dataset.dept || '内科',
+        mobility: opt.dataset.mobility || '徒歩',
+        infection: opt.dataset.infection || '無'
+      };
+
+      // 伝票上の入力欄へ流し込み
+      syncPatientInputs('id', pData.patientId);
+      syncPatientInputs('name', pData.name);
+      syncPatientInputs('kana', pData.kana);
+      syncPatientInputs('birth', pData.birthDate);
+      syncPatientInputs('room', pData.room);
+      document.getElementById('inputAge').value = pData.age;
+      document.getElementById('ct_requestDept').value = pData.department;
+
+      setGender(pData.gender);
+      setWard(pData.ward);
+      setMobility(pData.mobility);
+      setInfection(pData.infection);
+
+      // 日時が未設定なら現在日時をセット
+      setNowIfDateEmpty();
+    }
+
+    function clearAllPatientFields() {
+      syncPatientInputs('id', '');
+      syncPatientInputs('name', '');
+      syncPatientInputs('kana', '');
+      syncPatientInputs('birth', '');
+      syncPatientInputs('room', '');
+      document.getElementById('inputAge').value = '';
+      setGender('男');
+      setWard('外来');
+      setMobility('徒歩');
+      setInfection('無');
+    }
+
+    function setNowIfDateEmpty() {
+      const activeType = document.getElementById('inputFormType').value;
+      const prefix = (activeType === 'CT') ? 'ct' : (activeType === 'FLUORO' ? 'fl' : 'xr');
+      const dp = document.getElementById(`${prefix}_date_picker`);
+      const tp = document.getElementById(`${prefix}_time_picker`);
+      if (dp && !dp.value) {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        dp.value = `${yyyy}-${mm}-${dd}`;
+        if (tp) tp.value = `${hh}:${min}`;
+        syncDateTime();
+      }
+    }
+
+    // プリセット適用
+    function applyCtPreset(preset) {
+      switchFormType('CT');
+      setNowIfDateEmpty();
+      if (preset === 'chest') {
+        setCtContrast('単純');
+        checkPart('胸部 (肺・横隔)', 'chk_box_ct_chest');
+        document.getElementById('ctPurpose').value = '発熱・咳嗽持続のため肺炎疑い、胸部精査';
+      } else if (preset === 'abdo') {
+        setCtContrast('造影');
+        checkPart('腹部 (肝・胆・膵・腎)', 'chk_box_ct_abdo');
+        checkPart('骨盤腔', 'chk_box_ct_pelvis');
+        document.getElementById('ctPurpose').value = '腹痛・肝胆膵病変精査のため腹部骨盤造影CT';
+      } else if (preset === 'head') {
+        setCtContrast('単純');
+        checkPart('頭部', 'chk_box_ct_head');
+        document.getElementById('ctPurpose').value = '転倒・頭部打撲後の頭蓋内出血否定、精査';
+      }
+    }
+
+    function applyFluoroPreset(preset) {
+      switchFormType('FLUORO');
+      setNowIfDateEmpty();
+      if (preset === 'peg') {
+        checkFluoroExam('PEG交換', 'chk_box_fl_peg');
+        checkFluoroMed('ガストログラフィン 20ml', 'chk_box_fl_gastro');
+        checkFluoroMed('キシロカインゼリー2% 10ml', 'chk_box_fl_xylo');
+        document.getElementById('fluoroMaterials').value = 'ガストロボタン 24Fr 3.5cm、交換用シリンジ、滅菌ガーゼ';
+        document.getElementById('fluoroPurpose').value = '定期PEGチューブ交換、瘻孔部および胃内留置位置の造影確認';
+      } else if (preset === 'vf') {
+        checkFluoroExam('VF検査', 'chk_box_fl_vf');
+        checkFluoroMed('硫酸バリウム散98.8%ホリイ 300g', 'chk_box_fl_ba');
+        document.getElementById('fluoroMaterials').value = '嚥下食、トロミ水、バリウム液';
+        document.getElementById('fluoroPurpose').value = '誤嚥・嚥下障害の評価、嚥下機能造影検査(VF)';
+      }
+    }
+
+    function applyXrayPreset(preset) {
+      switchFormType('XRAY');
+      setNowIfDateEmpty();
+      if (preset === 'chest') {
+        checkXrayPart('① 胸部 (立位 PA / 側面 R-L)', 'chk_box_xr_1');
+        document.getElementById('xrayPurpose').value = '術後・定期経過観察、胸水・気胸・心拡大の有無確認';
+      } else if (preset === 'abdo') {
+        checkXrayPart('② 腹部 (立位 / 臥位)', 'chk_box_xr_2');
+        document.getElementById('xrayPurpose').value = '腹痛・イレウス疑い、ニボー像・フリーエア確認';
+      } else if (preset === 'lumbar') {
+        checkXrayPart('③ 腰椎 (正面 / 側面)', 'chk_box_xr_3');
+        document.getElementById('xrayPurpose').value = '腰痛精査、圧迫骨折・変形性脊椎症の確認';
+      }
+    }
+
+    function checkPart(val, boxId) {
+      const chk = document.querySelector(`input[name="ctParts"][value="${val}"]`);
+      if (chk) {
+        chk.checked = true;
+        toggleCustomChk(chk, boxId);
+      }
+    }
+    function checkFluoroExam(val, boxId) {
+      const chk = document.querySelector(`input[name="fluoroExam"][value="${val}"]`);
+      if (chk) {
+        chk.checked = true;
+        toggleCustomChk(chk, boxId);
+      }
+    }
+    function checkFluoroMed(val, boxId) {
+      const chk = document.querySelector(`input[name="fluoroMed"][value="${val}"]`);
+      if (chk) {
+        chk.checked = true;
+        toggleCustomChk(chk, boxId);
+      }
+    }
+    function checkXrayPart(val, boxId) {
+      const chk = document.querySelector(`input[name="xrayParts"][value="${val}"]`);
+      if (chk) {
+        chk.checked = true;
+        toggleCustomChk(chk, boxId);
+      }
+    }
+
+    // フォーム送信
+    function submitOrderForm(autoPrintVal) {
+      document.getElementById('inputAutoPrint').value = autoPrintVal;
+      const formType = document.getElementById('inputFormType').value;
+      const prefix = (formType === 'CT') ? 'ct' : (formType === 'FLUORO' ? 'fl' : 'xr');
+
+      // 共通隠しフィールドに同期
+      const pid = document.getElementById(`${prefix}_patientId`)?.value;
+      const pname = document.getElementById(`${prefix}_patientName`)?.value;
+      const pkana = document.getElementById(`${prefix}_patientKana`)?.value;
+      const doc = document.getElementById(`${prefix}_doctorName`)?.value;
+
+      if (!pid) {
+        alert('⚠️ 患者IDが入力されていません。対象患者を選択するかIDを入力してください。');
+        document.getElementById(`${prefix}_patientId`)?.focus();
+        return;
+      }
+      if (!pname) {
+        alert('⚠️ 患者氏名が入力されていません。');
+        document.getElementById(`${prefix}_patientName`)?.focus();
+        return;
+      }
+
+      // 日時が未設定なら今すぐ設定
+      syncDateTime();
+      if (!document.getElementById('inputScheduledDate').value) {
+        setNowIfDateEmpty();
+      }
+
+      // 送信用にCT以外の用紙の場合も input に値を流し込む
+      if (formType !== 'CT') {
+        const pbirth = document.getElementById(`${prefix}_birthDate`)?.value;
+        const proom = document.getElementById(`${prefix}_room`)?.value;
+
+        document.getElementById('ct_patientId').value = pid;
+        document.getElementById('ct_patientName').value = pname;
+        document.getElementById('ct_patientKana').value = pkana || '';
+        document.getElementById('ct_doctorName').value = doc || '担当医師';
+        if (pbirth) document.getElementById('ct_birthDate').value = pbirth;
+        if (proom) document.getElementById('ct_room').value = proom;
+      }
+
+      document.getElementById('radiologyOrderForm').submit();
+    }
+
+    // フォームのネイティブ submit 時の安全インターセプト
+    document.getElementById('radiologyOrderForm').addEventListener('submit', (e) => {
+      const formType = document.getElementById('inputFormType').value;
+      const prefix = (formType === 'CT') ? 'ct' : (formType === 'FLUORO' ? 'fl' : 'xr');
+      const pid = document.getElementById(`${prefix}_patientId`)?.value;
+      const pname = document.getElementById(`${prefix}_patientName`)?.value;
+
+      if (!pid) {
+        e.preventDefault();
+        alert('⚠️ 患者IDが入力されていません。対象患者を選択するかIDを入力してください。');
+        document.getElementById(`${prefix}_patientId`)?.focus();
+        return false;
+      }
+      if (!pname) {
+        e.preventDefault();
+        alert('⚠️ 患者氏名が入力されていません。');
+        document.getElementById(`${prefix}_patientName`)?.focus();
+        return false;
+      }
+      syncDateTime();
+    });
+
+    function resetForm() {
+      if (confirm('入力内容をすべてリセットしますか？')) {
+        document.getElementById('radiologyOrderForm').reset();
+        document.querySelectorAll('.chk-box-custom').forEach(b => b.classList.remove('checked'));
+        clearAllPatientFields();
+        const sel = document.getElementById('patientSelectDropdown');
+        if (sel) sel.value = '';
+      }
+    }
+
+    // 初期化
+    window.addEventListener('DOMContentLoaded', () => {
+      // URLに ?patientId= があれば反映
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryPid = urlParams.get('patientId');
+      if (queryPid) {
+        const select = document.getElementById('patientSelectDropdown');
+        if (select) {
+          select.value = queryPid;
+          onPatientSelectChange(queryPid);
+        }
+      }
+      // 日時初期値
+      setNowIfDateEmpty();
+    });
+  </script>
+</body>
+</html>

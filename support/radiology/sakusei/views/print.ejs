@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🩻 放射線科伝票 (A4 1枚 / A5 正・副 2分割) - だて病院</title>
+  <base href="/radiology/">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ==========================================================================
+       🖨️ 画面プレビュー & 印刷共用スタイル
+       だて病院 放射線科実物写真に完全準拠 (A4縦 1枚に A5横 2枚 [正・副] を配置)
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      background: #475569;
+      margin: 0;
+      padding: 0;
+      font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", "MS P明朝", "Times New Roman", serif;
+      color: #000;
+    }
+
+    /* 上部操作バー (印刷時は非表示) */
+    .print-toolbar {
+      background: #1e293b;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .btn-tool {
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn-tool-primary {
+      background: #0284c7;
+      color: white;
+    }
+    .btn-tool-primary:hover { background: #0369a1; }
+    .btn-tool-outline {
+      background: #334155;
+      color: white;
+      border-color: #64748b;
+    }
+    .btn-tool-outline:hover { background: #475569; }
+
+    /* A4用紙コンテナ (210mm × 297mm) */
+    .a4-container {
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      background: white;
+      margin: 1.5rem auto 3rem auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      padding: 5mm 7mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* A5 伝票スリップ (高さ約 139mm) */
+    .a5-slip {
+      height: 139mm;
+      max-height: 139mm;
+      width: 100%;
+      border: 1.5px solid #000;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 上部カラーアクセントバー (写真再現) */
+    .slip-color-bar {
+      height: 7.5mm;
+      width: 100%;
+      border-bottom: 1.5px solid #000;
+    }
+    .bar-ct { background-color: #facc15 !important; }      /* CT: 黄色 */
+    .bar-xray { background-color: #16a34a !important; }    /* 照射録: 緑色 */
+    .bar-fluoro { background-color: #0284c7 !important; }  /* 透視: 青色 */
+
+    /* スリップ内部コンテンツエリア */
+    .slip-content {
+      flex: 1;
+      padding: 2.5mm 4mm 2mm 4mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* 正・副バッジ */
+    .slip-badge {
+      display: inline-block;
+      padding: 1px 7px;
+      font-size: 8.5pt;
+      font-weight: bold;
+      letter-spacing: 1px;
+      border: 1.5px solid #000;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+    .badge-orig {
+      background: #000;
+      color: #fff;
+    }
+    .badge-copy {
+      background: #fff;
+      color: #000;
+      border-style: dashed;
+    }
+
+    /* 中央キリトリ線 */
+    .cut-line-separator {
+      height: 5mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      user-select: none;
+    }
+    .cut-line-separator::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 1px dashed #64748b;
+      z-index: 1;
+    }
+    .cut-line-label {
+      background: white;
+      padding: 0 10px;
+      font-size: 7.5pt;
+      color: #64748b;
+      position: relative;
+      z-index: 2;
+      font-family: sans-serif;
+      letter-spacing: 1px;
+    }
+
+    /* 共通テーブル罫線スタイル */
+    .table-slip {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #000;
+    }
+    .table-slip th, .table-slip td {
+      border: 1px solid #000;
+      padding: 2px 4px;
+      font-size: 8.2pt;
+    }
+    .table-slip th {
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* 選択マーク・丸囲み */
+    .circle-opt {
+      display: inline-block;
+      padding: 0 2px;
+    }
+    .circle-opt.selected {
+      font-weight: bold;
+      border: 1.5px solid #000;
+      border-radius: 50%;
+      padding: 0 4px;
+      margin: 0 -2px;
+    }
+
+    /* 最下部フッター */
+    .slip-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 1mm;
+      font-size: 8pt;
+    }
+    .hospital-title {
+      font-size: 10pt;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-align: center;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       🖨️ 印刷設定 (@media print)
+       ========================================================================== */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 4mm 6mm;
+      }
+      html, body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        max-height: 297mm !important;
+        overflow: hidden !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .a4-container {
+        width: 100% !important;
+        height: 282mm !important;
+        max-height: 285mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .a5-slip {
+        height: 138mm !important;
+        max-height: 138mm !important;
+        border: 1.5px solid #000 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+      .cut-line-separator {
+        height: 4mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .cut-line-separator::before {
+        border-top: 1px dashed #000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 上部操作バー (印刷時は非表示) -->
+  <div class="print-toolbar no-print">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="./" class="btn-tool btn-tool-outline">
+        ⬅ オーダー画面へ戻る
+      </a>
+      <span style="font-weight: bold; font-size: 1.05rem;">🩻 放射線科伝票 A4印刷 (A5 正・副 2分割)</span>
+      <span style="background: #7c3aed; color: white; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
+        <%= order.orderNumber %>
+      </span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <button type="button" class="btn-tool btn-tool-primary" onclick="window.print()">
+        🖨️ A4 1枚に印刷 (正・副 2分割)
+      </button>
+    </div>
+  </div>
+
+  <!-- A4 用紙本体 (幅210mm × 高さ297mm) -->
+  <div class="a4-container">
+
+    <% 
+      // 日時フォーマットの事前準備
+      const sched = new Date(order.scheduledDate || order.orderDate);
+      const sYear = sched.getFullYear();
+      const sMonth = sched.getMonth() + 1;
+      const sDate = sched.getDate();
+      const sHour = String(sched.getHours()).padStart(2, '0');
+      const sMin = String(sched.getMinutes()).padStart(2, '0');
+
+      // 部位存在チェック関数
+      function hasPart(p) {
+        if (!order.parts || !Array.isArray(order.parts)) return false;
+        return order.parts.some(item => item.includes(p));
+      }
+
+      // 正・副の2回ループ（上段：正・原本、下段：副・控え）
+      const slipCopies = [
+        { type: 'ORIGINAL', label: '正', subLabel: '原本 (放射線科提出用)', isOrig: true },
+        { type: 'COPY',     label: '副', subLabel: '控え (病棟・カルテ保管用)', isOrig: false }
+      ];
+
+      slipCopies.forEach((slip, index) => {
+    %>
+
+      <!-- 🩻 A5 伝票スリップ (正 or 副) -->
+      <div class="a5-slip">
+
+        <!-- 1. 最上部 カラーバー (写真再現) -->
+        <div class="slip-color-bar <%= order.formType === 'CT' ? 'bar-ct' : (order.formType === 'FLUORO' ? 'bar-fluoro' : 'bar-xray') %>"></div>
+
+        <!-- 2. スリップ内部 -->
+        <div class="slip-content">
+
+          <% if (order.formType === 'CT') { %>
+            <!-- ========================================================================= -->
+            <!-- 🟡 様式 1: ＣＴ検査依頼書 (写真: IMG_20260915_121825482_HDR.jpg 再現) -->
+            <!-- ========================================================================= -->
+
+            <!-- 上段：患者情報 (左) & タイトル枠テーブル (右) -->
+            <div style="display: flex; gap: 3mm; margin-bottom: 2mm;">
+              
+              <!-- 左側: 患者情報 (写真通りのレイアウト) -->
+              <div style="width: 44%; display: flex; flex-direction: column; justify-content: space-between; font-size: 8.5pt;">
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="font-weight: bold; width: 55px;">ID番号</span>
+                  <span style="font-family: monospace; font-size: 11pt; font-weight: bold; border-bottom: 1px solid #000; flex: 1; padding-left: 4px;">
+                    <%= order.patientId %>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="font-weight: bold; width: 55px;">氏名(カナ)</span>
+                  <span style="font-size: 10.5pt; font-weight: bold; border-bottom: 1px solid #000; flex: 1; padding-left: 4px;">
+                    <%= order.patientName %>
+                    <% if (order.patientKana) { %><span style="font-size: 7.5pt; font-weight: normal;">(<%= order.patientKana %>)</span><% } %>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 4px; font-size: 8pt;">
+                  <span style="font-weight: bold; width: 55px;">生年月日</span>
+                  <span style="flex: 1; border-bottom: 1px solid #000; padding-left: 2px;">
+                    <%= order.birthDate || '　　年　月　日' %>
+                  </span>
+                  <span style="font-weight: bold; margin-left: 4px;">性別</span>
+                  <span>
+                    <span class="circle-opt <%= order.gender === '男' ? 'selected' : '' %>">M</span>・<span class="circle-opt <%= order.gender === '女' ? 'selected' : '' %>">F</span>
+                  </span>
+                </div>
+                <div style="font-size: 8pt; border-bottom: 1px solid #000; padding-bottom: 1px;">
+                  <span class="circle-opt <%= (!order.ward || order.ward === '外来') ? 'selected' : '' %>">外来</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward !== '外来') ? 'selected' : '' %>">病棟</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward.includes('しおかぜ')) ? 'selected' : '' %>">しおかぜ</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward.includes('うみかぜ')) ? 'selected' : '' %>">うみかぜ</span>
+                  （ <strong><%= order.room || '　　' %></strong> ）号室
+                </div>
+              </div>
+
+              <!-- 右側: タイトル枠テーブル (写真通りの太枠) -->
+              <div style="width: 56%;">
+                <table class="table-slip" style="border: 1.5px solid #000;">
+                  <tr>
+                    <td colspan="4" style="text-align: center; padding: 2px; background: #fff;">
+                      <span style="font-size: 13pt; font-weight: bold; letter-spacing: 5px;">ＣＴ検査依頼書</span>
+                      <span class="slip-badge <%= slip.isOrig ? 'badge-orig' : 'badge-copy' %>">
+                        <%= slip.label %>
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="width: 15%; background: #f8fafc;">検査日</th>
+                    <td style="width: 38%; font-size: 8pt;">
+                      <%= sYear %>年<%= sMonth %>月<%= sDate %>日 <%= sHour %>時<%= sMin %>分
+                    </td>
+                    <th style="width: 15%; background: #f8fafc;">医師</th>
+                    <td style="width: 32%;">
+                      <strong><%= order.doctorName || '担当医師' %></strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">感染症</th>
+                    <td>
+                      <span class="circle-opt <%= (!order.infection || order.infection === '無') ? 'selected' : '' %>">無</span>・
+                      <span class="circle-opt <%= (order.infection && order.infection !== '無') ? 'selected' : '' %>">有</span>
+                      (<%= (order.infection && order.infection !== '無') ? order.infection : '　' %>)
+                    </td>
+                    <th style="background: #f8fafc;">技師</th>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">移動</th>
+                    <td colspan="3" style="font-size: 7.8pt;">
+                      <span class="circle-opt <%= order.mobility === '徒歩' ? 'selected' : '' %>">徒歩</span>・
+                      <span class="circle-opt <%= order.mobility === '車椅子' ? 'selected' : '' %>">車椅子</span>・
+                      <span class="circle-opt <%= order.mobility === 'ベッド' ? 'selected' : '' %>">ベッド</span>・
+                      <span class="circle-opt <%= order.mobility === 'ストレッチャー' ? 'selected' : '' %>">ストレッチャー</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">体格</th>
+                    <td colspan="3" style="font-size: 8pt;">
+                      身長: <strong><%= order.height || '　' %></strong> cm　　体重: <strong><%= order.weight || '　' %></strong> kg
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+            </div>
+
+            <!-- 中段：部位リスト (左) & 撮影条件・使用薬剤・目的 (右) -->
+            <div style="display: flex; gap: 3mm; flex: 1;">
+              
+              <!-- 左側: 部位選択リスト (9行の枠) -->
+              <div style="width: 44%;">
+                <table class="table-slip" style="height: 100%;">
+                  <% 
+                    const ctPartsRows = [
+                      { label: '頭部', key: '頭部', sub: '' },
+                      { label: '頸部', key: '頸部', sub: '' },
+                      { label: '胸部', key: '胸部', sub: '肺・横隔' },
+                      { label: '腹部', key: '腹部', sub: '肝・胆・膵・腎' },
+                      { label: '骨盤腔', key: '骨盤', sub: '' },
+                      { label: '脊椎', key: '脊椎', sub: '' },
+                      { label: '上肢', key: '上肢', sub: '' },
+                      { label: '下肢', key: '下肢', sub: '' },
+                      { label: 'その他', key: 'その他', sub: '' }
+                    ];
+                  %>
+                  <% ctPartsRows.forEach(row => { 
+                    const checked = hasPart(row.key);
+                  %>
+                    <tr style="height: 11%;">
+                      <td style="font-size: 8pt; padding: 1px 4px;">
+                        <strong>[<%= checked ? '✓' : ' ' %>] <%= row.label %></strong>
+                        <% if (row.sub) { %>
+                          <span style="font-size: 7.2pt; color: #444;">(<%= row.sub %>)</span>
+                        <% } else { %>
+                          ( <%= checked && order.partsDetail ? order.partsDetail : '　' %> )
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </table>
+              </div>
+
+              <!-- 右側: 単純・造影、使用薬剤、条件、目的 -->
+              <div style="width: 56%; display: flex; flex-direction: column; justify-content: space-between;">
+                
+                <table class="table-slip" style="flex: 1;">
+                  <!-- 造影・Dynamic -->
+                  <tr>
+                    <td style="font-size: 8pt; width: 62%;">
+                      <span class="circle-opt <%= order.contrast === '単純' ? 'selected' : '' %>">単純</span>・
+                      <span class="circle-opt <%= order.contrast === '造影' ? 'selected' : '' %>">造影</span>
+                      <span style="margin-left: 4px; font-weight: bold;">Dynamic</span>
+                      <span style="font-size: 7.5pt;">[<%= order.dynamicPhase === '2phase' ? '✓' : ' ' %>] 2p [<%= order.dynamicPhase === '3phase' ? '✓' : ' ' %>] 3p</span>
+                    </td>
+                    <!-- 使用薬剤 縦結合ヘッダー -->
+                    <th rowspan="3" style="width: 12%; background: #f8fafc; font-size: 7.5pt; writing-mode: vertical-rl; padding: 2px;">
+                      使用薬剤
+                    </th>
+                    <td rowspan="3" style="width: 26%; font-size: 7.2pt; vertical-align: top; padding: 2px;">
+                      <%= order.medications || '　' %>
+                    </td>
+                  </tr>
+                  <!-- 撮影条件 -->
+                  <tr>
+                    <td style="font-size: 7.8pt;">
+                      管電圧: <strong><%= order.conditions?.kv || '　' %></strong> kV　
+                      管電流: <strong><%= order.conditions?.ma || '　' %></strong> mA　
+                      時間: <strong><%= order.conditions?.sec || '　' %></strong> s
+                    </td>
+                  </tr>
+                  <!-- 電子画像管理加算 -->
+                  <tr>
+                    <td style="font-size: 7.8pt;">
+                      [<%= order.elecImgAdd ? '✓' : ' ' %>] 電子画像管理加算
+                    </td>
+                  </tr>
+                  <!-- 検査目的 -->
+                  <tr>
+                    <td colspan="3" style="height: 38px; vertical-align: top; font-size: 8pt; padding: 2px 4px;">
+                      <div style="font-weight: bold; font-size: 7.5pt; color: #555;">検査目的:</div>
+                      <%= order.purpose || '精査' %>
+                      <% if (order.remarks) { %><div style="font-size: 7.2pt; color: #333;">(特記: <%= order.remarks %>)</div><% } %>
+                    </td>
+                  </tr>
+                </table>
+
+              </div>
+
+            </div>
+
+          <% } else if (order.formType === 'XRAY') { %>
+            <!-- ========================================================================= -->
+            <!-- 🟢 様式 2: 診療Ｘ線照射録 (写真: IMG_20260915_121808155_HDR.jpg 再現) -->
+            <!-- ========================================================================= -->
+
+            <!-- 上段：患者情報 (左) & タイトル枠 (右) -->
+            <div style="display: flex; gap: 3mm; margin-bottom: 2mm;">
+              
+              <div style="width: 44%; display: flex; flex-direction: column; justify-content: space-between; font-size: 8.5pt;">
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="font-weight: bold; width: 55px;">ID番号</span>
+                  <span style="font-family: monospace; font-size: 11pt; font-weight: bold; border-bottom: 1px solid #000; flex: 1; padding-left: 4px;">
+                    <%= order.patientId %>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="font-weight: bold; width: 55px;">氏名(カナ)</span>
+                  <span style="font-size: 10.5pt; font-weight: bold; border-bottom: 1px solid #000; flex: 1; padding-left: 4px;">
+                    <%= order.patientName %>
+                    <% if (order.patientKana) { %><span style="font-size: 7.5pt; font-weight: normal;">(<%= order.patientKana %>)</span><% } %>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 4px; font-size: 8pt;">
+                  <span style="font-weight: bold; width: 55px;">生年月日</span>
+                  <span style="flex: 1; border-bottom: 1px solid #000; padding-left: 2px;">
+                    <%= order.birthDate || '　　年　月　日' %>
+                  </span>
+                  <span style="font-weight: bold; margin-left: 4px;">性別</span>
+                  <span>
+                    <span class="circle-opt <%= order.gender === '男' ? 'selected' : '' %>">M</span>・<span class="circle-opt <%= order.gender === '女' ? 'selected' : '' %>">F</span>
+                  </span>
+                </div>
+                <div style="font-size: 7.8pt; border-bottom: 1px solid #000; padding-bottom: 1px;">
+                  <span class="circle-opt <%= (!order.ward || order.ward === '外来') ? 'selected' : '' %>">外来</span>・
+                  <span class="circle-opt">医療</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward.includes('しおかぜ')) ? 'selected' : '' %>">しおかぜ</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward.includes('うみかぜ')) ? 'selected' : '' %>">うみかぜ</span>
+                  （ <strong><%= order.room || '　　' %></strong> ）号室
+                </div>
+                <div style="font-size: 7.5pt; color: #444;">
+                  プライム ・ 健診 ・ 入院時検査
+                </div>
+              </div>
+
+              <!-- 右側: タイトル枠 -->
+              <div style="width: 56%;">
+                <table class="table-slip" style="border: 1.5px solid #000;">
+                  <tr>
+                    <td colspan="4" style="text-align: center; padding: 2px; background: #fff;">
+                      <span style="font-size: 13pt; font-weight: bold; letter-spacing: 5px;">診療Ｘ線照射録</span>
+                      <span class="slip-badge <%= slip.isOrig ? 'badge-orig' : 'badge-copy' %>">
+                        <%= slip.label %>
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="width: 15%; background: #f8fafc;">検査日</th>
+                    <td style="width: 38%; font-size: 8pt;">
+                      <%= sYear %>年<%= sMonth %>月<%= sDate %>日 <%= sHour %>時<%= sMin %>分
+                    </td>
+                    <th style="width: 15%; background: #f8fafc;">医師</th>
+                    <td style="width: 32%;">
+                      <strong><%= order.doctorName || '担当医師' %></strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">感染症</th>
+                    <td>
+                      <span class="circle-opt <%= (!order.infection || order.infection === '無') ? 'selected' : '' %>">無</span>・
+                      <span class="circle-opt <%= (order.infection && order.infection !== '無') ? 'selected' : '' %>">有</span>
+                    </td>
+                    <th style="background: #f8fafc;">技師</th>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">移動</th>
+                    <td colspan="3" style="font-size: 7.8pt;">
+                      <span class="circle-opt <%= order.mobility === '徒歩' ? 'selected' : '' %>">徒歩</span>・
+                      <span class="circle-opt <%= order.mobility === '車椅子' ? 'selected' : '' %>">車椅子</span>・
+                      <span class="circle-opt <%= order.mobility === 'ベッド' ? 'selected' : '' %>">ベッド</span>・
+                      <span class="circle-opt <%= order.mobility === 'ストレッチャー' ? 'selected' : '' %>">ストレッチャー</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">ポータブル</th>
+                    <td colspan="3" style="font-size: 8pt;">
+                      [<%= order.isPortable ? '✓' : ' ' %>] ポータブル ( <%= order.portableRoom || order.room || '　　' %> ) 号室　　至急
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+            </div>
+
+            <!-- 中段：部位リスト (左) & 撮影条件・記録表 (右) -->
+            <div style="display: flex; gap: 3mm; flex: 1;">
+              
+              <!-- 左側: 部位選択リスト (写真通りの①〜⑩) -->
+              <div style="width: 52%;">
+                <table class="table-slip" style="height: 100%;">
+                  <tr><td style="font-size: 7.6pt;">① 胸部　正 (立位・座位・臥位) ・ 側面 (R-L・L-R) <%= hasPart('胸部') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">② 腹部　正 (立位・座位・臥位) <%= hasPart('腹部') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">③ 腰椎　正 ・ 側 <%= hasPart('腰椎') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">④ 膝関節　R ・ L　正 ・ 側 <%= hasPart('膝関節') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">⑤ 股関節　R ・ L　正 ・ 側 <%= hasPart('股関節') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">⑥ 骨盤　正 ・ 斜 <%= hasPart('骨盤') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">⑦ 手 (リウマチ) 2R　両 ・ 右 ・ 左 <%= hasPart('手') ? '［✓］' : '' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">⑧ <%= (order.parts && order.parts[0]) || '　' %></td></tr>
+                  <tr><td style="font-size: 7.6pt;">⑨ <%= (order.parts && order.parts[1]) || '　' %></td></tr>
+                  <tr>
+                    <td style="font-size: 7.2pt; background: #fafafa;">
+                      ※ 他院紹介用DVD作成・画像取り込み　
+                      <span class="circle-opt <%= order.mediaDvd !== '済' ? 'selected' : '' %>">未</span>・
+                      <span class="circle-opt <%= order.mediaDvd === '済' ? 'selected' : '' %>">済</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- 右側: 部位 / 撮影条件 / 電子保存 テーブル (写真通り) -->
+              <div style="width: 48%;">
+                <table class="table-slip" style="height: 100%;">
+                  <tr style="background: #f8fafc; height: 16%;">
+                    <th style="width: 40%;">部位</th>
+                    <th style="width: 38%;">撮影条件</th>
+                    <th style="width: 22%;">電子保存</th>
+                  </tr>
+                  <tr style="height: 21%;">
+                    <td style="font-size: 7.5pt; text-align: center;"><%= (order.parts && order.parts[0]) || order.examType %></td>
+                    <td style="font-size: 7.2pt; text-align: center;"><%= order.conditions?.raw || (order.conditions?.kv ? order.conditions.kv + 'kV ' + (order.conditions.ma || '') + 'mA' : '') %></td>
+                    <td style="font-size: 7.5pt; text-align: center;"><%= order.elecImgAdd ? '有' : '無' %></td>
+                  </tr>
+                  <tr style="height: 21%;">
+                    <td style="font-size: 7.5pt; text-align: center;"><%= (order.parts && order.parts[1]) || '' %></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr style="height: 21%;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr style="height: 21%;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                </table>
+              </div>
+
+            </div>
+
+          <% } else { %>
+            <!-- ========================================================================= -->
+            <!-- 🔵 様式 3: 透視検査依頼書 (写真: IMG_20260915_121833371_HDR.jpg 再現) -->
+            <!-- ========================================================================= -->
+
+            <!-- 上段：患者情報 (左) & タイトル枠 (右) -->
+            <div style="display: flex; gap: 3mm; margin-bottom: 2mm;">
+              
+              <div style="width: 44%; display: flex; flex-direction: column; justify-content: space-between; font-size: 8.5pt;">
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="font-weight: bold; width: 55px;">ID番号</span>
+                  <span style="font-family: monospace; font-size: 11pt; font-weight: bold; border-bottom: 1px solid #000; flex: 1; padding-left: 4px;">
+                    <%= order.patientId %>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="font-weight: bold; width: 55px;">氏名(カナ)</span>
+                  <span style="font-size: 10.5pt; font-weight: bold; border-bottom: 1px solid #000; flex: 1; padding-left: 4px;">
+                    <%= order.patientName %>
+                    <% if (order.patientKana) { %><span style="font-size: 7.5pt; font-weight: normal;">(<%= order.patientKana %>)</span><% } %>
+                  </span>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 4px; font-size: 8pt;">
+                  <span style="font-weight: bold; width: 55px;">生年月日</span>
+                  <span style="flex: 1; border-bottom: 1px solid #000; padding-left: 2px;">
+                    <%= order.birthDate || '　　年　月　日' %>
+                  </span>
+                  <span style="font-weight: bold; margin-left: 4px;">性別</span>
+                  <span>
+                    <span class="circle-opt <%= order.gender === '男' ? 'selected' : '' %>">M</span>・<span class="circle-opt <%= order.gender === '女' ? 'selected' : '' %>">F</span>
+                  </span>
+                </div>
+                <div style="font-size: 8pt; border-bottom: 1px solid #000; padding-bottom: 1px;">
+                  <span class="circle-opt <%= (!order.ward || order.ward === '外来') ? 'selected' : '' %>">外来</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward !== '外来') ? 'selected' : '' %>">病棟</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward.includes('しおかぜ')) ? 'selected' : '' %>">しおかぜ</span>・
+                  <span class="circle-opt <%= (order.ward && order.ward.includes('うみかぜ')) ? 'selected' : '' %>">うみかぜ</span>
+                  （ <strong><%= order.room || '　　' %></strong> ）号室
+                </div>
+              </div>
+
+              <!-- 右側: タイトル枠 -->
+              <div style="width: 56%;">
+                <table class="table-slip" style="border: 1.5px solid #000;">
+                  <tr>
+                    <td colspan="4" style="text-align: center; padding: 2px; background: #fff;">
+                      <span style="font-size: 13pt; font-weight: bold; letter-spacing: 5px;">透視検査依頼書</span>
+                      <span class="slip-badge <%= slip.isOrig ? 'badge-orig' : 'badge-copy' %>">
+                        <%= slip.label %>
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="width: 15%; background: #f8fafc;">検査日</th>
+                    <td style="width: 38%; font-size: 8pt;">
+                      <%= sYear %>年<%= sMonth %>月<%= sDate %>日 <%= sHour %>時<%= sMin %>分
+                    </td>
+                    <th style="width: 15%; background: #f8fafc;">医師</th>
+                    <td style="width: 32%;">
+                      <strong><%= order.doctorName || '担当医師' %></strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">感染症</th>
+                    <td>
+                      <span class="circle-opt <%= (!order.infection || order.infection === '無') ? 'selected' : '' %>">無</span>・
+                      <span class="circle-opt <%= (order.infection && order.infection !== '無') ? 'selected' : '' %>">有</span>
+                    </td>
+                    <th style="background: #f8fafc;">技師</th>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">移動</th>
+                    <td colspan="3" style="font-size: 7.8pt;">
+                      <span class="circle-opt <%= order.mobility === '徒歩' ? 'selected' : '' %>">徒歩</span>・
+                      <span class="circle-opt <%= order.mobility === '車椅子' ? 'selected' : '' %>">車椅子</span>・
+                      <span class="circle-opt <%= order.mobility === 'ベッド' ? 'selected' : '' %>">ベッド</span>・
+                      <span class="circle-opt <%= order.mobility === 'ストレッチャー' ? 'selected' : '' %>">ストレッチャー</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style="background: #f8fafc;">区分</th>
+                    <td colspan="3" style="font-size: 8pt;">
+                      透視室検査 / 処置・造影
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+            </div>
+
+            <!-- 中段：検査項目 (左) & 使用薬剤 (中) & 医療材料・詳細 (右) -->
+            <div style="display: flex; gap: 3mm; flex: 1;">
+              
+              <!-- 検査項目 (写真通り) -->
+              <div style="width: 25%;">
+                <table class="table-slip" style="height: 100%;">
+                  <tr style="background: #f8fafc; height: 16%;"><th style="font-size: 7.8pt;">検査項目</th></tr>
+                  <tr style="height: 16%;"><td style="font-size: 7.5pt;">[<%= order.examType.includes('PEG') ? '✓' : ' ' %>] PEG交換</td></tr>
+                  <tr style="height: 16%;"><td style="font-size: 7.5pt;">[<%= order.examType.includes('VF') ? '✓' : ' ' %>] VF検査</td></tr>
+                  <tr style="height: 16%;"><td style="font-size: 7.5pt;">[<%= order.examType.includes('消化管') ? '✓' : ' ' %>] 消化管造影</td></tr>
+                  <tr style="height: 16%;"><td style="font-size: 7.5pt;">[<%= order.examType.includes('単純') ? '✓' : ' ' %>] 単純透視</td></tr>
+                  <tr style="height: 20%;"><td style="font-size: 7.2pt;">その他 (<%= order.examType.includes('その他') ? order.examType : '　' %>)</td></tr>
+                </table>
+              </div>
+
+              <!-- 使用薬剤 (写真通り) -->
+              <div style="width: 42%;">
+                <table class="table-slip" style="height: 100%;">
+                  <tr style="background: #f8fafc; height: 16%;"><th style="font-size: 7.8pt;">使用薬剤</th></tr>
+                  <tr style="height: 14%;"><td style="font-size: 7.2pt;">ガストログラフィン ( <%= order.medications && order.medications.includes('ガストロ') ? order.medications : '　' %> ml)</td></tr>
+                  <tr style="height: 14%;"><td style="font-size: 7.2pt;">キシロカインゼリー2% ( ml)</td></tr>
+                  <tr style="height: 14%;"><td style="font-size: 7.2pt;">生理食塩水 ( ml)</td></tr>
+                  <tr style="height: 14%;"><td style="font-size: 7.2pt;">硫酸バリウム散98.8%ホリイ 300g</td></tr>
+                  <tr style="height: 14%;"><td style="font-size: 7.2pt;">バリコンミール 300g</td></tr>
+                  <tr style="height: 14%;"><td style="font-size: 7.2pt;">バロス発泡顆粒-S 3.5g×2</td></tr>
+                </table>
+              </div>
+
+              <!-- 医療材料 & 詳細 (写真通り) -->
+              <div style="width: 33%;">
+                <table class="table-slip" style="height: 100%;">
+                  <tr style="background: #f8fafc; height: 16%;"><th style="font-size: 7.8pt;">医療材料 / 詳細</th></tr>
+                  <tr>
+                    <td style="font-size: 7.5pt; vertical-align: top; padding: 4px;">
+                      <% if (order.materials) { %>
+                        <div><strong>材料:</strong> <%= order.materials %></div>
+                      <% } %>
+                      <div style="margin-top: 4px;"><strong>目的:</strong> <%= order.purpose || '造影・処置確認' %></div>
+                      <% if (order.remarks) { %>
+                        <div style="margin-top: 4px; font-size: 7pt; color: #444;">特記: <%= order.remarks %></div>
+                      <% } %>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+            </div>
+
+          <% } %>
+
+          <!-- 3. 最下部 (共通) -->
+          <div class="slip-footer">
+            <div style="width: 25%; font-size: 7.5pt; color: #555;">
+              伝票番号: <span style="font-family: monospace; font-weight: bold;"><%= order.orderNumber %></span>
+            </div>
+            <div class="hospital-title">
+              交雄会 だて病院
+            </div>
+            <div style="width: 25%; text-align: right; font-size: 7.5pt; color: #555;">
+              <%= slip.subLabel %>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 正・副の間のキリトリ線 (上段の後のみ表示) -->
+      <% if (index === 0) { %>
+        <div class="cut-line-separator">
+          <div class="cut-line-label">
+            ✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - キリトリ線 (A5 正・副 分割) - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ✂
+          </div>
+        </div>
+      <% } %>
+
+    <% }); %>
+
+  </div>
+
+  <script>
+    // 画面ロード時に自動印刷ダイアログを開くクエリ（?autoprint=1）に対応
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('autoprint') === '1') {
+        setTimeout(() => window.print(), 350);
+      }
+    });
+  </script>
+</body>
+</html>

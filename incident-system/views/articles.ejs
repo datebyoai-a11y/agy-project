@@ -1941,22 +1941,28 @@
           <span id="ribbonSearchArrow" style="font-size:0.65rem; transition:transform 0.2s ease;">▼</span>
         </button>
 
-        <!-- 🏥 統合ポータルへ戻る (Port 8000) -->
-        <a id="btnPortalTop" href="http://localhost:8000/menu" style="background:#4f46e5; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="医療統合ポータルメニュー (Port 8000) へ戻ります">
+        <!-- 🏥 統合ポータルへ戻る -->
+        <a id="btnPortalTop" href="/menu" style="background:#4f46e5; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="医療統合ポータルメニューへ戻ります">
           <span>🏥</span>
-          <span>ポータル (8000)</span>
+          <span>ポータル</span>
         </a>
 
-        <!-- 🚀 オーダリング移行 (Port 4000) -->
-        <a id="btnOrderingTop" href="http://localhost:4000/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面 (Port 4000) を現在選択中の患者を引き継いで開きます">
+        <!-- 🚀 オーダリング移行 -->
+        <a id="btnOrderingTop" href="/ordering/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" style="background:#0284c7; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="オーダリングシステム送信画面を現在選択中の患者を引き継いで開きます">
           <span>🚀</span>
-          <span>オーダリング移行 (Port 4000)</span>
+          <span>オーダー送信</span>
         </a>
 
         <!-- 💉 注射指示箋 (インクリメンタル検索対応) -->
-        <a id="btnInjSheetTop" href="http://localhost:4000/injection-sheet-form" target="app_injection_sheet" onclick="return handleInjectionSheetClick(event, this);" style="background:#059669; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="注射指示箋 (インクリメンタル薬品検索完備) を現在選択中の患者を引き継いで開きます">
+        <a id="btnInjSheetTop" href="/ordering/injection-sheet-form" target="app_injection_sheet" onclick="return handleInjectionSheetClick(event, this);" style="background:#059669; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="注射指示箋 (インクリメンタル薬品検索完備) を現在選択中の患者を引き継いで開きます">
           <span>💉</span>
           <span>注射指示箋</span>
+        </a>
+
+        <!-- 🩻 放射線科オーダー -->
+        <a id="btnRadiologyTop" href="/radiology/" target="app_radiology_order" onclick="return handleRadiologyClick(event, this);" style="background:#7c3aed; color:white; text-decoration:none; border:none; padding:0.35rem 0.75rem; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.35rem; box-shadow:0 1px 3px rgba(0,0,0,0.2); white-space:nowrap;" title="放射線科オーダーを現在選択中の患者を引き継いで開きます">
+          <span>🩻</span>
+          <span>放射線オーダー</span>
         </a>
 
         <!-- ⚙️ メニュー -->
@@ -1972,10 +1978,10 @@
             </div>
 
             <div class="gear-section-label">ナビゲーション</div>
-            <a href="http://localhost:8000/menu" class="gear-dropdown-item" style="background:#eef2ff;">
+            <a href="/menu" class="gear-dropdown-item" style="background:#eef2ff;">
               <span class="item-icon">🏥</span>
               <div class="item-info">
-                <div class="item-title" style="color:#4f46e5; font-weight:bold;">統合ポータルメニュー (Port 8000)</div>
+                <div class="item-title" style="color:#4f46e5; font-weight:bold;">統合ポータルメニュー</div>
                 <div class="item-desc">病院統合ポータルのメインメニューへ戻る</div>
               </div>
             </a>
@@ -2009,11 +2015,18 @@
                 <div class="item-desc">リボンの条件検索パネルを展開します</div>
               </div>
             </a>
-            <a href="/articles?order=radiology" class="gear-dropdown-item">
+            <a href="/radiology/" target="app_radiology_order" class="gear-dropdown-item" style="background:#faf5ff; border-left:3px solid #7c3aed; text-decoration:none;">
               <span class="item-icon">🩻</span>
               <div class="item-info">
-                <div class="item-title">放射線科オーダー</div>
-                <div class="item-desc">X線・CT・MRI等検査指示の発行</div>
+                <div class="item-title" style="color:#7c3aed; font-weight:bold;">放射線科オーダー (原本様式・印刷)</div>
+                <div class="item-desc">CT・透視・照射録オーダー入力・正副2枚組印刷画面へ移動</div>
+              </div>
+            </a>
+            <a href="/articles?order=radiology" class="gear-dropdown-item">
+              <span class="item-icon">📋</span>
+              <div class="item-info">
+                <div class="item-title">放射線科オーダー記事一覧</div>
+                <div class="item-desc">カルテ内の放射線検査記事を参照</div>
               </div>
             </a>
             <a href="/articles?order=iv" class="gear-dropdown-item">
@@ -2023,14 +2036,14 @@
                 <div class="item-desc">点滴・輸液・注射薬剤の投与指示</div>
               </div>
             </a>
-            <a id="btnOrderingGear" href="http://localhost:4000/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" class="gear-dropdown-item" style="background:#f0f9ff; border-left:3px solid #0284c7; text-decoration:none;">
+            <a id="btnOrderingGear" href="/ordering/" target="app_ordering_sender" onclick="return handleOrderingClick(event, this);" class="gear-dropdown-item" style="background:#f0f9ff; border-left:3px solid #0284c7; text-decoration:none;">
               <span class="item-icon">🚀</span>
               <div class="item-info">
-                <div class="item-title" style="color:#0284c7; font-weight:bold;">オーダリングシステム (Port 4000)</div>
+                <div class="item-title" style="color:#0284c7; font-weight:bold;">オーダリングシステム (送信画面)</div>
                 <div class="item-desc">病棟用注射指示箋・処方・検査の専用送信画面へ移動</div>
               </div>
             </a>
-            <a id="btnInjSheetGear" href="http://localhost:4000/injection-sheet-form" target="app_injection_sheet" onclick="return handleInjectionSheetClick(event, this);" class="gear-dropdown-item" style="background:#f0fdf4; border-left:3px solid #059669; text-decoration:none;">
+            <a id="btnInjSheetGear" href="/ordering/injection-sheet-form" target="app_injection_sheet" onclick="return handleInjectionSheetClick(event, this);" class="gear-dropdown-item" style="background:#f0fdf4; border-left:3px solid #059669; text-decoration:none;">
               <span class="item-icon">💉</span>
               <div class="item-info">
                 <div class="item-title" style="color:#059669; font-weight:bold;">注射指示箋 (インクリメンタル検索)</div>
@@ -3863,11 +3876,7 @@
         else orderType = 'IV'; // デフォルトは病棟用注射指示
       }
 
-      const isHttps = window.location.protocol === 'https:';
-      const senderPort = isHttps ? 4443 : 4000;
-      const protocol = isHttps ? 'https:' : 'http:';
-      const host = window.location.hostname || 'localhost';
-      const url = new URL(`${protocol}//${host}:${senderPort}/`);
+      const url = new URL('/ordering/', window.location.origin);
 
       if (patientCustomId) url.searchParams.set('patientId', patientCustomId);
       if (patientName) url.searchParams.set('patientName', patientName);
@@ -3884,7 +3893,7 @@
       return url.toString();
     }
 
-    // 🚀 オーダリングシステム送信画面 (Port 4000) を現在選択中の患者情報を引き継いで開く（既存タブがあれば再利用・移行）
+    // 🚀 オーダリングシステム送信画面を現在選択中の患者情報を引き継いで開く（既存タブがあれば再利用・移行）
     function openOrderingSystem(customOrderType = null) {
       const targetUrl = getOrderingSystemUrl(customOrderType);
       try {
@@ -3931,11 +3940,7 @@
       patientCustomId = String(patientCustomId || '').replace(/^\[|\]$/g, '').trim();
       patientName = String(patientName || '').replace(/\s*様$/, '').trim();
 
-      const isHttps = window.location.protocol === 'https:';
-      const senderPort = isHttps ? 4443 : 4000;
-      const protocol = isHttps ? 'https:' : 'http:';
-      const host = window.location.hostname || 'localhost';
-      const url = new URL(`${protocol}//${host}:${senderPort}/injection-sheet-form`);
+      const url = new URL('/ordering/injection-sheet-form', window.location.origin);
       if (patientCustomId) url.searchParams.set('patientId', patientCustomId);
       if (patientName) url.searchParams.set('patientName', patientName);
       return url.toString();
@@ -3954,6 +3959,21 @@
       } catch (e) {
         window.location.href = targetUrl;
       }
+    }
+
+    // 🩻 放射線科オーダー画面へのクリックハンドラ (リバースプロキシ連携)
+    function handleRadiologyClick(event, elem) {
+      let patientCustomId = document.getElementById('selectedPersonCode')?.value || (currentPerson && currentPerson.id) || currentTargetPersonId || '';
+      if (!patientCustomId) {
+        const idText = document.getElementById('cartePatientId')?.textContent?.trim();
+        if (idText && idText !== '未選択' && idText !== '0000000001') {
+          patientCustomId = idText.replace(/^\[|\]$/g, '').trim();
+        }
+      }
+      const url = new URL('/radiology/', window.location.origin);
+      if (patientCustomId) url.searchParams.set('patientId', patientCustomId);
+      if (elem) elem.href = url.toString();
+      return true;
     }
 
     // 💉 注射指示箋ボタンクリックハンドラ

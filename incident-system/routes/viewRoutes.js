@@ -146,7 +146,7 @@ router.get('/articles', async (req, res) => {
         });
 
         art.pgpSignature = pgpSig;
-        await art.save();
+        await Article.collection.updateOne({ _id: art._id }, { $set: { pgpSignature: pgpSig } });
       }
     }
 

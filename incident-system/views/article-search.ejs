@@ -549,9 +549,13 @@
         <span>◀</span>
         <span>カルテ記事画面へ戻る</span>
       </a>
-      <a href="http://localhost:4000/<%= curTargetId && curTargetId !== 'ALL' ? `?patientId=${encodeURIComponent(curTargetId)}` : '' %>" target="app_ordering_sender" class="btn-header btn-header-ordering" title="オーダリングシステム (Port 4000) へ移動">
+      <a href="/menu" class="btn-header" style="background:#4f46e5; color:white; text-decoration:none;" title="医療統合ポータルメニューへ戻る">
+        <span>🏠</span>
+        <span>ポータル</span>
+      </a>
+      <a href="/ordering/<%= curTargetId && curTargetId !== 'ALL' ? `?patientId=${encodeURIComponent(curTargetId)}` : '' %>" target="app_ordering_sender" class="btn-header btn-header-ordering" title="オーダリングシステムへ移動">
         <span>🚀</span>
-        <span>オーダリング (4000)</span>
+        <span>オーダー送信</span>
       </a>
     </div>
   </header>

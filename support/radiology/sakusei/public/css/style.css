@@ -1,0 +1,390 @@
+/* ==============================================================================
+   🏥 交雄会だて病院 放射線科オーダー発行・帳票印刷システム スタイルシート
+   ============================================================================== */
+
+:root {
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --rad-purple: #7c3aed;
+  --rad-purple-hover: #6d28d9;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Meiryo", sans-serif;
+  background-color: #f1f5f9;
+  color: var(--slate-900);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* ナビゲーションバー */
+.navbar {
+  background: white;
+  border-bottom: 1px solid var(--slate-200);
+  padding: 0.6rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-icon {
+  font-size: 1.8rem;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.brand-text h1 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin: 0;
+}
+
+.brand-text p {
+  font-size: 0.75rem;
+  color: var(--slate-600);
+  margin: 0;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* メインコンテナ */
+.main-container {
+  max-width: 1200px;
+  margin: 1.25rem auto;
+  padding: 0 1rem;
+}
+
+/* 患者情報バナー */
+.patient-banner-card {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.patient-info-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.patient-badge-id {
+  background: #0284c7;
+  color: white;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.patient-name-large {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--slate-900);
+}
+
+.patient-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* タブナビゲーション */
+.rad-tabs-nav {
+  display: flex;
+  gap: 0.4rem;
+  border-bottom: 2px solid var(--slate-300);
+  margin-bottom: 1.25rem;
+  background: white;
+  padding: 0.5rem 0.75rem 0 0.75rem;
+  border-radius: 10px 10px 0 0;
+}
+
+.rad-tab-btn {
+  background: var(--slate-100);
+  border: 1px solid var(--slate-300);
+  border-bottom: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--slate-600);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.15s ease;
+}
+
+.rad-tab-btn:hover {
+  background: #f8fafc;
+  color: var(--slate-900);
+}
+
+.rad-tab-btn.active {
+  background: white;
+  color: var(--rad-purple);
+  border-color: var(--slate-300);
+  border-top: 3px solid var(--rad-purple);
+  margin-bottom: -2px;
+  padding-bottom: calc(0.65rem + 2px);
+}
+
+/* フォームカード */
+.order-form-card {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: 0 0 10px 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+}
+
+.form-section-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--slate-800);
+  border-bottom: 2px solid #ede9fe;
+  padding-bottom: 0.35rem;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--slate-700);
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--slate-300);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  background: white;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+  border-color: var(--rad-purple);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+/* チェックボックス・ボックステーブル */
+.chk-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.chk-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.chk-item:hover {
+  background: #f1f5f9;
+}
+
+.chk-item input[type="checkbox"],
+.chk-item input[type="radio"] {
+  cursor: pointer;
+}
+
+/* ボタン */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--rad-purple);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--rad-purple-hover);
+}
+
+.btn-success {
+  background: #059669;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #047857;
+}
+
+.btn-outline {
+  background: white;
+  border: 1px solid var(--slate-300);
+  color: var(--slate-700);
+}
+
+.btn-outline:hover {
+  background: var(--slate-100);
+  border-color: var(--slate-400);
+}
+
+.btn-print {
+  background: #0284c7;
+  color: white;
+}
+
+.btn-print:hover {
+  background: #0369a1;
+}
+
+/* 履歴テーブル */
+.history-card {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  margin-top: 1.5rem;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 0.75rem;
+}
+
+.history-table th {
+  background: var(--slate-100);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--slate-300);
+  color: var(--slate-700);
+  font-weight: 700;
+}
+
+.history-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+.history-table tr:hover {
+  background: #faf5ff;
+}
+
+/* ==============================================================================
+   🖨️ 印刷基本設定 (@media print) ★A4 1枚 (A5 正・副 2分割) 対応
+   ============================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 4mm 6mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-family: "游明朝", "Yu Mincho", "Hiragino Mincho ProN", "MS P明朝", serif;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 画面操作要素の非表示 */
+  .no-print,
+  .common-top-ribbon,
+  .navbar,
+  .patient-banner-card,
+  .rad-tabs-nav,
+  .order-form-card,
+  .history-card,
+  .btn,
+  header,
+  footer {
+    display: none !important;
+  }
+}
+

@@ -81,9 +81,9 @@
                 <span id="selectedPatientBadge" style="font-size: 0.85rem; color: #0369a1; font-weight: bold;">
                     🎯 選択中の対象者: <span id="selectedPatientName">未選択</span>
                 </span>
-                <a id="btnOpenOrdering" href="http://localhost:4000/" target="app_ordering_sender" onclick="return launchOrderingSystem(event);" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" title="選択した対象者を引き継いでオーダリングシステム (Port 4000) を開きます">
+                <a id="btnOpenOrdering" href="/ordering/" target="app_ordering_sender" onclick="return launchOrderingSystem(event);" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.15);" title="選択した対象者を引き継いでオーダリングシステムを開きます">
                     <span>🚀</span>
-                    <span>オーダリング呼出 (Port 4000)</span>
+                    <span>オーダリング呼出</span>
                 </a>
             </div>
         </fieldset>
@@ -178,11 +178,7 @@
             const select = document.getElementById('targetPersonSelect');
             const selectedOpt = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
             
-            const isHttps = window.location.protocol === 'https:';
-            const port = isHttps ? 4443 : 4000;
-            const protocol = isHttps ? 'https:' : 'http:';
-            const host = window.location.hostname || 'localhost';
-            const url = new URL(`${protocol}//${host}:${port}/`);
+            const url = new URL('/ordering/', window.location.origin);
 
             if (selectedOpt && selectedOpt.value) {
                 const customId = selectedOpt.getAttribute('data-custom-id') || '';

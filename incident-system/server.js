@@ -18,6 +18,7 @@ app.use(cookieParser());
 
 // セッション設定
 app.use(session({
+  name: 'incident.sid',
   secret: 'incident-secret-key-2026',
   resave: false,
   saveUninitialized: false,

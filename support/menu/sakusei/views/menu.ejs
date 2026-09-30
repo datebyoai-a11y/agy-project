@@ -95,6 +95,18 @@
                   <button type="button" class="btn btn-primary" onclick="openPatientSelectModalForCarte()" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer;" title="カルテを開く対象患者を選択します">
                     🩺 患者を選んでカルテを開く ➔
                   </button>
+                <% } else if (menu.id === 'radiology_order') { %>
+                  <button type="button" class="btn btn-primary" onclick="launchRadiologyOrder('<%= menu.url %>')" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #7c3aed;">
+                    🩻 放射線オーダーを発行 ➔
+                  </button>
+                <% } else if (menu.id === 'radiology_receiver') { %>
+                  <a href="<%= menu.url %>" class="btn btn-primary" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #0284c7;">
+                    📋 指示受け・実施モニターを開く ➔
+                  </a>
+                <% } else if (menu.id === 'order_sender') { %>
+                  <button type="button" class="btn btn-primary" onclick="launchOrderingSender('<%= menu.url %>')" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #4f46e5;">
+                    📝 オーダー入力画面を開く ➔
+                  </button>
                 <% } else { %>
                   <a href="<%= menu.url %>" class="btn btn-primary">
                     <%= menu.title %> を開く ➔
@@ -339,6 +351,36 @@
 
       // SSO Launch 経由で対象患者のカルテ・記事入力画面へ直接遷移！
       window.location.href = '/sso/launch?app=articles&patientId=' + encodeURIComponent(patientId);
+    }
+
+    // 🩻 放射線科オーダーへのSSO Launch API 連携起動 (リボン選択中の患者を引き継ぐ)
+    function launchRadiologyOrder(baseUrl) {
+      let targetUrl = baseUrl || '/sso/launch?app=radiology';
+      try {
+        const stored = localStorage.getItem('koyukai_current_patient');
+        if (stored) {
+          const p = JSON.parse(stored);
+          if (p.patientId) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'patientId=' + encodeURIComponent(p.patientId);
+          }
+        }
+      } catch (_) {}
+      window.location.href = targetUrl;
+    }
+
+    // 📝 オーダリング送信画面への連携起動 (リボン選択中の患者を引き継ぐ)
+    function launchOrderingSender(baseUrl) {
+      let targetUrl = baseUrl || '/ordering/';
+      try {
+        const stored = localStorage.getItem('koyukai_current_patient');
+        if (stored) {
+          const p = JSON.parse(stored);
+          if (p.patientId) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'patientId=' + encodeURIComponent(p.patientId);
+          }
+        }
+      } catch (_) {}
+      window.location.href = targetUrl;
     }
 
     // 病棟フィルター切り替え

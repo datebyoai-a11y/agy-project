@@ -42,7 +42,10 @@ case "$ACTION" in
       kill "$(cat .launcher.pid)" 2>/dev/null
       rm -f .launcher.pid
     fi
-    # ポート 3000, 4000, 5000 のプロセスを終了
+    # ポート 8000, 8080, 8081, 3000, 4000, 5000 のプロセスを終了
+    fuser -k 8000/tcp 2>/dev/null
+    fuser -k 8080/tcp 2>/dev/null
+    fuser -k 8081/tcp 2>/dev/null
     fuser -k 3000/tcp 2>/dev/null
     fuser -k 4000/tcp 2>/dev/null
     fuser -k 5000/tcp 2>/dev/null
@@ -61,6 +64,27 @@ case "$ACTION" in
       echo "  [DB]     MongoDB (Port 27017)        : 🟢 稼働中"
     else
       echo "  [DB]     MongoDB (Port 27017)        : 🔴 停止"
+    fi
+
+    # Integrated Portal (Port 8000)
+    if lsof -ti :8000 > /dev/null 2>&1; then
+      echo "  [総合]   医療統合ポータル              : 🟢 稼働中 (http://localhost:8000)"
+    else
+      echo "  [総合]   医療統合ポータル              : 🔴 停止"
+    fi
+
+    # Radiology Ordering (Port 8080)
+    if lsof -ti :8080 > /dev/null 2>&1; then
+      echo "  [放射線] 放射線科オーダー & 帳票印刷   : 🟢 稼働中 (http://localhost:8080)"
+    else
+      echo "  [放射線] 放射線科オーダー & 帳票印刷   : 🔴 停止"
+    fi
+
+    # Radiology Receiver (Port 8081)
+    if lsof -ti :8081 > /dev/null 2>&1; then
+      echo "  [放射線] 放射線科【指示受けモニター】  : 🟢 稼働中 (http://localhost:8081 / Proxy: /radi-uke/)"
+    else
+      echo "  [放射線] 放射線科【指示受けモニター】  : 🔴 停止"
     fi
 
     # Incident System (Port 3000)

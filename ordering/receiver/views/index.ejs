@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/monitor/">
   <title>オーダリング【受信側】部門システム モニター</title>
   <!-- 🔒 多重起動防止・単一タブ排他制御 (1枚のみ起動可能) -->
   <script>
@@ -1660,10 +1661,14 @@
         <span id="customTerminalDisplay" style="display:none; color:#f8fafc; font-weight:bold; font-size:0.75rem;"></span>
       </div>
 
-      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="app_ordering_sender" style="background:#f59e0b; color:#0f172a; font-weight:bold; padding:0.35rem 0.85rem; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem;">
-        <span>✏️</span> <span>新規オーダー入力画面へ (Port 4000)</span>
+      <a href="/menu" style="background:#4f46e5; color:white; font-weight:bold; padding:0.35rem 0.75rem; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.82rem;" title="医療統合ポータルメニューへ戻る">
+        <span>🏠</span> <span>総合ポータル</span>
       </a>
-      <a href="http://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:3000/articles" target="app_carte_articles">📋 電子カルテ(Port 3000)</a>
+      <a href="/ordering/" target="app_ordering_sender" style="background:#f59e0b; color:#0f172a; font-weight:bold; padding:0.35rem 0.85rem; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem;">
+        <span>✏️</span> <span>新規オーダー入力画面へ</span>
+      </a>
+      <a href="/articles" target="app_carte_articles" style="background:#0284c7; color:white; font-weight:bold; padding:0.35rem 0.75rem; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; font-size:0.82rem;">📋 電子カルテ</a>
+      <a href="/radiology/" target="app_radiology_order" style="background:#7c3aed; color:white; font-weight:bold; padding:0.35rem 0.75rem; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:0.3rem; font-size:0.82rem;">🩻 放射線オーダー</a>
       <button type="button" onclick="clearAllOrders()" style="background:#dc2626; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
         🧹 履歴クリア
       </button>
@@ -1677,8 +1682,8 @@
         <span style="font-size:1.1rem;">💡</span>
         <span>現在は<strong>【受信側】各部門モニター画面</strong>を表示しています。注射指示・処方・放射線等の新規オーダーを入力する場合は、右のボタンから<strong>「オーダー入力画面」</strong>へお進みください。</span>
       </div>
-      <a href="<%= typeof protocol !== 'undefined' ? protocol : 'http' %>://<%= typeof serverHostname !== 'undefined' ? serverHostname : 'localhost' %>:<%= typeof protocol !== 'undefined' && protocol === 'https' ? 4443 : 4000 %>" target="app_ordering_sender" style="background:#059669; color:white; text-decoration:none; font-weight:bold; padding:0.25rem 0.7rem; border-radius:4px; font-size:0.75rem; white-space:nowrap;">
-        ✏️ オーダー入力画面を開く (Port 4000)
+      <a href="/ordering/" target="app_ordering_sender" style="background:#059669; color:white; text-decoration:none; font-weight:bold; padding:0.25rem 0.7rem; border-radius:4px; font-size:0.75rem; white-space:nowrap;">
+        ✏️ オーダー入力画面を開く
       </a>
     </div>
 
@@ -3469,7 +3474,7 @@
           formattedNote = `実施（${terminal}）`;
         }
 
-        const res = await fetch(`/api/orders/${orderId}/status`, {
+        const res = await fetch(`api/orders/${orderId}/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3498,7 +3503,7 @@
     // =========================================================
     async function loadOrdersList() {
       try {
-        const res = await fetch('/api/orders?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('api/orders?_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (data.success && data.orders) {
           const newOrders = data.orders.filter(o => !knownOrderIds.has(o.orderId));
@@ -3527,7 +3532,7 @@
     async function clearAllOrders() {
       if (!confirm('受信したすべてのオーダー履歴をクリアしますか？')) return;
       try {
-        const res = await fetch('/api/orders/clear', { method: 'POST' });
+        const res = await fetch('api/orders/clear', { method: 'POST' });
         if (res.ok) {
           selectedOrderId = null;
           await loadOrdersList();
@@ -4049,7 +4054,7 @@
 
       if (currentPreviewOrderId) {
         try {
-          const res = await fetch(`/api/orders/${currentPreviewOrderId}/injection-sheet`, {
+          const res = await fetch(`api/orders/${currentPreviewOrderId}/injection-sheet`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

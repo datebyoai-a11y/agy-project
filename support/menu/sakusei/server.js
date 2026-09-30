@@ -162,6 +162,140 @@ async function getActiveRoleTemplates() {
   }
 }
 
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+// =========================================================
+// 🌐 各種システムへのリバースプロキシ設定 (Cloudflare・外部アクセス完全対応)
+// =========================================================
+
+// 🩻 1. 放射線科オーダー (Port 8080) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/radiology') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/radiology/' + q);
+  }
+  next();
+});
+
+app.use('/radiology', createProxyMiddleware({
+  target: 'http://127.0.0.1:8080',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/radiology': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/radiology');
+    }
+  }
+}));
+
+// 🩻 1.5 放射線科【指示受け・実施モニター】(Port 8081) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/radi-uke') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/radi-uke/' + q);
+  }
+  next();
+});
+
+app.use('/radi-uke', createProxyMiddleware({
+  target: 'http://127.0.0.1:8081',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/radi-uke': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/radi-uke');
+    }
+  }
+}));
+
+// 📝 2. オーダリング【送信側】(Port 4000) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/ordering') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/ordering/' + q);
+  }
+  next();
+});
+
+app.use('/ordering', createProxyMiddleware({
+  target: 'http://127.0.0.1:4000',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/ordering': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/ordering');
+    }
+  }
+}));
+
+// 📥 3. オーダリング【受信側】部門モニター (Port 5000) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/monitor') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/monitor/' + q);
+  }
+  next();
+});
+
+app.use('/monitor', createProxyMiddleware({
+  target: 'http://127.0.0.1:5000',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/monitor': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/monitor');
+    }
+  }
+}));
+
+// 🩺 4. 電子カルテ・インシデント管理 (Port 3000) へのリバースプロキシ
+const emrProxy = createProxyMiddleware({
+  target: 'http://127.0.0.1:3000',
+  changeOrigin: true,
+  ws: true,
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-host', req.headers.host || '');
+      proxyReq.setHeader('x-forwarded-proto', req.protocol || 'http');
+    }
+  }
+});
+
+const isEmrRoute = (pathname) => {
+  if (pathname.startsWith('/articles') ||
+      pathname.startsWith('/target-people') ||
+      pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/incident') ||
+      pathname.startsWith('/incidents') ||
+      pathname.startsWith('/reports') ||
+      pathname === '/users') {
+    return true;
+  }
+  if (pathname.startsWith('/api')) {
+    if (pathname.startsWith('/api/patients') || pathname.startsWith('/api/bed-board')) {
+      return false; // ポータル固有API
+    }
+    return true; // 電子カルテAPI (sso-login, select-target-person, orders, articles等)
+  }
+  return false;
+};
+
+// ExpressのマウントによるパスStripを防止し、完全なURLパスをPort 3000へ透過プロキシ
+app.use((req, res, next) => {
+  if (isEmrRoute(req.path)) {
+    return emrProxy(req, res, next);
+  }
+  next();
+});
+
 // ミドルウェア
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -171,6 +305,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // セッション設定
 // セッション設定 (閉じて開いた時はログイン画面から開くよう、ブラウザ終了で破棄するセッションCookieに設定)
 app.use(session({
+  name: 'portal.sid',
   secret: 'koyukai-hospital-menu-portal-2026',
   resave: false,
   saveUninitialized: false,
@@ -340,6 +475,7 @@ app.get('/logout', (req, res) => {
   if (req.session) {
     req.session.destroy();
   }
+  res.clearCookie('portal.sid');
   res.clearCookie('connect.sid');
   res.redirect('/login');
 });
@@ -389,14 +525,41 @@ app.get('/sso/launch', requireAuth, async (req, res) => {
       { expiresIn: '5m' }
     );
 
-    // 接続先ホストを決定（別ホスト移行にも完全対応）
-    const emrHost = process.env.EMR_HOST || req.hostname;
-    const emrPort = process.env.EMR_PORT || 3000;
-    const emrProtocol = process.env.EMR_PROTOCOL || req.protocol;
+    // 🩻 放射線科オーダーへのSSO連携API (プロキシ経由で安全に接続)
+    if (appKey === 'radiology' || appKey === 'radiology_order') {
+      const patientId = req.query.patientId || req.query.targetId;
+      const targetQuery = patientId ? `&patientId=${encodeURIComponent(patientId)}` : '';
+      const ssoUrl = `/radiology/api/sso-login?token=${encodeURIComponent(ssoToken)}${targetQuery}`;
+      console.log(`🔗 [SSO Launch -> Radiology API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
+    }
 
-    const ssoUrl = `${emrProtocol}://${emrHost}:${emrPort}/api/sso-login?token=${encodeURIComponent(ssoToken)}&redirect=${encodeURIComponent(targetPath)}`;
+    // 🩻 放射線科【指示受け・実施モニター】へのSSO連携API
+    if (appKey === 'radi_uke' || appKey === 'radiology_receiver') {
+      const ssoUrl = `/radi-uke/api/sso-login?token=${encodeURIComponent(ssoToken)}`;
+      console.log(`🔗 [SSO Launch -> RadiUke API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
+    }
 
-    console.log(`🔗 [SSO Launch] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+    // 📝 オーダリング【送信側】へのプロキシ遷移
+    if (appKey === 'ordering' || appKey === 'order_sender') {
+      const patientId = req.query.patientId || req.query.targetId;
+      const targetQuery = patientId ? `?patientId=${encodeURIComponent(patientId)}` : '';
+      const targetUrl = `/ordering/${targetQuery}`;
+      console.log(`🔗 [SSO Launch -> Ordering Sender (Proxy)] ${user.userName} ➔ ${targetUrl}`);
+      return res.redirect(targetUrl);
+    }
+
+    // 📥 オーダリング【受信側】部門モニターへのプロキシ遷移
+    if (appKey === 'monitor' || appKey === 'order_receiver') {
+      const targetUrl = '/monitor/';
+      console.log(`🔗 [SSO Launch -> Ordering Receiver (Proxy)] ${user.userName} ➔ ${targetUrl}`);
+      return res.redirect(targetUrl);
+    }
+
+    // 🩺 電子カルテ・インシデントへのSSO連携API (プロキシ経由でポート指定不要・外部完全対応)
+    const ssoUrl = `/api/sso-login?token=${encodeURIComponent(ssoToken)}&redirect=${encodeURIComponent(targetPath)}`;
+    console.log(`🔗 [SSO Launch -> EMR API (Proxy)] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
     res.redirect(ssoUrl);
   } catch (err) {
     console.error('SSO起動エラー:', err.message);

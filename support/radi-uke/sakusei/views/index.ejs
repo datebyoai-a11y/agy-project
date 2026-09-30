@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>放射線科 指示受け・実施モニター | 交雄会だて病院</title>
+  <link rel="stylesheet" href="<%= prefix %>/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20100%20100><text y=%22.9em%22 font-size=%2290%22>🩻</text></svg>">
+</head>
+<body>
+
+  <!-- 1. 全システム共通 最上部1行リボンヘッダー -->
+  <%- include('partials/common-ribbon', { 
+        user: user, 
+        currentScreenTitle: '🩻 放射線科 指示受け・実施モニター' 
+      }) %>
+
+  <!-- 2. サブヘッダー (タイトル・統計・ナビゲーション) -->
+  <header class="main-header">
+    <div class="brand-section">
+      <div class="brand-icon">🩻</div>
+      <div>
+        <div class="brand-title">
+          放射線科 指示受け・実施モニター
+          <span class="brand-badge">リアルタイム連携</span>
+        </div>
+        <div class="brand-sub">モダリティ別 Kanban（一般撮影 / CT / 透視）＆ 一覧形式（全件管理）</div>
+      </div>
+    </div>
+
+    <!-- 統計サマリー -->
+    <div class="stats-summary">
+      <div class="stat-pill stat-ordered" title="未受付オーダー件数">
+        <span>🟡 未受付:</span>
+        <span class="stat-num" id="statOrdered">0</span>
+      </div>
+      <div class="stat-pill stat-accepted" title="受付済・待機中件数">
+        <span>🔵 受付済:</span>
+        <span class="stat-num" id="statAccepted">0</span>
+      </div>
+      <div class="stat-pill stat-completed" title="実施済件数">
+        <span>🟢 実施済:</span>
+        <span class="stat-num" id="statCompleted">0</span>
+      </div>
+      <div class="stat-pill stat-portable" title="ポータブル撮影件数">
+        <span>🚨 ポータブル:</span>
+        <span class="stat-num" id="statPortable">0</span>
+      </div>
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="header-actions">
+      <a href="/radiology/" class="btn btn-outline" title="放射線科オーダー入力・正控え帳票印刷を開く">
+        📝 オーダー発行・印刷 ➔
+      </a>
+      <a href="/" class="btn btn-primary" title="医療統合ポータルメニューへ戻る">
+        🏛️ 統合ポータル
+      </a>
+    </div>
+  </header>
+
+  <!-- 3. コントロールバー (フィルター / 検索 / 表示切替 / 更新) -->
+  <div class="control-bar">
+    <!-- 絞り込みフィルター -->
+    <div class="filter-group">
+      <button class="filter-btn active" data-filter="ACTIVE">⏳ 実施待ち (未受付+受付済)</button>
+      <button class="filter-btn" data-filter="ALL">📑 すべて表示 (一覧)</button>
+      <button class="filter-btn" data-filter="ORDERED">🟡 未受付のみ</button>
+      <button class="filter-btn" data-filter="COMPLETED">✅ 実施済のみ</button>
+    </div>
+
+    <!-- 検索ボックス -->
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="患者名・ID・部位・病棟で絞込...">
+    </div>
+
+    <!-- 表示形式切り替え (Kanban / 一覧テーブル) -->
+    <div class="view-mode-group">
+      <button id="btnKanbanView" class="view-mode-btn active" title="モダリティ別 縦3列Kanban表示">
+        📊 縦3列Kanban
+      </button>
+      <button id="btnListView" class="view-mode-btn" title="全件テーブル一覧形式">
+        📋 一覧形式
+      </button>
+    </div>
+
+    <!-- 更新ステータス -->
+    <div class="header-actions">
+      <div class="polling-indicator">
+        <span class="pulse-dot"></span>
+        <span>自動更新中 (4秒)</span>
+      </div>
+      <button id="refreshBtn" class="btn btn-refresh" title="手動で今すぐ更新">
+        🔄 今すぐ更新
+      </button>
+    </div>
+  </div>
+
+  <!-- 4.1 モダリティ別 縦3列 (Kanban) コンテナ -->
+  <main class="kanban-container" id="kanbanContainer">
+    
+    <!-- 📷 列1: 一般撮影・X線 -->
+    <section class="kanban-column" id="colXray">
+      <div class="col-header col-header-xray">
+        <div class="col-title-area">
+          <span class="col-icon">📷</span>
+          <div>
+            <div class="col-title">一般撮影 (X-Ray)</div>
+            <div class="col-subtitle">単純撮影 / ポータブル / 診療照射録</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count pending" id="badgeXrayOrdered" title="未受付">0</span>
+          <span class="badge-count active" id="badgeXrayAccepted" title="受付済">0</span>
+          <span class="badge-count done" id="badgeXrayTotal" title="総件数">0</span>
+        </div>
+      </div>
+      <div class="col-body" id="xrayCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+    <!-- 🌀 列2: CT検査 -->
+    <section class="kanban-column" id="colCt">
+      <div class="col-header col-header-ct">
+        <div class="col-title-area">
+          <span class="col-icon">🌀</span>
+          <div>
+            <div class="col-title">CT検査 (CT)</div>
+            <div class="col-subtitle">単純CT / 造影CT / ダイナミック</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count pending" id="badgeCtOrdered" title="未受付">0</span>
+          <span class="badge-count active" id="badgeCtAccepted" title="受付済">0</span>
+          <span class="badge-count done" id="badgeCtTotal" title="総件数">0</span>
+        </div>
+      </div>
+      <div class="col-body" id="ctCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+    <!-- 📺 列3: X線透視 -->
+    <section class="kanban-column" id="colFluoro">
+      <div class="col-header col-header-fluoro">
+        <div class="col-title-area">
+          <span class="col-icon">📺</span>
+          <div>
+            <div class="col-title">X線透視 (Fluoroscopy)</div>
+            <div class="col-subtitle">TV透視 / 嚥下造影 / PEG交換 / 整復</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count pending" id="badgeFluoroOrdered" title="未受付">0</span>
+          <span class="badge-count active" id="badgeFluoroAccepted" title="受付済">0</span>
+          <span class="badge-count done" id="badgeFluoroTotal" title="総件数">0</span>
+        </div>
+      </div>
+      <div class="col-body" id="fluoroCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 4.2 一覧形式 (テーブルビュー) コンテナ (「すべて表示」選択時に自動表示) -->
+  <div class="list-view-container" id="listViewContainer" style="display: none;">
+    <div class="table-card">
+      <div class="table-header-info">
+        <div class="table-title">
+          <span>📋</span>
+          <span>放射線オーダー 一覧テーブル</span>
+          <span id="tableCountBadge" class="brand-badge" style="background:#0284c7;">0件</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          ※未受付・受付済・実施済のすべてのオーダーを時系列一覧で管理できます。
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">状態</th>
+              <th style="width: 95px;">区分</th>
+              <th style="width: 140px;">オーダー番号 / 時刻</th>
+              <th style="width: 180px;">患者情報</th>
+              <th>検査種別 / 部位 / 条件</th>
+              <th>検査目的・臨床所見</th>
+              <th style="width: 120px;">依頼医師</th>
+              <th style="width: 150px;">対応技師 / 日時</th>
+              <th style="width: 170px; text-align: center;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <!-- 動的一覧行挿入 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知コンテナ -->
+  <div id="toastContainer"></div>
+
+  <!-- クライアント設定 & スクリプト -->
+  <script>
+    window.APP_PREFIX = '<%= prefix %>';
+    window.CURRENT_USER_NAME = '<%= user ? (user.userName || user.name || "放射線技師") : "放射線技師" %>';
+  </script>
+  <script src="<%= prefix %>/js/app.js"></script>
+</body>
+</html>

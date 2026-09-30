@@ -11,6 +11,9 @@ const path = require('path');
 const fs = require('fs');
 
 const ROOT_DIR = __dirname;
+const PORTAL_DIR = path.join(ROOT_DIR, 'support', 'menu', 'sakusei');
+const RAD_ORDER_DIR = path.join(ROOT_DIR, 'support', 'radiology', 'sakusei');
+const RAD_UKE_DIR = path.join(ROOT_DIR, 'support', 'radi-uke', 'sakusei');
 const INCIDENT_DIR = path.join(ROOT_DIR, 'incident-system');
 const ORDERING_DIR = path.join(ROOT_DIR, 'ordering');
 const MONGODB_CONF = path.join(ROOT_DIR, 'mongodb', 'mongodb.conf');
@@ -58,9 +61,12 @@ function killPort(port) {
   }
 }
 
-// 起動前にポート 3000, 4000, 5000 の古いプロセスを解放
+// 起動前にポート 8000, 8080, 3000, 4000, 5000 の古いプロセスを解放
 console.log('🔍 ポート競合の確認とクリーンアップ中...');
 ensureMongoDB();
+killPort(8000);
+killPort(8080);
+killPort(8081);
 killPort(3000);
 killPort(4000);
 killPort(5000);
@@ -86,22 +92,37 @@ function launchChild(name, filePath, cwd, envExtra) {
   return proc;
 }
 
-// 3. インシデント管理システム (Port 3000) 起動
-console.log('\n🚀 [1/3] インシデント管理システム / 電子カルテ (Port 3000) を起動中...');
+// 3. 医療統合ポータル (Port 8000) 起動
+console.log('\n🚀 [1/6] 医療統合ポータル (Port 8000) を起動中...');
+const portalPath = path.join(PORTAL_DIR, 'server.js');
+launchChild('医療統合ポータル (Port 8000)', portalPath, PORTAL_DIR, { PORT: '8000' });
+
+// 4. 🩻 放射線科オーダー & 帳票印刷 (Port 8080) 起動
+console.log('🚀 [2/6] 放射線科オーダー & 帳票印刷 (Port 8080) を起動中...');
+const radOrderPath = path.join(RAD_ORDER_DIR, 'server.js');
+launchChild('放射線科オーダー・帳票印刷 (Port 8080)', radOrderPath, RAD_ORDER_DIR, { PORT: '8080' });
+
+// 5. 📋 放射線科 指示受け・実施モニター (Port 8081) 起動
+console.log('🚀 [3/6] 放射線科 指示受け・実施モニター (Port 8081) を起動中...');
+const radUkePath = path.join(RAD_UKE_DIR, 'server.js');
+launchChild('放射線科 指示受け・実施モニター (Port 8081)', radUkePath, RAD_UKE_DIR, { PORT: '8081' });
+
+// 6. インシデント管理システム / 電子カルテ (Port 3000) 起動
+console.log('🚀 [4/6] インシデント管理システム / 電子カルテ (Port 3000) を起動中...');
 const incidentPath = path.join(INCIDENT_DIR, 'server.js');
 launchChild('インシデント管理システム (Port 3000)', incidentPath, INCIDENT_DIR, { PORT: '3000' });
 
-// 4. オーダリング【受信側】(Port 5000 / HTTPS 5443) 起動
-console.log('🚀 [2/3] オーダリング【受信側】部門モニター (Port 5000 / HTTPS 5443) を起動中...');
+// 7. オーダリング【受信側】(Port 5000 / HTTPS 5443) 起動
+console.log('🚀 [5/6] オーダリング【受信側】部門モニター (Port 5000 / HTTPS 5443) を起動中...');
 const receiverPath = path.join(ORDERING_DIR, 'receiver', 'server.js');
 launchChild('オーダリング【受信側】(Port 5000)', receiverPath, ORDERING_DIR, { PORT: '5000', HTTPS_PORT: '5443', USE_HTTPS: 'true' });
 
-// 5. オーダリング【送信側】(Port 4000 / HTTPS 4443) 起動
-console.log('🚀 [3/3] オーダリング【送信側】医師・病棟入力 (Port 4000 / HTTPS 4443) を起動中...');
+// 8. オーダリング【送信側】(Port 4000 / HTTPS 4443) 起動
+console.log('🚀 [6/6] オーダリング【送信側】医師・病棟入力 (Port 4000 / HTTPS 4443) を起動中...');
 const senderPath = path.join(ORDERING_DIR, 'sender', 'server.js');
 launchChild('オーダリング【送信側】(Port 4000)', senderPath, ORDERING_DIR, { PORT: '4000', HTTPS_PORT: '4443', USE_HTTPS: 'true', INCIDENT_SYSTEM_URL: 'http://127.0.0.1:3000' });
 
-// 6. 安全な終了処理 (Ctrl+C 時)
+// 8. 安全な終了処理 (Ctrl+C 時)
 function shutdown() {
   if (isShuttingDown) return;
   isShuttingDown = true;
@@ -123,17 +144,23 @@ function shutdown() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-// 7. アクセスURL案内を表示
+// 9. アクセスURL案内を表示
 setTimeout(() => {
   console.log('\n================================================================');
   console.log('🌟 すべてのシステムが正常に起動しました！ブラウザでアクセスできます:');
   console.log('----------------------------------------------------------------');
-  console.log(' 1. 🏥 インシデント管理 / 電子カルテ (Port 3000):');
+  console.log(' 🌐 ★総合トップ★ 医療統合ポータル (Port 8000):');
+  console.log('    👉 http://localhost:8000/login');
+  console.log('       (管理者: admin / pass)');
+  console.log(' 1. 🩻 放射線科オーダー & 正・控え帳票印刷 (Port 8080):');
+  console.log('    👉 http://localhost:8080/');
+  console.log(' 2. 📋 放射線科 指示受け・実施モニター (Port 8081):');
+  console.log('    👉 http://localhost:8081/ (Proxy: http://localhost:8000/radi-uke/)');
+  console.log(' 3. 🏥 インシデント管理 / 電子カルテ (Port 3000):');
   console.log('    👉 http://localhost:3000/login');
-  console.log('       (管理者: admin / admin123  |  看護研修生: nurse1 / user123)');
-  console.log(' 2. 📝 オーダリング【送信側】医師・病棟入力 (Port 4000):');
+  console.log(' 4. 📝 オーダリング【送信側】医師・病棟入力 (Port 4000):');
   console.log('    👉 http://localhost:4000/');
-  console.log(' 3. 📥 オーダリング【受信側】部門モニター (Port 5000):');
+  console.log(' 5. 📥 オーダリング【受信側】部門モニター (Port 5000):');
   console.log('    👉 http://localhost:5000/');
   console.log('----------------------------------------------------------------');
   console.log('💡 停止する場合は、このターミナルで [ Ctrl + C ] を押してください。');

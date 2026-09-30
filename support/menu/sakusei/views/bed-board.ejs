@@ -212,7 +212,7 @@
       z-index: 999999;
       animation: toastSlideUp 0.25s ease-out;
       border-left: 4px solid #0284c7;
-      max-width: 460px;
+      max-width: 600px;
     }
     @keyframes toastSlideUp {
       from { transform: translateY(100%); opacity: 0; }
@@ -1068,11 +1068,24 @@
             <span style="font-size: 0.8rem; font-weight: normal; color: #38bdf8;">(${patient.room || patient.ward || ''})</span>
           </div>
         </div>
-        <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+          <a href="/ordering/?patientId=${encodeURIComponent(patient.patientId)}" 
+             class="btn btn-primary" 
+             style="padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none; border-radius: 6px; white-space: nowrap; background: #4f46e5; display: inline-flex; align-items: center; gap: 0.3rem;"
+             title="この患者のオーダリング画面（放射線・処方・指示）を開く">
+            📝 オーダリング
+          </a>
           <a href="/sso/launch?app=articles&patientId=${encodeURIComponent(patient.patientId)}" 
              class="btn btn-primary" 
-             style="padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none; border-radius: 6px; white-space: nowrap; background: #0284c7;">
-            🩺 カルテを開く
+             style="padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none; border-radius: 6px; white-space: nowrap; background: #0284c7; display: inline-flex; align-items: center; gap: 0.3rem;"
+             title="この患者の電子カルテ記事を開く">
+            🩺 カルテ
+          </a>
+          <a href="/sso/launch?app=radiology&patientId=${encodeURIComponent(patient.patientId)}" 
+             class="btn btn-primary" 
+             style="padding: 0.35rem 0.75rem; font-size: 0.78rem; text-decoration: none; border-radius: 6px; white-space: nowrap; background: #7c3aed; display: inline-flex; align-items: center; gap: 0.3rem;"
+             title="放射線科オーダー発行（CT・透視・照射録）を開く">
+            🩻 放射線
           </a>
           <button type="button" onclick="this.closest('#boardPatientToast').remove()" style="background: none; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 0.2rem 0.4rem;" title="閉じる">✕</button>
         </div>
@@ -1086,7 +1099,7 @@
           toast.style.transform = 'translateY(20px)';
           setTimeout(() => toast.remove(), 400);
         }
-      }, 6000);
+      }, 10000);
     }
 
     // 画面初期表示時に選択中患者があればハイライトを復元
