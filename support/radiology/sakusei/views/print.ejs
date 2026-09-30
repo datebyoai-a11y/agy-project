@@ -64,20 +64,31 @@
     }
     .btn-tool-outline:hover { background: #475569; }
 
-    /* A4用紙コンテナ (210mm × 297mm) */
+    /* A4用紙ビューポート & コンテナ (大画面・別ウィンドウフィット対応) */
+    .a4-viewport {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 3rem 1rem;
+      overflow-x: auto;
+      box-sizing: border-box;
+    }
+
     .a4-container {
       width: 210mm;
+      min-width: 210mm;
       height: 297mm;
       max-height: 297mm;
       background: white;
-      margin: 1.5rem auto 3rem auto;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.4);
       padding: 5mm 7mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       position: relative;
       overflow: hidden;
+      transform-origin: top center;
+      transition: transform 0.15s ease-out;
     }
 
     /* A5 伝票スリップ (高さ約 139mm) */
@@ -227,7 +238,13 @@
       .no-print {
         display: none !important;
       }
+      .a4-viewport {
+        padding: 0 !important;
+        overflow: visible !important;
+        display: block !important;
+      }
       .a4-container {
+        transform: none !important;
         width: 100% !important;
         height: 282mm !important;
         max-height: 285mm !important;
@@ -264,7 +281,7 @@
   <div class="print-toolbar no-print">
     <div style="display: flex; align-items: center; gap: 0.75rem;">
       <a href="./" class="btn-tool btn-tool-outline">
-        ⬅ オーダー画面へ戻る
+        ⬅ オーダー画面
       </a>
       <span style="font-weight: bold; font-size: 1.05rem;">🩻 放射線科伝票 A4印刷 (A5 正・副 2分割)</span>
       <span style="background: #7c3aed; color: white; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
@@ -272,10 +289,27 @@
       </span>
     </div>
 
+    <!-- 🔍 表示倍率コントロール (画面いっぱいに見やすく拡大) -->
+    <div style="display: flex; align-items: center; gap: 0.4rem; background: #0f172a; padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid #334155;">
+      <span style="font-size: 0.78rem; color: #94a3b8; font-weight: bold;">🔍 表示:</span>
+      <button type="button" class="btn-tool btn-tool-outline" onclick="fitToWidth()" style="padding: 0.3rem 0.6rem; font-size: 0.78rem;" title="画面幅いっぱいに拡大表示">
+        ↔ 幅フィット
+      </button>
+      <button type="button" class="btn-tool btn-tool-outline" onclick="fitToScreen()" style="padding: 0.3rem 0.6rem; font-size: 0.78rem;" title="1画面内に収める">
+        ↕ 全体表示
+      </button>
+      <button type="button" class="btn-tool btn-tool-outline" onclick="applyZoom(1.0)" style="padding: 0.3rem 0.5rem; font-size: 0.78rem;" title="原寸表示(100%)">
+        100%
+      </button>
+      <button type="button" class="btn-tool btn-tool-outline" onclick="zoomIn()" style="padding: 0.3rem 0.5rem; font-size: 0.78rem;" title="拡大">➕</button>
+      <button type="button" class="btn-tool btn-tool-outline" onclick="zoomOut()" style="padding: 0.3rem 0.5rem; font-size: 0.78rem;" title="縮小">➖</button>
+      <span id="zoomLevelText" style="font-size: 0.75rem; color: #38bdf8; font-family: monospace; min-width: 42px; text-align: center;">100%</span>
+    </div>
+
     <div style="display: flex; align-items: center; gap: 0.6rem;">
       <% if (typeof pgpVerification !== 'undefined' && pgpVerification.isValid) { %>
         <a href="verify/<%= order._id %>" target="_blank" class="btn-tool" style="background: #065f46; color: #a7f3d0; border: 1px solid #059669; font-size: 0.82rem; text-decoration: none;" title="クリックしてPGP電子署名真正性証明書を表示">
-          🛡️ PGP真正性保証 (改ざんなし / Valid)
+          🛡️ PGP真正性保証 (Valid)
         </a>
       <% } else if (typeof pgpVerification !== 'undefined') { %>
         <a href="verify/<%= order._id %>" target="_blank" class="btn-tool" style="background: #7f1d1d; color: #fecaca; border: 1px solid #dc2626; font-size: 0.82rem; text-decoration: none;">
@@ -283,13 +317,18 @@
         </a>
       <% } %>
       <button type="button" class="btn-tool btn-tool-primary" onclick="window.print()">
-        🖨️ A4 1枚に印刷 (正・副 2分割)
+        🖨️ A4 1枚に印刷 (正・副)
+      </button>
+      <button type="button" class="btn-tool btn-tool-outline" style="background: #e11d48; border-color: #be123c; color: white;" onclick="window.close()" title="別ウィンドウを閉じる">
+        ❌ 閉じる
       </button>
     </div>
   </div>
 
-  <!-- A4 用紙本体 (幅210mm × 高さ297mm) -->
-  <div class="a4-container">
+  <!-- 大画面フィット対応 ビューポート -->
+  <div class="a4-viewport">
+    <!-- A4 用紙本体 (幅210mm × 高さ297mm) -->
+    <div class="a4-container">
 
     <% 
       // 日時フォーマットの事前準備
@@ -839,14 +878,79 @@
 
     <% }); %>
 
-  </div>
+  </div> <!-- /.a4-container -->
+  </div> <!-- /.a4-viewport -->
 
   <script>
-    // 画面ロード時に自動印刷ダイアログを開くクエリ（?autoprint=1）に対応
+    let currentScale = 1.0;
+    let autoFitMode = 'width'; // 'width', 'screen', 'custom'
+
+    function applyZoom(scale, mode = 'custom') {
+      currentScale = Math.max(0.4, Math.min(2.5, scale));
+      if (mode !== 'custom') autoFitMode = mode;
+      else autoFitMode = 'custom';
+
+      const container = document.querySelector('.a4-container');
+      if (container) {
+        container.style.transform = `scale(${currentScale})`;
+        // スケール変更に伴い下マージンを調整し、スクロール領域を確保
+        const baseHeight = container.offsetHeight || 1123;
+        const heightDiff = baseHeight * (currentScale - 1);
+        container.style.marginBottom = heightDiff > 0 ? `${heightDiff + 50}px` : '40px';
+      }
+      const zoomText = document.getElementById('zoomLevelText');
+      if (zoomText) {
+        zoomText.textContent = Math.round(currentScale * 100) + '%';
+      }
+    }
+
+    function fitToWidth() {
+      const container = document.querySelector('.a4-container');
+      if (!container) return;
+      const baseWidth = container.offsetWidth || 794;
+      const availableWidth = window.innerWidth - 40;
+      const scale = availableWidth / baseWidth;
+      applyZoom(scale, 'width');
+    }
+
+    function fitToScreen() {
+      const container = document.querySelector('.a4-container');
+      if (!container) return;
+      const baseWidth = container.offsetWidth || 794;
+      const baseHeight = container.offsetHeight || 1123;
+      const availableWidth = window.innerWidth - 40;
+      const availableHeight = window.innerHeight - 80;
+      const scale = Math.min(availableWidth / baseWidth, availableHeight / baseHeight);
+      applyZoom(scale, 'screen');
+    }
+
+    function zoomIn() {
+      applyZoom(currentScale + 0.1);
+    }
+
+    function zoomOut() {
+      applyZoom(currentScale - 0.1);
+    }
+
+    window.addEventListener('resize', () => {
+      if (autoFitMode === 'width') {
+        fitToWidth();
+      } else if (autoFitMode === 'screen') {
+        fitToScreen();
+      }
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
+      // autoprint の判定
       if (urlParams.get('autoprint') === '1') {
-        setTimeout(() => window.print(), 350);
+        setTimeout(() => window.print(), 400);
+      }
+
+      // ビューワー表示または別ウィンドウ時は画面幅フィットをデフォルト適用
+      const isViewer = <%= (typeof isViewer !== 'undefined' && isViewer) ? 'true' : 'false' %>;
+      if (isViewer || window.innerWidth > 800) {
+        fitToWidth();
       }
     });
   </script>

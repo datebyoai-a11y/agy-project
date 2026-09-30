@@ -333,9 +333,9 @@ ${medications ? '・使用薬剤: ' + medications + '\n' : ''}${materials ? '・
 });
 
 /**
- * 🖨️ 3. 正・控え 2枚組 帳票印刷プレビュー (GET /print/:id)
+ * 🖨️ 3. 正・控え 2枚組 帳票印刷 & 大画面プレビュー (GET /print/:id & GET /preview/:id)
  */
-app.get('/print/:id', async (req, res) => {
+app.get(['/print/:id', '/preview/:id'], async (req, res) => {
   try {
     let orderDoc = await RadiologyOrder.findById(req.params.id);
     if (!orderDoc) {
@@ -378,7 +378,8 @@ app.get('/print/:id', async (req, res) => {
       autoprint: req.query.autoprint === '1',
       qrCodeDataUrl,
       verifyUrl,
-      pgpVerification
+      pgpVerification,
+      isViewer: (req.query.viewer === '1' || req.path.includes('/preview'))
     });
   } catch (err) {
     console.error('[Radiology] 印刷プレビューエラー:', err);

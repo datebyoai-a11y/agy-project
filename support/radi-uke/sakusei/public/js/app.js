@@ -43,6 +43,24 @@ const elBadgeXrayCount = document.getElementById('badgeXrayCount');
 const elBadgeCtCount = document.getElementById('badgeCtCount');
 const elBadgeFluoroCount = document.getElementById('badgeFluoroCount');
 
+// 🖨️ 画面いっぱいの別ウィンドウで伝票を開く
+function openRadiologySlip(orderId) {
+  if (!orderId) return;
+  const w = window.screen.availWidth || window.innerWidth || 1280;
+  const h = window.screen.availHeight || window.innerHeight || 900;
+  const url = `/radiology/preview/${orderId}?viewer=1`;
+  const winName = `radiology_slip_${orderId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+  const features = `width=${w},height=${h},top=0,left=0,scrollbars=yes,resizable=yes,status=no,toolbar=no,menubar=no,location=no`;
+  
+  const win = window.open(url, winName, features);
+  if (win) {
+    win.focus();
+  } else {
+    // ポップアップブロッカー発生時のフォールバック
+    window.open(url, '_blank');
+  }
+}
+
 // 初期ロード
 document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
@@ -419,7 +437,7 @@ function createOrderCardHtml(order) {
       <!-- 操作ボタングループ -->
       <div class="card-actions">
         ${actionsHtml}
-        <a href="${radBaseUrl}/preview/${order._id}" target="_blank" class="btn-card-sub" title="正・控え伝票をプレビュー">
+        <a href="${radBaseUrl}/preview/${order._id}?viewer=1" onclick="openRadiologySlip('${order._id}'); return false;" class="btn-card-sub" title="正・控え伝票を画面いっぱいに表示">
           🖨️ 伝票
         </a>
       </div>
@@ -597,7 +615,7 @@ function renderTableView(orders) {
     }
 
     actions += `
-      <a href="/radiology/preview/${order._id}" target="_blank" class="btn-sm btn-sm-sub" title="正・控え伝票をプレビュー">
+      <a href="/radiology/preview/${order._id}?viewer=1" onclick="openRadiologySlip('${order._id}'); return false;" class="btn-sm btn-sm-sub" title="正・控え伝票を画面いっぱいに表示">
         🖨️ 伝票
       </a>
     `;
@@ -789,7 +807,7 @@ function updateCardStatusLocally(orderId, newStatus, staffName) {
           <button class="btn-complete" onclick="handleComplete('${orderId}', '')">
             ✅ 実施済
           </button>
-          <a href="/radiology/preview/${orderId}" target="_blank" class="btn-card-sub" title="正・控え伝票をプレビュー">
+          <a href="/radiology/preview/${orderId}?viewer=1" onclick="openRadiologySlip('${orderId}'); return false;" class="btn-card-sub" title="正・控え伝票を画面いっぱいに表示">
             🖨️ 伝票
           </a>
         `;
@@ -805,7 +823,7 @@ function updateCardStatusLocally(orderId, newStatus, staffName) {
 
       if (actionsArea) {
         actionsArea.innerHTML = `
-          <a href="/radiology/preview/${orderId}" target="_blank" class="btn-card-sub" style="flex:1;" title="正・控え伝票をプレビュー">
+          <a href="/radiology/preview/${orderId}?viewer=1" onclick="openRadiologySlip('${orderId}'); return false;" class="btn-card-sub" style="flex:1;" title="正・控え伝票を画面いっぱいに表示">
             🖨️ 正・控え伝票を表示
           </a>
         `;
@@ -819,7 +837,7 @@ function updateCardStatusLocally(orderId, newStatus, staffName) {
           <button class="btn-complete" onclick="handleComplete('${orderId}', '')">
             ✅ 実施済
           </button>
-          <a href="/radiology/preview/${orderId}" target="_blank" class="btn-card-sub" title="正・控え伝票をプレビュー">
+          <a href="/radiology/preview/${orderId}?viewer=1" onclick="openRadiologySlip('${orderId}'); return false;" class="btn-card-sub" title="正・控え伝票を画面いっぱいに表示">
             🖨️ 伝票
           </a>
         `;
@@ -842,18 +860,18 @@ function updateCardStatusLocally(orderId, newStatus, staffName) {
         actions.innerHTML = `
           <button class="btn-sm btn-sm-complete" onclick="handleComplete('${orderId}', '')">✅ 実施済</button>
           <button class="btn-revert" onclick="handleRevert('${orderId}')" title="ステータスを未受付に戻す">↩️ 戻す</button>
-          <a href="/radiology/preview/${orderId}" target="_blank" class="btn-sm btn-sm-sub">🖨️ 伝票</a>
+          <a href="/radiology/preview/${orderId}?viewer=1" onclick="openRadiologySlip('${orderId}'); return false;" class="btn-sm btn-sm-sub" title="正・控え伝票を画面いっぱいに表示">🖨️ 伝票</a>
         `;
       } else if (newStatus === 'COMPLETED') {
         actions.innerHTML = `
           <button class="btn-revert" onclick="handleRevert('${orderId}')" title="ステータスを受付済に戻す">↩️ 戻す</button>
-          <a href="/radiology/preview/${orderId}" target="_blank" class="btn-sm btn-sm-sub">🖨️ 伝票</a>
+          <a href="/radiology/preview/${orderId}?viewer=1" onclick="openRadiologySlip('${orderId}'); return false;" class="btn-sm btn-sm-sub" title="正・控え伝票を画面いっぱいに表示">🖨️ 伝票</a>
         `;
       } else if (newStatus === 'ORDERED') {
         actions.innerHTML = `
           <button class="btn-sm btn-sm-accept" onclick="handleAccept('${orderId}', '')">📥 受付</button>
           <button class="btn-sm btn-sm-complete" onclick="handleComplete('${orderId}', '')">✅ 実施済</button>
-          <a href="/radiology/preview/${orderId}" target="_blank" class="btn-sm btn-sm-sub">🖨️ 伝票</a>
+          <a href="/radiology/preview/${orderId}?viewer=1" onclick="openRadiologySlip('${orderId}'); return false;" class="btn-sm btn-sm-sub" title="正・控え伝票を画面いっぱいに表示">🖨️ 伝票</a>
         `;
       }
     }
