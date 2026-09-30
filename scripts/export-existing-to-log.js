@@ -11,7 +11,7 @@ const { MongoClient } = require('mongodb');
 const { logOperation, JSONL_LOG_PATH } = require('../support/common/operationLogger');
 const fs = require('fs');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017,127.0.0.1:27018/?replicaSet=rs0';
 const DB_NAME = process.env.DB_NAME || 'incident_db';
 
 const COLLECTIONS_TO_EXPORT = [

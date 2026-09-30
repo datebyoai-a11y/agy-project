@@ -94,8 +94,9 @@ const seedUsers = async () => {
 
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/incident_db');
-    console.log('MongoDB に正常に接続されました。');
+    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017,127.0.0.1:27018/incident_db?replicaSet=rs0';
+    await mongoose.connect(mongoUri);
+    console.log('✅ [Incident/Carte] MongoDB レプリカセット (rs0) に正常接続しました。');
     await seedTargetPeople();
     await seedUsers();
   } catch (err) {

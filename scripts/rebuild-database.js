@@ -51,7 +51,7 @@ const logArg = args.find(a => a.startsWith('--log='));
 const specifiedLogPath = logArg ? path.resolve(process.cwd(), logArg.split('=')[1]) : null;
 
 const DEFAULT_LOGS_DIR = path.resolve(__dirname, '../logs/operations');
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017,127.0.0.1:27018/?replicaSet=rs0';
 const DB_NAME = process.env.DB_NAME || 'incident_db';
 
 /**

@@ -23,23 +23,39 @@ console.log('================================================================');
 console.log('🏥 交雄会だて病院 医療統合システム 一括ランチャー (Launcher)');
 console.log('================================================================\n');
 
-// 1. MongoDB 稼働チェック & 自動起動
+// 1. MongoDB レプリカセット (Primary / Secondary / Arbiter) 稼働チェック & 自動起動
+const REPLICA_SET_URI = 'mongodb://127.0.0.1:27017,127.0.0.1:27018/incident_db?replicaSet=rs0';
+
 function ensureMongoDB() {
   try {
-    execSync('pgrep -x mongod', { stdio: 'ignore' });
-    console.log('✅ [DB] MongoDB (mongod) は既に稼働中です。');
+    // Primary (27017)
+    execSync('lsof -ti :27017', { stdio: 'ignore' });
+    console.log('✅ [DB] MongoDB Primary (Port 27017) は稼働中です。');
   } catch (e) {
-    console.log('⚠️ [DB] MongoDB が稼働していません。自動起動を試みます...');
+    console.log('⚠️ [DB] MongoDB Primary が稼働していません。起動します...');
     try {
-      if (fs.existsSync(MONGODB_CONF)) {
-        execSync(`mongod --config "${MONGODB_CONF}" > /dev/null 2>&1 &`, { stdio: 'ignore' });
-      } else {
-        execSync('systemctl start mongod || systemctl start mongodb || mongod --fork --logpath /tmp/mongod.log', { stdio: 'ignore' });
-      }
-      console.log('✅ [DB] MongoDB を起動しました。');
-    } catch (err) {
-      console.warn('⚠️ [DB] MongoDB 自動起動エラー (手動確認が必要な場合があります):', err.message);
-    }
+      execSync('systemctl start mongod || mongod --config /etc/mongod.conf', { stdio: 'ignore' });
+    } catch (_) {}
+  }
+
+  // Secondary (27018)
+  try {
+    execSync('lsof -ti :27018', { stdio: 'ignore' });
+    console.log('✅ [DB] MongoDB Secondary (Port 27018) は稼働中です。');
+  } catch (e) {
+    try {
+      execSync('systemctl start mongod-secondary || mongod --config /etc/mongod-secondary.conf', { stdio: 'ignore' });
+    } catch (_) {}
+  }
+
+  // Arbiter (27019)
+  try {
+    execSync('lsof -ti :27019', { stdio: 'ignore' });
+    console.log('✅ [DB] MongoDB Arbiter (Port 27019) は稼働中です。');
+  } catch (e) {
+    try {
+      execSync('systemctl start mongod-arbiter || mongod --config /etc/mongod-arbiter.conf', { stdio: 'ignore' });
+    } catch (_) {}
   }
 }
 
@@ -95,32 +111,32 @@ function launchChild(name, filePath, cwd, envExtra) {
 // 3. 医療統合ポータル (Port 8000) 起動
 console.log('\n🚀 [1/6] 医療統合ポータル (Port 8000) を起動中...');
 const portalPath = path.join(PORTAL_DIR, 'server.js');
-launchChild('医療統合ポータル (Port 8000)', portalPath, PORTAL_DIR, { PORT: '8000' });
+launchChild('医療統合ポータル (Port 8000)', portalPath, PORTAL_DIR, { PORT: '8000', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 4. 🩻 放射線科オーダー & 帳票印刷 (Port 8080) 起動
 console.log('🚀 [2/6] 放射線科オーダー & 帳票印刷 (Port 8080) を起動中...');
 const radOrderPath = path.join(RAD_ORDER_DIR, 'server.js');
-launchChild('放射線科オーダー・帳票印刷 (Port 8080)', radOrderPath, RAD_ORDER_DIR, { PORT: '8080' });
+launchChild('放射線科オーダー・帳票印刷 (Port 8080)', radOrderPath, RAD_ORDER_DIR, { PORT: '8080', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 5. 📋 放射線科 指示受け・実施モニター (Port 8081) 起動
 console.log('🚀 [3/6] 放射線科 指示受け・実施モニター (Port 8081) を起動中...');
 const radUkePath = path.join(RAD_UKE_DIR, 'server.js');
-launchChild('放射線科 指示受け・実施モニター (Port 8081)', radUkePath, RAD_UKE_DIR, { PORT: '8081' });
+launchChild('放射線科 指示受け・実施モニター (Port 8081)', radUkePath, RAD_UKE_DIR, { PORT: '8081', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 6. インシデント管理システム / 電子カルテ (Port 3000) 起動
 console.log('🚀 [4/6] インシデント管理システム / 電子カルテ (Port 3000) を起動中...');
 const incidentPath = path.join(INCIDENT_DIR, 'server.js');
-launchChild('インシデント管理システム (Port 3000)', incidentPath, INCIDENT_DIR, { PORT: '3000' });
+launchChild('インシデント管理システム (Port 3000)', incidentPath, INCIDENT_DIR, { PORT: '3000', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 7. オーダリング【受信側】(Port 5000 / HTTPS 5443) 起動
 console.log('🚀 [5/6] オーダリング【受信側】部門モニター (Port 5000 / HTTPS 5443) を起動中...');
 const receiverPath = path.join(ORDERING_DIR, 'receiver', 'server.js');
-launchChild('オーダリング【受信側】(Port 5000)', receiverPath, ORDERING_DIR, { PORT: '5000', HTTPS_PORT: '5443', USE_HTTPS: 'true' });
+launchChild('オーダリング【受信側】(Port 5000)', receiverPath, ORDERING_DIR, { PORT: '5000', HTTPS_PORT: '5443', USE_HTTPS: 'true', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 8. オーダリング【送信側】(Port 4000 / HTTPS 4443) 起動
 console.log('🚀 [6/6] オーダリング【送信側】医師・病棟入力 (Port 4000 / HTTPS 4443) を起動中...');
 const senderPath = path.join(ORDERING_DIR, 'sender', 'server.js');
-launchChild('オーダリング【送信側】(Port 4000)', senderPath, ORDERING_DIR, { PORT: '4000', HTTPS_PORT: '4443', USE_HTTPS: 'true', INCIDENT_SYSTEM_URL: 'http://127.0.0.1:3000' });
+launchChild('オーダリング【送信側】(Port 4000)', senderPath, ORDERING_DIR, { PORT: '4000', HTTPS_PORT: '4443', USE_HTTPS: 'true', INCIDENT_SYSTEM_URL: 'http://127.0.0.1:3000', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 8. 安全な終了処理 (Ctrl+C 時)
 function shutdown() {

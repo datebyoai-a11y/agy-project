@@ -59,11 +59,21 @@ case "$ACTION" in
     echo "================================================================"
     echo "📊 システム稼働ステータス:"
     echo "----------------------------------------------------------------"
-    # MongoDB
-    if pgrep -x mongod > /dev/null; then
-      echo "  [DB]     MongoDB (Port 27017)        : 🟢 稼働中"
+    # MongoDB Replica Set (rs0)
+    if lsof -ti :27017 > /dev/null 2>&1; then
+      echo "  [DB-Pri] MongoDB Primary (Port 27017)   : 🟢 稼働中 (書き込み・マスター)"
     else
-      echo "  [DB]     MongoDB (Port 27017)        : 🔴 停止"
+      echo "  [DB-Pri] MongoDB Primary (Port 27017)   : 🔴 停止"
+    fi
+    if lsof -ti :27018 > /dev/null 2>&1; then
+      echo "  [DB-Sec] MongoDB Secondary (Port 27018) : 🟢 稼働中 (リアルタイム完全二重化)"
+    else
+      echo "  [DB-Sec] MongoDB Secondary (Port 27018) : 🔴 停止"
+    fi
+    if lsof -ti :27019 > /dev/null 2>&1; then
+      echo "  [DB-Arb] MongoDB Arbiter (Port 27019)   : 🟢 稼働中 (自動選出・調停ノード)"
+    else
+      echo "  [DB-Arb] MongoDB Arbiter (Port 27019)   : 🔴 停止"
     fi
 
     # Integrated Portal (Port 8000)

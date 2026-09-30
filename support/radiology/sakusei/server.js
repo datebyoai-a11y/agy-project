@@ -29,10 +29,10 @@ const { logOperation } = require('../../common/operationLogger');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// MongoDB 接続 (incident_db)
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/incident_db';
+// MongoDB 接続 (incident_db - レプリカセット rs0 対応)
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017,127.0.0.1:27018/incident_db?replicaSet=rs0';
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ [Radiology] MongoDB (incident_db) に正常接続しました。'))
+  .then(() => console.log('✅ [Radiology] MongoDB レプリカセット (rs0) に正常接続しました。'))
   .catch(err => console.error('❌ [Radiology] MongoDB 接続エラー:', err.message));
 
 // ミドルウェア設定
