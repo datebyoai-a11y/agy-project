@@ -909,3 +909,70 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
+// ==============================================================================
+// 📜 操作監査ログ ＆ DB再構築モーダル制御
+// ==============================================================================
+function openLogModal() {
+  const modal = document.getElementById('logModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    loadReadableLog();
+  }
+}
+
+function closeLogModal() {
+  const modal = document.getElementById('logModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+async function loadReadableLog() {
+  const area = document.getElementById('logContentArea');
+  if (!area) return;
+  area.textContent = '📜 操作ログを読込中...';
+  try {
+    const res = await fetch('/radi-uke/api/operations/readable-log?limit=250');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    area.textContent = text || '（ログデータはありません）';
+    // 最下部にスクロール
+    area.parentElement.scrollTop = area.parentElement.scrollHeight;
+  } catch (err) {
+    area.textContent = `❌ ログ取得失敗: ${err.message}`;
+  }
+}
+
+async function triggerDbRebuild(dryRun = true) {
+  const area = document.getElementById('logContentArea');
+  if (!area) return;
+
+  const modeName = dryRun ? 'ドライラン（シミュレーション）' : '本番再構築（DB書き込み）';
+  if (!dryRun) {
+    if (!confirm('⚠️ 警告: ログを元にデータベースの再構築（同期リストア）を実行しますか？')) {
+      return;
+    }
+  }
+
+  area.textContent = `⏳ データベース再構築 (${modeName}) を実行中...\nしばらくお待ちください...`;
+
+  try {
+    const res = await fetch('/radi-uke/api/operations/rebuild', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dryRun, drop: false })
+    });
+    const data = await res.json();
+    if (data.success) {
+      area.textContent = `✅ 再構築実行完了 (終了コード: ${data.exitCode})\n\n${data.output}`;
+      showToast('success', `再構築 (${modeName}) が正常に完了しました`);
+      if (!dryRun) loadOrders();
+    } else {
+      area.textContent = `❌ 再構築エラー (終了コード: ${data.exitCode}):\n\n${data.output}`;
+      showToast('danger', '再構築でエラーが発生しました');
+    }
+  } catch (err) {
+    area.textContent = `❌ API通信エラー: ${err.message}`;
+  }
+}

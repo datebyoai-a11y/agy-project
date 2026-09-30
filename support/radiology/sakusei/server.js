@@ -23,6 +23,9 @@ const User = require('/home/a/Desktop/ai/agy-project/incident-system/models/User
 // 🛡️ PGP 真正性保証モジュール
 const pgpSigner = require('./utils/pgpSigner');
 
+// 📜 統一操作・監査ロガー
+const { logOperation } = require('../../common/operationLogger');
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -305,12 +308,64 @@ ${medications ? '・使用薬剤: ' + medications + '\n' : ''}${materials ? '・
       newOrder.articleId = newArticle._id;
       newOrder.syncStatus = 'SYNCED_CARTE';
       console.log(`✅ [Radiology] 電子カルテ (Article: ${newArticle._id}) に放射線オーダーを記録しました。`);
+
+      // 📜 電子カルテ記事生成の操作ログ記録
+      await logOperation({
+        system: 'radiology',
+        opType: 'CARTE_SYNC',
+        action: 'INSERT',
+        collection: 'articles',
+        documentId: String(newArticle._id),
+        operator: {
+          name: doctorName || '担当医師',
+          role: 'doctor',
+          department: requestDepartment || '内科',
+          ip: req.ip
+        },
+        summary: `【電子カルテ自動連動】放射線オーダー [${orderNumber}] をカルテ記事に登録 (患者: ${patientName})`,
+        details: {
+          伝票番号: orderNumber,
+          患者氏名: patientName,
+          検査項目: examType,
+          カルテID: String(newArticle._id)
+        },
+        snapshot: newArticle
+      });
     } catch (carteErr) {
       console.warn('⚠️ [Radiology] 電子カルテ (Article) への記録警告:', carteErr.message);
     }
 
     await newOrder.save();
     console.log(`✅ [Radiology] 放射線オーダーを発行・保存しました: [${newOrder.orderNumber}] ${newOrder.examType}`);
+
+    // 📜 放射線オーダー発行の操作ログ記録 (再構築完全対応)
+    await logOperation({
+      system: 'radiology',
+      opType: 'ORDER_CREATE',
+      action: 'INSERT',
+      collection: 'radiologyorders',
+      documentId: String(newOrder._id),
+      operator: {
+        name: doctorName || '担当医師',
+        role: 'doctor',
+        department: requestDepartment || '内科',
+        ip: req.ip
+      },
+      summary: `【放射線オーダー新規発行】[${newOrder.orderNumber}] ${patientName} (${newOrder.examType})`,
+      details: {
+        伝票番号: newOrder.orderNumber,
+        患者氏名: patientName,
+        患者ID: patientId,
+        モダリティ: newOrder.modality,
+        様式: newOrder.formName,
+        検査種別: newOrder.examType,
+        検査目的: newOrder.purpose,
+        ポータブル: newOrder.portable,
+        PGP署名: newOrder.pgp?.keyId ? `保証済 (KeyID: ${newOrder.pgp.keyId})` : '未署名',
+        カルテ連動ID: newOrder.articleId ? String(newOrder.articleId) : 'なし'
+      },
+      snapshot: newOrder
+    });
 
     // 自動印刷フラグがある場合は印刷画面へ直接リダイレクト、なければメイン画面へ
     const prefix = req.headers['x-forwarded-prefix'] || '';
@@ -364,13 +419,34 @@ app.get(['/print/:id', '/preview/:id'], async (req, res) => {
     const verifyUrl = `${proto}://${host}${prefix}/radiology/verify/${order._id}`;
     const qrCodeDataUrl = await pgpSigner.generateVerificationQr(verifyUrl);
 
-    // 印刷回数のインクリメント
-    await RadiologyOrder.findByIdAndUpdate(req.params.id, {
+    // 印刷回数のインクリメント & 状態取得
+    const updatedOrder = await RadiologyOrder.findByIdAndUpdate(req.params.id, {
       $inc: { 'printStatus.printedCount': 1 },
       $set: {
         'printStatus.lastPrintedAt': new Date(),
         'printStatus.printedBy': (req.session.user && req.session.user.userName) || '担当者'
       }
+    }, { new: true });
+
+    // 📜 伝票印刷の操作ログ記録
+    await logOperation({
+      system: 'radiology',
+      opType: 'ORDER_PRINT',
+      action: 'UPDATE',
+      collection: 'radiologyorders',
+      documentId: String(order._id),
+      operator: {
+        name: (req.session.user && req.session.user.userName) || '担当者',
+        ip: req.ip
+      },
+      summary: `【伝票印刷/表示】[${order.orderNumber}] ${order.patientName} (${order.examType}) 印刷回数: ${updatedOrder?.printStatus?.printedCount || 1}回目`,
+      details: {
+        伝票番号: order.orderNumber,
+        患者氏名: order.patientName,
+        印刷日時: updatedOrder?.printStatus?.lastPrintedAt,
+        累計印刷回数: updatedOrder?.printStatus?.printedCount
+      },
+      snapshot: updatedOrder || order
     });
 
     res.render('print', {

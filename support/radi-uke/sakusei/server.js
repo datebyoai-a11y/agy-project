@@ -28,6 +28,9 @@ const Article = require('/home/a/Desktop/ai/agy-project/incident-system/models/A
 const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
 const Patient = require('/home/a/Desktop/ai/agy-project/support/menu/sakusei/models/Patient');
 
+// 📜 統一操作・監査ロガー
+const { logOperation, getRecentLogs, getRecentReadableLog } = require('../../common/operationLogger');
+
 const app = express();
 const PORT = process.env.PORT || 8081;
 const JWT_SECRET = process.env.JWT_SECRET || 'incident-system-jwt-secret-key-2026';
@@ -278,6 +281,31 @@ app.post('/api/orders/:id/accept', async (req, res) => {
 
     console.log(`📥 [RadiUke] オーダー受付完了: [${order.orderNumber}] ${order.patientName} (${order.examType}) 担当: ${staffName}`);
 
+    // 📜 統一操作ログの記録 (可読ログ & DB再構築用)
+    await logOperation({
+      system: 'radi-uke',
+      opType: 'ORDER_ACCEPT',
+      action: 'UPDATE',
+      collection: 'radiologyorders',
+      documentId: String(order._id),
+      operator: {
+        name: staffName,
+        role: 'radiology_technician',
+        department: '放射線科',
+        ip: req.ip
+      },
+      summary: `【検査指示受け・受付】[${order.orderNumber}] ${order.patientName} (${order.examType}) 担当技師: ${staffName}`,
+      details: {
+        伝票番号: order.orderNumber,
+        患者氏名: order.patientName,
+        検査種別: order.examType,
+        担当技師: staffName,
+        受付日時: order.acceptedAt,
+        状態変化: 'ORDERED ➔ ACCEPTED'
+      },
+      snapshot: order
+    });
+
     // 🏥 電子カルテ (Article) 側のステータスも連動
     if (order.articleId) {
       try {
@@ -288,6 +316,19 @@ app.post('/api/orders/:id/accept', async (req, res) => {
           article.content += `\n\n【放射線科 受付済】${timeStr} 担当技師: ${staffName}`;
           await article.save();
           console.log(`✅ [RadiUke] 電子カルテ (Article: ${order.articleId}) のステータスを受付済(ACCEPTED)に更新しました。`);
+
+          // 📜 電子カルテ更新ログ
+          await logOperation({
+            system: 'radi-uke',
+            opType: 'CARTE_UPDATE',
+            action: 'UPDATE',
+            collection: 'articles',
+            documentId: String(article._id),
+            operator: { name: staffName, department: '放射線科', ip: req.ip },
+            summary: `【電子カルテ連動】放射線オーダー受付に伴うカルテ追記 (記事ID: ${article._id})`,
+            details: { 伝票番号: order.orderNumber, 患者氏名: order.patientName },
+            snapshot: article
+          });
         }
       } catch (cErr) {
         console.warn('⚠️ [RadiUke] カルテステータス更新警告:', cErr.message);
@@ -335,6 +376,32 @@ app.post('/api/orders/:id/complete', async (req, res) => {
 
     console.log(`✅ [RadiUke] 検査実施済: [${order.orderNumber}] ${order.patientName} (${order.examType}) 実施技師: ${staffName}`);
 
+    // 📜 統一操作ログの記録 (可読ログ & DB再構築用)
+    await logOperation({
+      system: 'radi-uke',
+      opType: 'ORDER_COMPLETE',
+      action: 'UPDATE',
+      collection: 'radiologyorders',
+      documentId: String(order._id),
+      operator: {
+        name: staffName,
+        role: 'radiology_technician',
+        department: '放射線科',
+        ip: req.ip
+      },
+      summary: `【検査実施完了】[${order.orderNumber}] ${order.patientName} (${order.examType}) 実施技師: ${staffName}`,
+      details: {
+        伝票番号: order.orderNumber,
+        患者氏名: order.patientName,
+        検査種別: order.examType,
+        実施技師: staffName,
+        実施日時: order.completedAt,
+        特記事項: technicianNotes || '特になし',
+        状態変化: 'ACCEPTED ➔ COMPLETED'
+      },
+      snapshot: order
+    });
+
     // 🏥 電子カルテ (Article) 側のステータスも実施済に連動
     if (order.articleId) {
       try {
@@ -345,6 +412,19 @@ app.post('/api/orders/:id/complete', async (req, res) => {
           article.content += `\n\n【放射線科 検査実施済】${timeStr} 実施技師: ${staffName}${technicianNotes ? ' (特記: ' + technicianNotes + ')' : ''}`;
           await article.save();
           console.log(`✅ [RadiUke] 電子カルテ (Article: ${order.articleId}) のステータスを実施済(COMPLETED)に更新しました。`);
+
+          // 📜 電子カルテ更新ログ
+          await logOperation({
+            system: 'radi-uke',
+            opType: 'CARTE_UPDATE',
+            action: 'UPDATE',
+            collection: 'articles',
+            documentId: String(article._id),
+            operator: { name: staffName, department: '放射線科', ip: req.ip },
+            summary: `【電子カルテ連動】検査実施済に伴うカルテ追記 (記事ID: ${article._id})`,
+            details: { 伝票番号: order.orderNumber, 患者氏名: order.patientName, 特記事項: technicianNotes || 'なし' },
+            snapshot: article
+          });
         }
       } catch (cErr) {
         console.warn('⚠️ [RadiUke] カルテステータス更新警告:', cErr.message);
@@ -389,10 +469,46 @@ app.post('/api/orders/:id/revert', async (req, res) => {
 
     console.log(`↩️ [RadiUke] ステータス差し戻し: [${order.orderNumber}] ${prevStatus} ➔ ${nextStatus}`);
 
+    // 📜 統一操作ログの記録 (可読ログ & DB再構築用)
+    await logOperation({
+      system: 'radi-uke',
+      opType: 'ORDER_REVERT',
+      action: 'UPDATE',
+      collection: 'radiologyorders',
+      documentId: String(order._id),
+      operator: {
+        name: req.session.user?.userName || '放射線技師',
+        role: 'radiology_technician',
+        department: '放射線科',
+        ip: req.ip
+      },
+      summary: `【ステータス差し戻し】[${order.orderNumber}] ${order.patientName} (${prevStatus} ➔ ${nextStatus})`,
+      details: {
+        伝票番号: order.orderNumber,
+        患者氏名: order.patientName,
+        変更前: prevStatus,
+        変更後: nextStatus
+      },
+      snapshot: order
+    });
+
     // 電子カルテ側も更新
     if (order.articleId) {
       try {
-        await Article.findByIdAndUpdate(order.articleId, { orderStatus: nextStatus });
+        const article = await Article.findByIdAndUpdate(order.articleId, { orderStatus: nextStatus }, { new: true });
+        if (article) {
+          await logOperation({
+            system: 'radi-uke',
+            opType: 'CARTE_UPDATE',
+            action: 'UPDATE',
+            collection: 'articles',
+            documentId: String(article._id),
+            operator: { name: req.session.user?.userName || '放射線技師', department: '放射線科', ip: req.ip },
+            summary: `【電子カルテ連動】ステータス差し戻し同期 (${nextStatus})`,
+            details: { 伝票番号: order.orderNumber },
+            snapshot: article
+          });
+        }
       } catch (_) {}
     }
 
@@ -415,10 +531,82 @@ app.post('/api/orders/:id/note', async (req, res) => {
     const { id } = req.params;
     const { technicianNotes } = req.body;
     const order = await RadiologyOrder.findByIdAndUpdate(id, { technicianNotes, updatedAt: new Date() }, { new: true });
+
+    if (order) {
+      // 📜 統一操作ログの記録
+      await logOperation({
+        system: 'radi-uke',
+        opType: 'ORDER_NOTE',
+        action: 'UPDATE',
+        collection: 'radiologyorders',
+        documentId: String(order._id),
+        operator: {
+          name: req.session.user?.userName || '放射線技師',
+          role: 'radiology_technician',
+          department: '放射線科',
+          ip: req.ip
+        },
+        summary: `【技師特記メモ更新】[${order.orderNumber}] ${order.patientName}: ${technicianNotes}`,
+        details: {
+          伝票番号: order.orderNumber,
+          患者氏名: order.patientName,
+          技師メモ: technicianNotes
+        },
+        snapshot: order
+      });
+    }
+
     res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+/**
+ * 📜 7. 統一操作ログ・監査ログ閲覧 API (GET /api/operations/log)
+ */
+app.get('/api/operations/log', (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 50;
+  const logs = getRecentLogs(limit);
+  res.json({ success: true, count: logs.length, logs });
+});
+
+/**
+ * 📖 8. 人間可読テキストログ閲覧 API (GET /api/operations/readable-log)
+ */
+app.get('/api/operations/readable-log', (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 200;
+  const text = getRecentReadableLog(limit);
+  res.type('text/plain; charset=utf-8').send(text);
+});
+
+/**
+ * 🔄 9. ログからのデータベース再構築 API (POST /api/operations/rebuild)
+ */
+app.post('/api/operations/rebuild', async (req, res) => {
+  const { spawn } = require('child_process');
+  const dryRun = req.body.dryRun === true;
+  const drop = req.body.drop === true;
+
+  const scriptArgs = [path.resolve(__dirname, '../../../scripts/rebuild-database.js')];
+  if (dryRun) scriptArgs.push('--dry-run');
+  if (drop) scriptArgs.push('--drop');
+
+  const child = spawn(process.execPath, scriptArgs);
+  let output = '';
+
+  child.stdout.on('data', d => { output += d.toString(); });
+  child.stderr.on('data', d => { output += d.toString(); });
+
+  child.on('close', code => {
+    res.json({
+      success: code === 0,
+      exitCode: code,
+      dryRun,
+      drop,
+      output
+    });
+  });
 });
 
 // サーバー起動
