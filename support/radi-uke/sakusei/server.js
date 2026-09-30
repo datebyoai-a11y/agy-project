@@ -29,7 +29,7 @@ const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/mod
 const Patient = require('/home/a/Desktop/ai/agy-project/support/menu/sakusei/models/Patient');
 
 // 📜 統一操作・監査ロガー
-const { logOperation, getRecentLogs, getRecentReadableLog } = require('../../common/operationLogger');
+const { logOperation, getRecentLogs, getRecentReadableLog, getLogArchivesList } = require('../../common/operationLogger');
 
 const app = express();
 const PORT = process.env.PORT || 8081;
@@ -607,6 +607,61 @@ app.post('/api/operations/rebuild', async (req, res) => {
       output
     });
   });
+});
+
+/**
+ * 📦 10. ログアーカイブ (.gz / 日別) 一覧取得 API (GET /api/operations/archives)
+ */
+app.get('/api/operations/archives', (req, res) => {
+  const archives = getLogArchivesList();
+  res.json({ success: true, count: archives.length, archives });
+});
+
+/**
+ * 🗜️ 11. 手動ログローテーション実行 API (POST /api/operations/rotate)
+ */
+app.post('/api/operations/rotate', (req, res) => {
+  const { spawn } = require('child_process');
+  const force = req.body.force === true;
+
+  const scriptArgs = [path.resolve(__dirname, '../../../scripts/rotate-logs.js')];
+  if (force) scriptArgs.push('--force');
+
+  const child = spawn(process.execPath, scriptArgs);
+  let output = '';
+
+  child.stdout.on('data', d => { output += d.toString(); });
+  child.stderr.on('data', d => { output += d.toString(); });
+
+  child.on('close', code => {
+    res.json({
+      success: code === 0,
+      exitCode: code,
+      output
+    });
+  });
+});
+
+/**
+ * 📖 12. アーカイブファイルの内容閲覧 API (GET /api/operations/archives/:filename)
+ */
+app.get('/api/operations/archives/:filename', (req, res) => {
+  const zlib = require('zlib');
+  const safeFilename = path.basename(req.params.filename);
+  const filePath = path.join(path.resolve(__dirname, '../../logs/operations'), safeFilename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('アーカイブファイルが見つかりません');
+  }
+
+  if (safeFilename.endsWith('.gz')) {
+    res.type('text/plain; charset=utf-8');
+    const readStream = fs.createReadStream(filePath);
+    const gunzip = zlib.createGunzip();
+    readStream.pipe(gunzip).pipe(res);
+  } else {
+    res.sendFile(filePath);
+  }
 });
 
 // サーバー起動

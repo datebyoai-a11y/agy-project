@@ -918,6 +918,7 @@ function openLogModal() {
   if (modal) {
     modal.style.display = 'flex';
     loadReadableLog();
+    loadArchivesList();
   }
 }
 
@@ -925,6 +926,75 @@ function closeLogModal() {
   const modal = document.getElementById('logModal');
   if (modal) {
     modal.style.display = 'none';
+  }
+}
+
+async function loadArchivesList() {
+  const sel = document.getElementById('selLogArchive');
+  if (!sel) return;
+  try {
+    const res = await fetch('/radi-uke/api/operations/archives');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.archives) return;
+
+    // 現在の選択値を保持
+    const curVal = sel.value;
+    sel.innerHTML = '<option value="CURRENT">🟢 本日の最新ログ (リアルタイム)</option>';
+
+    data.archives.forEach(item => {
+      // readable ログのアーカイブを優先表示
+      if (item.type === 'readable' && !item.filename.startsWith('operations.readable.log')) {
+        const opt = document.createElement('option');
+        opt.value = item.filename;
+        opt.textContent = `🗜️ ${item.filename} (${item.sizeKb})`;
+        sel.appendChild(opt);
+      }
+    });
+
+    sel.value = curVal;
+  } catch (_) {}
+}
+
+async function switchLogView(filename) {
+  const area = document.getElementById('logContentArea');
+  if (!area) return;
+
+  if (filename === 'CURRENT') {
+    return loadReadableLog();
+  }
+
+  area.textContent = `⏳ アーカイブ [${filename}] を展開・読込中...`;
+  try {
+    const res = await fetch(`/radi-uke/api/operations/archives/${encodeURIComponent(filename)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    area.textContent = text || '（ログデータはありません）';
+    area.parentElement.scrollTop = 0;
+  } catch (err) {
+    area.textContent = `❌ アーカイブ取得失敗: ${err.message}`;
+  }
+}
+
+async function triggerLogRotate() {
+  const area = document.getElementById('logContentArea');
+  if (!area) return;
+
+  if (!confirm('前日以前のログを即時 .gz 圧縮アーカイブしますか？')) return;
+
+  area.textContent = '🗜️ 日次ログローテーション (.gz 圧縮) を実行中...';
+  try {
+    const res = await fetch('/radi-uke/api/operations/rotate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: false })
+    });
+    const data = await res.json();
+    area.textContent = `✅ ローテーション実行完了 (終了コード: ${data.exitCode})\n\n${data.output}`;
+    showToast('success', 'ログローテーションが完了しました');
+    loadArchivesList();
+  } catch (err) {
+    area.textContent = `❌ ローテーション実行エラー: ${err.message}`;
   }
 }
 
@@ -950,12 +1020,12 @@ async function triggerDbRebuild(dryRun = true) {
 
   const modeName = dryRun ? 'ドライラン（シミュレーション）' : '本番再構築（DB書き込み）';
   if (!dryRun) {
-    if (!confirm('⚠️ 警告: ログを元にデータベースの再構築（同期リストア）を実行しますか？')) {
+    if (!confirm('⚠️ 警告: 全期間のログ（.gz アーカイブ含む）を元にデータベースの再構築（同期リストア）を実行しますか？')) {
       return;
     }
   }
 
-  area.textContent = `⏳ データベース再構築 (${modeName}) を実行中...\nしばらくお待ちください...`;
+  area.textContent = `⏳ データベース再構築 (${modeName}) を実行中...\n過去の .gz 圧縮アーカイブと最新ログを自動解析しています...`;
 
   try {
     const res = await fetch('/radi-uke/api/operations/rebuild', {
