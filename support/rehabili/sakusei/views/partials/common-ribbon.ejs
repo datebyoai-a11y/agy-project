@@ -1,0 +1,327 @@
+<!-- 🏥 全画面共通 最上部1行リボンヘッダー -->
+<div id="globalCommonRibbon" class="common-top-ribbon">
+  <!-- 1. 左側：ID, 対象者, 生年月日, 年齢 (初期値は選択されるまで空/未選択) -->
+  <div class="ribbon-col ribbon-left">
+    <span class="ribbon-badge-patient">🏥 対象患者</span>
+    <span class="ribbon-item">
+      <span class="ribbon-dim">ID:</span>
+      <strong id="ribbonPatientId" class="ribbon-highlight">--</strong>
+    </span>
+    <span class="ribbon-sep">|</span>
+    <span class="ribbon-item">
+      <span class="ribbon-dim">対象者:</span>
+      <strong id="ribbonPatientName" class="ribbon-name">（未選択）</strong>
+    </span>
+    <span class="ribbon-sep">|</span>
+    <span class="ribbon-item">
+      <span class="ribbon-dim">生年月日:</span>
+      <span id="ribbonPatientDob" class="ribbon-text">--</span>
+    </span>
+    <span class="ribbon-sep">|</span>
+    <span class="ribbon-item">
+      <span class="ribbon-dim">年齢:</span>
+      <strong id="ribbonPatientAge" class="ribbon-highlight">--</strong>
+    </span>
+    <button id="ribbonPatientClearBtn" type="button" onclick="clearRibbonPatient()" class="ribbon-clear-btn" style="display: none;" title="患者選択を解除">
+      ✕ 解除
+    </button>
+  </div>
+
+  <!-- 2. 中央：ログイン者、職種 -->
+  <div class="ribbon-col ribbon-center">
+    <div class="ribbon-user-pill">
+      <span class="ribbon-user-icon">👤</span>
+      <span class="ribbon-dim">ログイン者:</span>
+      <strong id="ribbonUserName" class="ribbon-user-val">
+        <%= (typeof user !== 'undefined' && user) ? (user.userName || user.name || user.loginId) : '未ログイン' %>
+      </strong>
+      <span class="ribbon-dept-tag <%= (typeof user !== 'undefined' && user && user.department === '医師') ? 'doctor' : (typeof user !== 'undefined' && user && user.department === '看護師' ? 'nurse' : '') %>">
+        <%= (typeof user !== 'undefined' && user && user.department) ? user.department : '一般' %>
+      </span>
+    </div>
+  </div>
+
+  <!-- 3. 中央右：現在の画面のタイトル (ユーザー指示: タイトル行は不要) -->
+  <div class="ribbon-col ribbon-center-right" style="display: none !important;">
+    <div class="ribbon-screen-pill">
+      <span class="ribbon-screen-icon">📌</span>
+      <span class="ribbon-screen-label">画面:</span>
+      <strong id="ribbonScreenTitle" class="ribbon-screen-val">
+        <%= (typeof currentScreenTitle !== 'undefined') ? currentScreenTitle : (typeof screenTitle !== 'undefined' ? screenTitle : '統合ポータルメニュー') %>
+      </strong>
+    </div>
+  </div>
+
+  <!-- 4. 右側：日付・時間（24時間表示） -->
+  <div class="ribbon-col ribbon-right">
+    <div class="ribbon-clock-pill">
+      <span class="ribbon-clock-icon">🕒</span>
+      <span id="ribbonClock24" class="ribbon-clock-digits">----/--/-- (--) --:--:--</span>
+    </div>
+  </div>
+</div>
+
+<style>
+/* =========================================================
+   🏥 全画面共通 最上部1行リボンスタイル
+   ========================================================= */
+.common-top-ribbon {
+  width: 100%;
+  height: 38px;
+  min-height: 38px;
+  background: #090d16;
+  background: linear-gradient(90deg, #0b1120 0%, #0f172a 45%, #0f172a 65%, #0b1120 100%);
+  color: #f1f5f9;
+  border-bottom: 1px solid #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 0.81rem;
+  line-height: 1;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  user-select: none;
+}
+
+.ribbon-col {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+/* 1. 左側：患者情報 */
+.ribbon-left {
+  flex: 0 0 auto;
+}
+.ribbon-badge-patient {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+.ribbon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.ribbon-dim {
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+.ribbon-highlight {
+  color: #fef08a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.ribbon-name {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+.ribbon-text {
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+.ribbon-sep {
+  color: #334155;
+  font-size: 0.85rem;
+  margin: 0 0.15rem;
+}
+
+.ribbon-clear-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 0.12rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: 0.35rem;
+}
+.ribbon-clear-btn:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+/* 2. 中央：ログイン者・職種 */
+.ribbon-center {
+  flex: 0 0 auto;
+}
+.ribbon-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+}
+.ribbon-user-icon {
+  font-size: 0.85rem;
+}
+.ribbon-user-val {
+  color: #38bdf8;
+  font-weight: 700;
+}
+.ribbon-dept-tag {
+  background: #334155;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.45rem;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+.ribbon-dept-tag.doctor {
+  background: #0284c7;
+  color: white;
+}
+.ribbon-dept-tag.nurse {
+  background: #059669;
+  color: white;
+}
+
+/* 3. 中央右：画面タイトル */
+.ribbon-center-right {
+  flex: 0 0 auto;
+}
+.ribbon-screen-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  padding: 0.22rem 0.65rem;
+  border-radius: 6px;
+}
+.ribbon-screen-icon {
+  font-size: 0.8rem;
+}
+.ribbon-screen-label {
+  color: #a5b4fc;
+  font-size: 0.75rem;
+}
+.ribbon-screen-val {
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+/* 4. 右側：時計 (24時間表記) */
+.ribbon-right {
+  flex: 0 0 auto;
+}
+.ribbon-clock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid #1e293b;
+  padding: 0.22rem 0.65rem;
+  border-radius: 5px;
+}
+.ribbon-clock-icon {
+  font-size: 0.85rem;
+}
+.ribbon-clock-digits {
+  color: #38bdf8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+</style>
+
+<script>
+// ==============================================================================
+// 1. 🕒 24時間表記 リアルタイム時計 (全画面共通)
+// ==============================================================================
+(function() {
+  function updateClock() {
+    const now = new Date();
+    const Y = now.getFullYear();
+    const M = String(now.getMonth() + 1).padStart(2, '0');
+    const D = String(now.getDate()).padStart(2, '0');
+    const days = ['日', '月', '火', '水', '木', '金', '土'];
+    const dStr = days[now.getDay()];
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    
+    const clockEl = document.getElementById('ribbonClock24');
+    if (clockEl) {
+      clockEl.textContent = `${Y}/${M}/${D} (${dStr}) ${h}:${m}:${s}`;
+    }
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+})();
+
+// ==============================================================================
+// 2. 🏥 患者選択の同期 & 初期値「空」制御
+// ==============================================================================
+function clearRibbonPatient() {
+  localStorage.removeItem('koyukai_current_patient');
+  applyRibbonPatient(null);
+}
+
+function applyRibbonPatient(p) {
+  const idEl = document.getElementById('ribbonPatientId');
+  const nameEl = document.getElementById('ribbonPatientName');
+  const dobEl = document.getElementById('ribbonPatientDob');
+  const ageEl = document.getElementById('ribbonPatientAge');
+  const clearBtn = document.getElementById('ribbonPatientClearBtn');
+
+  // 未選択または初期状態
+  if (!p || !p.patientId) {
+    if (idEl) idEl.textContent = '--';
+    if (nameEl) nameEl.textContent = '（未選択）';
+    if (dobEl) dobEl.textContent = '--';
+    if (ageEl) ageEl.textContent = '--';
+    if (clearBtn) clearBtn.style.display = 'none';
+    return;
+  }
+
+  // 患者が選択された場合のみ表示
+  if (idEl) idEl.textContent = p.patientId;
+  if (nameEl) nameEl.textContent = p.name ? (p.name + ' 様') : '（未選択）';
+  if (dobEl) dobEl.textContent = p.dob || p.birthDate || '--';
+  if (ageEl) ageEl.textContent = (p.age !== '' && p.age !== null && p.age !== undefined) ? (p.age + '歳') : '--';
+  if (clearBtn) clearBtn.style.display = 'inline-block';
+}
+
+// ページ読み込み時の処理: 保存された選択患者があれば復元、なければ「空(未選択)」
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const saved = localStorage.getItem('koyukai_current_patient');
+    if (saved) {
+      const p = JSON.parse(saved);
+      if (p && p.patientId) {
+        applyRibbonPatient(p);
+      } else {
+        applyRibbonPatient(null);
+      }
+    } else {
+      applyRibbonPatient(null);
+    }
+  } catch (_) {
+    applyRibbonPatient(null);
+  }
+});
+</script>

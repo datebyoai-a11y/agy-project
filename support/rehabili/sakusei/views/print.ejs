@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>リハビリテーション指示書Ver3.0 - <%= order.patientName %>様 (<%= order.orderNumber %>)</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      color: #000;
+      background: #fff;
+      font-size: 10pt;
+      line-height: 1.35;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .no-print-bar {
+      background: #f1f5f9;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .print-btn {
+      background: #0d9488;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    @media print {
+      .no-print-bar {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    }
+
+    .sheet-page {
+      width: 190mm;
+      margin: 0 auto;
+      padding: 4mm 0;
+    }
+
+    /* タイトルヘッダー */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2pt solid #000;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+    }
+    .main-title {
+      font-size: 16pt;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    .type-box {
+      font-size: 12pt;
+      font-weight: bold;
+    }
+    .circle-wrap {
+      display: inline-block;
+      border: 1.5pt solid #000;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      line-height: 20px;
+      text-align: center;
+      margin: 0 4px;
+    }
+
+    /* テーブル共通 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5pt solid #000;
+      margin-bottom: 5px;
+      font-size: 9pt;
+    }
+    th, td {
+      border: 1pt solid #000;
+      padding: 3px 5px;
+      vertical-align: middle;
+    }
+    .th-bg {
+      background-color: #f2f2f2 !important;
+      text-align: center;
+      font-weight: bold;
+    }
+    .sec-title {
+      background-color: #e6e6e6 !important;
+      font-weight: 900;
+      text-align: center;
+      font-size: 9.5pt;
+    }
+
+    /* 印鑑 */
+    .stamp-circle {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 1.5pt solid #d90429;
+      border-radius: 50%;
+      color: #d90429;
+      font-size: 7pt;
+      font-family: serif;
+      font-weight: bold;
+      text-align: center;
+      line-height: 12px;
+      padding-top: 3px;
+      box-sizing: border-box;
+      transform: rotate(-5deg);
+    }
+
+    .check-mark {
+      font-weight: bold;
+      font-size: 10pt;
+      margin-right: 2px;
+    }
+
+    /* 🎨 Excel実機再現: 印刷用網掛けスタイル */
+    .cell-shaded-print {
+      background-color: #d1ecf1 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .cell-shaded-stamp-print {
+      background-color: #fed7aa !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print-bar">
+    <div>
+      <strong>📄 リハビリテーション指示書Ver3.0 印刷プレビュー</strong>
+      <span style="color: #64748b; font-size: 12px; margin-left: 10px;">管理番号: <%= order.orderNumber %></span>
+    </div>
+    <div>
+      <button class="print-btn" onclick="window.print()">🖨️ A4原本を印刷する</button>
+    </div>
+  </div>
+
+  <div class="sheet-page">
+
+    <!-- ヘッダー -->
+    <div class="header-row">
+      <div class="main-title">
+        リハビリテーション　指 示 書 　Ver3.0
+      </div>
+      <div class="type-box">
+        <% if (order.patientType === 'inpatient') { %>
+          <span style="font-size: 13pt; font-weight: 900;">【 入院 】</span>　外来
+        <% } else { %>
+          入院　<span style="font-size: 13pt; font-weight: 900;">【 外来 】</span>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- 患者情報テーブル -->
+    <table>
+      <colgroup>
+        <col style="width: 10%;">
+        <col style="width: 20%;">
+        <col style="width: 8%;">
+        <col style="width: 12%;">
+        <col style="width: 14%;">
+        <col style="width: 20%;">
+        <col style="width: 8%;">
+        <col style="width: 8%;">
+      </colgroup>
+      <tr>
+        <td class="th-bg">病棟</td>
+        <td><%= order.ward || '2F医療病棟' %></td>
+        <td class="th-bg">病室</td>
+        <td class="cell-shaded-print"><%= order.roomNo ? order.roomNo + ' 号室' : '' %></td>
+        <td class="th-bg">指示日</td>
+        <td class="cell-shaded-print"><%= order.orderDate %></td>
+        <td class="th-bg">主治医</td>
+        <td class="cell-shaded-stamp-print"><%= order.doctorName %></td>
+      </tr>
+      <tr>
+        <td class="th-bg">患者ＩＤ</td>
+        <td class="cell-shaded-print" style="font-weight: bold; font-family: monospace; font-size: 10pt;"><%= order.patientId %></td>
+        <td class="th-bg">性別</td>
+        <td class="cell-shaded-print"><%= order.patientGender || '' %></td>
+        <td class="th-bg" rowspan="2">診断名<br><span style="font-size: 7.5pt; font-weight: normal;">(算定病名)</span></td>
+        <td colspan="3" rowspan="2" class="cell-shaded-print" style="font-weight: bold; font-size: 11pt;">
+          <%= order.diagnosisName %>
+        </td>
+      </tr>
+      <tr>
+        <td class="th-bg">氏　名</td>
+        <td class="cell-shaded-print" style="font-weight: 900; font-size: 11pt;"><%= order.patientName %> 様</td>
+        <td class="th-bg">年齢</td>
+        <td class="cell-shaded-print"><%= order.patientAge ? order.patientAge + ' 歳' : '' %></td>
+      </tr>
+      <tr>
+        <td class="th-bg">入院日<br>外来日</td>
+        <td class="cell-shaded-print"><%= order.admissionDate || order.orderDate %></td>
+        <td class="th-bg">生年月日</td>
+        <td class="cell-shaded-print"><%= order.patientBirthDate || '' %></td>
+        <td class="th-bg">発症日<br>起算日</td>
+        <td class="cell-shaded-print"><%= order.onsetDate || order.orderDate %></td>
+        <td class="th-bg">署名</td>
+        <td class="cell-shaded-stamp-print" style="text-align: center;">
+          <div class="stamp-circle">山田<br>印</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- 急変リスク -->
+    <table>
+      <colgroup>
+        <col style="width: 10%;">
+        <col style="width: 45%;">
+        <col style="width: 45%;">
+      </colgroup>
+      <tr>
+        <td class="th-bg" rowspan="3" style="font-weight: 900; font-size: 9.5pt;">
+          急変<br>リスク
+        </td>
+        <td>
+          <span class="check-mark"><%= order.riskCirculatory ? '☑' : '□' %></span>
+          循環器系異常（血圧低下/上昇、頻脈/不整脈）
+        </td>
+        <td>
+          <span class="check-mark"><%= order.riskRespiratory ? '☑' : '□' %></span>
+          呼吸不全（SpO₂低値）　酸素 (<%= order.oxygenFlow || '　　' %>) ℓ/分 使用中
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="check-mark"><%= order.riskMedicine ? '☑' : '□' %></span>
+          薬剤の影響（降圧薬・利尿薬・糖尿病薬）
+        </td>
+        <td>
+          <span class="check-mark"><%= order.riskJoint ? '☑' : '□' %></span>
+          人工関節　<%= order.jointSide || '右・左・両側' %>（部位: <%= order.jointPart || '股・膝' %> <%= order.jointOtherText || '' %>）
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="check-mark"><%= order.riskDementia ? '☑' : '□' %></span>
+          認知症による指示理解の低下
+        </td>
+        <td>
+          禁忌事項: <%= order.contraindications || '特になし' %>
+        </td>
+      </tr>
+    </table>
+
+    <!-- 指示欄 -->
+    <table>
+      <colgroup>
+        <col style="width: 10%;">
+        <col style="width: 90%;">
+      </colgroup>
+      <tr>
+        <td class="sec-title" rowspan="3">
+          指　示<br><span style="font-size: 7.5pt; font-weight: normal;">(医療のみ)</span>
+        </td>
+        <td>
+          <strong>① 医学的必要性記載欄 (離床が困難な理由・症状具体的記述):</strong><br>
+          <div style="padding: 2px 4px; min-height: 28px;">
+            <%= order.necessityReason || '脳梗塞発症に伴う片麻痺および廃用により歩行・移乗動作が低下しており、積極的なリハビリテーション介入を要する。' %>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="display: flex; justify-content: space-between; border: none; padding: 4px 6px;">
+          <div>
+            <span class="check-mark"><%= order.improvementExpected ? '☑' : '□' %></span>
+            <strong>② 医学的改善が見込まれるためリハビリを指示する</strong>
+          </div>
+          <div>
+            <strong>③ 頻度:</strong> 週 ( <strong><%= order.frequencyPerWeek || '5' %></strong> ) 回、( <strong><%= order.durationMonths || '3' %></strong> ) ヶ月間
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="display: flex; justify-content: space-between; border: none; padding: 4px 6px;">
+          <div>
+            <strong>場　所:</strong>
+            <span class="check-mark"><%= order.location === 'ward' || order.location === 'both' ? '☑' : '□' %></span> 病棟内　　
+            <span class="check-mark"><%= order.location === 'rehab_room' || order.location === 'both' ? '☑' : '□' %></span> 病棟外リハ室
+          </div>
+          <div>
+            ※入院患者: 入院料区分 【 <strong><%= order.admissionCategory || '医療療養1' %></strong> 】
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- 目的・内容テーブル -->
+    <table>
+      <colgroup>
+        <col style="width: 10%;">
+        <col style="width: 22%;">
+        <col style="width: 68%;">
+      </colgroup>
+      <tr>
+        <th class="th-bg">大項目</th>
+        <th class="th-bg">目　的</th>
+        <th class="th-bg">内　容</th>
+      </tr>
+
+      <!-- 理学療法 -->
+      <tr>
+        <td class="sec-title" rowspan="4">
+          理学療法<br><span style="font-size:7pt; font-weight:normal;">(医療療養・外来)</span>
+        </td>
+        <td>１．運動機能改善</td>
+        <td>
+          <span class="check-mark"><%= order.pt_rom ? '☑' : '□' %></span>関節可動域訓練(ROM)　
+          <span class="check-mark"><%= order.pt_strength ? '☑' : '□' %></span>筋力体力増強　
+          <span class="check-mark"><%= order.pt_neuro ? '☑' : '□' %></span>神経筋促通<br>
+          <span class="check-mark"><%= order.pt_balance ? '☑' : '□' %></span>平衡機能改善バランス　
+          <span class="check-mark"><%= order.pt_coordination ? '☑' : '□' %></span>協調運動(coordination)
+        </td>
+      </tr>
+      <tr>
+        <td>２．動作能力改善</td>
+        <td>
+          <span class="check-mark"><%= order.pt_basicMotion ? '☑' : '□' %></span>基本動作（寝返り-起き上がり-立ち上がり）<br>
+          <span class="check-mark"><%= order.pt_transfer ? '☑' : '□' %></span>移乗動作（transfer）　
+          <span class="check-mark"><%= order.pt_gait ? '☑' : '□' %></span>歩行能力向上（独歩-T字杖/補装具等）
+        </td>
+      </tr>
+      <tr>
+        <td>３．ADL改善</td>
+        <td>
+          <span class="check-mark"><%= order.pt_adl ? '☑' : '□' %></span>ADL動作（<%= order.pt_adlDetail || '　　　　　　　　' %>）　
+          <span class="check-mark"><%= order.pt_wheelchair ? '☑' : '□' %></span>車いす操作練習
+        </td>
+      </tr>
+      <tr>
+        <td>４．認知機能</td>
+        <td>
+          <span class="check-mark"><%= order.pt_cognition ? '☑' : '□' %></span>高次脳機能「認知」「注意」「記憶」「遂行機能」「社会的行動」（OT中心）
+        </td>
+      </tr>
+
+      <!-- 作業療法 -->
+      <tr>
+        <td class="sec-title" rowspan="4">
+          作業療法<br><span style="font-size:7pt; font-weight:normal;">(介護医療・通所)</span>
+        </td>
+        <td>１．身体機能の維持・改善<br><span style="font-size:7pt;">(PT中心)</span></td>
+        <td>
+          <span class="check-mark"><%= order.ot_rom ? '☑' : '□' %></span>関節可動域訓練(ROM)　
+          <span class="check-mark"><%= order.ot_strength ? '☑' : '□' %></span>筋力維持訓練　
+          <span class="check-mark"><%= order.ot_gait ? '☑' : '□' %></span>歩行訓練<br>
+          <span class="check-mark"><%= order.ot_posture ? '☑' : '□' %></span>座位/立位保持訓練（体幹の安定性向上と耐久性の確保[食事・ADL基盤]）
+        </td>
+      </tr>
+      <tr>
+        <td>２．ADL維持・向上<br><span style="font-size:7pt;">(OT中心)</span></td>
+        <td>
+          <span class="check-mark"><%= order.ot_meal ? '☑' : '□' %></span>食事動作訓練　
+          <span class="check-mark"><%= order.ot_dressing ? '☑' : '□' %></span>更衣-整容-入浴動作　
+          <span class="check-mark"><%= order.ot_toilet ? '☑' : '□' %></span>トイレ排泄動作指導
+        </td>
+      </tr>
+      <tr>
+        <td>３．認知機能・維持改善<br><span style="font-size:7pt;">(OT中心)</span></td>
+        <td>
+          <span class="check-mark"><%= order.ot_attention ? '☑' : '□' %></span>注意・記憶の訓練　
+          <span class="check-mark"><%= order.ot_executive ? '☑' : '□' %></span>遂行機能の訓練　
+          <span class="check-mark"><%= order.ot_recreation ? '☑' : '□' %></span>レクリエーション活動(手工芸・音楽)
+        </td>
+      </tr>
+      <tr>
+        <td>４．生活環境調整</td>
+        <td>
+          <span class="check-mark"><%= order.ot_environment ? '☑' : '□' %></span>生活環境調整・福祉用具の選定（PT・OT共通）
+        </td>
+      </tr>
+
+      <!-- 言語聴覚療法 -->
+      <tr>
+        <td class="sec-title" rowspan="3">
+          言語聴覚<br><span style="font-size:7pt; font-weight:normal;">【ST連携】</span>
+        </td>
+        <td>● 嚥下摂食機能療法</td>
+        <td>
+          <span class="check-mark"><%= order.st_vf ? '☑' : '□' %></span>嚥下造影検査(VF検査)　
+          <span class="check-mark"><%= order.st_swallowMeal ? '☑' : '□' %></span>嚥下・食事場面の支援　
+          <span class="check-mark"><%= order.st_swallowInstruction ? '☑' : '□' %></span>介助方法の助言指導<br>
+          <span class="check-mark"><%= order.st_swallowPosture ? '☑' : '□' %></span>食事姿勢の調整　
+          <span class="check-mark"><%= order.st_swallowForm ? '☑' : '□' %></span>食形態の評価　
+          <span class="check-mark"><%= order.st_swallowRisk ? '☑' : '□' %></span>誤嚥リスクの観察
+        </td>
+      </tr>
+      <tr>
+        <td>● 構音・失語症改善</td>
+        <td>
+          <span class="check-mark"><%= order.st_articulation ? '☑' : '□' %></span>構音障害改善（発声・口腔運動・音の練習・話し方の調整）<br>
+          <span class="check-mark"><%= order.st_aphasia ? '☑' : '□' %></span>失語症改善（理解・表出・読み書き・語彙訓練・生活場面での会話支援）
+        </td>
+      </tr>
+      <tr>
+        <td>● 医療処置</td>
+        <td>
+          <span class="check-mark"><%= order.st_suction ? '☑' : '□' %></span>サクション（吸引）
+        </td>
+      </tr>
+
+      <!-- 評価 -->
+      <tr>
+        <td class="sec-title">評　価</td>
+        <td colspan="2">
+          <span class="check-mark"><%= order.eval_dementia ? '☑' : '□' %></span>認知症評価（HDS-R・MMSE）　
+          <span class="check-mark"><%= order.eval_physical ? '☑' : '□' %></span>筋力・関節可動域・ADL評価測定（身体障がい者手帳 等）<br>
+          <span class="check-mark"><%= order.eval_walk ? '☑' : '□' %></span>６分間歩行テスト（6MD）　
+          <span class="check-mark"><%= order.eval_bodyComp ? '☑' : '□' %></span>体組成評価
+        </td>
+      </tr>
+
+      <!-- 消炎鎮痛 -->
+      <tr>
+        <td class="sec-title" rowspan="2">消炎鎮痛</td>
+        <td colspan="2">
+          <span class="check-mark"><%= order.sed_massage ? '☑' : '□' %></span>１．マッサージ　
+          <span class="check-mark"><%= order.sed_hotpack ? '☑' : '□' %></span>２．ホットパック　
+          <span class="check-mark"><%= order.sed_ssp ? '☑' : '□' %></span>３．SSP マイクロ波　
+          <span class="check-mark"><%= order.sed_medmer ? '☑' : '□' %></span>４．メドマー(エアマッサージ器)<br>
+          <span class="check-mark"><%= order.sed_traction ? '☑' : '□' %></span>５．牽引　頸椎（<%= order.sed_cervicalWeight || '　　' %> ㎏）　腰椎（<%= order.sed_lumbarWeight || '　　' %> ㎏）
+        </td>
+      </tr>
+      <tr>
+        <td>部　位</td>
+        <td>
+          側: <%= order.sed_partSide || '右・左・両側' %>　／　部位: <%= order.sed_partRegion || '頸・肩・腰・足' %> <%= order.sed_partOther ? '・他(' + order.sed_partOther + ')' : '' %>
+        </td>
+      </tr>
+    </table>
+
+    <!-- フッター 受付枠 -->
+    <table>
+      <colgroup>
+        <col style="width: 65%;">
+        <col style="width: 15%;">
+        <col style="width: 20%;">
+      </colgroup>
+      <tr>
+        <td style="font-size: 8pt; color: #444;">
+          管理番号: <%= order.orderNumber %> ／ 発行日時: <%= order.createdAt ? new Date(order.createdAt).toLocaleString('ja-JP') : '' %>
+        </td>
+        <td class="th-bg">リハビリ受付確認</td>
+        <td style="height: 40px; text-align: center; vertical-align: middle;">
+          <span style="color: #999; font-size: 8pt;">月　日　サイン</span>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+
+</body>
+</html>

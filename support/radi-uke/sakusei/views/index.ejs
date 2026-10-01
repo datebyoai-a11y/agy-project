@@ -15,19 +15,8 @@
         currentScreenTitle: '🩻 放射線科 指示受け・実施モニター' 
       }) %>
 
-  <!-- 2. サブヘッダー (タイトル・統計・ナビゲーション) -->
-  <header class="main-header">
-    <div class="brand-section">
-      <div class="brand-icon">🩻</div>
-      <div>
-        <div class="brand-title">
-          放射線科 指示受け・実施モニター
-          <span class="brand-badge">リアルタイム連携</span>
-        </div>
-        <div class="brand-sub">モダリティ別 Kanban（一般撮影 / CT / 透視）＆ 一覧形式（全件管理）</div>
-      </div>
-    </div>
-
+  <!-- 2. 統計・操作バー (タイトル画面は撤廃し、業務バーのみコンパクト配置) -->
+  <header class="main-header" style="padding:0.4rem 1.25rem;">
     <!-- 統計サマリー -->
     <div class="stats-summary">
       <div class="stat-pill stat-ordered" title="未受付オーダー件数">
@@ -55,9 +44,6 @@
       </button>
       <a href="/radiology/" class="btn btn-outline" title="放射線科オーダー入力・正控え帳票印刷を開く">
         📝 オーダー発行・印刷 ➔
-      </a>
-      <a href="/" class="btn btn-primary" title="医療統合ポータルメニューへ戻る">
-        🏛️ 統合ポータル
       </a>
     </div>
   </header>

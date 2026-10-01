@@ -27,21 +27,20 @@ const MENUS = [
   },
   {
     id: 'bed_board',
-    title: '病棟・ベッドボード管理',
-    shortName: 'ベッドボード',
-    subtitle: '病棟病床マップ・患者病室ベッド割り当て・空床リアルタイム管理',
+    title: '病棟フロアマップ・ベッドボード',
+    shortName: '病棟フロアマップ',
+    subtitle: 'アイホン連動2F病棟フロアマップ・患者ベッド配置・看護統計・空床リアルタイム管理',
     url: '/bed-board',
-    icon: '🛏️',
+    icon: '🗺️',
     category: '臨床・診療',
     badgeColor: 'teal'
   },
   {
     id: 'order_sender',
-    title: 'オーダリング【入力・指示箋】',
-    shortName: 'オーダー送信',
-    subtitle: '処方箋・注射点滴指示・放射線/検査依頼・食事オーダー発行 (リバースプロキシ連携)',
+    title: 'オーダリング総合ポータル【指示発行】',
+    shortName: '統合オーダリング',
+    subtitle: '放射線・注射点滴・リハビリテーション指示書の一括発行・カルテ連動 (統合画面)',
     url: '/ordering/',
-    port: 4000,
     icon: '📝',
     category: '臨床・診療',
     badgeColor: 'indigo'
@@ -69,6 +68,40 @@ const MENUS = [
     badgeColor: 'blue'
   },
   {
+    id: 'injection_order',
+    title: '注射・点滴オーダー【指示・ラベル印刷】',
+    shortName: '注射オーダー',
+    subtitle: '輸液・混注薬剤オーダー発行、注射指示票・ボトルラベル印刷、カルテ連動 (SSO自動ログイン)',
+    url: '/sso/launch?app=injection',
+    port: 8082,
+    icon: '💉',
+    category: '臨床・診療',
+    badgeColor: 'emerald'
+  },
+  {
+    id: 'naifuku_order',
+    title: '内服・外用処方オーダー【処方箋・調剤指示】',
+    shortName: '内服・外用処方',
+    subtitle: 'Rp別複数薬品・服用タイミング・一包化/粉砕指示・DO処方・院内処方箋印刷・カルテ連動 (SSO自動ログイン)',
+    url: '/sso/launch?app=naifuku',
+    port: 8084,
+    icon: '💊',
+    category: '臨床・診療',
+    badgeColor: 'blue'
+  },
+  {
+    id: 'rehabili_order',
+    title: 'リハビリテーション指示オーダー【指示書Ver3.0】',
+    shortName: 'リハビリ指示',
+    subtitle: 'PT/OT/ST指示書Ver3.0発行、急変リスク・医学的必要性・頻度・消炎鎮痛、A4原本印刷・カルテ連動 (SSO自動ログイン)',
+    url: '/sso/launch?app=rehabili',
+    port: 8083,
+    icon: '🤸',
+    category: '臨床・診療',
+    badgeColor: 'teal'
+  },
+  /*
+  {
     id: 'order_receiver',
     title: 'オーダリング【部門モニター】',
     shortName: '部門モニター',
@@ -79,6 +112,7 @@ const MENUS = [
     category: '部門・実施',
     badgeColor: 'teal'
   },
+  */
   {
     id: 'incident_report',
     title: 'インシデント・ヒヤリハット報告',
@@ -141,13 +175,16 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '医師 (Doctor)',
     defaultRole: 'user',
     description: '診察記事・病名登録・全オーダー発行・患者情報管理・病床把握',
-    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'radiology_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'emr': '全権限（診察記事・病名・指示）',
       'patient_management': '患者情報登録・編集・参照',
       'bed_board': '病床稼働マップ・病室割当',
       'order_sender': '全オーダー発行・処方・指示承認',
+      'naifuku_order': '内服・外用処方オーダー発行・処方箋印刷',
+      'injection_order': '注射・点滴オーダー発行・指示箋印刷',
       'radiology_order': '放射線オーダー発行・正控え印刷',
+      'rehabili_order': 'リハビリテーション指示書Ver3.0発行・原本印刷',
       'radiology_receiver': '放射線指示受け・実施状況モニター',
       'order_receiver': 'オーダー実施進捗確認',
       'incident_report': '全職員報告権限',
@@ -159,13 +196,16 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '看護師 (Nurse)',
     defaultRole: 'user',
     description: '看護記録・バイタル入力・病棟オーダー・患者情報・病床管理',
-    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'radiology_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'emr': '看護記録・バイタル入力・閲覧',
       'patient_management': '患者情報更新・バイタル登録',
       'bed_board': '病棟ベッド移動・空床割当',
       'order_sender': '病棟指示・食事変更・点滴連携',
+      'naifuku_order': '内服・外用処方指示確認・配薬チェック',
+      'injection_order': '注射点滴指示確認・ラベル印刷・実施',
       'radiology_order': '放射線オーダー参照・印刷',
+      'rehabili_order': 'リハビリ指示参照・原本印刷',
       'radiology_receiver': '放射線検査進捗・実施確認',
       'order_receiver': '病棟受取・点滴実施確認',
       'incident_report': '全職員報告権限',
@@ -193,10 +233,11 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: 'リハビリ職 (Rehabilitation)',
     defaultRole: 'user',
     description: 'リハビリ指示受取・実施記録・カルテ閲覧・患者参照',
-    menus: ['emr', 'patient_management', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['emr', 'patient_management', 'rehabili_order', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'emr': '患者情報・カルテ閲覧のみ',
       'patient_management': '患者基本情報・ADL参照',
+      'rehabili_order': 'リハビリ指示書Ver3.0受取・指示確認・原本印刷',
       'order_receiver': 'リハビリ指示受取・実施モニター',
       'incident_report': '全職員報告権限',
       'user_management': '職員一覧の閲覧'
@@ -207,9 +248,11 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '薬剤師 (Pharmacist)',
     defaultRole: 'user',
     description: '処方調剤・注射薬鑑査モニター・患者アレルギー参照',
-    menus: ['patient_management', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['patient_management', 'naifuku_order', 'injection_order', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'patient_management': '患者基本情報・アレルギー参照',
+      'naifuku_order': '処方鑑査・調剤指示確認・処方箋印刷',
+      'injection_order': '注射薬鑑査・ミキシング調剤確認',
       'order_receiver': '処方調剤・注射薬鑑査モニター',
       'incident_report': '全職員報告権限',
       'user_management': '職員一覧の閲覧'
@@ -247,12 +290,13 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '医療安全管理室 / 管理者 (Admin)',
     defaultRole: 'admin',
     description: '全館システムフルアクセス・インシデント集計・職員マスタ管理',
-    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'radiology_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'safety_analytics', 'user_management', 'system_status', 'novnc'],
+    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'safety_analytics', 'user_management', 'system_status', 'novnc'],
     labels: {
       'emr': '管理者フルアクセス',
       'patient_management': '患者マスタ全権限',
       'bed_board': '全館病床ベッドボード管理',
       'order_sender': '管理者フルアクセス',
+      'naifuku_order': '内服・外用処方オーダー全権限',
       'radiology_order': '放射線オーダー発行・帳票管理',
       'radiology_receiver': '放射線指示受け・実施モニター管理',
       'order_receiver': '全館オーダー総合モニター',

@@ -21,38 +21,63 @@ const Patient = require('./models/Patient');
 const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
 const { SamplePatients } = require('/home/a/Desktop/ai/agy-project/ordering/shared/orderSchema');
 const { getAuthorizedMenus, checkAccess, MENUS, DEFAULT_ROLE_TEMPLATES } = require('./config/permissions');
+const { seed2FPhotoPatients } = require('./seed2FPhotoPatients');
 
 // 🛏️ 病棟・病室・ベッドマスタ定義（全機能共通）
+// 2F医療病棟、3F介護医療院、4F介護医療院（全フロア同一構造・20部屋・計62床）
+function createWardRooms(floor) {
+  const f = String(floor);
+  return [
+    { roomNo: `${f}01`, type: '4人部屋', gender: '女', beds: [`${f}01-1`, `${f}01-2`, `${f}01-3`, `${f}01-4`] },
+    { roomNo: `${f}02`, type: '4人部屋', gender: '女', beds: [`${f}02-1`, `${f}02-2`, `${f}02-3`, `${f}02-4`] },
+    { roomNo: `${f}03`, type: '4人部屋', gender: '女', beds: [`${f}03-1`, `${f}03-2`, `${f}03-3`, `${f}03-4`] },
+    { roomNo: `${f}05`, type: '4人部屋', gender: '男', beds: [`${f}05-1`, `${f}05-2`, `${f}05-3`, `${f}05-4`] },
+    { roomNo: `${f}06`, type: '個室 (トイレ付)', gender: '女', beds: [`${f}06-1`] },
+    { roomNo: `${f}07`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}07-1`] },
+    { roomNo: `${f}08`, type: '個室 (トイレ付)', gender: '男', beds: [`${f}08-1`] },
+    { roomNo: `${f}11`, type: '4人部屋', gender: '男', beds: [`${f}11-1`, `${f}11-2`, `${f}11-3`, `${f}11-4`] },
+    { roomNo: `${f}12`, type: '4人部屋', gender: '男', beds: [`${f}12-1`, `${f}12-2`, `${f}12-3`, `${f}12-4`] },
+    { roomNo: `${f}13`, type: '4人部屋', gender: '女', beds: [`${f}13-1`, `${f}13-2`, `${f}13-3`, `${f}13-4`] },
+    { roomNo: `${f}15`, type: '個室 (トイレ付)', gender: '男', beds: [`${f}15-1`] },
+    { roomNo: `${f}16`, type: '個室 (トイレ付)', gender: '女', beds: [`${f}16-1`] },
+    { roomNo: `${f}17`, type: '個室 (トイレ付)', gender: '女', beds: [`${f}17-1`] },
+    { roomNo: `${f}18`, type: '4人部屋', gender: '男', beds: [`${f}18-1`, `${f}18-2`, `${f}18-3`, `${f}18-4`] },
+    { roomNo: `${f}20`, type: '4人部屋', gender: '女', beds: [`${f}20-1`, `${f}20-2`, `${f}20-3`, `${f}20-4`] },
+    { roomNo: `${f}21`, type: '4人部屋', gender: '女', beds: [`${f}21-1`, `${f}21-2`, `${f}21-3`, `${f}21-4`] },
+    { roomNo: `${f}22`, type: '4人部屋', gender: '女', beds: [`${f}22-1`, `${f}22-2`, `${f}22-3`, `${f}22-4`] },
+    { roomNo: `${f}23`, type: '4人部屋', gender: '男', beds: [`${f}23-1`, `${f}23-2`, `${f}23-3`, `${f}23-4`] },
+    { roomNo: `${f}25`, type: '4人部屋', gender: '女', beds: [`${f}25-1`, `${f}25-2`, `${f}25-3`, `${f}25-4`] },
+    { roomNo: `${f}26`, type: '4人部屋', gender: '女', beds: [`${f}26-1`, `${f}26-2`, `${f}26-3`, `${f}26-4`] }
+  ];
+}
+
 const BED_MASTER = {
-  'しおかぜ病棟': {
-    name: '4F しおかぜ病棟 (一般・地域包括ケア 24床)',
-    wardKey: 'しおかぜ病棟',
-    rooms: [
-      { roomNo: '401', type: '2人部屋', beds: ['401-A', '401-B'] },
-      { roomNo: '402', type: '2人部屋', beds: ['402-A', '402-B'] },
-      { roomNo: '403', type: '4人部屋', beds: ['403-A', '403-B', '403-C', '403-D'] },
-      { roomNo: '405', type: '個室 (特室)', beds: ['405-A'] },
-      { roomNo: '406', type: '4人部屋', beds: ['406-A', '406-B', '406-C', '406-D'] },
-      { roomNo: '407', type: '個室', beds: ['407-A'] },
-      { roomNo: '408', type: '4人部屋', beds: ['408-A', '408-B', '408-C', '408-D'] },
-      { roomNo: '410', type: '4人部屋', beds: ['410-A', '410-B', '410-C', '410-D'] }
-    ]
+  '2F医療病棟': {
+    name: '2F 医療病棟',
+    wardKey: '2F医療病棟',
+    floor: 2,
+    rooms: createWardRooms(2)
   },
-  'うみかぜ病棟': {
-    name: '3F うみかぜ病棟 (医療療養病棟 24床)',
-    wardKey: 'うみかぜ病棟',
-    rooms: [
-      { roomNo: '301', type: '個室 (特室)', beds: ['301-A'] },
-      { roomNo: '302', type: '4人部屋', beds: ['302-A', '302-B', '302-C', '302-D'] },
-      { roomNo: '303', type: '4人部屋', beds: ['303-A', '303-B', '303-C', '303-D'] },
-      { roomNo: '305', type: '個室', beds: ['305-A'] },
-      { roomNo: '306', type: '4人部屋', beds: ['306-A', '306-B', '306-C', '306-D'] },
-      { roomNo: '307', type: '個室', beds: ['307-A'] },
-      { roomNo: '308', type: '4人部屋', beds: ['308-A', '308-B', '308-C', '308-D'] },
-      { roomNo: '310', type: '4人部屋', beds: ['310-A', '310-B', '310-C', '310-D'] }
-    ]
+  '3F介護医療院': {
+    name: '3F 介護医療院',
+    wardKey: '3F介護医療院',
+    floor: 3,
+    rooms: createWardRooms(3)
+  },
+  '4F介護医療院': {
+    name: '4F 介護医療院',
+    wardKey: '4F介護医療院',
+    floor: 4,
+    rooms: createWardRooms(4)
   }
 };
+
+function resolveWardMaster(wardKey) {
+  if (BED_MASTER[wardKey]) return BED_MASTER[wardKey];
+  if (wardKey === 'うみかぜ病棟' || wardKey === '3F' || (wardKey && wardKey.startsWith('3F'))) return BED_MASTER['3F介護医療院'];
+  if (wardKey === 'しおかぜ病棟' || wardKey === '4F' || (wardKey && wardKey.startsWith('4F'))) return BED_MASTER['4F介護医療院'];
+  return BED_MASTER['2F医療病棟'];
+}
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -65,8 +90,28 @@ mongoose.connect(MONGO_URI)
     await initRoleTemplates();
     await initAdminUser();
     await initSamplePatients();
+    await migrateWardNames();
+    try {
+      // ※ ベッドボードの患者はDBから適宜入床させる運用の変更に伴い、起動時の固定ベッド割り当てシードは無効化
+      // await seed2FPhotoPatients();
+    } catch (e) {
+      console.warn('⚠️ seed2FPhotoPatients warning:', e.message);
+    }
   })
   .catch(err => console.warn('⚠️ [Portal] MongoDB 接続警告:', err.message));
+
+// 旧病棟名（うみかぜ・しおかぜ）から 3F/4F介護医療院へのマイグレーション
+async function migrateWardNames() {
+  try {
+    const r1 = await Patient.updateMany({ ward: 'うみかぜ病棟' }, { ward: '3F介護医療院' });
+    const r2 = await Patient.updateMany({ ward: 'しおかぜ病棟' }, { ward: '4F介護医療院' });
+    if (r1.modifiedCount > 0 || r2.modifiedCount > 0) {
+      console.log(`🏥 病棟移行完了: うみかぜ➔3F介護医療院(${r1.modifiedCount}件), しおかぜ➔4F介護医療院(${r2.modifiedCount}件)`);
+    }
+  } catch (e) {
+    console.warn('⚠️ 病棟名マイグレーション警告:', e.message);
+  }
+}
 
 // 初期職種テンプレートのシード
 async function initRoleTemplates() {
@@ -212,9 +257,79 @@ app.use('/radi-uke', createProxyMiddleware({
   }
 }));
 
-// 📝 2. オーダリング【送信側】(Port 4000) へのリバースプロキシ
+// 💉 1.6 注射・点滴オーダー (Port 8082) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/injection') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/injection/' + q);
+  }
+  next();
+});
+
+app.use('/injection', createProxyMiddleware({
+  target: 'http://127.0.0.1:8082',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/injection': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/injection');
+    }
+  }
+}));
+
+// 🤸 1.7 リハビリテーション指示オーダー (Port 8083) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/rehabili') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/rehabili/' + q);
+  }
+  next();
+});
+
+app.use('/rehabili', createProxyMiddleware({
+  target: 'http://127.0.0.1:8083',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/rehabili': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/rehabili');
+    }
+  }
+}));
+
+// 💊 1.8 内服・外用処方オーダー (Port 8084) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/naifuku') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/naifuku/' + q);
+  }
+  next();
+});
+
+app.use('/naifuku', createProxyMiddleware({
+  target: 'http://127.0.0.1:8084',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/naifuku': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/naifuku');
+    }
+  }
+}));
+
+// 📝 2. 統合オーダリング総合ポータル (Port 4000) へのリバースプロキシ
 app.use((req, res, next) => {
   if (req.path === '/ordering') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/ordering/' + q);
+  }
+  if (req.path === '/support/ordering') {
     const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
     return res.redirect(301, '/ordering/' + q);
   }
@@ -234,27 +349,36 @@ app.use('/ordering', createProxyMiddleware({
   }
 }));
 
-// 📥 3. オーダリング【受信側】部門モニター (Port 5000) へのリバースプロキシ
-app.use((req, res, next) => {
-  if (req.path === '/monitor') {
-    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    return res.redirect(301, '/monitor/' + q);
-  }
-  next();
-});
-
-app.use('/monitor', createProxyMiddleware({
-  target: 'http://127.0.0.1:5000',
+app.use('/support/ordering', createProxyMiddleware({
+  target: 'http://127.0.0.1:4000',
   changeOrigin: true,
   pathRewrite: {
-    '^/monitor': ''
+    '^/support/ordering': ''
   },
   on: {
     proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/monitor');
+      proxyReq.setHeader('x-forwarded-prefix', '/support/ordering');
     }
   }
 }));
+
+// 📥 オーダリング【受信側】(Port 5000) - 停止・閉鎖中
+app.use('/monitor', (req, res) => {
+  res.status(503).send(`
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head><meta charset="utf-8"><title>部門モニター停止中</title></head>
+    <body style="font-family:sans-serif; text-align:center; padding:3rem; background:#f8fafc; color:#1e293b;">
+      <div style="max-width:500px; margin:auto; background:white; padding:2rem; border-radius:12px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); border:1px solid #e2e8f0;">
+        <div style="font-size:2.5rem; margin-bottom:1rem;">🔒</div>
+        <h2 style="margin:0 0 0.5rem; color:#0f172a;">部門モニターは停止中です</h2>
+        <p style="color:#64748b; font-size:0.95rem; line-height:1.5;">ポート5000の受信モニター機能は停止・閉鎖されています。</p>
+        <a href="/menu" style="display:inline-block; margin-top:1.5rem; padding:0.55rem 1.4rem; background:#0284c7; color:white; text-decoration:none; border-radius:6px; font-weight:bold;">🏠 医療統合ポータルへ戻る</a>
+      </div>
+    </body>
+    </html>
+  `);
+});
 
 // 🩺 4. 電子カルテ・インシデント管理 (Port 3000) へのリバースプロキシ
 const emrProxy = createProxyMiddleware({
@@ -541,13 +665,40 @@ app.get('/sso/launch', requireAuth, async (req, res) => {
       return res.redirect(ssoUrl);
     }
 
-    // 📝 オーダリング【送信側】へのプロキシ遷移
+    // 💉 注射・点滴オーダーへのSSO連携API (プロキシ経由で安全に接続)
+    if (appKey === 'injection' || appKey === 'injection_order') {
+      const patientId = req.query.patientId || req.query.targetId;
+      const targetQuery = patientId ? `&patientId=${encodeURIComponent(patientId)}` : '';
+      const ssoUrl = `/injection/api/sso-login?token=${encodeURIComponent(ssoToken)}${targetQuery}`;
+      console.log(`🔗 [SSO Launch -> Injection API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
+    }
+
+    // 🤸 リハビリテーション指示オーダーへのSSO連携API (プロキシ経由で安全に接続)
+    if (appKey === 'rehabili' || appKey === 'rehabili_order') {
+      const patientId = req.query.patientId || req.query.targetId;
+      const targetQuery = patientId ? `&patientId=${encodeURIComponent(patientId)}` : '';
+      const ssoUrl = `/rehabili/api/sso-login?token=${encodeURIComponent(ssoToken)}${targetQuery}`;
+      console.log(`🔗 [SSO Launch -> Rehabili API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
+    }
+
+    // 💊 内服・外用処方オーダーへのSSO連携API (プロキシ経由で安全に接続)
+    if (appKey === 'naifuku' || appKey === 'naifuku_order' || appKey === 'prescription') {
+      const patientId = req.query.patientId || req.query.targetId;
+      const targetQuery = patientId ? `&patientId=${encodeURIComponent(patientId)}` : '';
+      const ssoUrl = `/naifuku/api/sso-login?token=${encodeURIComponent(ssoToken)}${targetQuery}`;
+      console.log(`🔗 [SSO Launch -> Naifuku API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
+    }
+
+    // 📝 統合オーダリング総合ポータルへのSSO連携API (プロキシ経由で安全に接続)
     if (appKey === 'ordering' || appKey === 'order_sender') {
       const patientId = req.query.patientId || req.query.targetId;
-      const targetQuery = patientId ? `?patientId=${encodeURIComponent(patientId)}` : '';
-      const targetUrl = `/ordering/${targetQuery}`;
-      console.log(`🔗 [SSO Launch -> Ordering Sender (Proxy)] ${user.userName} ➔ ${targetUrl}`);
-      return res.redirect(targetUrl);
+      const targetQuery = patientId ? `&patientId=${encodeURIComponent(patientId)}` : '';
+      const ssoUrl = `/ordering/api/sso-login?token=${encodeURIComponent(ssoToken)}${targetQuery}`;
+      console.log(`🔗 [SSO Launch -> Ordering Portal API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
     }
 
     // 📥 オーダリング【受信側】部門モニターへのプロキシ遷移
@@ -921,21 +1072,83 @@ app.post('/patients/delete/:id', requireAuth, async (req, res) => {
 app.get('/bed-board', requireAuth, async (req, res) => {
   try {
     const patients = await Patient.find({}).sort({ patientId: 1 });
-    const selectedWard = req.query.ward || 'しおかぜ病棟';
+    let selectedWard = req.query.ward || '2F医療病棟';
+    if (selectedWard === 'うみかぜ病棟') selectedWard = '3F介護医療院';
+    if (selectedWard === 'しおかぜ病棟') selectedWard = '4F介護医療院';
 
-    // ベッド外・一時待機エリアの患者（ベッド移動・入替え作業中）
-    const stagingPatients = patients.filter(p => p.ward === '一時待機' || p.room === '一時待機');
+    // 🪑 病棟ごとの仮置き患者（病棟ごとに独立管理）
+    const stagingPatients = patients.filter(p => {
+      const isStaging = (p.room === '仮置き' || p.room === '一時待機' || p.ward === '一時待機' || p.ward === `仮置き_${selectedWard}`);
+      if (!isStaging) return false;
+      if (p.ward === selectedWard) return true;
+      if (selectedWard === '2F医療病棟' && (p.ward === '2F' || (p.ward && p.ward.startsWith('2F')) || p.ward === '一時待機')) return true;
+      if (selectedWard === '3F介護医療院' && (p.ward === '3F' || (p.ward && p.ward.startsWith('3F')) || p.ward === 'うみかぜ病棟')) return true;
+      if (selectedWard === '4F介護医療院' && (p.ward === '4F' || (p.ward && p.ward.startsWith('4F')) || p.ward === 'しおかぜ病棟')) return true;
+      return false;
+    });
 
-    // 病棟ごとの空床・入床統計を算出
-    const currentWardMaster = BED_MASTER[selectedWard] || BED_MASTER['しおかぜ病棟'];
+    // 病棟マスタの解決 (2F, 3F, 4F 全フロア同一構造・20部屋・計62床)
+    const currentWardMaster = resolveWardMaster(selectedWard);
     let totalBeds = 0;
     currentWardMaster.rooms.forEach(r => totalBeds += r.beds.length);
 
-    // 現在の病棟に入床している患者
-    const wardPatients = patients.filter(p => p.ward && p.ward.includes(currentWardMaster.wardKey.slice(0, 4)));
-    const occupiedCount = wardPatients.filter(p => p.room && p.room.trim() !== '').length;
+    // 現在の病棟に入床している患者 (仮置きを除く)
+    const wardPatients = patients.filter(p => {
+      if (!p.ward) return false;
+      if (p.room === '仮置き' || p.room === '一時待機') return false;
+      if (p.ward === selectedWard) return true;
+      if (selectedWard === '2F医療病棟' && (p.ward === '2F' || p.ward.startsWith('2F'))) return true;
+      if (selectedWard === '3F介護医療院' && (p.ward === '3F' || p.ward.startsWith('3F') || p.ward === 'うみかぜ病棟')) return true;
+      if (selectedWard === '4F介護医療院' && (p.ward === '4F' || p.ward.startsWith('4F') || p.ward === 'しおかぜ病棟')) return true;
+      return false;
+    });
+
+    const occupiedPatients = wardPatients.filter(p => p.room && p.room.trim() !== '');
+    const occupiedCount = occupiedPatients.length;
     const emptyCount = Math.max(0, totalBeds - occupiedCount);
     const occupancyRate = totalBeds > 0 ? Math.round((occupiedCount / totalBeds) * 100) : 0;
+
+    // 性別集計
+    const maleCount = occupiedPatients.filter(p => p.gender === '男' || p.gender === '男性').length;
+    const femaleCount = occupiedPatients.filter(p => p.gender === '女' || p.gender === '女性').length;
+
+    // 移動区分集計 (実機: 担送, 護送, 独歩)
+    const tansouCount = occupiedPatients.filter(p => p.mobility === '担送').length;
+    const gosouCount = occupiedPatients.filter(p => p.mobility === '護送').length;
+    const doppoCount = occupiedPatients.filter(p => p.mobility === '独歩' || p.mobility === '徒歩').length;
+    const kubunNashiCount = Math.max(0, occupiedCount - (tansouCount + gosouCount + doppoCount));
+
+    // 空きベッドの男女別集計
+    let emptyMaleCount = 0;
+    let emptyFemaleCount = 0;
+    currentWardMaster.rooms.forEach(room => {
+      room.beds.forEach(bedId => {
+        const isOccupied = occupiedPatients.some(p => p.room === bedId || p.room === `${room.roomNo}-${bedId}`);
+        if (!isOccupied) {
+          if (room.gender === '男' || room.gender === '男性') emptyMaleCount++;
+          else if (room.gender === '女' || room.gender === '女性') emptyFemaleCount++;
+        }
+      });
+    });
+
+    const stats = {
+      totalBeds,
+      bedCount: totalBeds,
+      occupiedCount,
+      emptyCount,
+      occupancyRate,
+      maleCount,
+      femaleCount,
+      tansouCount,
+      gosouCount,
+      doppoCount,
+      kubunNashiCount,
+      emptyMaleCount,
+      emptyFemaleCount,
+      gaishutsuCount: 0,
+      gaihakuCount: 0,
+      zaiinCount: occupiedCount
+    };
 
     res.render('bed-board', {
       user: req.session.user,
@@ -944,7 +1157,7 @@ app.get('/bed-board', requireAuth, async (req, res) => {
       bedMaster: BED_MASTER,
       selectedWard,
       currentWardMaster,
-      stats: { totalBeds, occupiedCount, emptyCount, occupancyRate },
+      stats,
       success: req.query.success || null,
       error: req.query.error || null
     });
@@ -966,19 +1179,21 @@ app.post('/api/bed-board/assign', requireAuth, async (req, res) => {
       return res.redirect('/bed-board?error=' + encodeURIComponent('患者データが見つかりません。'));
     }
 
-    // ⚠️ 一時待機（ベッド外へ退避・入替え待機）
-    if (action === 'stage' || ward === '一時待機' || room === '一時待機') {
+    // 🪑 仮置き（病棟ごとのベッド外一時待機スロットへ移動）
+    if (action === 'stage' || ward === '一時待機' || ward === '仮置き' || room === '一時待機' || room === '仮置き') {
+      const targetWard = req.body.currentWard || req.body.ward || '2F医療病棟';
       const oldLocation = `${patient.ward || '外来'} ${patient.room || '未入床'}`;
-      patient.ward = '一時待機';
-      patient.room = '';
+      patient.ward = targetWard;
+      patient.room = '仮置き';
       await patient.save();
 
-      console.log(`🛏️ [ベッド外一時退避] ${patient.name} (${patient.patientId}) [元: ${oldLocation}] ➔ 一時待機エリア`);
-      return res.redirect(`/bed-board?ward=${encodeURIComponent(req.body.currentWard || 'しおかぜ病棟')}&success=` + encodeURIComponent(`患者「${patient.name}」をベッド外一時待機エリアへ移動しました。ベッド再配置が完了するまで画面遷移は制限されます。`));
+      console.log(`🛏️ [仮置き移動] ${patient.name} (${patient.patientId}) [元: ${oldLocation}] ➔ [${targetWard}] 仮置きスロット`);
+      return res.redirect(`/bed-board?ward=${encodeURIComponent(targetWard)}&success=` + encodeURIComponent(`患者「${patient.name}」を「${targetWard}」の仮置きスロットへ移動しました。`));
     }
 
     // 退院・外来へ移動（ベッド解放）
     if (action === 'discharge' || !ward || ward === '外来' || !room || room.trim() === '') {
+      const currentWard = req.body.currentWard || '2F医療病棟';
       patient.ward = '外来';
       patient.room = '';
       await patient.save();
@@ -989,16 +1204,16 @@ app.post('/api/bed-board/assign', requireAuth, async (req, res) => {
       );
 
       console.log(`🛏️ [ベッド解放] ${patient.name} (${patient.patientId}) を外来（退院・未入床）に移動しました`);
-      return res.redirect(`/bed-board?ward=${encodeURIComponent(req.body.currentWard || 'しおかぜ病棟')}&success=` + encodeURIComponent(`患者「${patient.name}」のベッド割り当てを解除しました（外来へ移動）。`));
+      return res.redirect(`/bed-board?ward=${encodeURIComponent(currentWard)}&success=` + encodeURIComponent(`患者「${patient.name}」のベッド割り当てを解除しました（外来へ移動）。`));
     }
 
-    // 同じ部屋・ベッドに既に別の患者がいる場合は、その患者を一時待機エリアへ自動退避
+    // 同じ部屋・ベッドに既に別の患者がいる場合は、その病棟の仮置きエリアへ自動退避
     const occupied = await Patient.findOne({ ward, room, patientId: { $ne: patientId } });
     if (occupied) {
-      occupied.ward = '一時待機';
-      occupied.room = '';
+      occupied.ward = ward;
+      occupied.room = '仮置き';
       await occupied.save();
-      console.log(`🛏️ [自動退避] 競合した患者「${occupied.name}」を一時待機エリアへ退避させました`);
+      console.log(`🛏️ [自動退避] 競合した患者「${occupied.name}」を [${ward}] の仮置きスロットへ退避させました`);
     }
 
     patient.ward = ward;
@@ -1014,12 +1229,54 @@ app.post('/api/bed-board/assign', requireAuth, async (req, res) => {
     console.log(`🛏️ [ベッド割り当て] ${patient.name} (${patient.patientId}) ➔ ${patient.ward} ${patient.room}`);
     let successMsg = `患者「${patient.name}」を [${ward} ${room}] に割り当てました。`;
     if (occupied) {
-      successMsg += ` (※元々入床していた「${occupied.name}」様は一時待機エリアへ退避されました)`;
+      successMsg += ` (※元々入床していた「${occupied.name}」様は仮置きスロットへ移動しました)`;
     }
     res.redirect(`/bed-board?ward=${encodeURIComponent(ward)}&success=` + encodeURIComponent(successMsg));
   } catch (err) {
     console.error('ベッド割り当てエラー:', err);
     res.redirect('/bed-board?error=' + encodeURIComponent('ベッド割り当て処理に失敗しました: ' + err.message));
+  }
+});
+
+// 病棟全ベッド一括解放（空床化）API
+app.post('/api/bed-board/clear-all', requireAuth, async (req, res) => {
+  try {
+    const ward = req.body.ward || '2F医療病棟';
+    let query = {};
+    if (ward === 'ALL') {
+      query = { $or: [{ room: { $exists: true, $ne: '' } }, { ward: { $exists: true, $nin: ['外来', ''] } }] };
+    } else if (ward === '2F医療病棟') {
+      query = { ward: { $regex: '^2F' } };
+    } else {
+      query = { ward };
+    }
+
+    const patients = await Patient.find(query);
+    for (const p of patients) {
+      p.ward = '外来';
+      p.room = '';
+      await p.save();
+      await TargetPerson.findOneAndUpdate(
+        { customId: p.patientId },
+        { department: '外来 ' + (p.department || '内科') }
+      );
+    }
+    console.log(`🛏️ [全床解放] ${ward} の患者 ${patients.length} 名の入床を解除しました`);
+    res.redirect(`/bed-board?ward=${encodeURIComponent(ward === 'ALL' ? '2F医療病棟' : ward)}&success=` + encodeURIComponent(`${patients.length} 名のベッド割り当てを解除し、全床を空床にしました。`));
+  } catch (err) {
+    res.redirect('/bed-board?error=' + encodeURIComponent('全床解放処理に失敗しました: ' + err.message));
+  }
+});
+
+// 初期写真データの一括復元API
+app.post('/api/bed-board/seed-photo-patients', requireAuth, async (req, res) => {
+  try {
+    const seedScript = path.join(__dirname, 'seed2FPhotoPatients.js');
+    const { execSync } = require('child_process');
+    execSync(`node "${seedScript}"`, { cwd: __dirname });
+    res.redirect('/bed-board?ward=2F医療病棟&success=' + encodeURIComponent('2F実機写真データ（59名）の入床配置を復元しました。'));
+  } catch (err) {
+    res.redirect('/bed-board?error=' + encodeURIComponent('初期データ復元に失敗しました: ' + err.message));
   }
 });
 

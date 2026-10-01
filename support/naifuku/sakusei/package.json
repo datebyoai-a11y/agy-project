@@ -1,0 +1,17 @@
+{
+  "name": "hospital-naifuku-system",
+  "version": "1.0.0",
+  "description": "交雄会だて病院 内服・外用処方オーダーシステム (support/naifuku/sakusei)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "prescription",
+    "hospital",
+    "order",
+    "electronic-medical-record"
+  ],
+  "author": "交雄会だて病院 医療情報室",
+  "license": "ISC"
+}

@@ -46,6 +46,8 @@ case "$ACTION" in
     fuser -k 8000/tcp 2>/dev/null
     fuser -k 8080/tcp 2>/dev/null
     fuser -k 8081/tcp 2>/dev/null
+    fuser -k 8082/tcp 2>/dev/null
+    fuser -k 8083/tcp 2>/dev/null
     fuser -k 3000/tcp 2>/dev/null
     fuser -k 4000/tcp 2>/dev/null
     fuser -k 5000/tcp 2>/dev/null
@@ -97,6 +99,20 @@ case "$ACTION" in
       echo "  [放射線] 放射線科【指示受けモニター】  : 🔴 停止"
     fi
 
+    # Injection Ordering (Port 8082)
+    if lsof -ti :8082 > /dev/null 2>&1; then
+      echo "  [注射]   注射・点滴オーダー & ラベル   : 🟢 稼働中 (http://localhost:8082 / Proxy: /injection/)"
+    else
+      echo "  [注射]   注射・点滴オーダー & ラベル   : 🔴 停止"
+    fi
+
+    # Rehabilitation Ordering (Port 8083)
+    if lsof -ti :8083 > /dev/null 2>&1; then
+      echo "  [リハ]   リハビリテーション指示書Ver3.0: 🟢 稼働中 (http://localhost:8083 / Proxy: /rehabili/)"
+    else
+      echo "  [リハ]   リハビリテーション指示書Ver3.0: 🔴 停止"
+    fi
+
     # Incident System (Port 3000)
     if lsof -ti :3000 > /dev/null 2>&1; then
       echo "  [1/3]    インシデント管理 / 電子カルテ  : 🟢 稼働中 (http://localhost:3000)"
@@ -104,19 +120,8 @@ case "$ACTION" in
       echo "  [1/3]    インシデント管理 / 電子カルテ  : 🔴 停止"
     fi
 
-    # Ordering Sender (Port 4000)
-    if lsof -ti :4000 > /dev/null 2>&1; then
-      echo "  [2/3]    オーダリング【送信側】       : 🟢 稼働中 (http://localhost:4000)"
-    else
-      echo "  [2/3]    オーダリング【送信側】       : 🔴 停止"
-    fi
-
-    # Ordering Receiver (Port 5000)
-    if lsof -ti :5000 > /dev/null 2>&1; then
-      echo "  [3/3]    オーダリング【受信側】       : 🟢 稼働中 (http://localhost:5000)"
-    else
-      echo "  [3/3]    オーダリング【受信側】       : 🔴 停止"
-    fi
+    # Ordering (Port 4000, 5000)
+    echo "  [オーダリング] ポート4000, 5000         : 🔒 閉鎖（停止中）"
     echo "================================================================"
     ;;
 

@@ -492,25 +492,10 @@
   <!-- 🏥 全画面共通 最上部1行リボン -->
   <%- include('partials/common-ribbon', { currentScreenTitle: '電子カルテ：対象患者選択' }) %>
 
-  <!-- 📌 固定ヘッダーエリア -->
+  <!-- 📌 固定操作エリア (タイトル画面は撤廃し、メニューのみ配置) -->
   <div class="sticky-top-header">
-    <header>
-      <div style="display:flex; align-items:center; gap:0.6rem;">
-        <span style="font-size:1.3rem;">🩺</span>
-        <div>
-          <h1 style="margin:0; font-size:1.05rem;">電子カルテ：対象患者選択</h1>
-          <div style="font-size:0.75rem; color:#94a3b8;">カルテ・記事作成を行う患者を選択してください</div>
-        </div>
-      </div>
-      
-      <div class="top-status-bar">
-        <a href="/menu" class="btn" style="background:#3b82f6; color:white; border:none; padding:0.25rem 0.65rem; border-radius:4px; text-decoration:none; font-size:0.8rem; font-weight:bold; display:inline-flex; align-items:center; gap:0.3rem;">
-          🏠 ポータルメニュー
-        </a>
-        <div class="status-chip">
-          👤 ログイン中: <strong><%= user %></strong>
-        </div>
-
+    <header style="padding:0.35rem 1.5rem; justify-content:flex-end;">
+      <div class="top-status-bar" style="margin-left:auto;">
         <!-- ⚙️ 右上の歯車印メニュー（その他のメニュー） -->
         <div class="gear-menu-container">
           <button id="gearMenuBtn" class="btn-gear" type="button" title="メニューを開く" aria-expanded="false" aria-haspopup="true">

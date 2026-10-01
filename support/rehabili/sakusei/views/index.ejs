@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>リハビリテーション指示書Ver3.0 - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/rehabili/css/style.css">
+  <style>
+    /* 追加のフォーム特化スタイル */
+    .patient-bar {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .patient-tag-badge {
+      background: #ccfbf1;
+      color: #0f766e;
+      font-weight: 800;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .grid-cell-label {
+      font-weight: bold;
+      color: #334155;
+      background: #f8fafc;
+      padding: 6px 8px;
+    }
+    .risk-box {
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+    .risk-box.alert-active {
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+    .sub-section-title {
+      font-weight: 800;
+      color: #0f766e;
+      background: #f0fdfa;
+      padding: 4px 8px;
+      border-left: 4px solid #0d9488;
+      margin-bottom: 6px;
+      font-size: 0.88rem;
+    }
+
+    /* 🎨 Excel実機再現: 必須入力項目 網掛けスタイル (アクア & ピーチ) */
+    .cell-shaded {
+      background-color: #cbeef3 !important;
+      border: 1.5px solid #67e8f9 !important;
+      color: #0f172a !important;
+      font-weight: 600;
+    }
+    .cell-shaded:focus {
+      background-color: #e0f7fa !important;
+      border-color: #06b6d4 !important;
+      outline: 2px solid rgba(6, 182, 212, 0.4) !important;
+    }
+    .cell-shaded-stamp {
+      background-color: #fed7aa !important;
+      border: 1.5px solid #fb923c !important;
+      color: #7c2d12 !important;
+      font-weight: 700;
+    }
+    .cell-shaded-box {
+      background-color: #cbeef3 !important;
+      border: 1.5px solid #67e8f9 !important;
+      border-radius: 4px;
+      padding: 2px 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .patient-type-selector label.cell-shaded-active {
+      background: #cbeef3 !important;
+      border-color: #0891b2 !important;
+      color: #0e7490 !important;
+      font-weight: 800 !important;
+    }
+    .top-compact-bar {
+      max-width: 1200px;
+      margin: 0.6rem auto 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: 'リハビリテーション指示書Ver3.0' }) %>
+
+  <!-- 操作・必須案内バー (タイトル行・患者選択行は撤廃) -->
+  <div style="max-width: 1200px; margin: 0.6rem auto; padding: 0 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+    <!-- 網掛け必須案内 -->
+    <div style="font-size: 0.8rem; color: #475569; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+      <span style="background: #cbeef3; border: 1.5px solid #67e8f9; padding: 0.15rem 0.5rem; border-radius: 4px; color: #0e7490; font-weight: 800;">
+        ■ 水色網掛け
+      </span>
+      <span>および</span>
+      <span style="background: #fed7aa; border: 1.5px solid #fb923c; padding: 0.15rem 0.5rem; border-radius: 4px; color: #9a3412; font-weight: 800;">
+        ■ 医師署名
+      </span>
+      <span>は入力必須項目です</span>
+    </div>
+
+    <!-- 操作アクションボタン -->
+    <div class="action-btns" style="display: flex; gap: 0.5rem; align-items: center;">
+      <% if (orderHistory && orderHistory.length > 0) { %>
+        <button type="button" onclick="openHistoryModal()" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.82rem; background: white;">
+          📋 過去履歴 (<%= orderHistory.length %>件)
+        </button>
+      <% } %>
+      <button type="button" onclick="saveOrder(true)" class="btn btn-print" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
+        🖨️ 保存して原本A4印刷 ➔
+      </button>
+      <button type="button" onclick="saveOrder(false)" class="btn btn-primary" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
+        💾 指示書を発行・電子カルテ連動
+      </button>
+    </div>
+  </div>
+
+  <main class="container" style="padding-top: 0.25rem;">
+
+    <!-- 📄 Excel原本再現フォーム (sheet-container) -->
+    <form id="rehabForm" onsubmit="event.preventDefault();">
+      <div class="sheet-container">
+        
+        <!-- ヘッダー行: タイトル & 区分(入院/外来) -->
+        <div class="sheet-header-row">
+          <div class="sheet-main-title">
+            リハビリテーション　指 示 書 　Ver3.0
+          </div>
+          <div class="patient-type-selector">
+            <label class="type-radio-label checked cell-shaded-active" id="labelInpatient">
+              <input type="radio" name="patientType" value="inpatient" checked onchange="updateTypeSelector()">
+              <span>【 入院 】</span>
+            </label>
+            <label class="type-radio-label" id="labelOutpatient">
+              <input type="radio" name="patientType" value="outpatient" onchange="updateTypeSelector()">
+              <span>【 外来 】</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 基本情報グリッドテーブル (xls網掛け＝必須入力項目) -->
+        <table class="sheet-table" style="margin-bottom: 12px;">
+          <colgroup>
+            <col style="width: 10%;">
+            <col style="width: 18%;">
+            <col style="width: 8%;">
+            <col style="width: 12%;">
+            <col style="width: 12%;">
+            <col style="width: 20%;">
+            <col style="width: 8%;">
+            <col style="width: 12%;">
+          </colgroup>
+          <tr>
+            <td class="th-label">病棟</td>
+            <td>
+              <input type="text" id="ward" name="ward" class="cell-input-text" value="<%= selectedPatient ? (selectedPatient.ward || '2F医療病棟') : '2F医療病棟' %>">
+            </td>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">病室 *</td>
+            <td>
+              <input type="text" id="roomNo" name="roomNo" class="cell-input-text cell-shaded" placeholder="例: 200" value="<%= selectedPatient ? (selectedPatient.roomNo || '') : '' %>" required>
+            </td>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">指示日 *</td>
+            <td>
+              <input type="date" id="orderDate" name="orderDate" class="cell-input-text cell-shaded" value="<%= todayStr %>" required>
+            </td>
+            <td class="th-label" style="background:#ffedd5; color:#9a3412; font-weight:800;">主治医 *</td>
+            <td>
+              <input type="text" id="doctorName" name="doctorName" class="cell-input-text cell-shaded-stamp" value="<%= user.department === '医師' ? user.userName : '山田 太郎' %>" required>
+            </td>
+          </tr>
+          <tr>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">患者ＩＤ *</td>
+            <td>
+              <input type="text" id="patientId" name="patientId" class="cell-input-text cell-shaded" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" readonly style="font-weight: bold;" required>
+            </td>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">性別 *</td>
+            <td>
+              <select id="patientGender" name="patientGender" class="cell-select cell-shaded" required>
+                <option value="男性" <%= (selectedPatient && selectedPatient.gender === '男性') ? 'selected' : '' %>>男性</option>
+                <option value="女性" <%= (selectedPatient && selectedPatient.gender === '女性') ? 'selected' : '' %>>女性</option>
+                <option value="その他" <%= (selectedPatient && selectedPatient.gender === 'その他') ? 'selected' : '' %>>その他</option>
+              </select>
+            </td>
+            <td class="th-label" rowspan="2" style="background:#e0f2fe; color:#0369a1; font-weight:800;">診断名 *<br><span style="font-size:0.75rem; color:#0e7490;">(算定病名)</span></td>
+            <td colspan="3" rowspan="2">
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.3rem;">
+                <select id="diagPreset" class="cell-select" style="flex: 1;" onchange="applyDiagnosisPreset()">
+                  <option value="">-- マスターから病名を選択 --</option>
+                  <% diagnosisMaster.forEach(d => { %>
+                    <option value="<%= d %>"><%= d %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <input type="text" id="diagnosisName" name="diagnosisName" class="cell-input-text cell-shaded" style="font-weight: bold; font-size: 0.95rem;" placeholder="診断名を入力または上記マスターから選択" value="脳梗塞後遺症" required>
+            </td>
+          </tr>
+          <tr>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">氏名 *</td>
+            <td>
+              <input type="text" id="patientName" name="patientName" class="cell-input-text cell-shaded" style="font-weight: bold; font-size: 1rem;" value="<%= selectedPatient ? selectedPatient.name : '' %>" required>
+            </td>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">年齢 *</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.2rem;">
+                <input type="number" id="patientAge" name="patientAge" class="cell-input-text cell-shaded" value="<%= selectedPatient ? selectedPatient.age : '' %>" style="width: 60px;" required>
+                <span>歳</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">入院日/外来日 *</td>
+            <td>
+              <input type="date" id="admissionDate" name="admissionDate" class="cell-input-text cell-shaded" value="<%= todayStr %>" required>
+            </td>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">生年月日 *</td>
+            <td>
+              <input type="date" id="patientBirthDate" name="patientBirthDate" class="cell-input-text cell-shaded" value="<%= selectedPatient && selectedPatient.birthDate ? selectedPatient.birthDate.split('T')[0] : '' %>" onchange="calcAgeFromBirth()" required>
+            </td>
+            <td class="th-label" style="background:#e0f2fe; color:#0369a1; font-weight:800;">発症日/起算日 *</td>
+            <td>
+              <input type="date" id="onsetDate" name="onsetDate" class="cell-input-text cell-shaded" value="<%= todayStr %>" required>
+            </td>
+            <td class="th-label" style="background:#ffedd5; color:#9a3412; font-weight:800;">医師署名</td>
+            <td style="text-align: center;">
+              <span class="stamp-box cell-shaded-stamp">山田<br>印</span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- 急変リスク セクション -->
+        <table class="sheet-table" style="margin-bottom: 12px;">
+          <colgroup>
+            <col style="width: 12%;">
+            <col style="width: 44%;">
+            <col style="width: 44%;">
+          </colgroup>
+          <tr>
+            <td class="th-label" rowspan="3" style="background: #fef2f2; color: #991b1b; font-size: 0.95rem;">
+              ⚠️ 急変リスク
+            </td>
+            <td>
+              <label class="check-item cell-shaded-box">
+                <input type="checkbox" name="riskCirculatory" value="true">
+                <strong>循環器系異常</strong>（血圧低下/上昇、頻脈/不整脈）
+              </label>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <label class="check-item cell-shaded-box" style="margin-bottom: 0;">
+                  <input type="checkbox" name="riskRespiratory" value="true">
+                  <strong>呼吸不全</strong>（SpO₂低値）
+                </label>
+                <span style="font-size: 0.82rem; color: #475569; font-weight:700;">酸素:</span>
+                <input type="text" name="oxygenFlow" class="cell-shaded" style="width: 50px; padding: 2px 4px; font-size: 0.85rem; border-radius: 4px; text-align:center; font-weight:bold;" placeholder="0.5">
+                <span style="font-size: 0.82rem;">ℓ/分 使用中</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label class="check-item cell-shaded-box">
+                <input type="checkbox" name="riskMedicine" value="true">
+                <strong>薬剤の影響</strong>（降圧薬・利尿薬・糖尿病薬）
+              </label>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                <label class="check-item cell-shaded-box" style="margin-bottom: 0;">
+                  <input type="checkbox" name="riskJoint" value="true">
+                  <strong>人工関節</strong>
+                </label>
+                <select name="jointSide" class="cell-select" style="width: 75px; padding: 2px 4px; font-size: 0.8rem;">
+                  <option value="">-側-</option>
+                  <option value="右">右</option>
+                  <option value="左">左</option>
+                  <option value="両側">両側</option>
+                </select>
+                <span style="font-size: 0.8rem;">(部位:</span>
+                <select name="jointPart" class="cell-select" style="width: 70px; padding: 2px 4px; font-size: 0.8rem;">
+                  <option value="股">股</option>
+                  <option value="膝">膝</option>
+                  <option value="他">他</option>
+                </select>
+                <input type="text" name="jointOtherText" placeholder="他部位詳細" style="width: 80px; padding: 2px 4px; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+                <span style="font-size: 0.8rem;">)</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label class="check-item cell-shaded-box">
+                <input type="checkbox" name="riskDementia" value="true">
+                <strong>認知症による指示理解の低下</strong>
+              </label>
+            </td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="font-size: 0.82rem; font-weight: bold; color: #dc2626;">禁忌事項:</span>
+                <input type="text" name="contraindications" class="cell-input-text cell-shaded" placeholder="例: 患肢荷重制限、過度の血圧上昇注意 など">
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- 指示欄（医療のみ / 必要性 / 頻度 / 場所） -->
+        <table class="sheet-table" style="margin-bottom: 12px;">
+          <colgroup>
+            <col style="width: 12%;">
+            <col style="width: 88%;">
+          </colgroup>
+          <tr>
+            <td class="sec-header" rowspan="3">
+              指　示<br><span style="font-size: 0.72rem; font-weight: normal;">(医療のみ)</span>
+            </td>
+            <td>
+              <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                <div style="font-weight: bold; font-size: 0.85rem; color: #1e293b;">
+                  ① 医学的必要性記載欄（症状・機能低下の具体的記述 [離床が困難な理由]）:
+                </div>
+                <textarea name="necessityReason" rows="2" class="cell-input-text" style="resize: vertical; font-size: 0.85rem;" placeholder="例: 脳梗塞発症に伴う左片麻痺および著明な筋力低下を認め、自力での離床・移乗動作が困難であるため、早期離床および身体機能維持の介入が不可欠である。">脳梗塞発症に伴う片麻痺および廃用により歩行・移乗動作が低下しており、積極的なリハビリテーション介入を要する。</textarea>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <label class="check-item" style="font-size: 0.9rem;">
+                  <input type="checkbox" name="improvementExpected" value="true" checked>
+                  <strong>② 医学的改善が見込まれるためリハビリを指示する</strong>
+                </label>
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <span style="font-weight: bold; font-size: 0.85rem;">③ 頻度:</span>
+                  <span>週 (</span>
+                  <input type="text" name="frequencyPerWeek" value="5" style="width: 35px; text-align: center; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px;">
+                  <span>) 回</span>
+                  <span style="margin-left: 0.5rem;">(</span>
+                  <input type="text" name="durationMonths" value="3" style="width: 35px; text-align: center; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px;">
+                  <span>) ヶ月間</span>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                  <span style="font-weight: bold; font-size: 0.85rem;">場 所:</span>
+                  <label class="check-item"><input type="radio" name="location" value="ward" checked> 病棟内</label>
+                  <label class="check-item"><input type="radio" name="location" value="rehab_room"> 病棟外リハ室</label>
+                  <label class="check-item"><input type="radio" name="location" value="both"> 併用</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="font-size: 0.8rem; color: #475569;">※入院患者: 入院料区分 【</span>
+                  <input type="text" name="admissionCategory" style="width: 60px; text-align: center; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px;" placeholder="医療療養1">
+                  <span style="font-size: 0.8rem; color: #475569;">】</span>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- 目的・内容セクション -->
+        <table class="sheet-table" style="margin-bottom: 12px;">
+          <colgroup>
+            <col style="width: 12%;">
+            <col style="width: 22%;">
+            <col style="width: 66%;">
+          </colgroup>
+          <tr>
+            <th class="th-label">大項目</th>
+            <th class="th-label">目　的</th>
+            <th class="th-label">内　容</th>
+          </tr>
+
+          <!-- 1. 理学療法 (Excel網掛け) -->
+          <tr>
+            <td class="sec-header cell-shaded" rowspan="4" style="color: #0369a1; font-weight: 800;">
+              理学療法<br><span style="font-size: 0.72rem; font-weight: normal;">(医療療養病棟・外来)</span>
+            </td>
+            <td class="grid-cell-label">１．運動機能改善</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="pt_rom" value="true" checked> 関節可動域訓練（ROM）</label>
+              <label class="check-item"><input type="checkbox" name="pt_strength" value="true" checked> 筋力体力増強</label>
+              <label class="check-item"><input type="checkbox" name="pt_neuro" value="true"> 神経筋促通</label>
+              <label class="check-item"><input type="checkbox" name="pt_balance" value="true" checked> 平衡機能の改善バランス</label>
+              <label class="check-item"><input type="checkbox" name="pt_coordination" value="true"> 協調運動（coordination）</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">２．動作能力改善</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="pt_basicMotion" value="true" checked> 基本動作（寝返り-起き上がり-立ち上がり）</label>
+              <label class="check-item"><input type="checkbox" name="pt_transfer" value="true" checked> 移乗動作（transfer）</label>
+              <label class="check-item"><input type="checkbox" name="pt_gait" value="true" checked> 歩行能力向上（独歩-T字杖/補装具等）</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">３．ADL改善</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="pt_adl" value="true" checked> ADL動作</label>
+              <input type="text" name="pt_adlDetail" placeholder="動作詳細（例: 車椅子自走、歩行器自立）" style="width: 250px; font-size: 0.8rem; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; margin-right: 1rem;">
+              <label class="check-item"><input type="checkbox" name="pt_wheelchair" value="true"> 車いす操作練習</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">４．認知機能</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="pt_cognition" value="true"> 高次脳機能「認知」「注意」「記憶」「遂行機能」「社会的行動」（OT中心）</label>
+            </td>
+          </tr>
+
+          <!-- 2. 作業療法 (Excel網掛け) -->
+          <tr>
+            <td class="sec-header cell-shaded" rowspan="4" style="color: #92400e; font-weight: 800;">
+              作業療法<br><span style="font-size: 0.72rem; font-weight: normal;">(介護医療院・通所)</span>
+            </td>
+            <td class="grid-cell-label">１．身体機能の維持・改善<br><span style="font-size:0.72rem; font-weight:normal;">(PT中心)</span></td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="ot_rom" value="true"> 関節可動域訓練（ROM）</label>
+              <label class="check-item"><input type="checkbox" name="ot_strength" value="true"> 筋力維持訓練</label>
+              <label class="check-item"><input type="checkbox" name="ot_gait" value="true"> 歩行訓練</label>
+              <label class="check-item"><input type="checkbox" name="ot_posture" value="true"> 座位/立位保持訓練（体幹の安定性向上と耐久性の確保[食事・ADLの基盤]）</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">２．ADL（生活動作）の維持・向上<br><span style="font-size:0.72rem; font-weight:normal;">(OT中心)</span></td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="ot_meal" value="true"> 食事動作訓練</label>
+              <label class="check-item"><input type="checkbox" name="ot_dressing" value="true"> 更衣-整容-入浴動作</label>
+              <label class="check-item"><input type="checkbox" name="ot_toilet" value="true"> トイレ排泄動作指導</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">３．認知機能・高次脳機能の維持改善<br><span style="font-size:0.72rem; font-weight:normal;">(OT中心)</span></td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="ot_attention" value="true"> 注意・記憶の訓練</label>
+              <label class="check-item"><input type="checkbox" name="ot_executive" value="true"> 遂行機能の訓練</label>
+              <label class="check-item"><input type="checkbox" name="ot_recreation" value="true"> レクリエーション活動(手工芸・音楽）</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">４．生活環境調整</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="ot_environment" value="true"> 生活環境調整・福祉用具の選定（PT・OT共通）</label>
+            </td>
+          </tr>
+
+          <!-- 3. 言語聴覚療法 (Excel網掛け) -->
+          <tr>
+            <td class="sec-header cell-shaded" rowspan="3" style="color: #6b21a8; font-weight: 800;">
+              言語聴覚療法<br><span style="font-size: 0.72rem; font-weight: normal;">【STと連携】</span>
+            </td>
+            <td class="grid-cell-label">● 嚥下摂食機能療法</td>
+            <td>
+              <label class="check-item cell-shaded-box" style="font-weight: 800;">
+                <input type="checkbox" name="st_vf" value="true"> 嚥下造影検査（VF検査）
+              </label>
+              <label class="check-item"><input type="checkbox" name="st_swallowMeal" value="true"> 嚥下・食事場面の支援</label>
+              <label class="check-item"><input type="checkbox" name="st_swallowInstruction" value="true"> 食事介助方法の助言指導</label>
+              <label class="check-item"><input type="checkbox" name="st_swallowPosture" value="true"> 食事姿勢の調整</label>
+              <label class="check-item"><input type="checkbox" name="st_swallowForm" value="true"> 食形態の評価</label>
+              <label class="check-item"><input type="checkbox" name="st_swallowRisk" value="true"> 誤嚥リスクの観察</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">● 構音・失語症改善</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="st_articulation" value="true"> 構音障害改善（発声・口腔運動・音の練習・話し方の調整）</label><br>
+              <label class="check-item"><input type="checkbox" name="st_aphasia" value="true"> 失語症改善（理解・表出・読み書き・語彙訓練・生活場面での会話支援）</label>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">● 医療処置</td>
+            <td>
+              <label class="check-item"><input type="checkbox" name="st_suction" value="true"> サクション（吸引）</label>
+            </td>
+          </tr>
+
+          <!-- 4. 評価 (Excel網掛け) -->
+          <tr>
+            <td class="sec-header cell-shaded" style="color: #0369a1; font-weight: 800;">評　価</td>
+            <td colspan="2">
+              <label class="check-item cell-shaded-box"><input type="checkbox" name="eval_dementia" value="true"> 認知症評価（HDS-R・MMSE）</label>
+              <label class="check-item cell-shaded-box"><input type="checkbox" name="eval_physical" value="true"> 筋力・関節可動域・ADL評価測定（身体障がい者手帳 等）</label>
+              <label class="check-item cell-shaded-box"><input type="checkbox" name="eval_walk" value="true"> ６分間歩行テスト（6MD）</label>
+              <label class="check-item cell-shaded-box"><input type="checkbox" name="eval_bodyComp" value="true"> 体組成評価</label>
+            </td>
+          </tr>
+
+          <!-- 5. 消炎鎮痛 -->
+          <tr>
+            <td class="sec-header" rowspan="2" style="background: #fdf2f8; color: #9d174d;">消炎鎮痛</td>
+            <td colspan="2">
+              <label class="check-item"><input type="checkbox" name="sed_massage" value="true"> １．マッサージ</label>
+              <label class="check-item"><input type="checkbox" name="sed_hotpack" value="true"> ２．ホットパック</label>
+              <label class="check-item"><input type="checkbox" name="sed_ssp" value="true"> ３．SSP マイクロ波</label>
+              <label class="check-item"><input type="checkbox" name="sed_medmer" value="true"> ４．メドマー（エアマッサージ器）</label>
+              <label class="check-item"><input type="checkbox" name="sed_traction" value="true"> ５．牽引</label>
+              <span style="font-size: 0.8rem; margin-left: 0.5rem;">
+                頸椎 (<input type="text" name="sed_cervicalWeight" style="width: 35px; padding: 2px;" placeholder="--"> ㎏)
+                腰椎 (<input type="text" name="sed_lumbarWeight" style="width: 35px; padding: 2px;" placeholder="--"> ㎏)
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <td class="grid-cell-label">部　位</td>
+            <td>
+              <span style="font-size: 0.8rem; font-weight: bold; margin-right: 0.3rem;">側:</span>
+              <select name="sed_partSide" class="cell-select" style="width: 80px; display: inline-block; padding: 2px 4px; font-size: 0.8rem;">
+                <option value="">-未選択-</option>
+                <option value="右">右</option>
+                <option value="左">左</option>
+                <option value="両側">両側</option>
+              </select>
+              <span style="font-size: 0.8rem; font-weight: bold; margin-left: 0.8rem; margin-right: 0.3rem;">部位:</span>
+              <select name="sed_partRegion" class="cell-select" style="width: 80px; display: inline-block; padding: 2px 4px; font-size: 0.8rem;">
+                <option value="">-未選択-</option>
+                <option value="頸">頸</option>
+                <option value="肩">肩</option>
+                <option value="腰">腰</option>
+                <option value="足">足</option>
+                <option value="他">他</option>
+              </select>
+              <input type="text" name="sed_partOther" placeholder="他部位詳細" style="width: 150px; font-size: 0.8rem; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; margin-left: 0.5rem;">
+            </td>
+          </tr>
+        </table>
+
+        <!-- フッター: 受付確認枠 -->
+        <table class="sheet-table">
+          <colgroup>
+            <col style="width: 60%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+          </colgroup>
+          <tr>
+            <td style="font-size: 0.8rem; color: #64748b;">
+              ※本指示書は原本としてリハビリテーション科へ提出され、指示内容に基づき訓練が実施されます。
+            </td>
+            <td class="th-label">リハビリ受付確認</td>
+            <td style="text-align: center; height: 45px; vertical-align: middle;">
+              <span style="font-size: 0.82rem; color: #94a3b8;">（受付印・確認サイン枠）</span>
+            </td>
+          </tr>
+        </table>
+
+      </div>
+    </form>
+
+  </main>
+
+  <!-- 👤 対象患者選択モーダル -->
+  <div id="patientSelectModal" class="modal-overlay" style="display: none;" onclick="handleModalBackdropClick(event)">
+    <div class="modal-card" style="max-width: 900px; width: 95%; max-height: 85vh; display: flex; flex-direction: column; background: white; border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid #cbd5e1;" onclick="event.stopPropagation()">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎯</span> リハビリ指示対象患者の選択
+          </h3>
+          <p style="margin: 0.25rem 0 0 0; font-size: 0.82rem; color: var(--text-muted);">
+            リハビリテーション指示書を発行する患者を選択してください。
+          </p>
+        </div>
+        <button type="button" onclick="closePatientModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; padding: 0.2rem 0.5rem;" title="閉じる">
+          ✕
+        </button>
+      </div>
+
+      <div style="padding: 1rem 1.5rem; background: white; border-bottom: 1px solid var(--border-color);">
+        <input type="text" id="patientSearchInput" placeholder="🔍 患者ID、氏名、カナ、病室で絞り込み..." oninput="filterPatients()"
+               style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; outline: none;">
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; padding: 0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 1px solid var(--border-color); color: #475569;">
+              <th style="padding: 0.75rem 1rem; text-align: left;">患者ID</th>
+              <th style="padding: 0.75rem 1rem; text-align: left;">氏名</th>
+              <th style="padding: 0.75rem 1rem; text-align: left;">年齢/性別</th>
+              <th style="padding: 0.75rem 1rem; text-align: left;">病棟 / 病室</th>
+              <th style="padding: 0.75rem 1rem; text-align: right;">選択</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% patients.forEach(p => { %>
+              <tr class="patient-row" data-id="<%= p.patientId %>" data-name="<%= p.name %>" data-kana="<%= p.kana || '' %>" data-ward="<%= p.ward || '' %>" data-room="<%= p.roomNo || '' %>" style="border-bottom: 1px solid var(--border-color); cursor: pointer;" onclick="selectPatient('<%= p.patientId %>')">
+                <td style="padding: 0.75rem 1rem; font-family: monospace; font-weight: bold;"><%= p.patientId %></td>
+                <td style="padding: 0.75rem 1rem; font-weight: bold;"><%= p.name %> 様</td>
+                <td style="padding: 0.75rem 1rem;"><%= p.age !== null ? p.age + '歳' : '-' %> (<%= p.gender %>)</td>
+                <td style="padding: 0.75rem 1rem;"><%= p.ward || '外来' %> <%= p.roomNo ? p.roomNo + '号' : '' %></td>
+                <td style="padding: 0.75rem 1rem; text-align: right;">
+                  <button type="button" class="btn btn-primary" style="padding: 0.35rem 0.8rem; font-size: 0.78rem;">選択 ➔</button>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="padding: 0.9rem 1.5rem; background: #f8fafc; border-top: 1px solid var(--border-color); text-align: right;">
+        <button type="button" class="btn btn-outline" onclick="closePatientModal()">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📋 過去履歴モーダル -->
+  <% if (orderHistory && orderHistory.length > 0) { %>
+    <div id="historyModal" class="modal-overlay" style="display: none;" onclick="closeHistoryModal()">
+      <div class="modal-card" style="max-width: 800px; width: 95%; max-height: 80vh; background: white; border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden;" onclick="event.stopPropagation()">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border-color); background: #f8fafc;">
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800;">
+            📋 <%= selectedPatient ? selectedPatient.name : '' %> 様のリハビリ指示履歴
+          </h3>
+          <button type="button" onclick="closeHistoryModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer;">✕</button>
+        </div>
+        <div style="padding: 1rem 1.5rem; overflow-y: auto; max-height: 60vh;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1px solid var(--border-color);">
+                <th style="padding: 0.5rem; text-align: left;">管理番号</th>
+                <th style="padding: 0.5rem; text-align: left;">指示日</th>
+                <th style="padding: 0.5rem; text-align: left;">診断名</th>
+                <th style="padding: 0.5rem; text-align: left;">区分</th>
+                <th style="padding: 0.5rem; text-align: right;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% orderHistory.forEach(h => { %>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 0.6rem 0.5rem; font-family: monospace; font-weight: bold;"><%= h.orderNumber %></td>
+                  <td style="padding: 0.6rem 0.5rem;"><%= h.orderDate %></td>
+                  <td style="padding: 0.6rem 0.5rem; font-weight: bold; color: #0f766e;"><%= h.diagnosisName %></td>
+                  <td style="padding: 0.6rem 0.5rem;"><%= h.patientType === 'inpatient' ? '入院' : '外来' %></td>
+                  <td style="padding: 0.6rem 0.5rem; text-align: right;">
+                    <a href="/rehabili/orders/<%= h._id %>/print" target="_blank" class="btn btn-outline" style="padding: 0.25rem 0.6rem; font-size: 0.78rem;">🖨️ 印刷</a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- トースト通知 -->
+  <div id="toastNotice" class="toast-notice">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">通知メッセージ</span>
+  </div>
+
+  <style>
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px);
+      z-index: 99999; display: flex; align-items: center; justify-content: center;
+    }
+  </style>
+
+  <script>
+    // 区分（入院/外来）切り替えビジュアル連動 (Excel網掛けトグル)
+    function updateTypeSelector() {
+      const isOutpatient = document.querySelector('input[name="patientType"]:checked').value === 'outpatient';
+      document.getElementById('labelInpatient').classList.toggle('checked', !isOutpatient);
+      document.getElementById('labelInpatient').classList.toggle('cell-shaded-active', !isOutpatient);
+      document.getElementById('labelOutpatient').classList.toggle('checked', isOutpatient);
+      document.getElementById('labelOutpatient').classList.toggle('cell-shaded-active', isOutpatient);
+    }
+
+    // 診断名プリセット選択
+    function applyDiagnosisPreset() {
+      const select = document.getElementById('diagPreset');
+      if (select.value) {
+        document.getElementById('diagnosisName').value = select.value;
+      }
+    }
+
+    // 生年月日から年齢自動計算
+    function calcAgeFromBirth() {
+      const dobVal = document.getElementById('patientBirthDate').value;
+      if (!dobVal) return;
+      const dob = new Date(dobVal);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age >= 0) {
+        document.getElementById('patientAge').value = age;
+      }
+    }
+
+    // トースト表示ヘルパー
+    function showToast(msg, icon = '✅', duration = 3500) {
+      const toast = document.getElementById('toastNotice');
+      document.getElementById('toastMsg').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // モーダル操作
+    function openPatientModal() {
+      document.getElementById('patientSelectModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('patientSearchInput').focus(), 50);
+    }
+    function closePatientModal() {
+      document.getElementById('patientSelectModal').style.display = 'none';
+    }
+    function handleModalBackdropClick(e) {
+      if (e.target.id === 'patientSelectModal') closePatientModal();
+    }
+
+    function openHistoryModal() {
+      const m = document.getElementById('historyModal');
+      if (m) m.style.display = 'flex';
+    }
+    function closeHistoryModal() {
+      const m = document.getElementById('historyModal');
+      if (m) m.style.display = 'none';
+    }
+
+    // 患者検索絞り込み
+    function filterPatients() {
+      const q = document.getElementById('patientSearchInput').value.toLowerCase().trim();
+      const rows = document.querySelectorAll('.patient-row');
+      rows.forEach(r => {
+        const id = (r.getAttribute('data-id') || '').toLowerCase();
+        const name = (r.getAttribute('data-name') || '').toLowerCase();
+        const kana = (r.getAttribute('data-kana') || '').toLowerCase();
+        const ward = (r.getAttribute('data-ward') || '').toLowerCase();
+        const room = (r.getAttribute('data-room') || '').toLowerCase();
+        const match = !q || id.includes(q) || name.includes(q) || kana.includes(q) || ward.includes(q) || room.includes(q);
+        r.style.display = match ? '' : 'none';
+      });
+    }
+
+    // 患者選択
+    function selectPatient(patientId) {
+      window.location.href = `/rehabili/?patientId=${encodeURIComponent(patientId)}`;
+    }
+
+    // 💾 オーダー保存処理
+    async function saveOrder(andPrint = false) {
+      const form = document.getElementById('rehabForm');
+      const formData = new FormData(form);
+      const data = {};
+
+      for (let [k, v] of formData.entries()) {
+        data[k] = v;
+      }
+
+      // チェックボックスの未チェック項目を明示的にfalseへ
+      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        data[cb.name] = cb.checked;
+      });
+
+      if (!data.patientId || !data.patientName) {
+        alert('⚠️ 【必須項目】患者が選択されていません。');
+        return;
+      }
+      if (!data.orderDate) {
+        alert('⚠️ 【網掛け必須項目】指示日を入力してください。');
+        document.getElementById('orderDate').focus();
+        return;
+      }
+      if (!data.diagnosisName || data.diagnosisName.trim() === '') {
+        alert('⚠️ 【網掛け必須項目】診断名（算定病名）を入力してください。');
+        document.getElementById('diagnosisName').focus();
+        return;
+      }
+      if (!data.doctorName || data.doctorName.trim() === '') {
+        alert('⚠️ 【網掛け必須項目】主治医を入力してください。');
+        document.getElementById('doctorName').focus();
+        return;
+      }
+
+      try {
+        const res = await fetch('/rehabili/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          showToast(`指示書を発行しました (${result.orderNumber})。電子カルテに自動連動しました。`);
+          if (andPrint && result.printUrl) {
+            window.open(result.printUrl, '_blank');
+          } else {
+            setTimeout(() => {
+              window.location.reload();
+            }, 1200);
+          }
+        } else {
+          alert('エラー: ' + (result.message || '保存に失敗しました'));
+        }
+      } catch (err) {
+        console.error('保存通信エラー:', err);
+        alert('通信エラーが発生しました: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

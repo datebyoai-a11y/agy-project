@@ -208,31 +208,6 @@
   <!-- 全画面共通 最上部1行リボン -->
   <%- include('partials/common-ribbon', { currentScreenTitle: '患者情報登録・管理' }) %>
 
-  <header class="navbar">
-    <a href="/menu" class="nav-brand">
-      <div class="brand-icon">🏥</div>
-      <div class="brand-text">
-        <h1>交雄会だて病院 医療統合ポータル</h1>
-        <p>患者情報登録・管理マスタ</p>
-      </div>
-    </a>
-    <div class="nav-user">
-      <div class="user-badge">
-        <span class="dept-pill"><%= user.department %></span>
-        <span class="user-name"><%= user.userName %> 職員</span>
-      </div>
-      <a href="/bed-board" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem; border-color: #0284c7; color: #0284c7;">
-        🛏️ ベッドボード
-      </a>
-      <a href="/menu" class="btn btn-outline" style="width: auto; padding: 0.35rem 0.8rem;">
-        🏠 メニューへ戻る
-      </a>
-      <a href="/logout" class="btn-logout">
-        🚪 ログアウト
-      </a>
-    </div>
-  </header>
-
   <main class="container">
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
       <div>

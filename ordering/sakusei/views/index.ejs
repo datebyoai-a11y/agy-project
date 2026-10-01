@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オーダリング総合ポータル - 交雄会だて病院</title>
+  <link rel="stylesheet" href="/ordering/css/style.css">
+  <style>
+    /* 追加のオーダリング用カード強調スタイル */
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .feature-item {
+      font-size: 0.82rem;
+      color: var(--slate-600);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .feature-item::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+    }
+    .active-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      margin-top: 0.5rem;
+    }
+    .patient-bar {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .patient-bar-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .patient-tag-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 800;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 全画面共通 最上部1行リボン -->
+  <%- include('partials/common-ribbon', { currentScreenTitle: 'オーダリング総合ポータル' }) %>
+
+  <!-- スリム操作バー (最上段リボン直下：タイトル画面は削除し戻るボタンを配置) -->
+  <div style="max-width: 1200px; margin: 0.6rem auto; padding: 0 1rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem;">
+    <a href="/bed-board" class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.82rem; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; color: #0284c7; border-color: #0284c7;">
+      🛏️ ベッドボードへ
+    </a>
+    <a href="/menu" class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.82rem; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+      🏥 統合ポータルへ戻る
+    </a>
+  </div>
+
+  <main class="container" style="padding-top: 0.25rem;">
+
+    <!-- 対象患者ステータスバー -->
+    <div class="patient-bar">
+      <div class="patient-bar-info">
+        <span style="font-size: 1.5rem;">🎯</span>
+        <div>
+          <div style="font-size: 0.78rem; color: var(--slate-500); font-weight: bold;">現在の指示対象患者</div>
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.15rem;">
+            <% if (selectedPatient) { %>
+              <span class="patient-tag-badge">[<%= selectedPatient.patientId %>]</span>
+              <strong style="font-size: 1.15rem; color: #0f172a;"><%= selectedPatient.name %> 様</strong>
+              <span style="font-size: 0.85rem; color: var(--slate-600);">(<%= selectedPatient.ward || '病棟未定' %> <%= selectedPatient.roomNo ? selectedPatient.roomNo + '号' : '' %> / <%= selectedPatient.gender || '' %> <%= selectedPatient.age ? selectedPatient.age + '歳' : '' %>)</span>
+            <% } else { %>
+              <span class="patient-tag-badge" style="background: #f1f5f9; color: #64748b;">未選択</span>
+              <span style="color: var(--slate-500); font-size: 0.95rem;">患者が選択されていません（オーダー発行時に選択可能です）</span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <div>
+        <button type="button" onclick="openPatientModal()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-color: #0284c7; color: #0284c7; border-radius: 6px; cursor: pointer; font-weight: bold;">
+          👤 対象患者を変更・選択 ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- カテゴリ別カード表示 -->
+    <div class="category-heading">
+      <span>現在利用可能なオーダリング機能</span>
+    </div>
+
+    <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));">
+      <% orderMenus.forEach(menu => { %>
+        <div class="menu-card <%= menu.status === 'active' ? 'authorized' : 'unauthorized' %>" style="display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div class="card-header">
+              <div class="card-icon" style="background: <%= menu.status === 'active' ? '#ecfdf5' : '#f1f5f9' %>;">
+                <%= menu.icon %>
+              </div>
+              <div class="card-titles">
+                <h3 class="card-title" style="font-size: 1.1rem;"><%= menu.title %></h3>
+                <p class="card-subtitle"><%= menu.subtitle %></p>
+                <% if (menu.badgeText) { %>
+                  <span class="active-badge" style="background: <%= menu.badgeColor %>;">
+                    <%= menu.badgeText %>
+                  </span>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- 特徴リスト -->
+            <div style="padding: 0 1.25rem;">
+              <ul class="feature-list">
+                <% menu.features.forEach(f => { %>
+                  <li class="feature-item"><%= f %></li>
+                <% }); %>
+              </ul>
+            </div>
+          </div>
+
+          <!-- アクションボタン -->
+          <div class="card-action" style="padding: 1.25rem; border-top: 1px solid var(--slate-100);">
+            <% if (menu.status === 'active') { %>
+              <% if (menu.id === 'radiology') { %>
+                <button type="button" class="btn btn-primary" onclick="launchOrder('/radiology/')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #7c3aed; font-weight: bold; padding: 0.75rem;">
+                  🩻 放射線オーダーを発行 ➔
+                </button>
+              <% } else if (menu.id === 'injection') { %>
+                <button type="button" class="btn btn-primary" onclick="launchOrder('/injection/')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #059669; font-weight: bold; padding: 0.75rem;">
+                  💉 注射・点滴オーダーを発行 ➔
+                </button>
+              <% } else if (menu.id === 'rehabili') { %>
+                <button type="button" class="btn btn-primary" onclick="launchOrder('/rehabili/')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #0d9488; font-weight: bold; padding: 0.75rem;">
+                  🤸 リハビリ指示書を発行 ➔
+                </button>
+              <% } %>
+            <% } else { %>
+              <button class="btn" disabled style="width: 100%; background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; cursor: not-allowed; padding: 0.75rem;">
+                🚧 <%= menu.badgeText %>
+              </button>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+  </main>
+
+  <!-- 👤 対象患者選択モーダル -->
+  <div id="patientSelectModal" class="modal-overlay" style="display: none;" onclick="handleModalBackdropClick(event)">
+    <div class="modal-card" style="max-width: 900px; width: 95%; max-height: 85vh; display: flex; flex-direction: column; background: white; border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid #cbd5e1;" onclick="event.stopPropagation()">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--slate-200); background: #f8fafc;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎯</span> オーダリング対象患者の選択
+          </h3>
+          <p style="margin: 0.25rem 0 0 0; font-size: 0.82rem; color: #64748b;">
+            オーダーを発行する患者を選択してください。上部共通リボンおよび各オーダー画面へ自動連動します。
+          </p>
+        </div>
+        <button type="button" onclick="closePatientModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; padding: 0.2rem 0.5rem;" title="閉じる">
+          ✕
+        </button>
+      </div>
+
+      <!-- 検索・フィルター -->
+      <div style="padding: 1rem 1.5rem; background: white; border-bottom: 1px solid var(--slate-200); display: flex; flex-direction: column; gap: 0.75rem;">
+        <input type="text" id="patientSearchInput" placeholder="🔍 患者ID、氏名、カナ、病室で絞り込み..." oninput="filterPatients()"
+               style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; outline: none;">
+      </div>
+
+      <!-- 患者テーブル -->
+      <div style="flex: 1; overflow-y: auto; padding: 0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 1px solid var(--slate-200); color: #475569;">
+              <th style="padding: 0.75rem 1rem; text-align: left;">患者ID</th>
+              <th style="padding: 0.75rem 1rem; text-align: left;">氏名</th>
+              <th style="padding: 0.75rem 1rem; text-align: left;">年齢/性別</th>
+              <th style="padding: 0.75rem 1rem; text-align: left;">病棟 / 病室</th>
+              <th style="padding: 0.75rem 1rem; text-align: right;">選択</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% patients.forEach(p => { %>
+              <tr class="patient-row" data-id="<%= p.patientId %>" data-name="<%= p.name %>" data-kana="<%= p.kana || '' %>" data-ward="<%= p.ward || '' %>" data-room="<%= p.roomNo || '' %>" style="border-bottom: 1px solid var(--slate-200); cursor: pointer;" onclick="selectPatientAndReload('<%= p.patientId %>', '<%= p.name %>', '<%= p.age %>', '<%= p.gender %>', '<%= p.birthDate || '' %>', '<%= p.ward || '' %>', '<%= p.roomNo || '' %>')">
+                <td style="padding: 0.75rem 1rem; font-family: monospace; font-weight: bold;"><%= p.patientId %></td>
+                <td style="padding: 0.75rem 1rem; font-weight: bold;"><%= p.name %> 様</td>
+                <td style="padding: 0.75rem 1rem;"><%= p.age !== null ? p.age + '歳' : '-' %> (<%= p.gender %>)</td>
+                <td style="padding: 0.75rem 1rem;"><%= p.ward || '外来' %> <%= p.roomNo ? p.roomNo + '号' : '' %></td>
+                <td style="padding: 0.75rem 1rem; text-align: right;">
+                  <button type="button" class="btn btn-primary" style="padding: 0.35rem 0.8rem; font-size: 0.78rem; border-radius: 6px;">選択 ➔</button>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="padding: 0.9rem 1.5rem; background: #f8fafc; border-top: 1px solid var(--slate-200); text-align: right;">
+        <button type="button" class="btn btn-outline" onclick="closePatientModal()" style="padding: 0.4rem 1rem; font-size: 0.85rem;">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px);
+      z-index: 99999; display: flex; align-items: center; justify-content: center;
+    }
+  </style>
+
+  <script>
+    let currentSelectedPatientId = '<%= patientId || "" %>';
+
+    // 画面ロード時にリボン保存患者を反映
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const saved = localStorage.getItem('koyukai_current_patient');
+        if (saved) {
+          const p = JSON.parse(saved);
+          if (p.patientId && !currentSelectedPatientId) {
+            // URLに付与されていなければリボン患者で再読み込み
+            window.location.href = '/ordering/?patientId=' + encodeURIComponent(p.patientId);
+          }
+        }
+      } catch (_) {}
+    });
+
+    // オーダー画面への遷移
+    function launchOrder(basePath) {
+      let targetUrl = basePath;
+      let pid = currentSelectedPatientId;
+
+      if (!pid) {
+        try {
+          const saved = localStorage.getItem('koyukai_current_patient');
+          if (saved) {
+            const p = JSON.parse(saved);
+            if (p.patientId) pid = p.patientId;
+          }
+        } catch (_) {}
+      }
+
+      if (pid) {
+        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'patientId=' + encodeURIComponent(pid);
+      }
+      window.location.href = targetUrl;
+    }
+
+    // 患者選択モーダル
+    function openPatientModal() {
+      document.getElementById('patientSelectModal').style.display = 'flex';
+    }
+    function closePatientModal() {
+      document.getElementById('patientSelectModal').style.display = 'none';
+    }
+    function handleModalBackdropClick(e) {
+      if (e.target.id === 'patientSelectModal') closePatientModal();
+    }
+
+    // 患者選択決定
+    function selectPatientAndReload(id, name, age, gender, dob, ward, room) {
+      const p = { patientId: id, name, age, gender, dob, ward, room };
+      try {
+        localStorage.setItem('koyukai_current_patient', JSON.stringify(p));
+      } catch (_) {}
+      window.location.href = '/ordering/?patientId=' + encodeURIComponent(id);
+    }
+
+    // 絞り込みフィルター
+    function filterPatients() {
+      const q = (document.getElementById('patientSearchInput').value || '').toLowerCase().trim();
+      document.querySelectorAll('.patient-row').forEach(row => {
+        const id = (row.dataset.id || '').toLowerCase();
+        const name = (row.dataset.name || '').toLowerCase();
+        const kana = (row.dataset.kana || '').toLowerCase();
+        const ward = (row.dataset.ward || '').toLowerCase();
+        const room = (row.dataset.room || '').toLowerCase();
+        const match = !q || id.includes(q) || name.includes(q) || kana.includes(q) || ward.includes(q) || room.includes(q);
+        row.style.display = match ? '' : 'none';
+      });
+    }
+  </script>
+
+</body>
+</html>

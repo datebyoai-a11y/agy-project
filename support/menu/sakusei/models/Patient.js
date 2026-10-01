@@ -6,7 +6,8 @@ const PatientSchema = new mongoose.Schema({
   kana: { type: String, default: '' },                      // フリガナ
   birthDate: { type: String, default: '' },                  // 生年月日 (YYYY-MM-DD)
   age: { type: Number, default: null },                      // 年齢 (生年月日から自動計算)
-  gender: { type: String, enum: ['男', '女', 'その他'], default: '男' }, // 性別
+  gender: { type: String, enum: ['男', '女', '男性', '女性', 'その他'], default: '男' }, // 性別
+  sensor: { type: Boolean, default: false },                // 離床センサー稼働状態
   
   // 連絡先・キーパーソン情報
   postalCode: { type: String, default: '' },                // 郵便番号 (例: 052-0012)
@@ -18,14 +19,14 @@ const PatientSchema = new mongoose.Schema({
   keyPersonNotes: { type: String, default: '' },            // キーパーソン備考 (連絡可能時間、留意事項等)
 
   // 診療・病棟病室情報
-  ward: { type: String, default: '外来' },                   // 病棟 (しおかぜ, うみかぜ, 医療療養, 外来 等)
-  room: { type: String, default: '' },                      // 病室 (例: 302号室, 401-A)
+  ward: { type: String, default: '外来' },                   // 病棟 (しおかぜ, うみかぜ, 2F医療病棟, 外来 等)
+  room: { type: String, default: '' },                      // 病室 (例: 302号室, 401-A, 201-1)
   department: { type: String, default: '内科' },             // 診療科 (内科, 外科, 整形外科, 総合診療科 等)
   
   // 身体・医療情報
   bloodType: { type: String, default: '不明' },              // 血液型 (A, B, O, AB, 不明)
   infection: { type: String, default: '無' },                // 感染症情報 (無 / 有(MRSA) 等)
-  mobility: { type: String, default: '徒歩' },               // 移動能力/ADL (徒歩, 車椅子, ベッド, ストレッチャー)
+  mobility: { type: String, default: '担送' },               // 移動能力/区分 (担送, 護送, 独歩)
   height: { type: Number, default: null },                   // 身長 (cm)
   weight: { type: Number, default: null },                   // 体重 (kg)
   allergies: { type: String, default: 'なし' },              // アレルギー情報

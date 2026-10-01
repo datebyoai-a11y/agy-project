@@ -11,37 +11,6 @@
   <!-- 全画面共通 最上部1行リボン -->
   <%- include('partials/common-ribbon', { currentScreenTitle: '統合ポータルメニュー' }) %>
 
-  <!-- ナビゲーションバー -->
-  <header class="navbar">
-    <a href="/menu" class="nav-brand">
-      <div class="brand-icon">🏥</div>
-      <div class="brand-text">
-        <h1>交雄会だて病院 医療統合ポータル</h1>
-        <p>Hospital Integrated Medical Portal System</p>
-      </div>
-    </a>
-
-    <div class="nav-user">
-      <div class="user-badge">
-        <% 
-          let deptClass = 'admin';
-          if (user.department === '医師') deptClass = 'doctor';
-          else if (user.department === '看護師') deptClass = 'nurse';
-          else if (user.department === '放射線技師') deptClass = 'radiology';
-          else if (user.department === 'リハビリ') deptClass = 'rehab';
-          else if (user.department === '薬剤師') deptClass = 'pharmacy';
-        %>
-        <span class="dept-pill <%= deptClass %>"><%= user.department %></span>
-        <span class="user-name"><%= user.userName %> 職員</span>
-        <span class="role-tag <%= user.role %>"><%= user.role === 'admin' ? '管理者' : '一般' %></span>
-      </div>
-
-      <a href="/logout" class="btn-logout">
-        🚪 ログアウト
-      </a>
-    </div>
-  </header>
-
   <main class="container">
 
     <!-- ページ見出し -->
@@ -98,6 +67,18 @@
                 <% } else if (menu.id === 'radiology_order') { %>
                   <button type="button" class="btn btn-primary" onclick="launchRadiologyOrder('<%= menu.url %>')" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #7c3aed;">
                     🩻 放射線オーダーを発行 ➔
+                  </button>
+                <% } else if (menu.id === 'naifuku_order') { %>
+                  <button type="button" class="btn btn-primary" onclick="launchNaifukuOrder('<%= menu.url %>')" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #0284c7;">
+                    💊 内服・外用処方を発行 ➔
+                  </button>
+                <% } else if (menu.id === 'injection_order') { %>
+                  <button type="button" class="btn btn-primary" onclick="launchInjectionOrder('<%= menu.url %>')" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #059669;">
+                    💉 注射・点滴オーダーを発行 ➔
+                  </button>
+                <% } else if (menu.id === 'rehabili_order') { %>
+                  <button type="button" class="btn btn-primary" onclick="launchRehabiliOrder('<%= menu.url %>')" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #0d9488;">
+                    🤸 リハビリ指示書を発行 ➔
                   </button>
                 <% } else if (menu.id === 'radiology_receiver') { %>
                   <a href="<%= menu.url %>" class="btn btn-primary" style="display:flex; align-items:center; justify-content:center; gap:0.4rem; cursor:pointer; background: #0284c7;">
@@ -209,11 +190,19 @@
                       <%= p.department || '一般' %>
                     </span>
                   </td>
-                  <td style="padding: 0.75rem 1rem; text-align: right;">
-                    <button type="button" class="btn btn-primary" style="padding: 0.35rem 0.7rem; font-size: 0.78rem; border-radius: 6px;"
-                            onclick="event.stopPropagation(); selectPatientAndLaunchCarte('<%= p.patientId %>', '<%= p.name %>', '<%= p.age %>', '<%= p.gender %>', '<%= p.birthDate || '' %>')">
-                      🩺 カルテを開く ➔
-                    </button>
+                  <td style="padding: 0.75rem 1rem; text-align: right; white-space: nowrap;">
+                    <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                      <button type="button" class="btn btn-primary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 6px; background: #0284c7;"
+                              onclick="event.stopPropagation(); selectPatientAndLaunchCarte('<%= p.patientId %>', '<%= p.name %>', '<%= p.age %>', '<%= p.gender %>', '<%= p.birthDate || '' %>')"
+                              title="<%= p.name %> 様の電子カルテを開く">
+                        🩺 カルテ ➔
+                      </button>
+                      <button type="button" class="btn btn-primary" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 6px; background: #4f46e5;"
+                              onclick="event.stopPropagation(); selectPatientAndLaunchOrdering('<%= p.patientId %>', '<%= p.name %>', '<%= p.age %>', '<%= p.gender %>', '<%= p.birthDate || '' %>')"
+                              title="<%= p.name %> 様の統合オーダリング画面を開く">
+                        📝 オーダリング ➔
+                      </button>
+                    </div>
                   </td>
                 </tr>
               <% }); %>
@@ -368,9 +357,54 @@
       window.location.href = targetUrl;
     }
 
-    // 📝 オーダリング送信画面への連携起動 (リボン選択中の患者を引き継ぐ)
+    // 💊 内服・外用処方オーダーへのSSO Launch API 連携起動 (リボン選択中の患者を引き継ぐ)
+    function launchNaifukuOrder(baseUrl) {
+      let targetUrl = baseUrl || '/sso/launch?app=naifuku';
+      try {
+        const stored = localStorage.getItem('koyukai_current_patient');
+        if (stored) {
+          const p = JSON.parse(stored);
+          if (p.patientId) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'patientId=' + encodeURIComponent(p.patientId);
+          }
+        }
+      } catch (_) {}
+      window.location.href = targetUrl;
+    }
+
+    // 💉 注射・点滴オーダーへのSSO Launch API 連携起動 (リボン選択中の患者を引き継ぐ)
+    function launchInjectionOrder(baseUrl) {
+      let targetUrl = baseUrl || '/sso/launch?app=injection';
+      try {
+        const stored = localStorage.getItem('koyukai_current_patient');
+        if (stored) {
+          const p = JSON.parse(stored);
+          if (p.patientId) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'patientId=' + encodeURIComponent(p.patientId);
+          }
+        }
+      } catch (_) {}
+      window.location.href = targetUrl;
+    }
+
+    // 🤸 リハビリテーション指示オーダーへのSSO Launch API 連携起動 (リボン選択中の患者を引き継ぐ)
+    function launchRehabiliOrder(baseUrl) {
+      let targetUrl = baseUrl || '/sso/launch?app=rehabili';
+      try {
+        const stored = localStorage.getItem('koyukai_current_patient');
+        if (stored) {
+          const p = JSON.parse(stored);
+          if (p.patientId) {
+            targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'patientId=' + encodeURIComponent(p.patientId);
+          }
+        }
+      } catch (_) {}
+      window.location.href = targetUrl;
+    }
+
+    // 📝 統合オーダリング総合ポータルへのSSO Launch API 連携起動 (リボン選択中の患者を引き継ぐ)
     function launchOrderingSender(baseUrl) {
-      let targetUrl = baseUrl || '/ordering/';
+      let targetUrl = baseUrl || '/sso/launch?app=ordering';
       try {
         const stored = localStorage.getItem('koyukai_current_patient');
         if (stored) {
