@@ -64,6 +64,7 @@ case "$ACTION" in
     fuser -k 8082/tcp 2>/dev/null
     fuser -k 8083/tcp 2>/dev/null
     fuser -k 8084/tcp 2>/dev/null
+    fuser -k 8085/tcp 2>/dev/null
     fuser -k 3000/tcp 2>/dev/null
     fuser -k 4000/tcp 2>/dev/null
     fuser -k 5000/tcp 2>/dev/null
@@ -127,6 +128,13 @@ case "$ACTION" in
       echo "  [リハ]   リハビリテーション指示書Ver3.0: 🟢 稼働中 (http://localhost:8083 / Proxy: /rehabili/)"
     else
       echo "  [リハ]   リハビリテーション指示書Ver3.0: 🔴 停止"
+    fi
+
+    # Rehabilitation Receiver (Port 8085)
+    if lsof -ti :8085 > /dev/null 2>&1; then
+      echo "  [リハ]   リハビリ科【指示受けモニター】: 🟢 稼働中 (http://localhost:8085 / Proxy: /reha-uke/)"
+    else
+      echo "  [リハ]   リハビリ科【指示受けモニター】: 🔴 停止"
     fi
 
     # Prescription Ordering (Port 8084)

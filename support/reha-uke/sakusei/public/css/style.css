@@ -1,0 +1,1073 @@
+/* ==============================================================================
+   🏥 交雄会だて病院 放射線科 指示受け・実施モニター スタイルシート (style.css)
+   ============================================================================== */
+
+:root {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #ffffff;
+  --bg-subtle: #f8fafc;
+  --border-color: #e2e8f0;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  /* モダリティ・カラー (放射線科オーダー発行の伝票実物カラーに完全統一！) */
+  --xray-accent: #16a34a;       /* 照射録・一般X線: 鮮やかな緑色 */
+  --xray-accent-dark: #15803d;
+  --xray-bg: #f0fdf4;
+  --xray-header-bg: #dcfce7;
+  --xray-border: #86efac;
+  --xray-border-dark: #16a34a;
+
+  --ct-accent: #eab308;         /* CT検査依頼書: 鮮やかな黄色・ゴールド */
+  --ct-accent-dark: #ca8a04;
+  --ct-bg: #fefce8;
+  --ct-header-bg: #fef9c3;
+  --ct-border: #fde047;
+  --ct-border-dark: #ca8a04;
+
+  --fluoro-accent: #0284c7;     /* 透視検査依頼書: 鮮やかなシアン・青色 */
+  --fluoro-accent-dark: #0369a1;
+  --fluoro-bg: #f0f9ff;
+  --fluoro-header-bg: #e0f2fe;
+  --fluoro-border: #7dd3fc;
+  --fluoro-border-dark: #0284c7;
+
+  /* ステータス・カラー */
+  --status-ordered: #f59e0b;    /* アンバー (未受付) */
+  --status-ordered-bg: #fffbeb;
+  --status-accepted: #2563eb;   /* ロイヤルブルー (受付済) */
+  --status-accepted-bg: #eff6ff;
+  --status-completed: #10b981;  /* エメラルド (実施済) */
+  --status-completed-bg: #f0fdf4;
+
+  --danger-color: #ef4444;
+  --warning-color: #f97316;
+  --success-color: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f1f5f9;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==============================================================================
+   🎛️ 1. ナビゲーションバー & サブヘッダー
+   ============================================================================== */
+.main-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 38px; /* リボンヘッダーの直下 */
+  z-index: 100;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.brand-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #3b82f6;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0;
+}
+
+.brand-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-summary {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 4px 10px;
+  gap: 14px;
+  font-size: 0.82rem;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-num {
+  font-weight: 800;
+  font-size: 1rem;
+}
+.stat-ordered .stat-num { color: #d97706; }
+.stat-accepted .stat-num { color: #2563eb; }
+.stat-completed .stat-num { color: #059669; }
+.stat-portable .stat-num { color: #dc2626; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-outline {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+.btn-outline:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-refresh {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+.btn-refresh:hover {
+  background: #e2e8f0;
+}
+
+/* ==============================================================================
+   🔍 2. コントロールバー (フィルター / 検索 / 自動更新)
+   ============================================================================== */
+.control-bar {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-btn {
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-btn:hover {
+  background: #e2e8f0;
+}
+.filter-btn.active {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  gap: 6px;
+  width: 260px;
+}
+.search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  width: 100%;
+}
+
+.polling-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-animation 2s infinite;
+}
+@keyframes pulse-animation {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* ==============================================================================
+   📊 3. モダリティ別 縦3列 (Kanban) コンテナ
+   ============================================================================== */
+.kanban-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 16px 20px 24px;
+  flex: 1;
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .kanban-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 🩻 カラム全体 (伝票実物の枠組みを再現した明確な境界線) */
+.kanban-column {
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden;
+  min-height: calc(100vh - 160px);
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+/* 📷 列1: 一般撮影・X線 (照射録 伝票カラー: 鮮やかな緑) */
+#colXray {
+  border: 2.5px solid var(--xray-border-dark);
+  border-top: 8px solid var(--xray-accent);
+}
+#colXray .col-header {
+  background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+  border-bottom: 2.5px solid var(--xray-accent);
+}
+#colXray .col-body {
+  background: #f8fdf9;
+}
+#colXray .col-title {
+  color: var(--xray-accent-dark);
+}
+
+/* 🌀 列2: CT検査 (CT検査依頼書 伝票カラー: 鮮やかな黄色・ゴールド) */
+#colCt {
+  border: 2.5px solid var(--ct-border-dark);
+  border-top: 8px solid var(--ct-accent);
+}
+#colCt .col-header {
+  background: linear-gradient(180deg, #fefce8 0%, #fef9c3 100%);
+  border-bottom: 2.5px solid var(--ct-accent-dark);
+}
+#colCt .col-body {
+  background: #fffef5;
+}
+#colCt .col-title {
+  color: #a16207;
+}
+
+/* 📺 列3: X線透視 (透視検査依頼書 伝票カラー: 鮮やかなシアン・青) */
+#colFluoro {
+  border: 2.5px solid var(--fluoro-border-dark);
+  border-top: 8px solid var(--fluoro-accent);
+}
+#colFluoro .col-header {
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-bottom: 2.5px solid var(--fluoro-accent);
+}
+#colFluoro .col-body {
+  background: #f8fbff;
+}
+#colFluoro .col-title {
+  color: var(--fluoro-accent-dark);
+}
+
+/* カラムヘッダー共通 */
+.col-header {
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.col-title-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.col-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.col-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.col-subtitle {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #475569;
+  margin-top: 1px;
+}
+
+.col-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.badge-count {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #334155;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.badge-count.pending {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.badge-count.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.badge-count.done {
+  background: #d1fae5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+/* 🏷️ カラム件数バッジ (下にある情報の件数だけを表示) */
+.col-count-badge {
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+#colXray .col-count-badge {
+  background: #dcfce7;
+  color: var(--xray-accent-dark);
+  border: 1.5px solid var(--xray-accent);
+}
+#colCt .col-count-badge {
+  background: #fef9c3;
+  color: #a16207;
+  border: 1.5px solid var(--ct-accent-dark);
+}
+#colFluoro .col-count-badge {
+  background: #e0f2fe;
+  color: var(--fluoro-accent-dark);
+  border: 1.5px solid var(--fluoro-accent);
+}
+
+/* カードリスト領域 */
+.col-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* 空状態 */
+.empty-placeholder {
+  text-align: center;
+  padding: 40px 10px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+.empty-placeholder-icon {
+  font-size: 2rem;
+  margin-bottom: 6px;
+  opacity: 0.6;
+}
+
+/* ==============================================================================
+   📄 4. オーダーカード スタイル (伝票枠組みデザイン再現)
+   ============================================================================== */
+.order-card {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 2px solid #cbd5e1;
+  border-left: 6px solid #94a3b8; /* ステータスボーダー */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 📑 伝票カラーバー (カード最上部に4pxのモダリティ伝票カラーを配置) */
+.order-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+#colXray .order-card::before, .order-card.modality-xray::before {
+  background-color: var(--xray-accent); /* 照射録: 鮮やかな緑 */
+}
+#colCt .order-card::before, .order-card.modality-ct::before {
+  background-color: var(--ct-accent);   /* CT依頼書: 鮮やかな黄(ゴールド) */
+}
+#colFluoro .order-card::before, .order-card.modality-fluoro::before {
+  background-color: var(--fluoro-accent); /* 透視依頼書: 鮮やかな青 */
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  border-color: #64748b;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+/* ステータス別ボーダー＆アクセント */
+.order-card.status-ordered {
+  border-left-color: var(--status-ordered);
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+}
+.order-card.status-accepted {
+  border-left-color: var(--status-accepted);
+  background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
+}
+.order-card.status-completed {
+  border-left-color: var(--status-completed);
+  background: #ffffff;
+  opacity: 0.92;
+}
+.order-card.status-completed:hover {
+  opacity: 1;
+}
+
+/* ポータブル警告カード */
+.order-card.is-portable {
+  border: 2px solid #ef4444;
+  border-left: 7px solid #dc2626;
+  background: linear-gradient(180deg, #fffafa 0%, #ffffff 100%);
+}
+
+/* カード上部：オーダー番号・ステータスバッジ・時間 */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 6px;
+}
+
+.order-num-text {
+  font-family: monospace;
+  font-weight: 700;
+  color: #475569;
+}
+
+.time-stamp {
+  color: var(--text-muted);
+}
+
+.status-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.status-badge.ORDERED {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #f59e0b;
+}
+.status-badge.ACCEPTED, .status-badge.RECEIVED {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #3b82f6;
+}
+.status-badge.COMPLETED {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #10b981;
+}
+
+/* 患者情報エリア */
+.patient-area {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.patient-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.patient-name {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.patient-kana {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.patient-meta {
+  font-size: 0.8rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.patient-id-tag {
+  font-family: monospace;
+  background: #e2e8f0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* 警告タグ・アラート */
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.tag-alert {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.tag-portable {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  animation: pulse-border 2s infinite;
+}
+.tag-infection {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-weight: 800;
+}
+.tag-contrast {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+.tag-mobility {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+/* 検査内容エリア (伝票実物の検査項目ブロック風枠組み) */
+.exam-area {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.exam-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exam-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.exam-parts {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.exam-purpose {
+  font-size: 0.78rem;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-top: 2px;
+}
+
+.doctor-info {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+/* 実施者・受付者タグ (完了時・受付時) */
+.operator-stamp {
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #334155;
+}
+
+/* ==============================================================================
+   🔘 5. 操作ボタングループ (受付 & 実施済)
+   ============================================================================== */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* 📥 受付ボタン */
+.btn-accept {
+  flex: 1;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+  transition: all 0.15s ease;
+}
+.btn-accept:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+.btn-accept:active {
+  transform: translateY(0);
+}
+
+/* ✅ 実施済ボタン */
+.btn-complete {
+  flex: 1;
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2);
+  transition: all 0.15s ease;
+}
+.btn-complete:hover {
+  background: #047857;
+  transform: translateY(-1px);
+}
+.btn-complete:active {
+  transform: translateY(0);
+}
+
+/* 補助ボタン (伝票印刷 / 戻す) */
+.btn-card-sub {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #475569;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.btn-card-sub:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-revert {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.btn-revert:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ==============================================================================
+   🔔 トースト通知
+   ============================================================================== */
+#toastContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  background: #1e293b;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toast-in 0.2s ease-out;
+}
+.toast.success { border-left: 4px solid #10b981; }
+.toast.info { border-left: 4px solid #3b82f6; }
+.toast.warning { border-left: 4px solid #f59e0b; }
+.toast.error { border-left: 4px solid #ef4444; }
+
+@keyframes toast-in {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ==============================================================================
+   📋 6. 一覧形式 (テーブルビュー) スタイル
+   ============================================================================== */
+.list-view-container {
+  padding: 16px 20px 24px;
+  flex: 1;
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.table-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.table-header-info {
+  background: #f8fafc;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.orders-table th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
+  padding: 10px 12px;
+  border-bottom: 2px solid #cbd5e1;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* ↕️ ソート可能ヘッダー */
+.orders-table th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.orders-table th.th-sortable:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.orders-table th.th-sortable.sorted-asc,
+.orders-table th.th-sortable.sorted-desc {
+  background: #dbeafe;
+  color: #1e40af;
+  border-bottom: 2px solid #3b82f6;
+}
+.sort-icon {
+  display: inline-block;
+  margin-left: 3px;
+  font-size: 0.72rem;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+.orders-table th.th-sortable:hover .sort-icon {
+  opacity: 0.8;
+}
+.orders-table th.th-sortable.sorted-asc .sort-icon,
+.orders-table th.th-sortable.sorted-desc .sort-icon {
+  opacity: 1;
+  font-weight: 900;
+  color: #1d4ed8;
+}
+
+/* ソートリセットボタン */
+.btn-reset-sort:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+.orders-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.orders-table tbody tr {
+  transition: background-color 0.15s;
+}
+
+.orders-table tbody tr:hover {
+  background-color: #f8faff;
+}
+
+/* 一覧形式でのモダリティバッジ */
+.modality-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.modality-pill.xray {
+  background: var(--xray-bg);
+  color: var(--xray-accent);
+  border: 1px solid var(--xray-border);
+}
+.modality-pill.ct {
+  background: var(--ct-bg);
+  color: var(--ct-accent);
+  border: 1px solid var(--ct-border);
+}
+.modality-pill.fluoro {
+  background: var(--fluoro-bg);
+  color: var(--fluoro-accent);
+  border: 1px solid var(--fluoro-border);
+}
+
+/* 一覧でのミニ操作ボタン */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 4px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.btn-sm-accept {
+  background: #2563eb;
+  color: #ffffff;
+}
+.btn-sm-accept:hover {
+  background: #1d4ed8;
+}
+.btn-sm-complete {
+  background: #059669;
+  color: #ffffff;
+}
+.btn-sm-complete:hover {
+  background: #047857;
+}
+.btn-sm-sub {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+.btn-sm-sub:hover {
+  background: #e2e8f0;
+}
+
+/* 表示切り替えボタングループ */
+.view-mode-group {
+  display: flex;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.view-mode-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.view-mode-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  font-weight: 700;
+}
+

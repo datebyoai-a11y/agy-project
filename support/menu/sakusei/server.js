@@ -302,6 +302,28 @@ app.use('/rehabili', createProxyMiddleware({
   }
 }));
 
+// 🤸 1.7.5 リハビリテーション科【指示受け・実施モニター】(Port 8085) へのリバースプロキシ
+app.use((req, res, next) => {
+  if (req.path === '/reha-uke') {
+    const q = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, '/reha-uke/' + q);
+  }
+  next();
+});
+
+app.use('/reha-uke', createProxyMiddleware({
+  target: 'http://127.0.0.1:8085',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/reha-uke': ''
+  },
+  on: {
+    proxyReq: (proxyReq, req, res) => {
+      proxyReq.setHeader('x-forwarded-prefix', '/reha-uke');
+    }
+  }
+}));
+
 // 💊 1.8 内服・外用処方オーダー (Port 8084) へのリバースプロキシ
 app.use((req, res, next) => {
   if (req.path === '/naifuku') {
@@ -681,6 +703,13 @@ app.get('/sso/launch', requireAuth, async (req, res) => {
       const targetQuery = patientId ? `&patientId=${encodeURIComponent(patientId)}` : '';
       const ssoUrl = `/rehabili/api/sso-login?token=${encodeURIComponent(ssoToken)}${targetQuery}`;
       console.log(`🔗 [SSO Launch -> Rehabili API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
+      return res.redirect(ssoUrl);
+    }
+
+    // 🤸 リハビリテーション科【指示受け・実施モニター】へのSSO連携API
+    if (appKey === 'reha_uke' || appKey === 'rehabili_receiver') {
+      const ssoUrl = `/reha-uke/api/sso-login?token=${encodeURIComponent(ssoToken)}`;
+      console.log(`🔗 [SSO Launch -> RehaUke API] ${user.userName} (${user.loginId}) ➔ ${ssoUrl}`);
       return res.redirect(ssoUrl);
     }
 

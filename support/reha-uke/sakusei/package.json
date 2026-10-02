@@ -1,0 +1,20 @@
+{
+  "name": "rehabilitation-order-receiver",
+  "version": "1.0.0",
+  "description": "リハビリテーション科 指示受け・実施モニターシステム (PT/OT/ST 縦3列 Kanban & 一覧モニター)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "rehabilitation",
+    "receiver",
+    "kanban",
+    "pt",
+    "ot",
+    "st",
+    "medical"
+  ],
+  "author": "交雄会だて病院 医療安全・情報システム室",
+  "license": "ISC"
+}

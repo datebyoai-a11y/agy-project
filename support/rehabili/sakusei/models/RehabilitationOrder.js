@@ -114,6 +114,11 @@ const RehabilitationOrderSchema = new mongoose.Schema({
     default: 'ordered',
     index: true
   },
+  acceptedAt: { type: Date },
+  acceptedBy: { type: String, default: '' },
+  completedAt: { type: Date },
+  completedBy: { type: String, default: '' },
+  rehabNotes: { type: String, default: '' }, // 訓練メモ・備考
 
   // 電子カルテ連携
   articleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Article' },

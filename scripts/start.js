@@ -19,6 +19,7 @@ const RAD_ORDER_DIR = path.join(ROOT_DIR, 'support', 'radiology', 'sakusei');
 const RAD_UKE_DIR = path.join(ROOT_DIR, 'support', 'radi-uke', 'sakusei');
 const INJECTION_DIR = path.join(ROOT_DIR, 'support', 'injection', 'sakusei');
 const REHABILI_DIR = path.join(ROOT_DIR, 'support', 'rehabili', 'sakusei');
+const REHA_UKE_DIR = path.join(ROOT_DIR, 'support', 'reha-uke', 'sakusei');
 const NAIFUKU_DIR = path.join(ROOT_DIR, 'support', 'naifuku', 'sakusei');
 const INCIDENT_DIR = path.join(ROOT_DIR, 'incident-system');
 const ORDERING_DIR = path.join(ROOT_DIR, 'ordering');
@@ -93,6 +94,7 @@ killPort(8081);
 killPort(8082);
 killPort(8083);
 killPort(8084);
+killPort(8085);
 killPort(3000);
 killPort(4000);
 killPort(5000);
@@ -144,9 +146,14 @@ const rehabiliPath = path.join(REHABILI_DIR, 'server.js');
 launchChild('リハビリテーション指示オーダー (Port 8083)', rehabiliPath, REHABILI_DIR, { PORT: '8083', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 5.7 💊 内服・外用処方オーダー (Port 8084) 起動
-console.log('🚀 [6/8] 内服・外用処方オーダー (Port 8084) を起動中...');
+console.log('🚀 [6/9] 内服・外用処方オーダー (Port 8084) を起動中...');
 const naifukuPath = path.join(NAIFUKU_DIR, 'server.js');
 launchChild('内服・外用処方オーダー (Port 8084)', naifukuPath, NAIFUKU_DIR, { PORT: '8084', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
+
+// 5.8 🤸 リハビリテーション科 指示受け・実施モニター (Port 8085) 起動
+console.log('🚀 [7/9] リハビリテーション科 指示受け・実施モニター (Port 8085) を起動中...');
+const rehaUkePath = path.join(REHA_UKE_DIR, 'server.js');
+launchChild('リハビリ指示受けモニター (Port 8085)', rehaUkePath, REHA_UKE_DIR, { PORT: '8085', MONGO_URI: process.env.MONGO_URI || REPLICA_SET_URI });
 
 // 6. インシデント管理システム / 電子カルテ (Port 3000) 起動
 console.log('🚀 [7/8] インシデント管理システム / 電子カルテ (Port 3000) を起動中...');
@@ -197,11 +204,13 @@ setTimeout(() => {
   console.log('    👉 http://localhost:8082/ (Proxy: http://localhost:8000/injection/)');
   console.log(' 4. 🤸 リハビリテーション指示オーダー & 原本印刷 (Port 8083):');
   console.log('    👉 http://localhost:8083/ (Proxy: http://localhost:8000/rehabili/)');
-  console.log(' 5. 💊 内服・外用処方オーダー & 処方箋・配薬指示票印刷 (Port 8084):');
+  console.log(' 5. 🤸 リハビリテーション科 指示受け・実施モニター (Port 8085):');
+  console.log('    👉 http://localhost:8085/ (Proxy: http://localhost:8000/reha-uke/)');
+  console.log(' 6. 💊 内服・外用処方オーダー & 処方箋・配薬指示票印刷 (Port 8084):');
   console.log('    👉 http://localhost:8084/ (Proxy: http://localhost:8000/naifuku/)');
-  console.log(' 6. 🏥 インシデント管理 / 電子カルテ (Port 3000):');
+  console.log(' 7. 🏥 インシデント管理 / 電子カルテ (Port 3000):');
   console.log('    👉 http://localhost:3000/login (Proxy: http://localhost:8000/incident/)');
-  console.log(' 7. 📝 統合オーダリング総合ポータル (Port 4000):');
+  console.log(' 8. 📝 統合オーダリング総合ポータル (Port 4000):');
   console.log('    👉 http://localhost:4000/ (Proxy: http://localhost:8000/ordering/)');
   console.log('----------------------------------------------------------------');
   console.log('💡 停止する場合は、このターミナルで [ Ctrl + C ] を押してください。');

@@ -100,6 +100,17 @@ const MENUS = [
     category: '臨床・診療',
     badgeColor: 'teal'
   },
+  {
+    id: 'rehabili_receiver',
+    title: 'リハビリテーション科【指示受け・実施モニター】',
+    shortName: 'リハビリ指示受け',
+    subtitle: 'PT/OT/ST 縦3列Kanban、指示受取・受付・訓練実施記録ワンクリック管理 (リアルタイム同期)',
+    url: '/sso/launch?app=reha_uke',
+    port: 8085,
+    icon: '🤸',
+    category: '部門・実施',
+    badgeColor: 'teal'
+  },
   /*
   {
     id: 'order_receiver',
@@ -175,7 +186,7 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '医師 (Doctor)',
     defaultRole: 'user',
     description: '診察記事・病名登録・全オーダー発行・患者情報管理・病床把握',
-    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'rehabili_receiver', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'emr': '全権限（診察記事・病名・指示）',
       'patient_management': '患者情報登録・編集・参照',
@@ -186,6 +197,7 @@ const DEFAULT_ROLE_TEMPLATES = {
       'radiology_order': '放射線オーダー発行・正控え印刷',
       'rehabili_order': 'リハビリテーション指示書Ver3.0発行・原本印刷',
       'radiology_receiver': '放射線指示受け・実施状況モニター',
+      'rehabili_receiver': 'リハビリ指示受け・訓練進捗モニター',
       'order_receiver': 'オーダー実施進捗確認',
       'incident_report': '全職員報告権限',
       'user_management': '職員一覧の閲覧'
@@ -196,7 +208,7 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '看護師 (Nurse)',
     defaultRole: 'user',
     description: '看護記録・バイタル入力・病棟オーダー・患者情報・病床管理',
-    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'rehabili_receiver', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'emr': '看護記録・バイタル入力・閲覧',
       'patient_management': '患者情報更新・バイタル登録',
@@ -207,6 +219,7 @@ const DEFAULT_ROLE_TEMPLATES = {
       'radiology_order': '放射線オーダー参照・印刷',
       'rehabili_order': 'リハビリ指示参照・原本印刷',
       'radiology_receiver': '放射線検査進捗・実施確認',
+      'rehabili_receiver': 'リハビリ訓練進捗・実施確認',
       'order_receiver': '病棟受取・点滴実施確認',
       'incident_report': '全職員報告権限',
       'user_management': '職員一覧の閲覧'
@@ -233,11 +246,12 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: 'リハビリ職 (Rehabilitation)',
     defaultRole: 'user',
     description: 'リハビリ指示受取・実施記録・カルテ閲覧・患者参照',
-    menus: ['emr', 'patient_management', 'rehabili_order', 'order_receiver', 'incident_report', 'user_management'],
+    menus: ['emr', 'patient_management', 'rehabili_order', 'rehabili_receiver', 'order_receiver', 'incident_report', 'user_management'],
     labels: {
       'emr': '患者情報・カルテ閲覧のみ',
       'patient_management': '患者基本情報・ADL参照',
       'rehabili_order': 'リハビリ指示書Ver3.0受取・指示確認・原本印刷',
+      'rehabili_receiver': '【主業務】指示受け・受付・訓練実施記録ワンクリック管理',
       'order_receiver': 'リハビリ指示受取・実施モニター',
       'incident_report': '全職員報告権限',
       'user_management': '職員一覧の閲覧'
@@ -290,7 +304,7 @@ const DEFAULT_ROLE_TEMPLATES = {
     name: '医療安全管理室 / 管理者 (Admin)',
     defaultRole: 'admin',
     description: '全館システムフルアクセス・インシデント集計・職員マスタ管理',
-    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'radiology_receiver', 'order_receiver', 'incident_report', 'safety_analytics', 'user_management', 'system_status', 'novnc'],
+    menus: ['emr', 'patient_management', 'bed_board', 'order_sender', 'naifuku_order', 'injection_order', 'radiology_order', 'rehabili_order', 'radiology_receiver', 'rehabili_receiver', 'order_receiver', 'incident_report', 'safety_analytics', 'user_management', 'system_status', 'novnc'],
     labels: {
       'emr': '管理者フルアクセス',
       'patient_management': '患者マスタ全権限',
@@ -298,7 +312,9 @@ const DEFAULT_ROLE_TEMPLATES = {
       'order_sender': '管理者フルアクセス',
       'naifuku_order': '内服・外用処方オーダー全権限',
       'radiology_order': '放射線オーダー発行・帳票管理',
+      'rehabili_order': 'リハビリ指示書発行全権限',
       'radiology_receiver': '放射線指示受け・実施モニター管理',
+      'rehabili_receiver': 'リハビリ指示受け・訓練進捗管理',
       'order_receiver': '全館オーダー総合モニター',
       'incident_report': '全職員報告権限',
       'safety_analytics': 'インシデント集計・分析',

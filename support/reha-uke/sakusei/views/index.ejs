@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>リハビリテーション科 指示受け・実施モニター | 交雄会だて病院</title>
+  <link rel="stylesheet" href="<%= prefix %>/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20100%20100><text y=%22.9em%22 font-size=%2290%22>🤸</text></svg>">
+  <style>
+    /* リハビリ科専用カラー & スタイル調整 */
+    :root {
+      --pt-accent: #0284c7;
+      --pt-accent-dark: #0369a1;
+      --pt-bg: #f0f9ff;
+      --pt-header-bg: #e0f2fe;
+      --pt-border: #7dd3fc;
+      --pt-border-dark: #0284c7;
+
+      --ot-accent: #16a34a;
+      --ot-accent-dark: #15803d;
+      --ot-bg: #f0fdf4;
+      --ot-header-bg: #dcfce7;
+      --ot-border: #86efac;
+      --ot-border-dark: #16a34a;
+
+      --st-accent: #d97706;
+      --st-accent-dark: #b45309;
+      --st-bg: #fffbeb;
+      --st-header-bg: #fef3c7;
+      --st-border: #fde68a;
+      --st-border-dark: #d97706;
+    }
+
+    #colPt {
+      border: 2.5px solid var(--pt-border-dark);
+      border-top: 8px solid var(--pt-accent);
+    }
+    #colPt .col-header {
+      background: linear-gradient(180deg, var(--pt-bg) 0%, var(--pt-header-bg) 100%);
+      border-bottom: 2.5px solid var(--pt-accent);
+    }
+    #colPt .col-body { background: #f8fbff; }
+    #colPt .col-title { color: var(--pt-accent-dark); }
+
+    #colOt {
+      border: 2.5px solid var(--ot-border-dark);
+      border-top: 8px solid var(--ot-accent);
+    }
+    #colOt .col-header {
+      background: linear-gradient(180deg, var(--ot-bg) 0%, var(--ot-header-bg) 100%);
+      border-bottom: 2.5px solid var(--ot-accent);
+    }
+    #colOt .col-body { background: #f8fdf9; }
+    #colOt .col-title { color: var(--ot-accent-dark); }
+
+    #colSt {
+      border: 2.5px solid var(--st-border-dark);
+      border-top: 8px solid var(--st-accent);
+    }
+    #colSt .col-header {
+      background: linear-gradient(180deg, var(--st-bg) 0%, var(--st-header-bg) 100%);
+      border-bottom: 2.5px solid var(--st-accent-dark);
+    }
+    #colSt .col-body { background: #fffef5; }
+    #colSt .col-title { color: var(--st-accent-dark); }
+
+    .tag-therapy {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+    .tag-pt { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+    .tag-ot { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .tag-st { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+    .stat-inprogress {
+      background: #e0e7ff;
+      color: #3730a3;
+      border-color: #c7d2fe;
+    }
+    .stat-risk {
+      background: #ffe4e6;
+      color: #9f1239;
+      border-color: #fecdd3;
+    }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 全システム共通 最上部1行リボンヘッダー -->
+  <%- include('partials/common-ribbon', { 
+        user: user, 
+        currentScreenTitle: '🤸 リハビリテーション科 指示受け・実施モニター' 
+      }) %>
+
+  <!-- 2. 統計・操作バー -->
+  <header class="main-header" style="padding:0.4rem 1.25rem;">
+    <!-- 統計サマリー -->
+    <div class="stats-summary">
+      <div class="stat-pill stat-ordered" title="未受付指示書件数">
+        <span>🟡 未受付:</span>
+        <span class="stat-num" id="statOrdered">0</span>
+      </div>
+      <div class="stat-pill stat-accepted" title="受付済件数">
+        <span>🔵 受付済:</span>
+        <span class="stat-num" id="statAccepted">0</span>
+      </div>
+      <div class="stat-pill stat-inprogress" title="訓練実施中件数">
+        <span>🟣 実施中:</span>
+        <span class="stat-num" id="statInProgress">0</span>
+      </div>
+      <div class="stat-pill stat-completed" title="実施済件数">
+        <span>🟢 実施済:</span>
+        <span class="stat-num" id="statCompleted">0</span>
+      </div>
+      <div class="stat-pill stat-risk" title="急変リスク注意患者件数">
+        <span>🚨 リスク注意:</span>
+        <span class="stat-num" id="statRisk">0</span>
+      </div>
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="header-actions">
+      <button type="button" class="btn btn-outline" onclick="openLogModal()" style="background:#f8fafc; border-color:#94a3b8; color:#334155;" title="操作監査ログの閲覧">
+        📜 操作ログ
+      </button>
+      <a href="/rehabili/" class="btn btn-outline" title="リハビリテーション指示書Ver3.0 発行画面を開く">
+        📝 指示書発行・印刷 ➔
+      </a>
+    </div>
+  </header>
+
+  <!-- 3. コントロールバー (フィルター / 検索 / 表示切替 / 更新) -->
+  <div class="control-bar">
+    <!-- 絞り込みフィルター -->
+    <div class="filter-group">
+      <button class="filter-btn active" data-filter="ACTIVE">⏳ 訓練待ち (未受付+受付済+実施中)</button>
+      <button class="filter-btn" data-filter="ALL">📑 すべて表示 (一覧)</button>
+      <button class="filter-btn" data-filter="ordered">🟡 未受付</button>
+      <button class="filter-btn" data-filter="in_progress">🟣 実施中</button>
+      <button class="filter-btn" data-filter="completed">✅ 実施済</button>
+    </div>
+
+    <!-- 検索ボックス -->
+    <div class="search-box">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="患者名・ID・病棟・診断名で絞込...">
+    </div>
+
+    <!-- 更新ステータス -->
+    <div class="header-actions">
+      <div class="polling-indicator">
+        <span class="pulse-dot"></span>
+        <span>自動更新中 (4秒)</span>
+      </div>
+      <button id="refreshBtn" class="btn btn-refresh" title="手動で今すぐ更新">
+        🔄 今すぐ更新
+      </button>
+    </div>
+  </div>
+
+  <!-- 4.1 職種別・療法別 縦3列 (Kanban) コンテナ -->
+  <main class="kanban-container" id="kanbanContainer">
+    
+    <!-- 🏃‍♂️ 列1: 理学療法 (PT) -->
+    <section class="kanban-column" id="colPt">
+      <div class="col-header">
+        <div class="col-title-area">
+          <span class="col-icon" style="font-size:1.8rem;">🏃‍♂️</span>
+          <div>
+            <div class="col-title" style="font-size:1.1rem; font-weight:700;">理学療法 (PT)</div>
+            <div class="col-subtitle" style="font-size:0.75rem; color:#64748b;">関節可動域 / 起立歩行 / 基本動作 / ADL改善</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count col-count-badge" id="badgePtCount">0件</span>
+        </div>
+      </div>
+      <div class="col-body" id="ptCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+    <!-- 🖐️ 列2: 作業療法 (OT) -->
+    <section class="kanban-column" id="colOt">
+      <div class="col-header">
+        <div class="col-title-area">
+          <span class="col-icon" style="font-size:1.8rem;">🖐️</span>
+          <div>
+            <div class="col-title" style="font-size:1.1rem; font-weight:700;">作業療法 (OT)</div>
+            <div class="col-subtitle" style="font-size:0.75rem; color:#64748b;">ADL動作 / 食事・更衣 / 座位保持 / 環境調整</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count col-count-badge" id="badgeOtCount">0件</span>
+        </div>
+      </div>
+      <div class="col-body" id="otCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+    <!-- 🗣️ 列3: 言語聴覚療法 (ST) & 物理療法 -->
+    <section class="kanban-column" id="colSt">
+      <div class="col-header">
+        <div class="col-title-area">
+          <span class="col-icon" style="font-size:1.8rem;">🗣️</span>
+          <div>
+            <div class="col-title" style="font-size:1.1rem; font-weight:700;">言語聴覚 (ST) & 物理療法</div>
+            <div class="col-subtitle" style="font-size:0.75rem; color:#64748b;">摂食嚥下・VF / 構音・失語 / 温熱・メドマー・牽引</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count col-count-badge" id="badgeStCount">0件</span>
+        </div>
+      </div>
+      <div class="col-body" id="stCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 4.2 全件一覧テーブルコンテナ (すべて表示選択時に表示) -->
+  <section class="list-view-container" id="listViewContainer" style="display: none;">
+    <div class="table-card">
+      <div class="table-header-bar">
+        <div class="table-title">
+          <span>📋 リハビリテーション指示書 一覧モニター</span>
+          <span class="badge-count" id="tableCountBadge">0件</span>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th data-sort="orderNumber">伝票番号</th>
+              <th data-sort="orderDate">指示日</th>
+              <th data-sort="patientName">患者氏名</th>
+              <th data-sort="ward">病棟 / 区分</th>
+              <th data-sort="diagnosis">診断名</th>
+              <th>指示療法</th>
+              <th data-sort="doctor">主治医</th>
+              <th data-sort="risk">急変リスク</th>
+              <th data-sort="status">状態</th>
+              <th style="text-align:center;">アクション</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <!-- 動的行挿入 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 実施記録・メモ入力モーダル -->
+  <div class="modal-overlay" id="recordModal" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="recordModalTitle">リハビリ訓練 実施記録</h3>
+        <button type="button" class="modal-close" onclick="closeRecordModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>担当セラピスト氏名:</label>
+          <input type="text" id="recordStaffName" class="form-control" value="<%= user.userName %>">
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label>訓練実施メモ・申し送り事項 (任意):</label>
+          <textarea id="recordNotes" class="form-control" rows="3" placeholder="バイタル変化、訓練内容、特記事項など..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top:15px; display:flex; justify-content:flex-end; gap:8px;">
+        <button type="button" class="btn btn-outline" onclick="closeRecordModal()">キャンセル</button>
+        <button type="button" class="btn btn-primary" id="recordSubmitBtn" style="background:#10b981; border-color:#059669; color:#fff;">✅ 実施済にする</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 操作ログモーダル -->
+  <div class="modal-overlay" id="logModal" style="display: none;">
+    <div class="modal-dialog" style="max-width: 800px; width: 90%;">
+      <div class="modal-header">
+        <h3>📜 リハビリテーション科 操作・監査ログ</h3>
+        <button type="button" class="modal-close" onclick="closeLogModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <pre id="logContent" style="background:#0f172a; color:#f8fafc; padding:12px; border-radius:6px; font-family:monospace; max-height:400px; overflow-y:auto; font-size:0.8rem;"></pre>
+      </div>
+      <div class="modal-footer" style="margin-top:15px; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" onclick="closeLogModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="<%= prefix %>/js/app.js"></script>
+</body>
+</html>
