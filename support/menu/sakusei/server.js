@@ -58,15 +58,15 @@ const BED_MASTER = {
     floor: 2,
     rooms: createWardRooms(2)
   },
-  '3F介護医療院': {
-    name: '3F 介護医療院',
-    wardKey: '3F介護医療院',
+  '3Fしおかぜ': {
+    name: '3F しおかぜ',
+    wardKey: '3Fしおかぜ',
     floor: 3,
     rooms: createWardRooms(3)
   },
-  '4F介護医療院': {
-    name: '4F 介護医療院',
-    wardKey: '4F介護医療院',
+  '4Fうみかぜ': {
+    name: '4F うみかぜ',
+    wardKey: '4Fうみかぜ',
     floor: 4,
     rooms: createWardRooms(4)
   }
@@ -74,8 +74,8 @@ const BED_MASTER = {
 
 function resolveWardMaster(wardKey) {
   if (BED_MASTER[wardKey]) return BED_MASTER[wardKey];
-  if (wardKey === 'うみかぜ病棟' || wardKey === '3F' || (wardKey && wardKey.startsWith('3F'))) return BED_MASTER['3F介護医療院'];
-  if (wardKey === 'しおかぜ病棟' || wardKey === '4F' || (wardKey && wardKey.startsWith('4F'))) return BED_MASTER['4F介護医療院'];
+  if (wardKey === '3Fしおかぜ' || wardKey === 'しおかぜ病棟' || wardKey === '3F' || (wardKey && (wardKey.startsWith('3F') || wardKey.includes('しおかぜ')))) return BED_MASTER['3Fしおかぜ'];
+  if (wardKey === '4Fうみかぜ' || wardKey === 'うみかぜ病棟' || wardKey === '4F' || (wardKey && (wardKey.startsWith('4F') || wardKey.includes('うみかぜ')))) return BED_MASTER['4Fうみかぜ'];
   return BED_MASTER['2F医療病棟'];
 }
 
@@ -100,13 +100,14 @@ mongoose.connect(MONGO_URI)
   })
   .catch(err => console.warn('⚠️ [Portal] MongoDB 接続警告:', err.message));
 
-// 旧病棟名（うみかぜ・しおかぜ）から 3F/4F介護医療院へのマイグレーション
+// 病棟名マイグレーション (3F: しおかぜ, 4F: うみかぜ)
 async function migrateWardNames() {
   try {
-    const r1 = await Patient.updateMany({ ward: 'うみかぜ病棟' }, { ward: '3F介護医療院' });
-    const r2 = await Patient.updateMany({ ward: 'しおかぜ病棟' }, { ward: '4F介護医療院' });
-    if (r1.modifiedCount > 0 || r2.modifiedCount > 0) {
-      console.log(`🏥 病棟移行完了: うみかぜ➔3F介護医療院(${r1.modifiedCount}件), しおかぜ➔4F介護医療院(${r2.modifiedCount}件)`);
+    const r1 = await Patient.updateMany({ ward: { $in: ['3F介護医療院', '3F', 'しおかぜ病棟'] } }, { ward: '3Fしおかぜ' });
+    const r2 = await Patient.updateMany({ ward: { $in: ['4F介護医療院', '4F', 'うみかぜ病棟'] } }, { ward: '4Fうみかぜ' });
+    const r3 = await Patient.updateMany({ ward: { $in: ['2F', '2F医療'] } }, { ward: '2F医療病棟' });
+    if (r1.modifiedCount > 0 || r2.modifiedCount > 0 || r3.modifiedCount > 0) {
+      console.log(`🏥 病棟移行完了: 3F➔3Fしおかぜ(${r1.modifiedCount}件), 4F➔4Fうみかぜ(${r2.modifiedCount}件), 2F➔2F医療病棟(${r3.modifiedCount}件)`);
     }
   } catch (e) {
     console.warn('⚠️ 病棟名マイグレーション警告:', e.message);
@@ -920,11 +921,20 @@ app.get('/patients', requireAuth, async (req, res) => {
       patients,
       bedMaster: BED_MASTER,
       success: req.query.success || null,
-      error: req.query.error || null
+      error: req.query.error || null,
+      action: req.query.action || null,
+      targetWard: req.query.ward || '',
+      targetRoom: req.query.room || ''
     });
   } catch (err) {
     res.status(500).send('患者一覧の取得に失敗しました: ' + err.message);
   }
+});
+
+// 新規患者登録画面ショートカット (ベッドボード等からの直接遷移対応)
+app.get('/patients/new', requireAuth, (req, res) => {
+  const q = new URLSearchParams(req.query).toString();
+  res.redirect('/patients?action=new' + (q ? '&' + q : ''));
 });
 
 // 新規患者登録
@@ -1073,8 +1083,8 @@ app.get('/bed-board', requireAuth, async (req, res) => {
   try {
     const patients = await Patient.find({}).sort({ patientId: 1 });
     let selectedWard = req.query.ward || '2F医療病棟';
-    if (selectedWard === 'うみかぜ病棟') selectedWard = '3F介護医療院';
-    if (selectedWard === 'しおかぜ病棟') selectedWard = '4F介護医療院';
+    if (selectedWard === '3F介護医療院' || selectedWard === 'しおかぜ病棟' || selectedWard === '3F') selectedWard = '3Fしおかぜ';
+    if (selectedWard === '4F介護医療院' || selectedWard === 'うみかぜ病棟' || selectedWard === '4F') selectedWard = '4Fうみかぜ';
 
     // 🪑 病棟ごとの仮置き患者（病棟ごとに独立管理）
     const stagingPatients = patients.filter(p => {
@@ -1082,8 +1092,8 @@ app.get('/bed-board', requireAuth, async (req, res) => {
       if (!isStaging) return false;
       if (p.ward === selectedWard) return true;
       if (selectedWard === '2F医療病棟' && (p.ward === '2F' || (p.ward && p.ward.startsWith('2F')) || p.ward === '一時待機')) return true;
-      if (selectedWard === '3F介護医療院' && (p.ward === '3F' || (p.ward && p.ward.startsWith('3F')) || p.ward === 'うみかぜ病棟')) return true;
-      if (selectedWard === '4F介護医療院' && (p.ward === '4F' || (p.ward && p.ward.startsWith('4F')) || p.ward === 'しおかぜ病棟')) return true;
+      if (selectedWard === '3Fしおかぜ' && (p.ward === '3F' || (p.ward && p.ward.startsWith('3F')) || (p.ward && p.ward.includes('しおかぜ')) || p.ward === '3F介護医療院')) return true;
+      if (selectedWard === '4Fうみかぜ' && (p.ward === '4F' || (p.ward && p.ward.startsWith('4F')) || (p.ward && p.ward.includes('うみかぜ')) || p.ward === '4F介護医療院')) return true;
       return false;
     });
 
@@ -1098,8 +1108,8 @@ app.get('/bed-board', requireAuth, async (req, res) => {
       if (p.room === '仮置き' || p.room === '一時待機') return false;
       if (p.ward === selectedWard) return true;
       if (selectedWard === '2F医療病棟' && (p.ward === '2F' || p.ward.startsWith('2F'))) return true;
-      if (selectedWard === '3F介護医療院' && (p.ward === '3F' || p.ward.startsWith('3F') || p.ward === 'うみかぜ病棟')) return true;
-      if (selectedWard === '4F介護医療院' && (p.ward === '4F' || p.ward.startsWith('4F') || p.ward === 'しおかぜ病棟')) return true;
+      if (selectedWard === '3Fしおかぜ' && (p.ward === '3F' || p.ward.startsWith('3F') || (p.ward && p.ward.includes('しおかぜ')) || p.ward === '3F介護医療院')) return true;
+      if (selectedWard === '4Fうみかぜ' && (p.ward === '4F' || p.ward.startsWith('4F') || (p.ward && p.ward.includes('うみかぜ')) || p.ward === '4F介護医療院')) return true;
       return false;
     });
 

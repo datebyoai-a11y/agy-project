@@ -391,6 +391,12 @@
                  title="<%= p.name %> 様の電子カルテ・記事作成画面を開く">
                 🩺 カルテ
               </a>
+              <a href="/ordering/?patientId=<%= encodeURIComponent(p.patientId) %>" 
+                 onclick='try{localStorage.setItem("koyukai_current_patient", JSON.stringify({patientId:"<%= p.patientId %>", name:"<%= p.name %>", age:"<%= p.age %>", gender:"<%= p.gender %>", birthDate:"<%= p.birthDate || "" %>"}));}catch(_){}'
+                 class="btn btn-primary" style="width: auto; padding: 0.3rem 0.65rem; font-size: 0.75rem; background: #4f46e5; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;" 
+                 title="<%= p.name %> 様の統合オーダリング画面を開く">
+                📝 オーダリング
+              </a>
               <button onclick='selectPatientForRibbon(<%= JSON.stringify(p) %>)' class="btn btn-outline" style="width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem;" title="この患者を共通リボンの対象患者に選択">
                 📌 選択
               </button>
@@ -1027,6 +1033,24 @@
         applyRibbonPatient(patientData);
       }
     }
+
+    // ➕ 新規患者登録画面への直接遷移制御 (?action=new または /patients/new)
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isNewAction = urlParams.get('action') === 'new' || urlParams.get('new') === '1' || <%= (typeof action !== 'undefined' && action === 'new') ? 'true' : 'false' %>;
+      if (isNewAction) {
+        openPatientModal();
+        const wardParam = urlParams.get('ward') || "<%= (typeof targetWard !== 'undefined' && targetWard) ? targetWard : '' %>";
+        const roomParam = urlParams.get('room') || "<%= (typeof targetRoom !== 'undefined' && targetRoom) ? targetRoom : '' %>";
+        if (wardParam) {
+          const wardEl = document.getElementById('ward');
+          if (wardEl) {
+            wardEl.value = wardParam;
+            onWardChange(roomParam);
+          }
+        }
+      }
+    });
   </script>
 </body>
 </html>

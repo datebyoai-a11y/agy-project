@@ -1067,12 +1067,12 @@
         
         <%
           let f = '2';
-          if (selectedWard === '3F介護医療院' || selectedWard === 'うみかぜ病棟' || (selectedWard && selectedWard.startsWith('3F'))) {
+          if (selectedWard === '3Fしおかぜ' || selectedWard === '3F介護医療院' || selectedWard === 'しおかぜ病棟' || (selectedWard && (selectedWard.startsWith('3F') || selectedWard.includes('しおかぜ')))) {
             f = '3';
-          } else if (selectedWard === '4F介護医療院' || selectedWard === 'しおかぜ病棟' || (selectedWard && selectedWard.startsWith('4F'))) {
+          } else if (selectedWard === '4Fうみかぜ' || selectedWard === '4F介護医療院' || selectedWard === 'うみかぜ病棟' || (selectedWard && (selectedWard.startsWith('4F') || selectedWard.includes('うみかぜ')))) {
             f = '4';
           }
-          const wardDisplayName = f === '2' ? '2F 医療病棟' : (f === '3' ? '3F 介護医療院' : '4F 介護医療院');
+          const wardDisplayName = f === '2' ? '2F 医療病棟' : (f === '3' ? '3F しおかぜ' : '4F うみかぜ');
         %>
 
         <!-- =========================================================
@@ -1400,8 +1400,8 @@
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:0.6rem;">
-          <!-- ➕ 新規患者登録ショートカットボタン -->
-          <a href="/patients" target="_blank" class="btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.85rem; font-size:0.85rem; background:#059669; color:white; border-radius:6px; font-weight:800; box-shadow:0 1px 2px rgba(0,0,0,0.1);" title="患者管理画面を開いて新しい患者を登録します">
+          <!-- ➕ 新規患者登録画面への直接遷移ショートカットボタン -->
+          <a href="/patients?action=new" id="btnGoNewPatient" target="_blank" class="btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.85rem; font-size:0.85rem; background:#059669; color:white; border-radius:6px; font-weight:800; box-shadow:0 1px 2px rgba(0,0,0,0.1);" title="新規患者登録画面を直接開きます">
             <span>➕</span>
             <span>新規患者登録</span>
           </a>
@@ -1682,8 +1682,8 @@
           if (p.room === '仮置き' || p.room === '一時待機') return false;
           const wardMatch = (p.ward === currentWard) ||
                             (currentWard === '2F医療病棟' && (p.ward === '2F' || (p.ward && p.ward.startsWith('2F')))) ||
-                            (currentWard === '3F介護医療院' && (p.ward === '3F' || (p.ward && p.ward.startsWith('3F')) || p.ward === 'うみかぜ病棟')) ||
-                            (currentWard === '4F介護医療院' && (p.ward === '4F' || (p.ward && p.ward.startsWith('4F')) || p.ward === 'しおかぜ病棟'));
+                            (currentWard === '3Fしおかぜ' && (p.ward === '3F' || (p.ward && p.ward.startsWith('3F')) || (p.ward && p.ward.includes('しおかぜ')) || p.ward === '3F介護医療院')) ||
+                            (currentWard === '4Fうみかぜ' && (p.ward === '4F' || (p.ward && p.ward.startsWith('4F')) || (p.ward && p.ward.includes('うみかぜ')) || p.ward === '4F介護医療院'));
           if (!wardMatch) return false;
           return p.room === bedId || p.room === `${roomNo}-${bedId}` || p.room === `${roomNo}-${i + 1}`;
         });
@@ -1709,9 +1709,9 @@
 
     function renderMinimapOverview(currentWard, allPatients, stagingList, statsData) {
       let f = '2';
-      if (currentWard === '3F介護医療院' || currentWard === 'うみかぜ病棟' || (currentWard && currentWard.startsWith('3F'))) {
+      if (currentWard === '3Fしおかぜ' || currentWard === '3F介護医療院' || currentWard === 'しおかぜ病棟' || (currentWard && (currentWard.startsWith('3F') || currentWard.includes('しおかぜ')))) {
         f = '3';
-      } else if (currentWard === '4F介護医療院' || currentWard === 'しおかぜ病棟' || (currentWard && currentWard.startsWith('4F'))) {
+      } else if (currentWard === '4Fうみかぜ' || currentWard === '4F介護医療院' || currentWard === 'うみかぜ病棟' || (currentWard && (currentWard.startsWith('4F') || currentWard.includes('うみかぜ')))) {
         f = '4';
       }
 
@@ -1870,7 +1870,7 @@
       const linkRehabili = document.getElementById('pomLinkRehabili');
       const linkCarte = document.getElementById('pomLinkCarte');
 
-      if (linkOrdering) linkOrdering.href = `/sso/launch?app=ordering&patientId=${pId}`;
+      if (linkOrdering) linkOrdering.href = `/ordering/?patientId=${pId}`;
       if (linkRadiology) linkRadiology.href = `/sso/launch?app=radiology&patientId=${pId}`;
       if (linkNaifuku) linkNaifuku.href = `/sso/launch?app=naifuku&patientId=${pId}`;
       if (linkInjection) linkInjection.href = `/sso/launch?app=injection&patientId=${pId}`;
@@ -2191,6 +2191,10 @@
       targetAssignRoom = room;
       document.getElementById('assignWardDisplay').textContent = ward;
       document.getElementById('assignRoomDisplay').textContent = room;
+      const btnNew = document.getElementById('btnGoNewPatient');
+      if (btnNew) {
+        btnNew.href = `/patients?action=new&ward=${encodeURIComponent(ward)}&room=${encodeURIComponent(room)}`;
+      }
       document.getElementById('assignModal').style.display = 'flex';
       filterAssignPatients();
       const input = document.getElementById('assignSearchInput');

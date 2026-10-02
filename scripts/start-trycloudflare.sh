@@ -20,7 +20,7 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM EXIT
 
-# URLを監視してデスクトップのファイルに出力
+# URLを監視してデスクトップのファイルに出力 ＆ メール通知
 (
     for i in {1..30}; do
         URL=$(grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare\.com' "$LOG_FILE" | head -n 1 || true)
@@ -44,6 +44,13 @@ $(date '+%Y年%m月%d日 %H:%M:%S')
 =============================================================
 OUT
             echo "[TryCloudflare] 公開URLが確定しました: $URL"
+
+            # 📧 datebyoai@gmail.com へのメール自動通知を実行
+            if [ -f "/home/a/send_tunnel_url.py" ]; then
+                echo "[TryCloudflare] メール通知処理を実行中..." >> "$LOG_FILE"
+                /usr/bin/python3 /home/a/send_tunnel_url.py "$URL" >> "$LOG_FILE" 2>&1 &
+            fi
+
             break
         fi
         sleep 1

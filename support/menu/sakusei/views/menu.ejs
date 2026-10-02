@@ -136,10 +136,11 @@
         <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
           <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-right: 0.2rem;">病棟絞込:</span>
           <button type="button" class="btn-filter-pill active" onclick="setCarteWardFilter('ALL', this)">すべて</button>
-          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('しおかぜ', this)">しおかぜ病棟</button>
-          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('うみかぜ', this)">うみかぜ病棟</button>
+          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('2F', this)">2F 医療病棟</button>
+          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('3F', this)">3F しおかぜ</button>
+          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('4F', this)">4F うみかぜ</button>
           <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('外来', this)">外来</button>
-          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('一時待機', this)">一時待機</button>
+          <button type="button" class="btn-filter-pill" onclick="setCarteWardFilter('仮置き', this)">仮置き</button>
         </div>
       </div>
 
@@ -340,6 +341,21 @@
 
       // SSO Launch 経由で対象患者のカルテ・記事入力画面へ直接遷移！
       window.location.href = '/sso/launch?app=articles&patientId=' + encodeURIComponent(patientId);
+    }
+
+    // 患者を選択して統合オーダリング画面起動
+    function selectPatientAndLaunchOrdering(patientId, name, age, gender, birthDate) {
+      try {
+        localStorage.setItem('koyukai_current_patient', JSON.stringify({
+          patientId: patientId,
+          name: name,
+          age: age,
+          gender: gender,
+          birthDate: birthDate
+        }));
+      } catch (_) {}
+
+      window.location.href = '/ordering/?patientId=' + encodeURIComponent(patientId);
     }
 
     // 🩻 放射線科オーダーへのSSO Launch API 連携起動 (リボン選択中の患者を引き継ぐ)
