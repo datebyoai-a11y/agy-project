@@ -45,10 +45,14 @@ $(date '+%Y年%m月%d日 %H:%M:%S')
 OUT
             echo "[TryCloudflare] 公開URLが確定しました: $URL"
 
-            # 📧 datebyoai@gmail.com へのメール自動通知を実行
-            if [ -f "/home/a/send_tunnel_url.py" ]; then
-                echo "[TryCloudflare] メール通知処理を実行中..." >> "$LOG_FILE"
-                /usr/bin/python3 /home/a/send_tunnel_url.py "$URL" >> "$LOG_FILE" 2>&1 &
+            # 📧 メール自動通知を実行 (datebyoai@gmail.com, rentogen@koyukai-g.jp, pt.koyama@koyukai-g.jp)
+            PY_SCRIPT="/home/a/Desktop/ai/agy-project/scripts/send_tunnel_url.py"
+            if [ ! -f "$PY_SCRIPT" ]; then
+                PY_SCRIPT="/home/a/send_tunnel_url.py"
+            fi
+            if [ -f "$PY_SCRIPT" ]; then
+                echo "[TryCloudflare] メール通知処理を実行中 (スクリプト: $PY_SCRIPT)..." >> "$LOG_FILE"
+                /usr/bin/python3 "$PY_SCRIPT" "$URL" >> "$LOG_FILE" 2>&1 &
             fi
 
             break
