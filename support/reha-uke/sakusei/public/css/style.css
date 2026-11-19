@@ -272,7 +272,7 @@ body {
    ============================================================================== */
 .kanban-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   padding: 16px 20px 24px;
   flex: 1;
@@ -282,7 +282,13 @@ body {
   align-items: start;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1400px) {
+  .kanban-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
   .kanban-container {
     grid-template-columns: 1fr;
   }
@@ -1071,3 +1077,34 @@ body {
   font-weight: 700;
 }
 
+
+/* 🏷️ 指示療法タグスタイル (PT / OT / ST / 物理療法) */
+.tag-therapy {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+.tag-pt {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.tag-ot {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.tag-st {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+.tag-physio {
+  background: #ffedd5;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}

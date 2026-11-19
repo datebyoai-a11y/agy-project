@@ -15,10 +15,10 @@ const session = require('express-session');
 
 // モデル
 const RadiologyOrder = require('./models/RadiologyOrder');
-const Patient = require('/home/a/Desktop/ai/agy-project/support/menu/sakusei/models/Patient');
-const Article = require('/home/a/Desktop/ai/agy-project/incident-system/models/Article');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
-const User = require('/home/a/Desktop/ai/agy-project/incident-system/models/User');
+const Patient = require('/home/a/src/github.com/datebyoai-a11y/agy-project/support/menu/sakusei/models/Patient');
+const Article = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/Article');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
+const User = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/User');
 
 // 🛡️ PGP 真正性保証モジュール
 const pgpSigner = require('./utils/pgpSigner');
@@ -537,11 +537,12 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// サーバー起動
-app.listen(PORT, '0.0.0.0', () => {
+// サーバー起動（デフォルトはローカル限定 127.0.0.1 / ポータルHTTPSプロキシ経由）
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
   console.log('================================================================');
   console.log(`🩻 交雄会だて病院 放射線科オーダー & 帳票印刷システム`);
-  console.log(`🌐 待機ポート: http://localhost:${PORT}`);
+  console.log(`🌐 待機アドレス: http://${HOST}:${PORT} (ローカル隔離)`);
   console.log(`🖨️ 正・控え 2枚組印刷 / 電子カルテ (Article) 記録連動 Active`);
   console.log('================================================================');
 });

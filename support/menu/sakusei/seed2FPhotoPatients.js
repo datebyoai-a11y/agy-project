@@ -9,7 +9,7 @@
 
 const mongoose = require('mongoose');
 const Patient = require('./models/Patient');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
 
 const PHOTO_PATIENTS_2F = [
   // 215 (個室・男・トイレ付)

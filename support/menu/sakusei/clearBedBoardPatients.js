@@ -6,7 +6,7 @@
 
 const mongoose = require('mongoose');
 const Patient = require('./models/Patient');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017,127.0.0.1:27018/incident_db?replicaSet=rs0';
 

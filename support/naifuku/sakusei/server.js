@@ -513,11 +513,11 @@ app.get('/print/:id', async (req, res) => {
   }
 });
 
-// サーバー起動
-app.listen(PORT, '0.0.0.0', () => {
+// サーバー起動（デフォルトはローカル限定 127.0.0.1 / ポータルHTTPSプロキシ経由）
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
   console.log(`========================================================`);
   console.log(`💊 交雄会だて病院 内服・外用処方オーダーシステム 起動完了`);
-  console.log(`📡 Port: ${PORT}`);
-  console.log(`🔗 Local URL: http://localhost:${PORT}/`);
+  console.log(`📡 Bind: ${HOST}:${PORT} (ローカル隔離)`);
   console.log(`========================================================`);
 });

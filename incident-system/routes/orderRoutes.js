@@ -574,7 +574,13 @@ router.get('/orders/sync-from-receiver', async (req, res) => {
     const receiverUrl = process.env.ORDER_RECEIVER_URL || 'http://localhost:5000';
     console.log(`\n🔄 [カルテ連携] 受信側 (${receiverUrl}) から全オーダーステータス一括同期を開始...`);
 
-    const fetchRes = await fetch(`${receiverUrl}/api/orders`, { signal: AbortSignal.timeout(5000) });
+    let fetchRes;
+    try {
+      fetchRes = await fetch(`${receiverUrl}/api/orders`, { signal: AbortSignal.timeout(5000) });
+    } catch (netErr) {
+      console.log(`ℹ️ [カルテ連携] 受信側 (${receiverUrl}) は現在停止・閉鎖中のため同期をスキップしました`);
+      return res.json({ success: true, skipped: true, message: '受信側モニター停止中のためスキップ' });
+    }
     if (!fetchRes.ok) {
       return res.status(502).json({ success: false, error: '受信側APIに接続できませんでした: HTTP ' + fetchRes.status });
     }
@@ -605,7 +611,7 @@ router.get('/orders/sync-from-receiver', async (req, res) => {
       syncedCount
     });
   } catch (err) {
-    console.error('❌ [カルテ連携] 一括同期エラー:', err);
+    console.error('❌ [カルテ連携] 一括同期エラー:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });

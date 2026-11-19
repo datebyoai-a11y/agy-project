@@ -42,47 +42,124 @@
     }
 
     /* ☀️ 上部ヘッダーバー (アイホン実機風) */
+    /* ☀️ 上部ヘッダーバー (リボンと同様の1行の太さ: 38px) */
     .aiphone-topbar {
       background: #e2e5dc;
       border: 1.5px solid #b8bcb1;
-      border-radius: 8px 8px 0 0;
-      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      height: 38px;
+      min-height: 38px;
+      max-height: 38px;
+      padding: 0 0.65rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       box-shadow: inset 0 1px 0 #ffffff, 0 1px 3px rgba(0,0,0,0.1);
       margin-bottom: 0.35rem;
+      box-sizing: border-box;
+      gap: 0.5rem;
+      white-space: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
 
     .topbar-left {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-    }
-
-    .shift-badge {
-      background: #fef08a;
-      border: 1.5px solid #eab308;
-      color: #854d0e;
-      padding: 0.25rem 0.75rem;
-      border-radius: 6px;
-      font-weight: 800;
-      font-size: 0.95rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      gap: 0.45rem;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .ward-dropdown-select {
       background: white;
       border: 1.5px solid #94a3b8;
-      border-radius: 6px;
-      padding: 0.25rem 0.65rem;
+      border-radius: 5px;
+      height: 28px;
+      padding: 0 0.55rem;
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       color: #1e293b;
       cursor: pointer;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .ward-dropdown-select:hover, .ward-dropdown-select:focus {
+      border-color: #0284c7;
+    }
+
+    .floor-indicator-badge {
+      font-size: 1.15rem;
+      font-weight: 900;
+      padding: 0.2rem 0.75rem;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .floor-badge-2 {
+      background: #16a34a;
+      color: white;
+      border: 1.5px solid #15803d;
+    }
+    .floor-badge-3 {
+      background: #ea580c;
+      color: white;
+      border: 1.5px solid #c2410c;
+    }
+    .floor-badge-4 {
+      background: #db2777;
+      color: white;
+      border: 1.5px solid #be185d;
+    }
+
+    /* 🚪 3F・4F 5連続個室横並びレイアウト (x11, x10, x08, x07, x06) */
+    .private-rooms-5col {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.25rem;
+    }
+    .private-rooms-5col .map-room {
+      min-width: 0;
+    }
+    .private-rooms-5col .room-header-bar {
+      padding: 0.15rem 0.25rem;
+      font-size: 0.72rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+    }
+    .private-rooms-5col .room-num-badge {
+      font-size: 0.78rem;
+    }
+
+    /* 📊 看護統計・呼出履歴タブ切替ボタン */
+    .stats-panel-tabs {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+    }
+    .stats-panel-tab-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.18rem 0.55rem;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .stats-panel-tab-btn:hover {
+      background: #e2e8f0;
+    }
+    .stats-panel-tab-btn.is-active {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: white;
+      box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25);
     }
 
     .topbar-center {
@@ -101,17 +178,20 @@
     .nav-minimap-trigger {
       background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
       border: 1.5px solid #0284c7;
-      padding: 0.25rem 0.85rem;
-      border-radius: 6px;
+      height: 28px;
+      padding: 0 0.65rem;
+      border-radius: 5px;
       font-weight: 800;
-      font-size: 0.88rem;
+      font-size: 0.8rem;
       color: #0369a1;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.35rem;
       box-shadow: 0 1px 3px rgba(2, 132, 199, 0.15);
       transition: all 0.15s ease;
+      box-sizing: border-box;
+      white-space: nowrap;
     }
     .nav-minimap-trigger:hover,
     .nav-minimap-container.is-active .nav-minimap-trigger {
@@ -397,28 +477,177 @@
     .topbar-right {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.35rem;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .topbar-btn {
       background: white;
       border: 1.5px solid #b8bcb1;
-      padding: 0.3rem 0.75rem;
-      border-radius: 6px;
+      height: 28px;
+      padding: 0 0.55rem;
+      border-radius: 5px;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       color: #334155;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.25rem;
       transition: all 0.15s ease;
       text-decoration: none;
+      box-sizing: border-box;
+      white-space: nowrap;
     }
     .topbar-btn:hover {
       background: #f1f5f9;
       border-color: #0284c7;
       color: #0284c7;
+    }
+
+    /* 🏠 全体ナビボタン */
+    .topbar-btn-portal {
+      background: #ffffff !important;
+      border: 1.5px solid #475569 !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .topbar-btn-portal:hover {
+      background: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+    }
+
+    /* ⚙️ 業務システムドロップダウンメニュー */
+    .biz-nav-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .biz-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      width: 325px;
+      background: #ffffff;
+      border: 1.5px solid #94a3b8;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      z-index: 100010;
+      padding: 0.4rem 0;
+      animation: bizDropdownFade 0.15s ease-out;
+    }
+    @keyframes bizDropdownFade {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .biz-dropdown-menu.show {
+      display: block;
+    }
+    .biz-dropdown-header {
+      padding: 0.35rem 0.85rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      letter-spacing: 0.03em;
+    }
+    .biz-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.45rem 0.85rem;
+      text-decoration: none;
+      color: #1e293b;
+      transition: all 0.12s ease;
+      border-left: 3px solid transparent;
+    }
+    .biz-dropdown-item:hover {
+      background: #f1f5f9;
+      border-left-color: #0284c7;
+    }
+    .biz-dropdown-item.featured {
+      background: #f5f3ff;
+      border-left-color: #6366f1;
+    }
+    .biz-dropdown-item.featured:hover {
+      background: #ede9fe;
+    }
+    .biz-item-icon {
+      font-size: 1.25rem;
+      width: 26px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .biz-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .biz-item-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .biz-item-desc {
+      font-size: 0.68rem;
+      color: #64748b;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .biz-badge {
+      font-size: 0.62rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-weight: 800;
+      background: #4f46e5;
+      color: white;
+    }
+    .biz-dropdown-divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 0.3rem 0;
+    }
+
+    /* 📝 オーダリング総合ポータルへの直接ボタン */
+    .topbar-btn-ordering {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+      color: #ffffff !important;
+      border: 1px solid #3730a3 !important;
+      box-shadow: 0 1px 3px rgba(79, 70, 229, 0.35);
+      font-weight: 800 !important;
+    }
+    .topbar-btn-ordering:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.45);
+      transform: translateY(-1px);
+      color: #ffffff !important;
+    }
+    .ordering-badge-tag {
+      font-size: 0.65rem;
+      background: rgba(255, 255, 255, 0.25);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    /* リアルタイム時計 */
+    .topbar-clock {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #334155;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 0.22rem 0.55rem;
+      border-radius: 6px;
+      white-space: nowrap;
     }
 
     /* 🖥️ メインコンテンツレイアウト (フロアマップ + 右端縦タブ) */
@@ -956,11 +1185,22 @@
   </style>
 </head>
 <body>
-
-  <!-- 全画面共通 最上部1行リボン -->
-  <%- include('partials/common-ribbon', { currentScreenTitle: '病棟フロアマップ・ベッドボード' }) %>
+  <!-- 1. 全システム共通 最上部1行リボンヘッダー -->
+  <%- include('partials/common-ribbon', { 
+        user: (typeof user !== 'undefined' ? user : null), 
+        currentScreenTitle: '🗺️ 病棟フロアマップ・ベッドボード' 
+      }) %>
 
   <div class="aiphone-container">
+    <%
+      let f = '2';
+      if (selectedWard === '3Fしおかぜ' || selectedWard === '3F介護医療院' || selectedWard === 'しおかぜ病棟' || (selectedWard && (selectedWard.startsWith('3F') || selectedWard.includes('しおかぜ')))) {
+        f = '3';
+      } else if (selectedWard === '4Fうみかぜ' || selectedWard === '4F介護医療院' || selectedWard === 'うみかぜ病棟' || (selectedWard && (selectedWard.startsWith('4F') || selectedWard.includes('うみかぜ')))) {
+        f = '4';
+      }
+      const wardDisplayName = f === '2' ? '2F 医療病棟' : (f === '3' ? '3F しおかぜ' : '4F うみかぜ');
+    %>
 
     <!-- 🔔 成功・エラー通知メッセージ -->
     <% if (typeof success !== 'undefined' && success) { %>
@@ -982,19 +1222,117 @@
       </div>
     <% } %>
 
-    <!-- ☀️ 1. アイホン実機風 上部ヘッダーバー -->
+    <!-- ☀️ 1. アイホン実機風 上部ヘッダーバー (スリム1行) -->
     <div class="aiphone-topbar">
       <div class="topbar-left">
-        <span class="shift-badge">☀️ 日勤</span>
-        
-        <!-- 病棟選択 -->
-        <select class="ward-dropdown-select" onchange="location.href='/bed-board?ward=' + encodeURIComponent(this.value)">
-          <% Object.keys(bedMaster).forEach(wKey => { %>
-            <option value="<%= wKey %>" <%= selectedWard === wKey ? 'selected' : '' %>>
-              <%= bedMaster[wKey].name %>
-            </option>
-          <% }); %>
-        </select>
+        <!-- 🏠 全体ナビ (医療統合ポータルトップへ) -->
+        <a href="/menu" class="topbar-btn topbar-btn-portal" title="医療統合ポータル 全体トップメニューへ">
+          <span>🏠</span>
+          <span>全体ナビ</span>
+        </a>
+
+        <!-- 🏥 病棟選択ドロップダウン (ボタンは削除しドロップダウンのみ残す) -->
+        <div style="display:flex; align-items:center; gap:0.25rem;">
+          <span style="font-size:0.78rem; font-weight:800; color:#334155;">🏥 病棟:</span>
+          <select class="ward-dropdown-select" onchange="location.href='/bed-board?ward=' + encodeURIComponent(this.value)">
+            <% Object.keys(bedMaster).forEach(wKey => { %>
+              <option value="<%= wKey %>" <%= selectedWard === wKey ? 'selected' : '' %>>
+                <%= bedMaster[wKey].name %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- ⚙️ 業務システムメニュー (ドロップダウン) -->
+        <div class="biz-nav-dropdown" id="bizNavDropdown">
+          <button type="button" class="topbar-btn" onclick="toggleBizDropdown(event)" title="各部門の業務システムメニューを開く">
+            <span>⚙️</span>
+            <span>業務システムメニュー</span>
+            <span style="font-size:0.65rem; margin-left:1px;">▾</span>
+          </button>
+          <div class="biz-dropdown-menu" id="bizDropdownMenu">
+            <div class="biz-dropdown-header">🏥 交雄会だて病院 業務システム</div>
+            <a href="/ordering/" target="_blank" class="biz-dropdown-item featured">
+              <span class="biz-item-icon">📝</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">オーダリング総合ポータル <span class="biz-badge">総合</span></div>
+                <div class="biz-item-desc">Port 4000 / 放射線・注射・処方・リハビリ指示発行</div>
+              </div>
+            </a>
+            <div class="biz-dropdown-divider"></div>
+            <a href="/incident/" class="biz-dropdown-item">
+              <span class="biz-item-icon">🩺</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">電子カルテ ＆ インシデント管理</div>
+                <div class="biz-item-desc">Port 3000 / SOAP記録・リスクレポート</div>
+              </div>
+            </a>
+            <a href="/radiology/" target="_blank" class="biz-dropdown-item">
+              <span class="biz-item-icon">🩻</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">放射線科オーダー ＆ 帳票印刷</div>
+                <div class="biz-item-desc">Port 8080 / CT・X線検査指示・A4正控え印刷</div>
+              </div>
+            </a>
+            <a href="/radi-uke/" target="_blank" class="biz-dropdown-item">
+              <span class="biz-item-icon">📋</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">放射線科 指示受け・実施モニター</div>
+                <div class="biz-item-desc">Port 8081 / 実施打刻・撮影完了ステータス連動</div>
+              </div>
+            </a>
+            <a href="/injection/" target="_blank" class="biz-dropdown-item">
+              <span class="biz-item-icon">💉</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">注射・点滴オーダー ＆ ラベル印刷</div>
+                <div class="biz-item-desc">Port 8082 / 原本様式指示箋・ボトルラベル印刷</div>
+              </div>
+            </a>
+            <a href="/rehabili/" target="_blank" class="biz-dropdown-item">
+              <span class="biz-item-icon">🤸</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">リハビリテーション指示オーダー</div>
+                <div class="biz-item-desc">Port 8083 / PT・OT・ST指示・原本準拠A4印刷</div>
+              </div>
+            </a>
+            <a href="/reha-uke/" target="_blank" class="biz-dropdown-item">
+              <span class="biz-item-icon">🤸</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">リハビリ科 指示受け・実施モニター</div>
+                <div class="biz-item-desc">Port 8085 / 実施打刻・実施計画書連動</div>
+              </div>
+            </a>
+            <a href="/naifuku/" target="_blank" class="biz-dropdown-item">
+              <span class="biz-item-icon">💊</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">内服・外用処方オーダー</div>
+                <div class="biz-item-desc">Port 8084 / Rp定期臨時処方・処方箋印刷</div>
+              </div>
+            </a>
+            <div class="biz-dropdown-divider"></div>
+            <a href="/patients" class="biz-dropdown-item">
+              <span class="biz-item-icon">👥</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">患者マスター管理台帳</div>
+                <div class="biz-item-desc">患者登録・基本情報・病棟所属管理</div>
+              </div>
+            </a>
+            <a href="/menu" class="biz-dropdown-item">
+              <span class="biz-item-icon">🏠</span>
+              <div class="biz-item-info">
+                <div class="biz-item-title">全体ポータルメニューに戻る</div>
+                <div class="biz-item-desc">医療統合ポータル 全機能一覧画面</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- 📝 オーダリング総合ポータルに遷移するボタン -->
+        <a href="/ordering/" target="_blank" class="topbar-btn topbar-btn-ordering" title="統合オーダリング総合ポータル (Port 4000) を別ウィンドウで開く">
+          <span>📝</span>
+          <span>オーダリング総合ポータル</span>
+          <span class="ordering-badge-tag">Port 4000 ↗</span>
+        </a>
       </div>
 
       <% const stList = typeof stagingPatients !== 'undefined' ? stagingPatients : []; %>
@@ -1016,7 +1354,7 @@
                 <span><%= selectedWard %> 全体配置ミニマップ</span>
               </div>
               <div class="minimap-header-stats">
-                <span>総病床: <strong><%= stats.totalBeds || stats.bedCount || 62 %></strong>床</span>
+                <span>総病床: <strong><%= stats.totalBeds || stats.bedCount || (f === '2' ? 62 : 60) %></strong>床</span>
                 <span>在院: <strong style="color:#60a5fa;"><%= stats.zaiinCount %></strong>名</span>
                 <span>空き: <strong style="color:#4ade80;"><%= stats.emptyCount %></strong>床</span>
                 <span>稼働率: <strong><%= (stats.totalBeds || stats.bedCount) ? (((stats.zaiinCount || 0) / (stats.totalBeds || stats.bedCount || 1)) * 100).toFixed(1) : '0.0' %>%</strong></span>
@@ -1045,6 +1383,12 @@
       </div>
 
       <div class="topbar-right">
+        <!-- 🕒 リアルタイム時計 (最上部リボンに表示されているためスリム化) -->
+        <span id="realtimeClockDisplay" class="topbar-clock" style="display:none;"></span>
+
+        <!-- フロアバッジ (実機写真 2F / 3F / 4F) -->
+        <span class="floor-indicator-badge floor-badge-<%= f %>"><%= f %>F</span>
+
         <!-- 一時待機・仮置き患者表示 -->
         <button type="button" class="topbar-btn" onclick="scrollToStaging()" style="<%= stList.length > 0 ? 'background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;' : '' %>" title="移動待機・仮置きスロットへ移動">
           <span><%= stList.length > 0 ? '🪑' : '🪑' %></span>
@@ -1065,61 +1409,58 @@
       <!-- フロアマップキャンバス -->
       <div class="floor-canvas-container" id="floorCanvasContainer">
         
-        <%
-          let f = '2';
-          if (selectedWard === '3Fしおかぜ' || selectedWard === '3F介護医療院' || selectedWard === 'しおかぜ病棟' || (selectedWard && (selectedWard.startsWith('3F') || selectedWard.includes('しおかぜ')))) {
-            f = '3';
-          } else if (selectedWard === '4Fうみかぜ' || selectedWard === '4F介護医療院' || selectedWard === 'うみかぜ病棟' || (selectedWard && (selectedWard.startsWith('4F') || selectedWard.includes('うみかぜ')))) {
-            f = '4';
-          }
-          const wardDisplayName = f === '2' ? '2F 医療病棟' : (f === '3' ? '3F しおかぜ' : '4F うみかぜ');
-        %>
-
         <!-- =========================================================
-             🗺️ <%= wardDisplayName %> 実機完全再現フロアマップ（2F・3F・4F 共通高密度グリッド構造・全20部屋/62床）
+             🗺️ <%= wardDisplayName %> 実機完全再現フロアマップ（全<%= f === '2' ? '20部屋/62床' : '21部屋/60床' %>）
              ========================================================= -->
         <div class="floor-map-grid" id="floorMapGrid">
 
-          <!-- ⬅️ 左翼病室群 & 看護統計1 (<%= f %>15, <%= f %>13, <%= f %>12, <%= f %>11, <%= f %>08, <%= f %>07, <%= f %>06, <%= f %>05, <%= f %>03, <%= f %>02, <%= f %>01, 看護統計1) -->
+          <!-- ⬅️ 左翼病室群 & 看護統計1/呼出履歴 -->
           <div class="wing-left">
-            
-            <!-- <%= f %>15 (個室・トイレ付) -->
-            <%- renderRoomBox(`${f}15`, '個室 (トイレ付)', [`${f}15-1`], patients, selectedWard, true, 'left') %>
+            <% if (f === '2') { %>
+              <!-- 2F医療病棟: 215, 213, 212, 211, 208, 207, 206, 205, 203, 202, 201 -->
+              <%- renderRoomBox(`215`, '個室 (トイレ付)', [`215-1`], patients, selectedWard, true, 'left') %>
+              <%- renderRoomBox(`213`, '4人部屋', [`213-1`, `213-2`, `213-3`, `213-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`212`, '4人部屋', [`212-1`, `212-2`, `212-3`, `212-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`211`, '4人部屋', [`211-1`, `211-2`, `211-3`, `211-4`], patients, selectedWard, false, 'left') %>
 
-            <!-- <%= f %>13 (4人部屋) -->
-            <%- renderRoomBox(`${f}13`, '4人部屋', [`${f}13-1`, `${f}13-2`, `${f}13-3`, `${f}13-4`], patients, selectedWard, false, 'left') %>
+              <!-- 個室3連 (208, 207, 206) -->
+              <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.25rem;">
+                <%- renderRoomBox(`208`, '個室', [`208-1`], patients, selectedWard, true, 'left') %>
+                <%- renderRoomBox(`207`, '個室(空床)', [`207-1`], patients, selectedWard, true, 'left') %>
+                <%- renderRoomBox(`206`, '個室', [`206-1`], patients, selectedWard, true, 'left') %>
+              </div>
 
-            <!-- <%= f %>12 (4人部屋) -->
-            <%- renderRoomBox(`${f}12`, '4人部屋', [`${f}12-1`, `${f}12-2`, `${f}12-3`, `${f}12-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`205`, '4人部屋', [`205-1`, `205-2`, `205-3`, `205-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`203`, '4人部屋', [`203-1`, `203-2`, `203-3`, `203-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`202`, '4人部屋', [`202-1`, `202-2`, `202-3`, `202-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`201`, '4人部屋', [`201-1`, `201-2`, `201-3`, `201-4`], patients, selectedWard, false, 'left') %>
+            <% } else { %>
+              <!-- 3Fしおかぜ / 4Fうみかぜ 実機写真完全準拠: x15, x13, x12, (x11, x10, x08, x07, x06), x05, x03, x02, x01 -->
+              <%- renderRoomBox(`${f}15`, '個室 (トイレ付)', [`${f}15-1`], patients, selectedWard, true, 'left') %>
+              <%- renderRoomBox(`${f}13`, '4人部屋', [`${f}13-1`, `${f}13-2`, `${f}13-3`, `${f}13-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`${f}12`, '4人部屋', [`${f}12-1`, `${f}12-2`, `${f}12-3`, `${f}12-4`], patients, selectedWard, false, 'left') %>
 
-            <!-- <%= f %>11 (4人部屋) -->
-            <%- renderRoomBox(`${f}11`, '4人部屋', [`${f}11-1`, `${f}11-2`, `${f}11-3`, `${f}11-4`], patients, selectedWard, false, 'left') %>
+              <!-- 🚪 5連個室横並び配置 (実機写真完全準拠: <%= f %>11, <%= f %>10, <%= f %>08, <%= f %>07, <%= f %>06) -->
+              <div class="private-rooms-5col">
+                <%- renderRoomBox(`${f}11`, '個室', [`${f}11-1`], patients, selectedWard, true, 'left') %>
+                <%- renderRoomBox(`${f}10`, '個室', [`${f}10-1`], patients, selectedWard, true, 'left') %>
+                <%- renderRoomBox(`${f}08`, '個室', [`${f}08-1`], patients, selectedWard, true, 'left') %>
+                <%- renderRoomBox(`${f}07`, '個室', [`${f}07-1`], patients, selectedWard, true, 'left') %>
+                <%- renderRoomBox(`${f}06`, '個室', [`${f}06-1`], patients, selectedWard, true, 'left') %>
+              </div>
 
-            <!-- 個室3連 (<%= f %>08, <%= f %>07, <%= f %>06) -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.25rem;">
-              <%- renderRoomBox(`${f}08`, '個室', [`${f}08-1`], patients, selectedWard, true, 'left') %>
-              <%- renderRoomBox(`${f}07`, '個室(空床)', [`${f}07-1`], patients, selectedWard, true, 'left') %>
-              <%- renderRoomBox(`${f}06`, '個室', [`${f}06-1`], patients, selectedWard, true, 'left') %>
-            </div>
+              <%- renderRoomBox(`${f}05`, '4人部屋', [`${f}05-1`, `${f}05-2`, `${f}05-3`, `${f}05-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`${f}03`, '4人部屋', [`${f}03-1`, `${f}03-2`, `${f}03-3`, `${f}03-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`${f}02`, '4人部屋', [`${f}02-1`, `${f}02-2`, `${f}02-3`, `${f}02-4`], patients, selectedWard, false, 'left') %>
+              <%- renderRoomBox(`${f}01`, '4人部屋', [`${f}01-1`, `${f}01-2`, `${f}01-3`, `${f}01-4`], patients, selectedWard, false, 'left') %>
+            <% } %>
 
-            <!-- <%= f %>05 (4人部屋) -->
-            <%- renderRoomBox(`${f}05`, '4人部屋', [`${f}05-1`, `${f}05-2`, `${f}05-3`, `${f}05-4`], patients, selectedWard, false, 'left') %>
-
-            <!-- <%= f %>03 (4人部屋) -->
-            <%- renderRoomBox(`${f}03`, '4人部屋', [`${f}03-1`, `${f}03-2`, `${f}03-3`, `${f}03-4`], patients, selectedWard, false, 'left') %>
-
-            <!-- <%= f %>02 (4人部屋) -->
-            <%- renderRoomBox(`${f}02`, '4人部屋', [`${f}02-1`, `${f}02-2`, `${f}02-3`, `${f}02-4`], patients, selectedWard, false, 'left') %>
-
-            <!-- <%= f %>01 (4人部屋) -->
-            <%- renderRoomBox(`${f}01`, '4人部屋', [`${f}01-1`, `${f}01-2`, `${f}01-3`, `${f}01-4`], patients, selectedWard, false, 'left') %>
-
-            <!-- 📊 看護統計 1 (<%= f %>01号室の真下に配置) -->
-            <%- renderStatsPanel1(stats) %>
+            <!-- 📊 看護統計 1 ＆ 🔔 呼出履歴 パネル (<%= f %>01号室の真下に配置) -->
+            <%- renderStatsAndCallHistoryPanel(stats, f) %>
 
           </div>
 
-          <!-- 🏢 中央部 (<%= f %>16, <%= f %>17病室、最小限スタッフステーション、仮置きスロット) -->
+          <!-- 🏢 中央部 (<%= f %>16, <%= f %>17病室、諸室、スタッフステーション、仮置きスロット) -->
           <div class="wing-center">
             
             <!-- 中央上部病室 (<%= f %>16, <%= f %>17) -->
@@ -1128,16 +1469,46 @@
               <%- renderRoomBox(`${f}17`, '個室 (トイレ付)', [`${f}17-1`], patients, selectedWard, true, 'center') %>
             </div>
 
-            <!-- 最小限スタッフステーション -->
-            <div class="staff-station-minimal">
+            <!-- 中央コア施設 (EV・処置室・汚物室・WC等) -->
+            <div style="background:#e8ece3; border:1px solid #cbd5e1; border-radius:6px; padding:0.35rem 0.5rem; display:grid; grid-template-columns: repeat(4, 1fr); gap:0.25rem;">
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">🛗 EV (2基)</div>
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">🚻 WC・5</div>
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">🧻 汚物室</div>
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">🩹 処置室</div>
+            </div>
+
+            <!-- スタッフステーション (病棟カラー連動 - 実機写真完全準拠) -->
+            <%
+              let sBorder = '#16a34a';
+              let sBg = '#ecfdf5';
+              let sColor = '#15803d';
+              if (f === '3') {
+                sBorder = '#ea580c';
+                sBg = '#fff7ed';
+                sColor = '#c2410c';
+              } else if (f === '4') {
+                sBorder = '#db2777';
+                sBg = '#fdf2f8';
+                sColor = '#be185d';
+              }
+            %>
+            <div class="staff-station-minimal" style="border: 2px solid <%= sBorder %>; background: <%= sBg %>; color: <%= sColor %>;">
               <div style="display:flex; align-items:center; gap:0.4rem;">
                 <span>👩‍⚕️</span>
-                <span><%= f %>F スタッフステーション</span>
+                <span style="font-weight:900;"><%= f %>F スタッフステーション</span>
               </div>
               <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="font-size:0.75rem; color:#15803d; font-weight:700;">🟢 呼出待機中</span>
-                <button type="button" onclick="location.href='/sso/launch?app=articles'" class="topbar-btn" style="padding:0.15rem 0.45rem; font-size:0.72rem; background:#16a34a; color:white; border-color:#16a34a;" title="カルテ記事一覧">カルテ呼出</button>
+                <span style="font-size:0.75rem; color:<%= sColor %>; font-weight:700;">🟢 呼出待機中</span>
+                <button type="button" onclick="location.href='/sso/launch?app=articles'" class="topbar-btn" style="padding:0.15rem 0.45rem; font-size:0.72rem; background:<%= sBorder %>; color:white; border-color:<%= sBorder %>;" title="カルテ記事一覧">カルテ呼出</button>
               </div>
+            </div>
+
+            <!-- 下部コア施設 (休憩室・リネン・シャワー・特浴) -->
+            <div style="background:#e8ece3; border:1px solid #cbd5e1; border-radius:6px; padding:0.35rem 0.5rem; display:grid; grid-template-columns: repeat(4, 1fr); gap:0.25rem;">
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">☕ 休憩室</div>
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">👔 リネン</div>
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">🚿 シャワー</div>
+              <div class="facility-chip" style="padding:0.25rem; font-size:0.72rem;">🛁 特別浴室</div>
             </div>
 
             <!-- 🪑 移動待機・仮置きスロット (病棟ごとに独立、5人分) -->
@@ -1195,6 +1566,25 @@
 
       </div>
 
+    </div>
+
+    <!-- 📟 3. 最下部 アイホン実機ステータスバー (実機写真完全再現) -->
+    <div class="aiphone-bottombar">
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span style="font-weight:bold; font-size:0.85rem; color:#facc15;">☀️ 日勤</span>
+        <span style="font-size:0.8rem; color:#cbd5e1; border-left:1px solid #64748b; padding-left:0.6rem;">
+          ベッド待ち 入院患者 <strong style="color:<%= f === '3' ? '#f59e0b' : '#38bdf8' %>;"><%= f === '3' ? '1' : '0' %></strong>
+        </span>
+      </div>
+      <div class="status-mobility-summary">
+        <span><span style="color:#ea580c;">●</span> 担送 <%= stats.tansouCount %>人</span>
+        <span><span style="color:#16a34a;">●</span> 護送 <%= stats.gosouCount %>人</span>
+        <span><span style="color:#2563eb;">●</span> 独歩 <%= stats.doppoCount %>人</span>
+        <span style="color:#94a3b8;">区分なし <%= stats.kubunNashiCount %>人</span>
+      </div>
+      <div class="aiphone-logo">
+        <span style="font-size:1.15rem; color:#38bdf8; font-weight:900; letter-spacing:0.06em;">アイホン</span>
+      </div>
     </div>
 
   </div>
@@ -1504,31 +1894,92 @@
        ========================================================= -->
   <%
     function renderStatsPanel1(statsData) {
-      let sHtml = '<div class="stats-panel-1">';
-      sHtml += '<div class="stats-panel-header">看護統計 1</div>';
-      sHtml += '<div class="stats-grid-box">';
+      return renderStatsAndCallHistoryPanel(statsData, '2');
+    }
+
+    function renderStatsAndCallHistoryPanel(statsData, currentFloor) {
+      const showCallFirst = (currentFloor === '3');
+      let sHtml = '<div class="stats-panel-1" id="statsAndCallPanel">';
+      sHtml += '<div class="stats-panel-header" style="display:flex; justify-content:space-between; align-items:center; padding:0.15rem 0.25rem 0.35rem 0.25rem;">';
+      sHtml += '  <div class="stats-panel-tabs">';
+      sHtml += '    <button type="button" id="tabBtnStat" class="stats-panel-tab-btn ' + (!showCallFirst ? 'is-active' : '') + '" onclick="switchStatsTab(\'stat\')">📊 看護統計 1</button>';
+      sHtml += '    <button type="button" id="tabBtnCall" class="stats-panel-tab-btn ' + (showCallFirst ? 'is-active' : '') + '" onclick="switchStatsTab(\'call\')">🔔 呼出履歴</button>';
+      sHtml += '  </div>';
+      sHtml += '  <span style="font-size:0.75rem; color:#64748b; font-weight:800;">' + (currentFloor === '2' ? '2F 医療' : (currentFloor === '3' ? '3F しおかぜ' : '4F うみかぜ')) + '</span>';
+      sHtml += '</div>';
+
+      // 1. 看護統計 1 表示
+      sHtml += '<div id="statPanelBox" style="' + (showCallFirst ? 'display:none;' : 'display:block;') + '">';
+      sHtml += '  <div class="stats-grid-box">';
       
       // 左列
-      sHtml += '<div class="stats-col">';
-      sHtml += '<div class="stats-row"><span class="stats-lbl">入院患者数</span><span class="stats-num">' + statsData.occupiedCount + '</span></div>';
-      sHtml += '<div class="stats-sub-row"><span>男性</span><strong style="color:#0f172a;">' + statsData.maleCount + '</strong></div>';
-      sHtml += '<div class="stats-sub-row" style="border-bottom:1.5px solid #94a3b8;"><span>女性</span><strong style="color:#0f172a;">' + statsData.femaleCount + '</strong></div>';
-      sHtml += '<div class="stats-row"><span class="stats-lbl">空きベッド数</span><span class="stats-num">' + statsData.emptyCount + '</span></div>';
-      sHtml += '<div class="stats-sub-row"><span>男性</span><strong style="color:#0f172a;">' + statsData.emptyMaleCount + '</strong></div>';
-      sHtml += '<div class="stats-sub-row"><span>女性</span><strong style="color:#0f172a;">' + statsData.emptyFemaleCount + '</strong></div>';
-      sHtml += '</div>';
+      sHtml += '    <div class="stats-col">';
+      sHtml += '      <div class="stats-row"><span class="stats-lbl">入院患者数</span><span class="stats-num">' + statsData.occupiedCount + '</span></div>';
+      sHtml += '      <div class="stats-sub-row"><span>男性</span><strong style="color:#0f172a;">' + statsData.maleCount + '</strong></div>';
+      sHtml += '      <div class="stats-sub-row" style="border-bottom:1.5px solid #94a3b8;"><span>女性</span><strong style="color:#0f172a;">' + statsData.femaleCount + '</strong></div>';
+      sHtml += '      <div class="stats-row"><span class="stats-lbl">空きベッド数</span><span class="stats-num">' + statsData.emptyCount + '</span></div>';
+      sHtml += '      <div class="stats-sub-row"><span>男性</span><strong style="color:#0f172a;">' + statsData.emptyMaleCount + '</strong></div>';
+      sHtml += '      <div class="stats-sub-row"><span>女性</span><strong style="color:#0f172a;">' + statsData.emptyFemaleCount + '</strong></div>';
+      sHtml += '    </div>';
 
       // 右列
-      sHtml += '<div class="stats-col">';
-      sHtml += '<div class="stats-row"><span class="stats-lbl" style="color:#ea580c;">担送</span><span class="stats-num" style="color:#ea580c;">' + statsData.tansouCount + '</span></div>';
-      sHtml += '<div class="stats-row"><span class="stats-lbl" style="color:#16a34a;">護送</span><span class="stats-num" style="color:#16a34a;">' + statsData.gosouCount + '</span></div>';
-      sHtml += '<div class="stats-row" style="border-bottom:1.5px solid #94a3b8;"><span class="stats-lbl" style="color:#2563eb;">独歩</span><span class="stats-num" style="color:#2563eb;">' + statsData.doppoCount + '</span></div>';
-      sHtml += '<div class="stats-row"><span class="stats-lbl">外出</span><span class="stats-num">' + statsData.gaishutsuCount + '</span></div>';
-      sHtml += '<div class="stats-row"><span class="stats-lbl">外泊</span><span class="stats-num">' + statsData.gaihakuCount + '</span></div>';
-      sHtml += '<div class="stats-row" style="background:#f0f9ff;"><span class="stats-lbl" style="font-weight:900; color:#0369a1;">在院</span><span class="stats-num" style="color:#0369a1; font-size:1.05rem;">' + statsData.zaiinCount + '</span></div>';
+      sHtml += '    <div class="stats-col">';
+      sHtml += '      <div class="stats-row"><span class="stats-lbl" style="color:#ea580c;">担送</span><span class="stats-num" style="color:#ea580c;">' + statsData.tansouCount + '</span></div>';
+      sHtml += '      <div class="stats-row"><span class="stats-lbl" style="color:#16a34a;">護送</span><span class="stats-num" style="color:#16a34a;">' + statsData.gosouCount + '</span></div>';
+      sHtml += '      <div class="stats-row" style="border-bottom:1.5px solid #94a3b8;"><span class="stats-lbl" style="color:#2563eb;">独歩</span><span class="stats-num" style="color:#2563eb;">' + statsData.doppoCount + '</span></div>';
+      sHtml += '      <div class="stats-row"><span class="stats-lbl">外出</span><span class="stats-num">' + statsData.gaishutsuCount + '</span></div>';
+      sHtml += '      <div class="stats-row"><span class="stats-lbl">外泊</span><span class="stats-num">' + statsData.gaihakuCount + '</span></div>';
+      sHtml += '      <div class="stats-row" style="background:#f0f9ff;"><span class="stats-lbl" style="font-weight:900; color:#0369a1;">在院</span><span class="stats-num" style="color:#0369a1; font-size:1.05rem;">' + statsData.zaiinCount + '</span></div>';
+      sHtml += '    </div>';
+
+      sHtml += '  </div>';
       sHtml += '</div>';
 
-      sHtml += '</div></div>';
+      // 2. 呼出履歴 表示 (3F実機写真準拠・患者名はプライバシー保護のため非表示)
+      sHtml += '<div id="callHistoryBox" style="' + (showCallFirst ? 'display:block;' : 'display:none;') + '">';
+      sHtml += '  <div style="max-height:175px; overflow-y:auto; border:1.5px solid #94a3b8; background:white;">';
+      sHtml += '    <table style="width:100%; border-collapse:collapse; font-size:0.75rem; text-align:center;">';
+      sHtml += '      <thead>';
+      sHtml += '        <tr style="background:#f1f5f9; border-bottom:1.5px solid #cbd5e1; color:#334155; position:sticky; top:0;">';
+      sHtml += '          <th style="padding:0.22rem 0.3rem;">日付</th>';
+      sHtml += '          <th style="padding:0.22rem 0.3rem;">呼出時刻</th>';
+      sHtml += '          <th style="padding:0.22rem 0.3rem;">種別</th>';
+      sHtml += '          <th style="padding:0.22rem 0.3rem;">ベッド番号</th>';
+      sHtml += '          <th style="padding:0.22rem 0.3rem;">患者名</th>';
+      sHtml += '        </tr>';
+      sHtml += '      </thead>';
+      sHtml += '      <tbody>';
+
+      const callLogs = (currentFloor === '3') ? [
+        { date: '10/02', time: '10:13:46', type: '01', bed: '303-4', name: '--' },
+        { date: '10/02', time: '10:07:53', type: 'TC', bed: 'WC6',   name: '--' },
+        { date: '10/02', time: '10:07:22', type: '01', bed: '303-4', name: '--' },
+        { date: '10/02', time: '10:02:18', type: 'TC', bed: 'WC2',   name: '--' },
+        { date: '10/02', time: '09:59:25', type: 'NC', bed: '326-1', name: '--' },
+        { date: '10/02', time: '09:59:08', type: 'TC', bed: 'WC6',   name: '--' }
+      ] : [
+        { date: '10/02', time: '09:42:15', type: '01', bed: `${currentFloor}13-1`, name: '--' },
+        { date: '10/02', time: '09:30:11', type: 'TC', bed: 'WC1', name: '--' },
+        { date: '10/02', time: '09:15:02', type: 'NC', bed: `${currentFloor}20-2`, name: '--' },
+        { date: '10/02', time: '08:58:40', type: '01', bed: `${currentFloor}03-2`, name: '--' }
+      ];
+
+      callLogs.forEach((log, idx) => {
+        sHtml += '<tr style="border-bottom:1px solid #e2e8f0; background:' + (idx % 2 === 0 ? '#ffffff' : '#f8fafc') + ';">';
+        sHtml += '  <td style="padding:0.22rem 0.3rem; color:#64748b;">' + log.date + '</td>';
+        sHtml += '  <td style="padding:0.22rem 0.3rem; font-weight:bold; color:#0f172a;">' + log.time + '</td>';
+        sHtml += '  <td style="padding:0.22rem 0.3rem;"><span style="background:#e0f2fe; color:#0369a1; padding:0.05rem 0.3rem; border-radius:3px; font-weight:800; font-size:0.7rem;">' + log.type + '</span></td>';
+        sHtml += '  <td style="padding:0.22rem 0.3rem; font-weight:800; color:#1e293b;">' + log.bed + '</td>';
+        sHtml += '  <td style="padding:0.22rem 0.3rem; color:#94a3b8; font-weight:600;">' + log.name + '</td>';
+        sHtml += '</tr>';
+      });
+
+      sHtml += '      </tbody>';
+      sHtml += '    </table>';
+      sHtml += '  </div>';
+      sHtml += '</div>';
+
+      sHtml += '</div>';
       return sHtml;
     }
 
@@ -1723,12 +2174,22 @@
       html += renderMinimapRoom(`${f}15`, '個室', [`${f}15-1`], allPatients, currentWard, true);
       html += renderMinimapRoom(`${f}13`, '4人', [`${f}13-1`, `${f}13-2`, `${f}13-3`, `${f}13-4`], allPatients, currentWard, false);
       html += renderMinimapRoom(`${f}12`, '4人', [`${f}12-1`, `${f}12-2`, `${f}12-3`, `${f}12-4`], allPatients, currentWard, false);
-      html += renderMinimapRoom(`${f}11`, '4人', [`${f}11-1`, `${f}11-2`, `${f}11-3`, `${f}11-4`], allPatients, currentWard, false);
-      html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5px;">';
-      html += renderMinimapRoom(`${f}08`, '個室', [`${f}08-1`], allPatients, currentWard, true);
-      html += renderMinimapRoom(`${f}07`, '個室', [`${f}07-1`], allPatients, currentWard, true);
-      html += renderMinimapRoom(`${f}06`, '個室', [`${f}06-1`], allPatients, currentWard, true);
-      html += '</div>';
+      if (f === '2') {
+        html += renderMinimapRoom(`${f}11`, '4人', [`${f}11-1`, `${f}11-2`, `${f}11-3`, `${f}11-4`], allPatients, currentWard, false);
+        html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5px;">';
+        html += renderMinimapRoom(`${f}08`, '個室', [`${f}08-1`], allPatients, currentWard, true);
+        html += renderMinimapRoom(`${f}07`, '個室', [`${f}07-1`], allPatients, currentWard, true);
+        html += renderMinimapRoom(`${f}06`, '個室', [`${f}06-1`], allPatients, currentWard, true);
+        html += '</div>';
+      } else {
+        html += '<div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:1.5px;">';
+        html += renderMinimapRoom(`${f}11`, '個室', [`${f}11-1`], allPatients, currentWard, true);
+        html += renderMinimapRoom(`${f}10`, '個室', [`${f}10-1`], allPatients, currentWard, true);
+        html += renderMinimapRoom(`${f}08`, '個室', [`${f}08-1`], allPatients, currentWard, true);
+        html += renderMinimapRoom(`${f}07`, '個室', [`${f}07-1`], allPatients, currentWard, true);
+        html += renderMinimapRoom(`${f}06`, '個室', [`${f}06-1`], allPatients, currentWard, true);
+        html += '</div>';
+      }
       html += renderMinimapRoom(`${f}05`, '4人', [`${f}05-1`, `${f}05-2`, `${f}05-3`, `${f}05-4`], allPatients, currentWard, false);
       html += renderMinimapRoom(`${f}03`, '4人', [`${f}03-1`, `${f}03-2`, `${f}03-3`, `${f}03-4`], allPatients, currentWard, false);
       html += renderMinimapRoom(`${f}02`, '4人', [`${f}02-1`, `${f}02-2`, `${f}02-3`, `${f}02-4`], allPatients, currentWard, false);
@@ -1801,6 +2262,47 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // 📊 看護統計 1 / 🔔 呼出履歴 タブ切替 (3F/4F 実機写真準拠)
+    function switchStatsTab(tabName) {
+      const statBox = document.getElementById('statPanelBox');
+      const callBox = document.getElementById('callHistoryBox');
+      const btnStat = document.getElementById('tabBtnStat');
+      const btnCall = document.getElementById('tabBtnCall');
+
+      if (tabName === 'stat') {
+        if (statBox) statBox.style.display = 'block';
+        if (callBox) callBox.style.display = 'none';
+        if (btnStat) btnStat.classList.add('is-active');
+        if (btnCall) btnCall.classList.remove('is-active');
+      } else {
+        if (statBox) statBox.style.display = 'none';
+        if (callBox) callBox.style.display = 'block';
+        if (btnStat) btnStat.classList.remove('is-active');
+        if (btnCall) btnCall.classList.add('is-active');
+      }
+    }
+
+    // ⚙️ 業務システムドロップダウン開閉制御
+    function toggleBizDropdown(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      const menu = document.getElementById('bizDropdownMenu');
+      if (menu) {
+        menu.classList.toggle('show');
+      }
+    }
+
+    // 外部クリックでドロップダウンを閉じる
+    window.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('bizNavDropdown');
+      const menu = document.getElementById('bizDropdownMenu');
+      if (dropdown && menu && !dropdown.contains(e.target)) {
+        menu.classList.remove('show');
+      }
+    });
 
     // 画面切替 (フロアマップ / 一覧)
     let isMapView = true;

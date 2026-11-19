@@ -30,10 +30,10 @@ try {
 
 // モデル
 const InjectionOrder = require('./models/InjectionOrder');
-const Patient = require('/home/a/Desktop/ai/agy-project/support/menu/sakusei/models/Patient');
-const Article = require('/home/a/Desktop/ai/agy-project/incident-system/models/Article');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
-const User = require('/home/a/Desktop/ai/agy-project/incident-system/models/User');
+const Patient = require('/home/a/src/github.com/datebyoai-a11y/agy-project/support/menu/sakusei/models/Patient');
+const Article = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/Article');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
+const User = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/User');
 
 // 📜 統一操作・監査ロガー
 const { logOperation } = require('../../common/operationLogger');
@@ -802,11 +802,11 @@ app.get('/print/:id', async (req, res) => {
   }
 });
 
-// サーバー起動
-app.listen(PORT, '0.0.0.0', () => {
+// サーバー起動（デフォルトはローカル限定 127.0.0.1 / ポータルHTTPSプロキシ経由）
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
   console.log(`========================================================`);
   console.log(`💉 交雄会だて病院 注射・点滴オーダーシステム 起動完了`);
-  console.log(`📡 Port: ${PORT}`);
-  console.log(`🔗 Local URL: http://localhost:${PORT}/`);
+  console.log(`📡 Bind: ${HOST}:${PORT} (ローカル隔離)`);
   console.log(`========================================================`);
 });

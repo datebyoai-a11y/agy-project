@@ -158,9 +158,9 @@ const MENUS = [
   },
   {
     id: 'system_status',
-    title: 'システム稼働 & 外部接続監視',
+    title: 'システム稼働 & 院内接続監視',
     shortName: 'システム監視',
-    subtitle: 'カルテ(3000)・オーダリング(4000/5000)・DB・Cloudflareトンネル',
+    subtitle: 'カルテ(3000)・オーダリング(4000)・DB・院内LAN接続',
     url: '/admin/status',
     icon: '🌐',
     category: 'システム管理',

@@ -91,8 +91,9 @@ app.get('/logout', (req, res) => {
 app.use('/', viewRoutes);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`インシデント管理システム サーバー起動中: http://localhost:${PORT}`);
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
+  console.log(`インシデント管理システム サーバー起動中: http://${HOST}:${PORT} (ローカル隔離)`);
 
   // 起動後、オーダリング受信側(Port 5000)から既存完了オーダーステータスを自動連動同期
   setTimeout(async () => {

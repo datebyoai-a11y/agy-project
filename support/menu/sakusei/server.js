@@ -8,6 +8,10 @@
  */
 
 const express = require('express');
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -18,15 +22,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'incident-system-jwt-secret-key-202
 const User = require('./models/User');
 const RoleTemplate = require('./models/RoleTemplate');
 const Patient = require('./models/Patient');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
-const { SamplePatients } = require('/home/a/Desktop/ai/agy-project/ordering/shared/orderSchema');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
+const { SamplePatients } = require('../../common/orderSchema');
 const { getAuthorizedMenus, checkAccess, MENUS, DEFAULT_ROLE_TEMPLATES } = require('./config/permissions');
 const { seed2FPhotoPatients } = require('./seed2FPhotoPatients');
 
 // 🛏️ 病棟・病室・ベッドマスタ定義（全機能共通）
-// 2F医療病棟、3F介護医療院、4F介護医療院（全フロア同一構造・20部屋・計62床）
-function createWardRooms(floor) {
-  const f = String(floor);
+// 2F医療病棟: 20部屋・計62床
+function createWardRooms2F() {
+  const f = '2';
   return [
     { roomNo: `${f}01`, type: '4人部屋', gender: '女', beds: [`${f}01-1`, `${f}01-2`, `${f}01-3`, `${f}01-4`] },
     { roomNo: `${f}02`, type: '4人部屋', gender: '女', beds: [`${f}02-1`, `${f}02-2`, `${f}02-3`, `${f}02-4`] },
@@ -51,24 +55,60 @@ function createWardRooms(floor) {
   ];
 }
 
+// 3Fしおかぜ & 4Fうみかぜ: 実機写真完全準拠 (21部屋・計60床)
+// 個室: 15, 11, 10, 08, 07, 06, 16, 17 (計8部屋)
+// 4人部屋: 13, 12, 05, 03, 02, 01, 18, 20, 21, 22, 23, 25, 26 (計13部屋)
+function createWardRooms3F4F(floor) {
+  const f = String(floor);
+  return [
+    { roomNo: `${f}01`, type: '4人部屋', gender: floor === 3 ? '女' : '男', beds: [`${f}01-1`, `${f}01-2`, `${f}01-3`, `${f}01-4`] },
+    { roomNo: `${f}02`, type: '4人部屋', gender: floor === 3 ? '男' : '男', beds: [`${f}02-1`, `${f}02-2`, `${f}02-3`, `${f}02-4`] },
+    { roomNo: `${f}03`, type: '4人部屋', gender: floor === 3 ? '女' : '女', beds: [`${f}03-1`, `${f}03-2`, `${f}03-3`, `${f}03-4`] },
+    { roomNo: `${f}05`, type: '4人部屋', gender: floor === 3 ? '女' : '男', beds: [`${f}05-1`, `${f}05-2`, `${f}05-3`, `${f}05-4`] },
+    { roomNo: `${f}06`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}06-1`] },
+    { roomNo: `${f}07`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}07-1`] },
+    { roomNo: `${f}08`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}08-1`] },
+    { roomNo: `${f}10`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}10-1`] },
+    { roomNo: `${f}11`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}11-1`] },
+    { roomNo: `${f}12`, type: '4人部屋', gender: floor === 3 ? '女' : '女', beds: [`${f}12-1`, `${f}12-2`, `${f}12-3`, `${f}12-4`] },
+    { roomNo: `${f}13`, type: '4人部屋', gender: floor === 3 ? '女' : '女', beds: [`${f}13-1`, `${f}13-2`, `${f}13-3`, `${f}13-4`] },
+    { roomNo: `${f}15`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}15-1`] },
+    { roomNo: `${f}16`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}16-1`] },
+    { roomNo: `${f}17`, type: '個室 (トイレ付)', gender: '個室', beds: [`${f}17-1`] },
+    { roomNo: `${f}18`, type: '4人部屋', gender: floor === 3 ? '女' : '男', beds: [`${f}18-1`, `${f}18-2`, `${f}18-3`, `${f}18-4`] },
+    { roomNo: `${f}20`, type: '4人部屋', gender: floor === 3 ? '男' : '女', beds: [`${f}20-1`, `${f}20-2`, `${f}20-3`, `${f}20-4`] },
+    { roomNo: `${f}21`, type: '4人部屋', gender: floor === 3 ? '男' : '男', beds: [`${f}21-1`, `${f}21-2`, `${f}21-3`, `${f}21-4`] },
+    { roomNo: `${f}22`, type: '4人部屋', gender: floor === 3 ? '女' : '女', beds: [`${f}22-1`, `${f}22-2`, `${f}22-3`, `${f}22-4`] },
+    { roomNo: `${f}23`, type: '4人部屋', gender: floor === 3 ? '女' : '女', beds: [`${f}23-1`, `${f}23-2`, `${f}23-3`, `${f}23-4`] },
+    { roomNo: `${f}25`, type: '4人部屋', gender: floor === 3 ? '女' : '女', beds: [`${f}25-1`, `${f}25-2`, `${f}25-3`, `${f}25-4`] },
+    { roomNo: `${f}26`, type: '4人部屋', gender: floor === 3 ? '男' : '女', beds: [`${f}26-1`, `${f}26-2`, `${f}26-3`, `${f}26-4`] }
+  ];
+}
+
+function createWardRooms(floor) {
+  const fNum = Number(floor);
+  if (fNum === 2) return createWardRooms2F();
+  return createWardRooms3F4F(fNum);
+}
+
 const BED_MASTER = {
   '2F医療病棟': {
     name: '2F 医療病棟',
     wardKey: '2F医療病棟',
     floor: 2,
-    rooms: createWardRooms(2)
+    rooms: createWardRooms2F()
   },
   '3Fしおかぜ': {
     name: '3F しおかぜ',
     wardKey: '3Fしおかぜ',
     floor: 3,
-    rooms: createWardRooms(3)
+    rooms: createWardRooms3F4F(3)
   },
   '4Fうみかぜ': {
     name: '4F うみかぜ',
     wardKey: '4Fうみかぜ',
     floor: 4,
-    rooms: createWardRooms(4)
+    rooms: createWardRooms3F4F(4)
   }
 };
 
@@ -80,7 +120,56 @@ function resolveWardMaster(wardKey) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+app.set('trust proxy', 1);
+
+const HOST = process.env.HOST || '';
+const ALSO_BIND_LOCALHOST = process.env.ALSO_BIND_LOCALHOST !== '0';
+const PORT = Number(process.env.PORT || 80);
+const HTTPS_PORT = Number(process.env.HTTPS_PORT || 8443);
+const ENABLE_HTTPS = process.env.ENABLE_HTTPS === '1';
+const LAN_MODE = process.env.LAN_MODE || 'auto';
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
+const CERT_DIR = process.env.CERT_DIR || path.join(PROJECT_ROOT, 'certs');
+const SSL_KEY_PATH = process.env.SSL_KEY_PATH || path.join(CERT_DIR, 'server.key');
+const SSL_CERT_PATH = process.env.SSL_CERT_PATH || path.join(CERT_DIR, 'server.crt');
+const CA_CERT_PATH = process.env.CA_CERT_PATH || path.join(CERT_DIR, 'ca.crt');
+
+function getIntranetIPs() {
+  const result = [];
+  const interfaces = os.networkInterfaces();
+  for (const [name, addrs] of Object.entries(interfaces)) {
+    if (!addrs) continue;
+    for (const addr of addrs) {
+      if (addr.family === 'IPv4' && !addr.internal && addr.address) {
+        result.push({ iface: name, address: addr.address });
+      }
+    }
+  }
+  // 有線LAN (en/eth) を最優先、次に無線LAN (wl)、tailscale等を後ろに並べる
+  result.sort((a, b) => {
+    const score = (n) => (/^(en|eth)/.test(n) ? 0 : /^wl/.test(n) ? 1 : /^tailscale/.test(n) ? 3 : 2);
+    return score(a.iface) - score(b.iface);
+  });
+  return result;
+}
+
+function resolveBindHosts() {
+  const ips = getIntranetIPs();
+  const targetHost = HOST || (ips[0] && ips[0].address) || '127.0.0.1';
+  if (targetHost === '0.0.0.0') {
+    return ['0.0.0.0'];
+  }
+  const hosts = [targetHost];
+  if (ALSO_BIND_LOCALHOST && targetHost !== '127.0.0.1') {
+    hosts.push('127.0.0.1');
+  }
+  return hosts;
+}
+
+function formatOrigin(proto, host, port) {
+  const isDefault = (proto === 'http' && Number(port) === 80) || (proto === 'https' && Number(port) === 443);
+  return isDefault ? `${proto}://${host}` : `${proto}://${host}:${port}`;
+}
 
 // MongoDB 接続 (レプリカセット rs0 対応)
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017,127.0.0.1:27018/incident_db?replicaSet=rs0';
@@ -211,8 +300,15 @@ async function getActiveRoleTemplates() {
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // =========================================================
-// 🌐 各種システムへのリバースプロキシ設定 (Cloudflare・外部アクセス完全対応)
+// 🌐 各種システムへのリバースプロキシ設定 (院内イントラネット HTTPS 集約)
 // =========================================================
+function applyProxyHeaders(proxyReq, req, prefix) {
+  if (prefix) {
+    proxyReq.setHeader('x-forwarded-prefix', prefix);
+  }
+  proxyReq.setHeader('x-forwarded-host', req.headers.host || '');
+  proxyReq.setHeader('x-forwarded-proto', req.secure ? 'https' : (req.protocol || 'http'));
+}
 
 // 🩻 1. 放射線科オーダー (Port 8080) へのリバースプロキシ
 app.use((req, res, next) => {
@@ -230,9 +326,7 @@ app.use('/radiology', createProxyMiddleware({
     '^/radiology': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/radiology');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/radiology')
   }
 }));
 
@@ -252,9 +346,7 @@ app.use('/radi-uke', createProxyMiddleware({
     '^/radi-uke': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/radi-uke');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/radi-uke')
   }
 }));
 
@@ -274,9 +366,7 @@ app.use('/injection', createProxyMiddleware({
     '^/injection': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/injection');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/injection')
   }
 }));
 
@@ -296,9 +386,7 @@ app.use('/rehabili', createProxyMiddleware({
     '^/rehabili': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/rehabili');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/rehabili')
   }
 }));
 
@@ -318,9 +406,7 @@ app.use('/reha-uke', createProxyMiddleware({
     '^/reha-uke': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/reha-uke');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/reha-uke')
   }
 }));
 
@@ -340,9 +426,7 @@ app.use('/naifuku', createProxyMiddleware({
     '^/naifuku': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/naifuku');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/naifuku')
   }
 }));
 
@@ -366,9 +450,7 @@ app.use('/ordering', createProxyMiddleware({
     '^/ordering': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/ordering');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/ordering')
   }
 }));
 
@@ -379,9 +461,7 @@ app.use('/support/ordering', createProxyMiddleware({
     '^/support/ordering': ''
   },
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-prefix', '/support/ordering');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '/support/ordering')
   }
 }));
 
@@ -409,10 +489,7 @@ const emrProxy = createProxyMiddleware({
   changeOrigin: true,
   ws: true,
   on: {
-    proxyReq: (proxyReq, req, res) => {
-      proxyReq.setHeader('x-forwarded-host', req.headers.host || '');
-      proxyReq.setHeader('x-forwarded-proto', req.protocol || 'http');
-    }
+    proxyReq: (proxyReq, req) => applyProxyHeaders(proxyReq, req, '')
   }
 });
 
@@ -458,6 +535,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
+    secure: ENABLE_HTTPS,
     sameSite: 'lax'
     // ※ maxAge を指定しないことで、ブラウザ・ウィンドウ終了時にCookieが自動消滅します
   }
@@ -930,10 +1008,40 @@ app.post('/admin/users/delete/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// 🔐 院内端末向け Root CA 公開証明書ダウンロード（秘密鍵は含まれません）
+app.get('/certs/koyukai-intranet-ca.crt', (req, res) => {
+  if (!fs.existsSync(CA_CERT_PATH)) {
+    return res.status(404).send('院内CA証明書が未生成です。');
+  }
+  res.setHeader('Content-Type', 'application/x-x509-ca-cert');
+  res.setHeader('Content-Disposition', 'attachment; filename="koyukai-intranet-ca.crt"');
+  res.sendFile(CA_CERT_PATH);
+});
+
 // 🌐 システム稼働監視
 app.get('/admin/status', requireAdmin, (req, res) => {
+  const intranetIps = getIntranetIPs();
+  const bindHosts = resolveBindHosts();
+  const primaryIp = HOST && HOST !== '0.0.0.0'
+    ? HOST
+    : ((intranetIps[0] && intranetIps[0].address) || '127.0.0.1');
+  const proto = ENABLE_HTTPS ? 'https' : 'http';
+  const activePort = ENABLE_HTTPS ? HTTPS_PORT : PORT;
   res.render('admin-status', {
-    user: req.session.user
+    user: req.session.user,
+    intranet: {
+      ips: intranetIps,
+      bindHosts,
+      lanMode: LAN_MODE,
+      primaryIp,
+      hostname: os.hostname(),
+      httpsEnabled: ENABLE_HTTPS,
+      httpsPort: HTTPS_PORT,
+      httpPort: PORT,
+      primaryUrl: `${formatOrigin(proto, primaryIp, activePort)}/login`,
+      caCertExists: fs.existsSync(CA_CERT_PATH),
+      caCertPath: CA_CERT_PATH
+    }
   });
 });
 
@@ -1380,13 +1488,87 @@ app.get('/api/patients', async (req, res) => {
   }
 });
 
-// サーバー起動
-app.listen(PORT, () => {
-  console.log('================================================================');
-  console.log(`🏥 医療統合ポータル 稼働中: http://localhost:${PORT}`);
-  console.log(`   ログイン画面 : http://localhost:${PORT}/login`);
-  console.log(`   権限メニュー : http://localhost:${PORT}/menu`);
-  console.log(`   患者管理画面 : http://localhost:${PORT}/patients`);
-  console.log(`   職員権限管理 : http://localhost:${PORT}/admin/users`);
-  console.log('================================================================');
-});
+// サーバー起動（院内イントラネット指定IP + localhost 同時バインド対応）
+const intranetIps = getIntranetIPs();
+const bindHosts = resolveBindHosts();
+const primaryIp = HOST && HOST !== '0.0.0.0'
+  ? HOST
+  : ((intranetIps[0] && intranetIps[0].address) || '127.0.0.1');
+
+function attachBindErrorHandler(srv, host, port) {
+  srv.on('error', (err) => {
+    if (err.code === 'EACCES' && port < 1024) {
+      console.error(`❌ [Portal] Port ${port} (${host}) の待ち受け権限がありません。`);
+      console.error(`   👉 次のコマンドを1回実行してください: sudo setcap 'cap_net_bind_service=+ep' $(readlink -f $(which node))`);
+    } else if (err.code === 'EADDRINUSE') {
+      console.error(`❌ [Portal] ${host}:${port} は既に別プロセスが使用中です。`);
+    } else {
+      console.error(`❌ [Portal] サーバー起動エラー (${host}:${port}):`, err.message);
+    }
+    process.exit(1);
+  });
+}
+
+if (ENABLE_HTTPS) {
+  if (!fs.existsSync(SSL_KEY_PATH) || !fs.existsSync(SSL_CERT_PATH)) {
+    console.error('❌ [Portal] SSL証明書または秘密鍵が見つかりません:');
+    console.error(`   KEY : ${SSL_KEY_PATH}`);
+    console.error(`   CERT: ${SSL_CERT_PATH}`);
+    console.error('   👉 実行コマンド: node scripts/generate-intranet-certs.js');
+    process.exit(1);
+  }
+
+  const tlsOptions = {
+    key: fs.readFileSync(SSL_KEY_PATH),
+    cert: fs.readFileSync(SSL_CERT_PATH)
+  };
+
+  bindHosts.forEach((bindHost, idx) => {
+    const httpsSrv = https.createServer(tlsOptions, app);
+    attachBindErrorHandler(httpsSrv, bindHost, HTTPS_PORT);
+    httpsSrv.listen(HTTPS_PORT, bindHost, () => {
+      if (idx === 0) {
+        const origin = formatOrigin('https', primaryIp, HTTPS_PORT);
+        console.log('================================================================');
+        console.log(`🔒 医療統合ポータル (HTTPS / 院内イントラネット) 稼働中`);
+        console.log(`   バインド     : ${bindHosts.map(h => `${h}:${HTTPS_PORT}`).join(', ')}`);
+        console.log(`   院内アクセス : ${origin}/login`);
+        console.log(`   ローカル     : ${formatOrigin('https', 'localhost', HTTPS_PORT)}/login`);
+        console.log('================================================================');
+      }
+    });
+
+    const redirectSrv = http.createServer((req, res) => {
+      const rawHost = req.headers.host || primaryIp;
+      const hostWithoutPort = rawHost.startsWith('[')
+        ? rawHost.replace(/:\d+$/, '')
+        : rawHost.split(':')[0];
+      const targetUrl = `${formatOrigin('https', hostWithoutPort, HTTPS_PORT)}${req.url || '/'}`;
+      res.writeHead(301, { Location: targetUrl });
+      res.end();
+    });
+    attachBindErrorHandler(redirectSrv, bindHost, PORT);
+    redirectSrv.listen(PORT, bindHost);
+  });
+} else {
+  const origin = formatOrigin('http', primaryIp, PORT);
+  const localOrigin = formatOrigin('http', 'localhost', PORT);
+
+  bindHosts.forEach((bindHost, idx) => {
+    const httpSrv = http.createServer(app);
+    attachBindErrorHandler(httpSrv, bindHost, PORT);
+    httpSrv.listen(PORT, bindHost, () => {
+      if (idx === 0) {
+        console.log('================================================================');
+        console.log(`🏥 医療統合ポータル (院内イントラネット HTTP / Mode: ${LAN_MODE}) 稼働中`);
+        console.log(`   バインド     : ${bindHosts.map(h => `${h}:${PORT}`).join(', ')}`);
+        console.log(`   院内アクセス : ${origin}/login`);
+        console.log(`   ローカル     : ${localOrigin}/login`);
+        console.log(`   権限メニュー : ${origin}/menu`);
+        console.log(`   患者管理画面 : ${origin}/patients`);
+        console.log(`   職員権限管理 : ${origin}/admin/users`);
+        console.log('================================================================');
+      }
+    });
+  });
+}

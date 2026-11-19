@@ -29,6 +29,13 @@
       --st-header-bg: #fef3c7;
       --st-border: #fde68a;
       --st-border-dark: #d97706;
+
+      --physio-accent: #e11d48;
+      --physio-accent-dark: #be123c;
+      --physio-bg: #fff1f2;
+      --physio-header-bg: #ffe4e6;
+      --physio-border: #fecdd3;
+      --physio-border-dark: #e11d48;
     }
 
     #colPt {
@@ -64,6 +71,17 @@
     #colSt .col-body { background: #fffef5; }
     #colSt .col-title { color: var(--st-accent-dark); }
 
+    #colPhysio {
+      border: 2.5px solid var(--physio-border-dark);
+      border-top: 8px solid var(--physio-accent);
+    }
+    #colPhysio .col-header {
+      background: linear-gradient(180deg, var(--physio-bg) 0%, var(--physio-header-bg) 100%);
+      border-bottom: 2.5px solid var(--physio-accent-dark);
+    }
+    #colPhysio .col-body { background: #fff8f8; }
+    #colPhysio .col-title { color: var(--physio-accent-dark); }
+
     .tag-therapy {
       display: inline-block;
       font-size: 0.72rem;
@@ -75,6 +93,7 @@
     .tag-pt { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
     .tag-ot { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .tag-st { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .tag-physio { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
 
     .stat-inprogress {
       background: #e0e7ff;
@@ -176,7 +195,7 @@
     </div>
   </div>
 
-  <!-- 4.1 職種別・療法別 縦3列 (Kanban) コンテナ -->
+  <!-- 4.1 職種別・療法別 縦4列 (Kanban) コンテナ -->
   <main class="kanban-container" id="kanbanContainer">
     
     <!-- 🏃‍♂️ 列1: 理学療法 (PT) -->
@@ -217,14 +236,14 @@
       </div>
     </section>
 
-    <!-- 🗣️ 列3: 言語聴覚療法 (ST) & 物理療法 -->
+    <!-- 🗣️ 列3: 言語聴覚療法 (ST) -->
     <section class="kanban-column" id="colSt">
       <div class="col-header">
         <div class="col-title-area">
           <span class="col-icon" style="font-size:1.8rem;">🗣️</span>
           <div>
-            <div class="col-title" style="font-size:1.1rem; font-weight:700;">言語聴覚 (ST) & 物理療法</div>
-            <div class="col-subtitle" style="font-size:0.75rem; color:#64748b;">摂食嚥下・VF / 構音・失語 / 温熱・メドマー・牽引</div>
+            <div class="col-title" style="font-size:1.1rem; font-weight:700;">言語聴覚療法 (ST)</div>
+            <div class="col-subtitle" style="font-size:0.75rem; color:#64748b;">摂食嚥下・VF / 構音障害 / 失語症訓練</div>
           </div>
         </div>
         <div class="col-badges">
@@ -232,6 +251,25 @@
         </div>
       </div>
       <div class="col-body" id="stCardList">
+        <!-- 動的カード挿入 -->
+      </div>
+    </section>
+
+    <!-- ⚡ 列4: 物理療法 (消炎鎮痛) -->
+    <section class="kanban-column" id="colPhysio">
+      <div class="col-header">
+        <div class="col-title-area">
+          <span class="col-icon" style="font-size:1.8rem;">⚡</span>
+          <div>
+            <div class="col-title" style="font-size:1.1rem; font-weight:700;">物理療法 (消炎鎮痛)</div>
+            <div class="col-subtitle" style="font-size:0.75rem; color:#64748b;">ホットパック / メドマー / 牽引 / マッサージ / SSP</div>
+          </div>
+        </div>
+        <div class="col-badges">
+          <span class="badge-count col-count-badge" id="badgePhysioCount">0件</span>
+        </div>
+      </div>
+      <div class="col-body" id="physioCardList">
         <!-- 動的カード挿入 -->
       </div>
     </section>

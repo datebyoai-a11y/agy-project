@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>放射線科 指示受け・実施モニター | 交雄会だて病院</title>
-  <link rel="stylesheet" href="<%= prefix %>/css/style.css">
+  <link rel="stylesheet" href="<%= prefix %>/css/style.css?v=1790924107">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%220%22%20100%20100><text y=%22.9em%22 font-size=%2290%22>🩻</text></svg>">
 </head>
 <body>
@@ -163,7 +163,8 @@
             <tr>
               <th class="th-sortable" data-sort="status" style="width: 85px;" title="クリックで状態順に並び替え">状態 <span class="sort-icon">↕️</span></th>
               <th class="th-sortable" data-sort="modality" style="width: 95px;" title="クリックで区分順に並び替え">区分 <span class="sort-icon">↕️</span></th>
-              <th class="th-sortable sorted-desc" data-sort="date" style="width: 155px;" title="クリックで指示日時順に並び替え">オーダー番号 / 時刻 <span class="sort-icon">▼</span></th>
+              <th class="th-sortable" data-sort="orderNumber" style="width: 140px;" title="クリックでオーダー番号順に並び替え">オーダー番号 <span class="sort-icon">↕️</span></th>
+              <th class="th-sortable sorted-desc" data-sort="date" style="width: 145px;" title="クリックで検査日時順に並び替え">検査日 / 時刻 <span class="sort-icon">▼</span></th>
               <th class="th-sortable" data-sort="patient" style="width: 180px;" title="クリックで患者名順に並び替え">患者情報 <span class="sort-icon">↕️</span></th>
               <th class="th-sortable" data-sort="exam" title="クリックで検査種別・部位順に並び替え">検査種別 / 部位 / 条件 <span class="sort-icon">↕️</span></th>
               <th class="th-sortable" data-sort="purpose" title="クリックで目的順に並び替え">検査目的・臨床所見 <span class="sort-icon">↕️</span></th>
@@ -238,6 +239,6 @@
     window.APP_PREFIX = '<%= prefix %>';
     window.CURRENT_USER_NAME = '<%= user ? (user.userName || user.name || "放射線技師") : "放射線技師" %>';
   </script>
-  <script src="<%= prefix %>/js/app.js"></script>
+  <script src="<%= prefix %>/js/app.js?v=1790924107"></script>
 </body>
 </html>

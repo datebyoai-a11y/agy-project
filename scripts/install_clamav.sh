@@ -58,7 +58,7 @@ systemctl is-active clamav-freshclam && echo "clamav-freshclam: 稼働中 (activ
 
 echo -e "\n【便利な使い方】"
 echo "  1. 特定ディレクトリのスキャン (例: プロジェクト):"
-echo "     clamscan -r -i /home/a/Desktop/ai/agy-project"
+echo "     clamscan -r -i /home/a/src/github.com/datebyoai-a11y/agy-project"
 echo "  2. 感染ファイルのみ表示してホーム全体をスキャン:"
 echo "     clamscan -r -i /home/a"
 echo "  3. ウイルス定義ファイルの即時更新:"

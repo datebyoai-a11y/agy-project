@@ -158,7 +158,8 @@ function updateSortHeaderIndicators() {
   const sortLabels = {
     status: '状態',
     modality: '区分',
-    date: '指示日時',
+    orderNumber: 'オーダー番号',
+    date: '検査日時',
     patient: '患者情報',
     exam: '検査種別・部位',
     purpose: '検査目的',
@@ -298,8 +299,23 @@ function renderColumn(container, orders, emptyText) {
   container.innerHTML = html;
 }
 
+// 📅 検査日フォーマット (scheduledDate 優先、なければ orderDate または createdAt)
+function formatExamDate(order) {
+  const rawDate = order.scheduledDate || order.orderDate || order.createdAt;
+  if (!rawDate) return '';
+  const d = new Date(rawDate);
+  if (isNaN(d.getTime())) return '';
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const w = weekdays[d.getDay()];
+  return `${y}/${m}/${day}(${w})`;
+}
+
 // 個別カードHTML生成
 function createOrderCardHtml(order) {
+  const examDateStr = formatExamDate(order);
   const status = order.orderStatus || 'ORDERED';
   const isPortable = order.isPortable || (order.portable && order.portable.includes('ポータブル'));
   const isOrdered = (status === 'ORDERED');
@@ -390,13 +406,18 @@ function createOrderCardHtml(order) {
     <div class="order-card modality-${modType} status-${status.toLowerCase()} ${isPortable ? 'is-portable' : ''}" id="card-${order._id}">
       <!-- 上部メタ情報 (伝票カラーバー直下) -->
       <div class="card-top">
-        <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
           ${modPill}
           <span class="order-num-text">${escapeHtml(order.orderNumber)}</span>
+          <span class="status-badge ${status} status-clickable" 
+                onclick="handleToggleStatus('${order._id}', '${status}', '${escapeHtml(order.patientName)}')" 
+                title="クリックで進める: 未受付 ➔ 受付済 ➔ 実施済">
+            ${statusLabel}
+          </span>
         </div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span class="status-badge ${status}">${statusLabel}</span>
-          <span class="time-stamp">🕒 ${timeStr}</span>
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <span class="exam-date" title="検査予定日 / 検査日">📅 <strong>${examDateStr}</strong></span>
+          <span class="time-stamp" title="指示・発行時刻">🕒 ${timeStr}</span>
         </div>
       </div>
 
@@ -458,7 +479,7 @@ function renderTableView(orders) {
   if (!orders || orders.length === 0) {
     elOrdersTableBody.innerHTML = `
       <tr>
-        <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-dim);">
+        <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-dim);">
           <div style="font-size: 1.8rem; margin-bottom: 6px;">📭</div>
           該当するオーダーはありません
         </td>
@@ -479,6 +500,12 @@ function renderTableView(orders) {
         if (cmp === 0) {
           cmp = new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
         }
+        break;
+      }
+      case 'orderNumber': {
+        const nA = (a.orderNumber || '').trim();
+        const nB = (b.orderNumber || '').trim();
+        cmp = nA.localeCompare(nB);
         break;
       }
       case 'modality': {
@@ -528,8 +555,8 @@ function renderTableView(orders) {
       }
       case 'date':
       default: {
-        const tA = new Date(a.createdAt || a.orderDate || 0).getTime();
-        const tB = new Date(b.createdAt || b.orderDate || 0).getTime();
+        const tA = new Date(a.scheduledDate || a.createdAt || a.orderDate || 0).getTime();
+        const tB = new Date(b.scheduledDate || b.createdAt || b.orderDate || 0).getTime();
         cmp = tA - tB;
         break;
       }
@@ -562,7 +589,8 @@ function renderTableView(orders) {
 
     // 時刻
     const d = new Date(order.createdAt || order.orderDate);
-    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${timeStr}`;
 
     // 患者情報
     const ageGender = [order.gender, order.age ? `${order.age}歳` : ''].filter(Boolean).join(' / ');
@@ -622,11 +650,20 @@ function renderTableView(orders) {
 
     return `
       <tr id="row-${order._id}" class="${isPortable ? 'is-portable' : ''}">
-        <td><span class="status-badge ${status}">${statusLabel}</span></td>
-        <td>${modBadge}</td>
         <td>
-          <div style="font-family:monospace; font-weight:700; color:#334155;">${escapeHtml(order.orderNumber)}</div>
-          <div style="font-size:0.74rem; color:var(--text-muted);">${dateStr}</div>
+          <span class="status-badge ${status} status-clickable" 
+                onclick="handleToggleStatus('${order._id}', '${status}', '${escapeHtml(order.patientName)}')" 
+                title="クリックで進める: 未受付 ➔ 受付済 ➔ 実施済">
+            ${statusLabel}
+          </span>
+        </td>
+        <td>${modBadge}</td>
+        <td style="font-family:monospace; font-weight:700; color:#334155; font-size:0.85rem;">
+          ${escapeHtml(order.orderNumber)}
+        </td>
+        <td>
+          <div style="font-size:0.8rem; font-weight:700; color:#0f172a;">📅 ${formatExamDate(order)}</div>
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">🕒 ${timeStr}</div>
         </td>
         <td>
           <div style="font-weight:700; font-size:0.95rem; color:#0f172a;">${escapeHtml(order.patientName)}</div>
@@ -761,6 +798,46 @@ async function handleRevert(orderId) {
   }
 }
 
+// 🔄 ステータス枠クリックによるワンクリック進行 (未受付 ➔ 受付済 ➔ 実施済 ➔ 未受付)
+async function handleToggleStatus(orderId, currentStatus, patientName) {
+  const norm = (currentStatus || 'ORDERED').toUpperCase();
+  if (norm === 'ORDERED') {
+    await handleAccept(orderId, patientName);
+  } else if (norm === 'ACCEPTED' || norm === 'RECEIVED') {
+    await handleComplete(orderId, patientName);
+  } else if (norm === 'COMPLETED') {
+    const pText = patientName ? `\n患者: ${patientName} 様` : '';
+    if (confirm(`【ステータス変更】${pText}\n現在の「実施済」から「未受付」に戻しますか？`)) {
+      await handleRevertToOrdered(orderId, patientName);
+    }
+  }
+}
+
+// 実施済から未受付へ直接戻す処理
+async function handleRevertToOrdered(orderId, patientName) {
+  updateCardStatusLocally(orderId, 'ORDERED', '');
+  showToast('warning', `↩️ ${patientName || ''} 様のステータスを未受付に戻しました`);
+
+  try {
+    const prefix = window.APP_PREFIX || '';
+    const res = await fetch(`${prefix}/api/orders/${orderId}/revert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetStatus: 'ORDERED' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadOrders(true);
+    } else {
+      showToast('error', `戻し失敗: ${data.message || data.error}`);
+      loadOrders();
+    }
+  } catch (err) {
+    showToast('error', `通信エラー: ${err.message}`);
+    loadOrders();
+  }
+}
+
 // ⚡ 名前上部の未受付バッジおよびボタン・スタンプの即時DOM連動更新関数
 function updateCardStatusLocally(orderId, newStatus, staffName) {
   const card = document.getElementById(`card-${orderId}`);
@@ -778,7 +855,9 @@ function updateCardStatusLocally(orderId, newStatus, staffName) {
     const badge = card.querySelector('.card-top .status-badge');
     if (badge) {
       badge.textContent = label;
-      badge.className = `status-badge ${newStatus}`;
+      badge.className = `status-badge ${newStatus} status-clickable`;
+      badge.setAttribute('onclick', `handleToggleStatus('${orderId}', '${newStatus}', '')`);
+      badge.setAttribute('title', `現在: ${label} (クリックで次へ進める)`);
       badge.style.transform = 'scale(1.2)';
       badge.style.transition = 'all 0.2s ease';
       setTimeout(() => { badge.style.transform = 'scale(1)'; }, 250);
@@ -850,7 +929,9 @@ function updateCardStatusLocally(orderId, newStatus, staffName) {
     const badge = row.querySelector('.status-badge');
     if (badge) {
       badge.textContent = label;
-      badge.className = `status-badge ${newStatus}`;
+      badge.className = `status-badge ${newStatus} status-clickable`;
+      badge.setAttribute('onclick', `handleToggleStatus('${orderId}', '${newStatus}', '')`);
+      badge.setAttribute('title', `現在: ${label} (クリックで次へ進める)`);
       badge.style.transform = 'scale(1.15)';
       setTimeout(() => { badge.style.transform = 'scale(1)'; }, 200);
     }

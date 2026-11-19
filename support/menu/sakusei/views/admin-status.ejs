@@ -12,8 +12,8 @@
 
   <main class="container">
     <div class="page-header">
-      <h2 class="page-title">🌐 システム稼働 & 接続モニター</h2>
-      <p class="page-subtitle">院内各システム・データベース・外部トンネルの稼働状態をリアルタイム表示しています。</p>
+      <h2 class="page-title">🌐 システム稼働 &amp; 院内接続モニター</h2>
+      <p class="page-subtitle">院内イントラネット接続・各部門システム・データベースの稼働状態を表示しています。</p>
     </div>
 
     <div class="menu-grid" style="grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));">
@@ -114,19 +114,29 @@
       </div>
     </div>
 
-    <!-- 外部アクセス / Cloudflare Quick Tunnel 情報 -->
+    <!-- 院内イントラネット接続情報 -->
     <div style="margin-top: 2.5rem; background: white; border-radius: 12px; border: 1px solid var(--slate-200); padding: 1.5rem; box-shadow: var(--shadow-sm);">
       <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-        <span>☁️ Cloudflare Tunnel (外部安全暗号化アクセス)</span>
+        <span>🏢 院内イントラネット接続 (外部公開トンネル無効)</span>
       </h3>
       <p style="font-size: 0.85rem; color: var(--slate-600); margin-bottom: 1rem;">
-        ルーターのポートを開けずに、外部インターネットから暗号化通信で院内システムにアクセスするための接続状態です。
+        外部インターネット向けの公開トンネルを使用せず、院内LANからのみ医療統合ポータルへ接続する構成です。各部門サブシステムはローカル（127.0.0.1）に隔離されています。
       </p>
 
       <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.85rem;">
-        <div><strong>SSH 待機ポート:</strong> 50022 (公開鍵認証限定・パスワード禁止)</div>
-        <div style="margin-top: 0.4rem;"><strong>侵入防止 (fail2ban):</strong> Port 50022 監視中 (Active)</div>
-        <div style="margin-top: 0.4rem;"><strong>自動常駐スクリプト:</strong> ~/start-trycloudflare.sh</div>
+        <div><strong>院内ポータル URL:</strong> <%= intranet.primaryUrl %></div>
+        <div style="margin-top: 0.4rem;"><strong>接続モード:</strong> <%= intranet.lanMode === 'wired' ? '有線LAN固定 (192.168.20.221/24・同一セグメント閉域)' : (intranet.lanMode === 'dhcp' ? 'DHCP (有線LAN未接続)' : '自動判定') %></div>
+        <div style="margin-top: 0.4rem;"><strong>待ち受けアドレス:</strong> <%= (intranet.bindHosts || []).map(h => `${h}:${intranet.httpsEnabled ? intranet.httpsPort : intranet.httpPort}`).join(' / ') %></div>
+        <div style="margin-top: 0.4rem;"><strong>通信プロトコル:</strong> <%= intranet.httpsEnabled ? `HTTPS (Port ${intranet.httpsPort} / HTTP ${intranet.httpPort} 自動転送)` : `HTTP (Port ${intranet.httpPort})` %></div>
+        <div style="margin-top: 0.4rem;"><strong>ホスト名:</strong> <%= intranet.hostname %></div>
+        <div style="margin-top: 0.4rem;"><strong>検出IPアドレス:</strong> <%= (intranet.ips || []).map(i => `${i.iface}: ${i.address}`).join(' / ') || '127.0.0.1' %></div>
+        <div style="margin-top: 0.4rem;"><strong>公開範囲:</strong> ポータル (Port <%= intranet.httpsEnabled ? `${intranet.httpsPort} / ${intranet.httpPort}` : intranet.httpPort %>) のみ公開・サブシステムは 127.0.0.1 隔離</div>
+        <% if (intranet.httpsEnabled && intranet.caCertExists) { %>
+        <div style="margin-top: 0.6rem;">
+          <strong>院内 Root CA 証明書 (ブラウザ警告解消用):</strong>
+          <a href="/certs/koyukai-intranet-ca.crt" style="color: #0284c7; font-weight: bold; text-decoration: underline;">koyukai-intranet-ca.crt をダウンロード</a>
+        </div>
+        <% } %>
       </div>
     </div>
   </main>

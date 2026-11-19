@@ -46,7 +46,7 @@ OUT
             echo "[TryCloudflare] 公開URLが確定しました: $URL"
 
             # 📧 メール自動通知を実行 (datebyoai@gmail.com, rentogen@koyukai-g.jp, pt.koyama@koyukai-g.jp)
-            PY_SCRIPT="/home/a/Desktop/ai/agy-project/scripts/send_tunnel_url.py"
+            PY_SCRIPT="/home/a/src/github.com/datebyoai-a11y/agy-project/scripts/send_tunnel_url.py"
             if [ ! -f "$PY_SCRIPT" ]; then
                 PY_SCRIPT="/home/a/send_tunnel_url.py"
             fi

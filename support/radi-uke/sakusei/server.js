@@ -24,9 +24,9 @@ const jwt = require('jsonwebtoken');
 
 // モデル
 const RadiologyOrder = require('./models/RadiologyOrder');
-const Article = require('/home/a/Desktop/ai/agy-project/incident-system/models/Article');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
-const Patient = require('/home/a/Desktop/ai/agy-project/support/menu/sakusei/models/Patient');
+const Article = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/Article');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
+const Patient = require('/home/a/src/github.com/datebyoai-a11y/agy-project/support/menu/sakusei/models/Patient');
 
 // 📜 統一操作・監査ロガー
 const { logOperation, getRecentLogs, getRecentReadableLog, getLogArchivesList } = require('../../common/operationLogger');
@@ -456,7 +456,11 @@ app.post('/api/orders/:id/revert', async (req, res) => {
 
     const prevStatus = order.orderStatus;
     let nextStatus = 'ORDERED';
-    if (prevStatus === 'COMPLETED') {
+    if (req.body && req.body.targetStatus === 'ORDERED') {
+      nextStatus = 'ORDERED';
+      order.completedAt = null;
+      order.acceptedAt = null;
+    } else if (prevStatus === 'COMPLETED') {
       nextStatus = 'ACCEPTED';
       order.completedAt = null;
     } else {
@@ -664,11 +668,12 @@ app.get('/api/operations/archives/:filename', (req, res) => {
   }
 });
 
-// サーバー起動
-app.listen(PORT, '0.0.0.0', () => {
+// サーバー起動（デフォルトはローカル限定 127.0.0.1 / ポータルHTTPSプロキシ経由）
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
   console.log('================================================================');
   console.log(`🩻 交雄会だて病院 放射線科 指示受け・実施モニターシステム`);
-  console.log(`🌐 待機ポート: http://localhost:${PORT}`);
+  console.log(`🌐 待機アドレス: http://${HOST}:${PORT} (ローカル隔離)`);
   console.log(`📊 モダリティ別 縦3列 (一般X線 / CT / 透視) Kanban 受付・実施管理`);
   console.log('================================================================');
 });

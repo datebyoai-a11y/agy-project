@@ -1,0 +1,40 @@
+#!/bin/bash
+# ==============================================================================
+# NetworkManager Dispatcher フック (/etc/NetworkManager/dispatcher.d/99-agy-lan-switch)
+#
+# - 有線LAN (enp0s31f6) の up / down を検知して有線固定 ↔ DHCP を切替
+# - 無線LAN (wlp1s0 等) の up / dhcp4-change 時に、有線未接続なら新DHCPアドレスへ追従
+# ==============================================================================
+IFACE="${1:-}"
+ACTION="${2:-}"
+
+WIRED_IFACE="enp0s31f6"
+SWITCH_SCRIPT="/home/a/src/github.com/datebyoai-a11y/agy-project/scripts/lan-mode-switch.sh"
+
+[ -x "$SWITCH_SCRIPT" ] || exit 0
+
+case "$IFACE" in
+  "$WIRED_IFACE")
+    case "$ACTION" in
+      up)
+        "$SWITCH_SCRIPT" wired >/dev/null 2>&1 &
+        ;;
+      down|post-down)
+        "$SWITCH_SCRIPT" dhcp >/dev/null 2>&1 &
+        ;;
+    esac
+    ;;
+  wl*)
+    case "$ACTION" in
+      up|dhcp4-change)
+        # 有線LANが物理接続されていない場合のみ、新しいDHCPアドレスへサーバーを追従
+        CARRIER=$(cat "/sys/class/net/${WIRED_IFACE}/carrier" 2>/dev/null || echo "0")
+        if [ "$CARRIER" != "1" ]; then
+          "$SWITCH_SCRIPT" dhcp >/dev/null 2>&1 &
+        fi
+        ;;
+    esac
+    ;;
+esac
+
+exit 0

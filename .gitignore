@@ -19,8 +19,11 @@ mongodb/data/
 # Temporary and agent files
 *.pid
 .launcher.pid
+.lan-bind.env
 .agents/
 
 # Security & Cryptographic Private Keys
 *private*.asc
 *private*.key
+certs/
+*.key

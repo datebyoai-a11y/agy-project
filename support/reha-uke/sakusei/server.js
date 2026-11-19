@@ -26,9 +26,9 @@ const jwt = require('jsonwebtoken');
 
 // モデル
 const RehabilitationOrder = require('./models/RehabilitationOrder');
-const Article = require('/home/a/Desktop/ai/agy-project/incident-system/models/Article');
-const TargetPerson = require('/home/a/Desktop/ai/agy-project/incident-system/models/TargetPerson');
-const Patient = require('/home/a/Desktop/ai/agy-project/support/menu/sakusei/models/Patient');
+const Article = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/Article');
+const TargetPerson = require('/home/a/src/github.com/datebyoai-a11y/agy-project/incident-system/models/TargetPerson');
+const Patient = require('/home/a/src/github.com/datebyoai-a11y/agy-project/support/menu/sakusei/models/Patient');
 
 // 📜 統一操作・監査ロガー
 let logOperation = () => {};
@@ -121,14 +121,16 @@ function classifyRehabTherapies(order) {
     order.ot_meal || order.ot_dressing || order.ot_toilet || order.ot_attention ||
     order.ot_executive || order.ot_recreation || order.ot_environment);
 
+  // 🗣️ 言語聴覚療法 (ST: 嚥下、構音、失語、サクション、VF検査)
   const isSt = !!(order.st_vf || order.st_swallowMeal || order.st_swallowPosture ||
     order.st_swallowForm || order.st_swallowInstruction || order.st_swallowRisk ||
-    order.st_articulation || order.st_aphasia || order.st_suction ||
-    order.sed_massage || order.sed_hotpack || order.sed_ssp || order.sed_medmer ||
-    order.sed_traction || order.eval_dementia || order.eval_walk || order.eval_physical ||
-    order.eval_bodyComp);
+    order.st_articulation || order.st_aphasia || order.st_suction);
 
-  return { isPt, isOt, isSt };
+  // ⚡ 物理療法 (消炎鎮痛処置: マッサージ、温熱・ホットパック、SSP、メドマー、牽引)
+  const isPhysio = !!(order.sed_massage || order.sed_hotpack || order.sed_ssp ||
+    order.sed_medmer || order.sed_traction || order.sed_partRegion || order.sed_partOther);
+
+  return { isPt, isOt, isSt, isPhysio };
 }
 
 // サマリーテキスト生成ヘルパー
@@ -151,14 +153,21 @@ function generateSummaryItems(order) {
   if (order.st_swallowMeal) stItems.push('摂食嚥下');
   if (order.st_articulation) stItems.push('構音訓練');
   if (order.st_aphasia) stItems.push('失語訓練');
-  if (order.sed_hotpack) stItems.push('ホットパック');
-  if (order.sed_medmer) stItems.push('メドマー');
-  if (order.sed_traction) stItems.push('牽引');
+  if (order.st_suction) stItems.push('吸引');
+
+  const physioItems = [];
+  if (order.sed_massage) physioItems.push('マッサージ');
+  if (order.sed_hotpack) physioItems.push('ホットパック');
+  if (order.sed_ssp) physioItems.push('SSP');
+  if (order.sed_medmer) physioItems.push('メドマー');
+  if (order.sed_traction) physioItems.push('牽引');
+  if (order.sed_partRegion) physioItems.push(order.sed_partRegion);
 
   return {
     pt: ptItems.join('・'),
     ot: otItems.join('・'),
-    st: stItems.join('・')
+    st: stItems.join('・'),
+    physio: physioItems.join('・')
   };
 }
 
@@ -180,12 +189,13 @@ app.get('/', async (req, res) => {
     const grouped = {
       pt: [],
       ot: [],
-      st: []
+      st: [],
+      physio: []
     };
 
     orders.forEach(order => {
-      const { isPt, isOt, isSt } = classifyRehabTherapies(order);
-      order.therapies = { isPt, isOt, isSt };
+      const { isPt, isOt, isSt, isPhysio } = classifyRehabTherapies(order);
+      order.therapies = { isPt, isOt, isSt, isPhysio };
       order.summaryItems = generateSummaryItems(order);
 
       // いずれの指示にも該当しない場合のフォールバックはPTに配置
@@ -193,6 +203,7 @@ app.get('/', async (req, res) => {
       if (isPt) { grouped.pt.push(order); assigned = true; }
       if (isOt) { grouped.ot.push(order); assigned = true; }
       if (isSt) { grouped.st.push(order); assigned = true; }
+      if (isPhysio) { grouped.physio.push(order); assigned = true; }
       if (!assigned) { grouped.pt.push(order); }
     });
 
@@ -243,7 +254,8 @@ app.get('/api/orders', async (req, res) => {
       risk: 0,
       pt: { total: 0, ordered: 0, received: 0, in_progress: 0, completed: 0 },
       ot: { total: 0, ordered: 0, received: 0, in_progress: 0, completed: 0 },
-      st: { total: 0, ordered: 0, received: 0, in_progress: 0, completed: 0 }
+      st: { total: 0, ordered: 0, received: 0, in_progress: 0, completed: 0 },
+      physio: { total: 0, ordered: 0, received: 0, in_progress: 0, completed: 0 }
     };
 
     allRecentOrders.forEach(order => {
@@ -257,7 +269,7 @@ app.get('/api/orders', async (req, res) => {
         counts.risk++;
       }
 
-      const { isPt, isOt, isSt } = classifyRehabTherapies(order);
+      const { isPt, isOt, isSt, isPhysio } = classifyRehabTherapies(order);
       if (isPt) {
         counts.pt.total++;
         if (st === 'ordered') counts.pt.ordered++;
@@ -278,6 +290,13 @@ app.get('/api/orders', async (req, res) => {
         else if (st === 'received') counts.st.received++;
         else if (st === 'in_progress') counts.st.in_progress++;
         else if (st === 'completed') counts.st.completed++;
+      }
+      if (isPhysio) {
+        counts.physio.total++;
+        if (st === 'ordered') counts.physio.ordered++;
+        else if (st === 'received') counts.physio.received++;
+        else if (st === 'in_progress') counts.physio.in_progress++;
+        else if (st === 'completed') counts.physio.completed++;
       }
     });
 
@@ -305,22 +324,24 @@ app.get('/api/orders', async (req, res) => {
 
     const orders = await RehabilitationOrder.find(filterQuery).sort({ createdAt: -1 }).lean();
 
-    // 3列に仕分け
+    // 4列に仕分け (PT / OT / ST / 物理療法)
     const grouped = {
       pt: [],
       ot: [],
-      st: []
+      st: [],
+      physio: []
     };
 
     orders.forEach(order => {
-      const { isPt, isOt, isSt } = classifyRehabTherapies(order);
-      order.therapies = { isPt, isOt, isSt };
+      const { isPt, isOt, isSt, isPhysio } = classifyRehabTherapies(order);
+      order.therapies = { isPt, isOt, isSt, isPhysio };
       order.summaryItems = generateSummaryItems(order);
 
       let assigned = false;
       if (isPt) { grouped.pt.push(order); assigned = true; }
       if (isOt) { grouped.ot.push(order); assigned = true; }
       if (isSt) { grouped.st.push(order); assigned = true; }
+      if (isPhysio) { grouped.physio.push(order); assigned = true; }
       if (!assigned) { grouped.pt.push(order); }
     });
 
@@ -626,11 +647,12 @@ app.get('/api/logs', async (req, res) => {
   }
 });
 
-// サーバー起動
-app.listen(PORT, '0.0.0.0', () => {
+// サーバー起動（デフォルトはローカル限定 127.0.0.1 / ポータルHTTPSプロキシ経由）
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
   console.log(`\n================================================================`);
-  console.log(`🤸 交雄会だて病院 リハビリ指示受けモニター (Port ${PORT}) 稼働開始`);
-  console.log(`   ・ローカル直接アクセス: http://localhost:${PORT}/`);
-  console.log(`   ・リバースプロキシ経由: http://localhost:8000/reha-uke/`);
+  console.log(`🤸 交雄会だて病院 リハビリ指示受けモニター (${HOST}:${PORT}) 稼働開始`);
+  console.log(`   ・ローカル隔離バインド: http://${HOST}:${PORT}/`);
+  console.log(`   ・リバースプロキシ経由: /reha-uke/`);
   console.log(`================================================================\n`);
 });

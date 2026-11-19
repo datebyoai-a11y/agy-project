@@ -28,6 +28,7 @@ const elTableCountBadge = document.getElementById('tableCountBadge');
 const elPtList = document.getElementById('ptCardList');
 const elOtList = document.getElementById('otCardList');
 const elStList = document.getElementById('stCardList');
+const elPhysioList = document.getElementById('physioCardList');
 
 // バッジ要素
 const elStatOrdered = document.getElementById('statOrdered');
@@ -39,6 +40,7 @@ const elStatRisk = document.getElementById('statRisk');
 const elBadgePtCount = document.getElementById('badgePtCount');
 const elBadgeOtCount = document.getElementById('badgeOtCount');
 const elBadgeStCount = document.getElementById('badgeStCount');
+const elBadgePhysioCount = document.getElementById('badgePhysioCount');
 
 const elSearchInput = document.getElementById('searchInput');
 const elRefreshBtn = document.getElementById('refreshBtn');
@@ -187,6 +189,7 @@ function renderOrders(data) {
   if (elBadgePtCount) elBadgePtCount.textContent = (data.grouped?.pt?.length || 0) + '件';
   if (elBadgeOtCount) elBadgeOtCount.textContent = (data.grouped?.ot?.length || 0) + '件';
   if (elBadgeStCount) elBadgeStCount.textContent = (data.grouped?.st?.length || 0) + '件';
+  if (elBadgePhysioCount) elBadgePhysioCount.textContent = (data.grouped?.physio?.length || 0) + '件';
   if (elTableCountBadge) elTableCountBadge.textContent = (currentOrders.length || 0) + '件';
 
   // 3. ビュー別の描画
@@ -196,6 +199,7 @@ function renderOrders(data) {
     renderKanbanColumn(elPtList, data.grouped?.pt || [], 'pt');
     renderKanbanColumn(elOtList, data.grouped?.ot || [], 'ot');
     renderKanbanColumn(elStList, data.grouped?.st || [], 'st');
+    renderKanbanColumn(elPhysioList, data.grouped?.physio || [], 'physio');
   }
 }
 
@@ -230,10 +234,11 @@ function getRiskBadgesHtml(order) {
 // 指示療法タグ生成
 function getTherapyTagsHtml(order) {
   const tags = [];
-  const { isPt, isOt, isSt } = order.therapies || {};
+  const { isPt, isOt, isSt, isPhysio } = order.therapies || {};
   if (isPt) tags.push('<span class="tag-therapy tag-pt">PT 理学</span>');
   if (isOt) tags.push('<span class="tag-therapy tag-ot">OT 作業</span>');
-  if (isSt) tags.push('<span class="tag-therapy tag-st">ST 言語・消炎</span>');
+  if (isSt) tags.push('<span class="tag-therapy tag-st">ST 言語</span>');
+  if (isPhysio) tags.push('<span class="tag-therapy tag-physio">物理療法</span>');
   return tags.join('');
 }
 
@@ -328,7 +333,8 @@ function createOrderCardHtml(order, columnType) {
         </div>
         ${summary.pt ? `<div><strong>PT:</strong> ${escapeHtml(summary.pt)}</div>` : ''}
         ${summary.ot ? `<div><strong>OT:</strong> ${escapeHtml(summary.ot)}</div>` : ''}
-        ${summary.st ? `<div><strong>ST/物理:</strong> ${escapeHtml(summary.st)}</div>` : ''}
+        ${summary.st ? `<div><strong>ST:</strong> ${escapeHtml(summary.st)}</div>` : ''}
+        ${summary.physio ? `<div><strong>物理:</strong> ${escapeHtml(summary.physio)}</div>` : ''}
         ${order.rehabNotes ? `<div style="margin-top:3px; color:#047857; font-weight:600;">📝 メモ: ${escapeHtml(order.rehabNotes)}</div>` : ''}
       </div>
 
