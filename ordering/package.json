@@ -1,0 +1,17 @@
+{
+  "name": "ordering-system",
+  "version": "0.1.0",
+  "description": "小病院向けオーダリングシステム",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node src/db/seedUsers.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "mongodb": "^6.12.0"
+  }
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>食事オーダー票 (<%= order.orderNumber %>)</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 12px; color: #000; background: #eee; }
+    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .no-print button { padding: 4px 12px; font-weight: 700; cursor: pointer; }
+    .sheet { width: 186mm; margin: 8mm auto; background: #fff; padding: 10mm; border: 1px solid #000; }
+    .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
+    .head-title { font-size: 18px; font-weight: 700; letter-spacing: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #000; padding: 5px 7px; vertical-align: middle; }
+    th { background: #f3f4f6; text-align: left; width: 18%; }
+    .flag-banner { border: 2px solid #b91c1c; color: #b91c1c; padding: 4px 8px; font-weight: 700; margin-bottom: 8px; }
+    .diet-big { font-size: 15px; font-weight: 700; }
+    .sign-grid { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .sign-grid th { text-align: center; width: 33.3%; }
+    .sign-grid td { height: 22mm; }
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none; }
+      .sheet { margin: 0; border: none; width: 100%; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <span>食事オーダー票プレビュー: <%= order.orderNumber %></span>
+    <div>
+      <button type="button" onclick="window.print()">印刷</button>
+      <button type="button" onclick="window.close()">閉じる</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="head">
+      <span>オーダー番号: <strong><%= order.orderNumber %></strong></span>
+      <span class="head-title">食 事 オ ー ダ ー 票</span>
+      <span><%= order.startDate %> <%= order.startMeal %>〜</span>
+    </div>
+
+    <% if (order.isCancelled) { %>
+      <div class="flag-banner">【中止】<%= order.cancelReason %>（<%= order.cancelledBy %>）</div>
+    <% } %>
+    <% if (order.isSuperseded) { %>
+      <div class="flag-banner">【訂正済】新オーダー番号: <%= order.supersededBy %></div>
+    <% } %>
+
+    <table>
+      <tr>
+        <th>患者ID</th>
+        <td><strong><%= order.patientId %></strong></td>
+        <th>氏名（カナ）</th>
+        <td><strong><%= order.patientName %></strong>（<%= order.patientKana || '-' %>）</td>
+      </tr>
+      <tr>
+        <th>生年月日/性/年齢</th>
+        <td><%= order.birthDate || '-' %> / <%= order.gender %> / <%= order.age != null ? order.age + '歳' : '-' %></td>
+        <th>区分・病室</th>
+        <td><%= order.ward %> <%= order.room ? order.room + '号室' : '' %></td>
+      </tr>
+      <tr>
+        <th>開始日・開始食</th>
+        <td><strong><%= order.startDate %> <%= order.startMeal %>〜</strong></td>
+        <th>指示者</th>
+        <td><%= order.doctorName %></td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <th>食種</th>
+        <td colspan="3" class="diet-big"><%= order.dietType %></td>
+      </tr>
+      <tr>
+        <th>主食種類</th>
+        <td><strong><%= order.stapleType %></strong></td>
+        <th>主食量</th>
+        <td><strong><%= order.stapleAmount %></strong></td>
+      </tr>
+      <tr>
+        <th>副食形態</th>
+        <td><strong><%= order.sideTexture %></strong></td>
+        <th>とろみ指定</th>
+        <td><strong><%= order.thickener %></strong></td>
+      </tr>
+      <tr>
+        <th>エネルギー量</th>
+        <td><%= order.calories || '標準' %></td>
+        <th>塩分制限</th>
+        <td><%= order.saltLimit || '制限なし' %></td>
+      </tr>
+      <tr>
+        <th>蛋白制限</th>
+        <td><%= order.proteinLimit || '-' %></td>
+        <th>水分制限</th>
+        <td><%= order.waterLimit || '-' %></td>
+      </tr>
+      <tr>
+        <th>補助食品・濃厚流動</th>
+        <td colspan="3"><%= order.supplement || '-' %></td>
+      </tr>
+      <tr>
+        <th>禁止食品・アレルギー</th>
+        <td colspan="3"><strong><%= order.prohibitedFoods || '特になし' %></strong></td>
+      </tr>
+      <tr>
+        <th>食事介助・食器</th>
+        <td colspan="3"><%= (order.eatingAid && order.eatingAid.length > 0) ? order.eatingAid.join(' ／ ') : '-' %></td>
+      </tr>
+      <tr>
+        <th>備考・栄養科連絡</th>
+        <td colspan="3">
+          <%= order.remarks || '-' %>
+          <% if (order.parentOrderNumber) { %> 【訂正元: <%= order.parentOrderNumber %>】<% } %>
+        </td>
+      </tr>
+    </table>
+
+    <table class="sign-grid">
+      <tr>
+        <th>指示医師確認</th>
+        <th>病棟看護師確認</th>
+        <th>栄養科・管理栄養士受付</th>
+      </tr>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </div>
+
+  <% if (autoPrint) { %>
+    <script>window.addEventListener('load', () => window.print());</script>
+  <% } %>
+</body>
+</html>

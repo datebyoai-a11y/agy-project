@@ -1,0 +1,181 @@
+<%
+  const injLabelMap = {
+    '入院注射': { title: '入院注射箋', spaced: '入 院 注 射 箋' },
+    '外来注射': { title: '外来注射箋', spaced: '外 来 注 射 箋' }
+  };
+  const injLabel = injLabelMap[order.injectionType] || injLabelMap['入院注射'];
+%>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title><%= injLabel.title %> (<%= order.orderNumber %>)</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 12px; color: #000; background: #eee; }
+    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .no-print button { padding: 4px 12px; font-weight: 700; cursor: pointer; }
+    .sheet { width: 186mm; margin: 8mm auto; background: #fff; padding: 10mm; border: 1px solid #000; }
+    .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
+    .head-title { font-size: 18px; font-weight: 700; letter-spacing: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; }
+    th { background: #f3f4f6; text-align: left; }
+    .meta-th { width: 15%; }
+    .center { text-align: center; white-space: nowrap; }
+    .flag-banner { border: 2px solid #b91c1c; color: #b91c1c; padding: 4px 8px; font-weight: 700; margin-bottom: 8px; }
+    .sign-grid { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .sign-grid th { text-align: center; width: 25%; }
+    .sign-grid td { height: 22mm; }
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none; }
+      .sheet { margin: 0; border: none; width: 100%; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <span><%= injLabel.title %>プレビュー: <%= order.orderNumber %></span>
+    <div>
+      <button type="button" onclick="window.print()">印刷</button>
+      <button type="button" onclick="window.close()">閉じる</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="head">
+      <span>注射番号: <strong><%= order.orderNumber %></strong></span>
+      <span class="head-title"><%= injLabel.spaced %></span>
+      <span><%= order.injectionType %></span>
+    </div>
+
+    <% if (order.isCancelled) { %>
+      <div class="flag-banner">【中止】<%= order.cancelReason %>（<%= order.cancelledBy %>）</div>
+    <% } %>
+    <% if (order.isSuperseded) { %>
+      <div class="flag-banner">【訂正済】新注射番号: <%= order.supersededBy %></div>
+    <% } %>
+
+    <table>
+      <tr>
+        <th class="meta-th">患者ID</th>
+        <td><strong><%= order.patientId %></strong></td>
+        <th class="meta-th">氏名（カナ）</th>
+        <td><strong><%= order.patientName %></strong>（<%= order.patientKana || '-' %>）</td>
+      </tr>
+      <tr>
+        <th class="meta-th">生年月日/性/年齢</th>
+        <td><%= order.birthDate || '-' %> / <%= order.gender %> / <%= order.age != null ? order.age + '歳' : '-' %></td>
+        <th class="meta-th">区分・病室</th>
+        <td><%= order.ward %> <%= order.room ? order.room + '号室' : '' %></td>
+      </tr>
+      <tr>
+        <th class="meta-th">実施開始日</th>
+        <td><%= order.startDate %></td>
+        <th class="meta-th">指示医師</th>
+        <td><%= order.doctorName %></td>
+      </tr>
+    </table>
+
+    <% const showTimingCol = order.injectionType !== '入院注射'; %>
+    <table>
+      <thead>
+        <tr>
+          <th class="center" style="width:36px;">Rp</th>
+          <th>薬剤名</th>
+          <th class="center">投与量</th>
+          <th class="center">投与経路</th>
+          <% if (showTimingCol) { %><th class="center">実施時間</th><% } %>
+          <th>速度・時間</th>
+          <th class="center">日数/回数</th>
+          <th>備考</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (order.items || []).forEach((it) => { %>
+          <tr>
+            <td class="center"><strong>Rp<%= it.rpNo %></strong></td>
+            <td>
+              <strong><%= it.drugName %></strong>
+              <% if (it.genericName) { %><div style="font-size:10px;color:#444;"><%= it.genericName %></div><% } %>
+            </td>
+            <td class="center"><strong><%= it.dose %></strong></td>
+            <td class="center"><%= it.route %></td>
+            <% if (showTimingCol) { %><td class="center"><%= it.timing || '-' %></td><% } %>
+            <td><%= it.rate || '-' %></td>
+            <td class="center"><strong><%= it.days %><%= it.dayUnit %></strong></td>
+            <td><%= it.note || '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <%
+      const allScheduleDates = Array.from(
+        new Set(
+          (order.items || []).flatMap((it) => (it.dailySchedule || []).map((d) => d.date))
+        )
+      ).sort();
+    %>
+    <% if (allScheduleDates.length > 0) { %>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px;" class="center">Rp</th>
+            <th>薬剤名（日付別 継続/削除）</th>
+            <% allScheduleDates.forEach((d) => { %>
+              <th class="center"><%= d.slice(5).replace('-', '/') %></th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% (order.items || []).forEach((it) => { %>
+            <% const sMap = Object.fromEntries((it.dailySchedule || []).map((x) => [x.date, x.status])); %>
+            <tr>
+              <td class="center"><strong>Rp<%= it.rpNo %></strong></td>
+              <td><%= it.drugName %></td>
+              <% allScheduleDates.forEach((d) => { %>
+                <% const st = sMap[d] || ''; %>
+                <td class="center" style="<%= st === 'DELETE' ? 'color:#b91c1c;text-decoration:line-through;' : 'font-weight:700;' %>">
+                  <%= st === 'CONTINUE' ? '○ 継続' : st === 'DELETE' ? '× 削除' : '-' %>
+                </td>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+
+    <table>
+      <tr>
+        <th class="meta-th">全体備考</th>
+        <td>
+          <%= order.remarks || '-' %>
+          <% if (order.parentOrderNumber) { %> 【訂正元: <%= order.parentOrderNumber %>】<% } %>
+        </td>
+      </tr>
+    </table>
+
+    <table class="sign-grid">
+      <tr>
+        <th>指示医師確認</th>
+        <th>薬剤師監査・混注</th>
+        <th>看護師ダブルチェック</th>
+        <th>実施者サイン・時刻</th>
+      </tr>
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </table>
+  </div>
+
+  <% if (autoPrint) { %>
+    <script>window.addEventListener('load', () => window.print());</script>
+  <% } %>
+</body>
+</html>

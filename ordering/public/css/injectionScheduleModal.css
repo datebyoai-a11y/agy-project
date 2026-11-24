@@ -1,0 +1,284 @@
+.inj-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.inj-modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.inj-modal {
+  width: min(1060px, 96vw);
+  max-height: 88vh;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.inj-modal__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: #15314b;
+  color: #ffffff;
+}
+
+.inj-modal__title {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.inj-modal__meta {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.inj-modal__close {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.inj-modal__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #eef3f8;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.inj-modal__lbl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inj-modal__hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: #475569;
+}
+
+.inj-m-input {
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid #94a3b8;
+  border-radius: 2px;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.inj-m-rev {
+  width: 190px;
+}
+
+.inj-m-btn {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid #94a3b8;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inj-m-btn:hover { background: #e2e8f0; }
+.inj-m-btn--primary { background: #0f5f8c; border-color: #0f5f8c; color: #ffffff; }
+.inj-m-btn--primary:hover { background: #0b4a6e; }
+.inj-m-btn--ok { background: #ecfdf5; border-color: #10b981; color: #065f46; }
+.inj-m-btn--ok:hover { background: #d1fae5; }
+.inj-m-btn--danger { background: #fef2f2; border-color: #f87171; color: #991b1b; }
+.inj-m-btn--danger:hover { background: #fee2e2; }
+
+.inj-modal__body {
+  flex: 1;
+  min-height: 160px;
+  overflow: auto;
+  padding: 8px 10px;
+}
+
+.inj-sched-table-wrap {
+  overflow: auto;
+}
+
+.inj-sched-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.inj-sched-table th,
+.inj-sched-table td {
+  border: 1px solid #cbd5e1;
+  padding: 4px 5px;
+  vertical-align: middle;
+}
+
+.inj-sched-table thead th {
+  background: #e6eef6;
+  font-weight: 700;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.inj-sched-date-th {
+  text-align: center;
+  min-width: 68px;
+}
+
+.inj-sched-col-btn {
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 1px 2px;
+  width: 100%;
+}
+
+.inj-sched-col-btn:hover {
+  color: #0f5f8c;
+  text-decoration: underline;
+}
+
+.inj-sched-col-btn.is-sun { color: #b91c1c; }
+.inj-sched-col-btn.is-sat { color: #1d4ed8; }
+
+.inj-sched-drug-cell {
+  min-width: 210px;
+}
+
+.inj-sched-drug-sub {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.inj-sched-row-ops {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.inj-sched-cell {
+  text-align: center;
+  padding: 2px !important;
+}
+
+.inj-cell-toggle {
+  width: 100%;
+  min-width: 58px;
+  height: 26px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.inj-cell-toggle.is-continue {
+  background: #dcfce7;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.inj-cell-toggle.is-continue:hover {
+  background: #bbf7d0;
+}
+
+.inj-cell-toggle.is-delete {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+  text-decoration: line-through;
+}
+
+.inj-cell-toggle.is-delete:hover {
+  background: #fecaca;
+}
+
+.inj-modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-top: 1px solid #cbd5e1;
+}
+
+.inj-modal__foot-left,
+.inj-modal__foot-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inj-modal__append-note {
+  font-size: 10px;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.inj-modal__status {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.inj-modal__status.is-err { color: #b42318; }
+.inj-modal__status.is-ok { color: #146c43; }
+
+/* 履歴カード内の日付別チップ表示 */
+.inj-sched-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.inj-chip {
+  display: inline-block;
+  padding: 0 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.inj-chip--cont {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.inj-chip--del {
+  background: #fee2e2;
+  color: #991b1b;
+  text-decoration: line-through;
+}

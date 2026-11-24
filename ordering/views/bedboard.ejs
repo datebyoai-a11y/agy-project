@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/bedboard.css">
+</head>
+<body
+  class="page-bedboard"
+  data-dept-code="<%= department.code %>"
+  data-dept-name="<%= department.name %>"
+>
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <main class="bb-main">
+    <!-- 1行コンパクト絞込・表示項目切替バー -->
+    <div class="bb-toolbar" role="region" aria-label="ベッドボード絞込・表示項目設定">
+      <div class="bb-toolbar__left">
+        <input
+          type="text"
+          id="bbFilterInput"
+          class="bb-input"
+          placeholder="病室・患者ID・氏名・病名で絞込"
+          aria-label="ベッドボード検索"
+        >
+        <span class="bb-occupancy" id="bbOccupancyText">在床 <%= occupiedBeds %>名 ／ 全 <%= totalBeds %>床</span>
+        <span class="bb-status-msg" id="bbStatusMsg" role="status" aria-live="polite"></span>
+      </div>
+
+      <div class="bb-toolbar__checks">
+        <label class="bb-chk"><input type="checkbox" id="chkShowEmpty" checked><span>空床表示</span></label>
+        <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-demographics" checked><span>性別/年齢</span></label>
+        <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-dx" checked><span>病名</span></label>
+        <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-caution" checked><span>注意事項</span></label>
+        <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-allergy" checked><span>アレルギー</span></label>
+        <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-orders" checked><span>オーダー件数</span></label>
+        <label class="bb-chk"><input type="checkbox" id="chkShowHistory"><span>移動履歴</span></label>
+      </div>
+    </div>
+
+    <!-- 移動履歴パネル（チェックボックスで表示切替・追記ログ） -->
+    <section class="bb-history-panel is-hidden" id="bbHistoryPanel" aria-label="入退床・移動履歴">
+      <% if (!recentMovements || recentMovements.length === 0) { %>
+        <div class="bb-history-empty">移動履歴はありません。</div>
+      <% } else { %>
+        <table class="bb-history-table">
+          <thead>
+            <tr>
+              <th>日時</th>
+              <th>区分</th>
+              <th>患者</th>
+              <th>移動元 → 移動先</th>
+              <th>理由・備考</th>
+              <th>操作者</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentMovements.forEach((mv) => { %>
+              <%
+                const dt = mv.movedAt
+                  ? new Date(mv.movedAt).toLocaleString('ja-JP', {
+                      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                    })
+                  : '-';
+              %>
+              <tr>
+                <td class="cell-nowrap"><%= dt %></td>
+                <td class="cell-nowrap"><span class="mv-tag mv-tag--<%= mv.action %>"><%= mv.actionLabel %></span></td>
+                <td class="cell-nowrap"><code><%= mv.patientId %></code> <strong><%= mv.patientName %></strong></td>
+                <td class="cell-nowrap">
+                  <%= mv.fromDepartmentName %><%= mv.fromRoom ? ' ' + mv.fromRoom : '' %>
+                  →
+                  <strong><%= mv.toDepartmentName %><%= mv.toRoom ? ' ' + mv.toRoom : '' %></strong>
+                </td>
+                <td><%= mv.reason || '-' %></td>
+                <td class="cell-nowrap"><%= mv.actor || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+
+    <!-- ベッドボード本体 -->
+    <div class="bb-scroll">
+      <div class="bb-rooms" id="bbRoomsGrid">
+        <% rooms.forEach((room) => { %>
+          <% const occCount = room.beds.filter((b) => b.patient).length; %>
+          <section class="bb-room" data-room-no="<%= room.roomNo %>" data-occupied="<%= occCount %>">
+            <div class="bb-room__head">
+              <span class="bb-room__no"><%= room.roomNo === '未割当' ? '病室未割当' : `${room.roomNo}号室` %></span>
+              <span class="bb-room__meta"><%= room.roomType %>（<%= occCount %>/<%= room.beds.length %>）</span>
+            </div>
+
+            <div class="bb-beds">
+              <% room.beds.forEach((bed) => { %>
+                <% if (bed.patient) { %>
+                  <%
+                    const p = bed.patient;
+                    const emptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+                    const hasAllergy = Boolean(p.allergies && !emptyPat.test(String(p.allergies).trim()));
+                    const hasCaution = Boolean(p.cautions && !emptyPat.test(String(p.cautions).trim()));
+                    const dxNames = (p.activeDiagnoses || []).map((d) => d.name).join('・');
+                    const searchStr = `${room.roomNo} ${bed.bedCode} ${p.patientId} ${p.fullName} ${p.kana || ''} ${dxNames} ${p.cautions || ''} ${p.allergies || ''}`.toLowerCase();
+                  %>
+                  <div
+                    class="bb-bed bb-bed--occupied <%= p.patientId === selectedPatientId ? 'is-current' : '' %>"
+                    draggable="true"
+                    data-occupied="1"
+                    data-bed-code="<%= bed.bedCode %>"
+                    data-patient-id="<%= p.patientId %>"
+                    data-patient-name="<%= p.fullName %>"
+                    data-search="<%= searchStr %>"
+                  >
+                    <a
+                      href="<%= workspaceBasePath %>?patientId=<%= encodeURIComponent(p.patientId) %>"
+                      class="bb-bed__link"
+                      title="クリックで患者ワークスペースを開く（空床へドラッグで移動可）"
+                    >
+                      <div class="bb-bed__top">
+                        <span class="bb-bed__code"><%= bed.bedCode %></span>
+                        <code class="bb-bed__id"><%= p.patientId %></code>
+                        <span class="bb-bed__demo" data-bb-group="bb-demographics">
+                          <span class="bb-gender bb-gender--<%= p.gender === '男' ? 'm' : p.gender === '女' ? 'f' : 'o' %>"><%= p.gender %></span>
+                          <%= p.age != null ? `${p.age}歳` : '-' %>
+                        </span>
+                      </div>
+
+                      <div class="bb-bed__name">
+                        <strong><%= p.fullName %></strong>
+                        <% if (p.kana) { %><span class="bb-bed__kana"><%= p.kana %></span><% } %>
+                      </div>
+
+                      <% if (dxNames) { %>
+                        <div class="bb-bed__dx" data-bb-group="bb-dx" title="<%= dxNames %>"><%= dxNames %></div>
+                      <% } %>
+
+                      <% if (hasCaution || hasAllergy) { %>
+                        <div class="bb-bed__alerts">
+                          <% if (hasCaution) { %>
+                            <span class="bb-tag bb-tag--caution" data-bb-group="bb-caution">注: <%= p.cautions %></span>
+                          <% } %>
+                          <% if (hasAllergy) { %>
+                            <span class="bb-tag bb-tag--allergy" data-bb-group="bb-allergy">禁: <%= p.allergies %></span>
+                          <% } %>
+                        </div>
+                      <% } %>
+
+                      <div class="bb-bed__orders" data-bb-group="bb-orders">
+                        <span class="bb-ord <%= p.counts.rx > 0 ? 'is-on bb-ord--rx' : '' %>">処:<%= p.counts.rx %></span>
+                        <span class="bb-ord <%= p.counts.inj > 0 ? 'is-on bb-ord--inj' : '' %>">注:<%= p.counts.inj %></span>
+                        <span class="bb-ord <%= p.counts.rad > 0 ? 'is-on bb-ord--rad' : '' %>">放:<%= p.counts.rad %></span>
+                        <span class="bb-ord <%= p.counts.meal > 0 ? 'is-on bb-ord--meal' : '' %>">食:<%= p.counts.meal %></span>
+                        <span class="bb-ord <%= p.counts.rehab > 0 ? 'is-on bb-ord--rehab' : '' %>">リ:<%= p.counts.rehab %></span>
+                      </div>
+                    </a>
+
+                    <div class="bb-bed__ops">
+                      <button
+                        type="button"
+                        class="bb-op-btn js-bb-move"
+                        data-patient-id="<%= p.patientId %>"
+                        data-patient-name="<%= p.fullName %>"
+                        data-bed-code="<%= bed.bedCode %>"
+                      >移動</button>
+                      <button
+                        type="button"
+                        class="bb-op-btn bb-op-btn--transfer js-bb-transfer"
+                        data-patient-id="<%= p.patientId %>"
+                        data-patient-name="<%= p.fullName %>"
+                        data-bed-code="<%= bed.bedCode %>"
+                      >他病棟</button>
+                      <button
+                        type="button"
+                        class="bb-op-btn bb-op-btn--discharge js-bb-discharge"
+                        data-patient-id="<%= p.patientId %>"
+                        data-patient-name="<%= p.fullName %>"
+                        data-bed-code="<%= bed.bedCode %>"
+                      >退床</button>
+                    </div>
+                  </div>
+                <% } else { %>
+                  <div
+                    class="bb-bed bb-bed--empty"
+                    data-occupied="0"
+                    data-bed-code="<%= bed.bedCode %>"
+                    data-search="<%= `${room.roomNo} ${bed.bedCode} 空床`.toLowerCase() %>"
+                  >
+                    <div class="bb-bed__top">
+                      <span class="bb-bed__code"><%= bed.bedCode %></span>
+                      <span class="bb-empty-pill">空床</span>
+                    </div>
+                    <div class="bb-bed__empty-ops">
+                      <button
+                        type="button"
+                        class="bb-op-btn bb-op-btn--admit js-bb-admit"
+                        data-bed-code="<%= bed.bedCode %>"
+                      >＋ 入床</button>
+                    </div>
+                  </div>
+                <% } %>
+              <% }) %>
+            </div>
+          </section>
+        <% }) %>
+      </div>
+    </div>
+  </main>
+
+  <!-- 患者移動モーダル（入床・退床・同病棟移動・他病棟移動） -->
+  <div class="bb-modal-backdrop" id="bbMoveModal" role="dialog" aria-modal="true" aria-labelledby="bbModalTitle" hidden>
+    <div class="bb-modal">
+      <div class="bb-modal__head">
+        <span id="bbModalTitle">患者移動</span>
+        <button type="button" class="bb-modal__close" id="btnCloseBbModal" aria-label="閉じる">×</button>
+      </div>
+
+      <form id="bbMoveForm" class="bb-modal__body">
+        <div class="bb-modal__error" id="bbModalError" role="alert" hidden></div>
+        <div class="bb-modal__summary" id="bbModalSummary"></div>
+
+        <!-- 入床: 対象患者選択 -->
+        <div class="bb-field" id="grpAdmitPatient" hidden>
+          <label for="selAdmitPatient" class="bb-label">入床患者を選択</label>
+          <select id="selAdmitPatient" class="bb-select">
+            <option value="">患者を選択してください...</option>
+            <% (admitCandidates || []).forEach((c) => { %>
+              <option value="<%= c.patientId %>">
+                [<%= c.patientId %>] <%= c.fullName %>（現在: <%= c.careCategoryName %><%= c.wardRoom ? ' ' + c.wardRoom : '' %>）
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- 他病棟移動: 移動先病棟選択 -->
+        <div class="bb-field" id="grpTargetDept" hidden>
+          <label for="selTargetDept" class="bb-label">移動先病棟・フロア</label>
+          <select id="selTargetDept" class="bb-select">
+            <% (inpatientDepartments || []).forEach((d) => { %>
+              <% if (d.code !== department.code) { %>
+                <option value="<%= d.code %>"><%= d.name %></option>
+              <% } %>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- 移動・他病棟: 移動先ベッド選択 -->
+        <div class="bb-field" id="grpTargetBed" hidden>
+          <label for="selTargetBed" class="bb-label">移動先ベッド（空床）</label>
+          <select id="selTargetBed" class="bb-select">
+            <% (emptyBeds || []).forEach((b) => { %>
+              <option value="<%= b.bedCode %>"><%= b.bedCode %>（<%= b.roomNo %>号室・<%= b.roomType %>）</option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- 理由・備考 -->
+        <div class="bb-field" id="grpMoveReason">
+          <label for="inpMoveReason" class="bb-label">理由・備考</label>
+          <input type="text" id="inpMoveReason" class="bb-text" placeholder="例: 入院、転室、退院、療養移行など">
+        </div>
+
+        <div class="bb-modal__foot">
+          <button type="button" class="bb-btn" id="btnCancelBbModal">キャンセル</button>
+          <button type="submit" class="bb-btn bb-btn--primary" id="btnSubmitBbModal">確定</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script id="bbEmptyBedsData" type="application/json"><%- JSON.stringify(emptyBeds || []) %></script>
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/bedboard.js"></script>
+</body>
+</html>

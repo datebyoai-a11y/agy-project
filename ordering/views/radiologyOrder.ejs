@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/radiologyOrder.css">
+</head>
+<body class="page-rad-order <%= isEmbed ? 'is-embed' : '' %>" data-embed="<%= isEmbed ? '1' : '0' %>" data-revise="<%= reviseOrderNumber || '' %>">
+  <% if (!isEmbed) { %>
+    <%- include('partials/statusBar', { statusBar }) %>
+  <% } %>
+
+  <!-- 1行コンパクト制御バー -->
+  <div class="compact-bar" role="region" aria-label="患者選択・様式切替・表示項目設定">
+    <div class="compact-bar__group">
+      <% if (!isEmbed) { %>
+        <select id="patientPicker" class="ctrl-select ctrl-select--patient" aria-label="対象患者選択">
+          <option value="">対象患者を選択（手入力可）</option>
+          <% patients.forEach((p) => { %>
+            <option
+              value="<%= p.patientId %>"
+              data-id="<%= p.patientId %>"
+              data-name="<%= p.fullName %>"
+              data-kana="<%= p.kana || '' %>"
+              data-birth="<%= p.birthDate || '' %>"
+              data-age="<%= p.age != null ? p.age : '' %>"
+              data-gender="<%= p.gender || '男' %>"
+              data-ward="<%= p.careCategoryName || '外来' %>"
+              data-room="<%= p.wardRoom || '' %>"
+              data-allergies="<%= p.allergies || '' %>"
+              <%= selectedPatient && selectedPatient.patientId === p.patientId ? 'selected' : '' %>
+            >[<%= p.patientId %>] <%= p.fullName %>（<%= p.careCategoryName %><%= p.wardRoom ? ' ' + p.wardRoom : '' %> / <%= p.age != null ? p.age + '歳' : '-' %>）</option>
+          <% }) %>
+        </select>
+      <% } %>
+
+      <div class="form-tabs" role="tablist" aria-label="放射線伝票様式">
+        <button type="button" class="form-tab is-active" data-form-tab="CT" role="tab" aria-selected="true">
+          <span class="dot dot--ct"></span>CT検査依頼書
+        </button>
+        <button type="button" class="form-tab" data-form-tab="FLUORO" role="tab" aria-selected="false">
+          <span class="dot dot--fluoro"></span>透視検査依頼書
+        </button>
+        <button type="button" class="form-tab" data-form-tab="XRAY" role="tab" aria-selected="false">
+          <span class="dot dot--xray"></span>診療X線照射録
+        </button>
+      </div>
+    </div>
+
+    <div class="compact-bar__checks">
+      <% if (!isEmbed) { %>
+        <label class="chk-inline"><input type="checkbox" data-pane-toggle="tree" checked>左ツリー</label>
+        <label class="chk-inline"><input type="checkbox" data-pane-toggle="history" checked>過去記載</label>
+      <% } %>
+      <label class="chk-inline"><input type="checkbox" data-field-toggle="physique" checked>体格・依頼科</label>
+      <label class="chk-inline"><input type="checkbox" data-field-toggle="conditions" checked>撮影条件</label>
+      <label class="chk-inline"><input type="checkbox" data-field-toggle="meds" checked>薬剤・材料</label>
+    </div>
+
+    <div class="compact-bar__group">
+      <span class="perm-pill <%= rolePerm.canCreate ? 'perm-pill--ok' : 'perm-pill--warn' %>">
+        発行権限: <%= rolePerm.canCreate ? '可' : '参照' %>
+      </span>
+      <% if (!isEmbed) { %>
+        <a href="/radiology/monitor" class="btn-cell btn-cell--sub">モニターへ</a>
+      <% } %>
+      <span class="status-msg" id="statusMessage" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <!-- 縦3分割メイン画面: 左=ツリー / 中=過去記載 / 右=記入画面 -->
+  <main class="rad-grid <%= isEmbed ? 'hide-tree hide-history' : '' %>" id="radGrid">
+    <!-- 左ペイン: ツリー方式メニュー（様式・クイックプリセット） -->
+    <aside class="pane pane--tree <%= isEmbed ? 'is-hidden' : '' %>" data-pane="tree" aria-label="放射線オーダーツリーメニュー">
+      <div class="pane__bar">
+        <span class="pane__label">様式・定型プリセット</span>
+      </div>
+      <ul class="tree-list">
+        <li class="tree-node">
+          <details open>
+            <summary class="tree-summary"><span class="dot dot--ct"></span>CT検査依頼書</summary>
+            <ul class="tree-children">
+              <li><button type="button" class="tree-leaf" data-preset="ct:chest">胸部精査（単純）</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="ct:abdo">腹部・骨盤（造影2p）</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="ct:head">頭部打撲（単純）</button></li>
+            </ul>
+          </details>
+        </li>
+        <li class="tree-node">
+          <details open>
+            <summary class="tree-summary"><span class="dot dot--fluoro"></span>透視検査依頼書</summary>
+            <ul class="tree-children">
+              <li><button type="button" class="tree-leaf" data-preset="fluoro:peg">PEG胃瘻チューブ交換</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="fluoro:vf">VF嚥下造影検査</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="fluoro:gi">消化管造影検査</button></li>
+            </ul>
+          </details>
+        </li>
+        <li class="tree-node">
+          <details open>
+            <summary class="tree-summary"><span class="dot dot--xray"></span>診療X線照射録</summary>
+            <ul class="tree-children">
+              <li><button type="button" class="tree-leaf" data-preset="xray:chest">胸部2方向（立位/側面）</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="xray:portable_chest">胸部ポータブル（病室）</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="xray:abdo">腹部立位・臥位</button></li>
+              <li><button type="button" class="tree-leaf" data-preset="xray:lumbar">腰椎正面・側面</button></li>
+            </ul>
+          </details>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- 中ペイン: 過去記載（放射線オーダー履歴・追記フラグ管理） -->
+    <section class="pane pane--history <%= isEmbed ? 'is-hidden' : '' %>" data-pane="history" aria-label="過去放射線オーダー一覧">
+      <div class="pane__bar">
+        <span class="pane__label">過去オーダー（<%= selectedPatient ? selectedPatient.fullName : '全患者' %>）</span>
+        <div class="pane__checks">
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="purpose" checked>目的</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="cond">条件</label>
+          <label class="chk-inline"><input type="checkbox" id="toggleHistoryInactive" checked>中止/訂正済</label>
+        </div>
+      </div>
+      <div class="history-list" id="pastOrdersList">
+        <% if (!pastOrders || pastOrders.length === 0) { %>
+          <div class="empty-msg">過去の放射線オーダーはありません。</div>
+        <% } else { %>
+          <% pastOrders.forEach((o) => { %>
+            <%
+              const stLabel = o.isSuperseded
+                ? '訂正済'
+                : o.isCancelled
+                  ? '中止'
+                  : o.orderStatus === 'COMPLETED'
+                    ? '実施済'
+                    : o.orderStatus === 'ACCEPTED'
+                      ? '受付済'
+                      : '未受付';
+              const stClass = o.isSuperseded
+                ? 'st-superseded'
+                : o.isCancelled
+                  ? 'st-cancelled'
+                  : o.orderStatus === 'COMPLETED'
+                    ? 'st-completed'
+                    : o.orderStatus === 'ACCEPTED'
+                      ? 'st-accepted'
+                      : 'st-ordered';
+              const dtStr = o.scheduledDate
+                ? new Date(o.scheduledDate).toLocaleString('ja-JP', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                  })
+                : '';
+            %>
+            <article
+              class="hist-item hist-item--<%= o.modalityKey %> <%= (o.isCancelled || o.isSuperseded) ? 'is-flagged' : '' %>"
+              data-order-number="<%= o.orderNumber %>"
+              data-detail-type="rad"
+              data-detail-order="<%= o.orderNumber %>"
+              data-flagged="<%= (o.isCancelled || o.isSuperseded) ? 'true' : 'false' %>"
+              title="クリックで詳細表示"
+            >
+              <div class="hist-item__top">
+                <span class="mod-tag mod-tag--<%= o.modalityKey %>"><%= o.modality %></span>
+                <code class="hist-num"><%= o.orderNumber %></code>
+                <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                <span class="hist-date"><%= dtStr %></span>
+              </div>
+              <div class="hist-item__main">
+                <% if (!selectedPatient) { %>
+                  <span class="hist-patient">[<%= o.patientId %>] <%= o.patientName %></span>
+                <% } %>
+                <strong><%= o.examType %></strong>
+                <% if (o.isPortable) { %><span class="mini-alert mini-alert--port">ポータブル(<%= o.portableRoom || o.room || '病室' %>)</span><% } %>
+                <% if (o.isUrgent) { %><span class="mini-alert mini-alert--urgent">至急</span><% } %>
+                <% if (o.contrast === '造影') { %><span class="mini-alert mini-alert--contrast">造影</span><% } %>
+              </div>
+              <% if (o.purpose) { %>
+                <div class="hist-item__sub" data-hist-item="purpose">目的: <%= o.purpose %></div>
+              <% } %>
+              <% if (o.conditionKv || o.conditionMa || o.conditionSec) { %>
+                <div class="hist-item__sub" data-hist-item="cond">条件: <%= o.conditionKv || '-' %>kV / <%= o.conditionMa || '-' %>mA / <%= o.conditionSec || '-' %>s</div>
+              <% } %>
+              <% if (o.parentOrderNumber) { %>
+                <div class="hist-item__flag">訂正元: <%= o.parentOrderNumber %><%= o.revisionNote ? `（${o.revisionNote}）` : '' %></div>
+              <% } %>
+              <% if (o.isSuperseded) { %>
+                <div class="hist-item__flag">訂正先: <%= o.supersededBy %></div>
+              <% } %>
+              <% if (o.isCancelled) { %>
+                <div class="hist-item__flag">中止理由: <%= o.cancelReason || '中止' %>（<%= o.cancelledBy %>）</div>
+              <% } %>
+              <div class="hist-item__foot">
+                <span class="hist-doc">依頼: <%= o.doctorName %></span>
+                <div class="hist-actions">
+                  <% if (!o.isCancelled && !o.isSuperseded) { %>
+                    <button type="button" class="btn-mini js-revise-order" data-order-number="<%= o.orderNumber %>">訂正再発行</button>
+                    <button type="button" class="btn-mini btn-mini--warn js-cancel-order" data-order-number="<%= o.orderNumber %>">中止</button>
+                  <% } %>
+                  <a href="/radiology/print/<%= encodeURIComponent(o.orderNumber) %>" target="_blank" class="btn-mini">伝票</a>
+                </div>
+              </div>
+            </article>
+          <% }) %>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- 右ペイン: 記入画面（バックアップ原本3様式ベース） -->
+    <section class="pane pane--editor" aria-label="放射線オーダー記入画面">
+      <form id="radOrderForm" class="slip-form" novalidate>
+        <input type="hidden" id="fFormType" value="CT">
+        <input type="hidden" id="fParentOrderNumber" value="">
+        <input type="hidden" id="fAge" value="<%= selectedPatient && selectedPatient.age != null ? selectedPatient.age : '' %>">
+        <input type="hidden" id="fGender" value="<%= selectedPatient ? selectedPatient.gender : '男' %>">
+        <input type="hidden" id="fWard" value="<%= initialWard %>">
+        <input type="hidden" id="fSourceDept" value="<%= sourceDept %>">
+        <input type="hidden" id="fMobility" value="徒歩">
+        <input type="hidden" id="fInfection" value="無">
+        <input type="hidden" id="fCtContrast" value="単純">
+        <input type="hidden" id="fXrayDvd" value="未">
+
+        <!-- 訂正再発行モード通知バー -->
+        <div class="revision-banner" id="revisionBanner" hidden>
+          <span>訂正再発行モード（元オーダー <strong id="revisionParentLabel"></strong> に訂正済フラグを立て新規追記します）</span>
+          <input type="text" id="fRevisionNote" class="ctrl-input" placeholder="訂正理由（任意）">
+          <button type="button" class="btn-cell btn-cell--sub" id="btnCancelRevision">訂正解除</button>
+        </div>
+
+        <!-- 原本カラーバー -->
+        <div class="slip-colorbar slip-colorbar--ct" id="slipColorbar"></div>
+
+        <div class="slip-scroll">
+          <!-- 共通上部: 患者情報(左) & 検査基本情報(右) -->
+          <div class="slip-top-grid">
+            <table class="slip-table">
+              <tr>
+                <th class="w-lbl">ID番号</th>
+                <td>
+                  <input type="text" id="fPatientId" class="s-input s-mono" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" placeholder="患者ID" required>
+                </td>
+              </tr>
+              <tr>
+                <th>氏名(カナ)</th>
+                <td>
+                  <div class="s-inline">
+                    <input type="text" id="fPatientName" class="s-input s-bold" value="<%= selectedPatient ? selectedPatient.fullName : '' %>" placeholder="患者氏名" required>
+                    <input type="text" id="fPatientKana" class="s-input s-kana" value="<%= selectedPatient ? (selectedPatient.kana || '') : '' %>" placeholder="フリガナ">
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th>生年月日/性</th>
+                <td>
+                  <div class="s-inline">
+                    <input type="text" id="fBirthDate" class="s-input" value="<%= selectedPatient ? (selectedPatient.birthDate || '') : '' %>" placeholder="YYYY-MM-DD">
+                    <span class="circle-group" data-circle-group="gender">
+                      <button type="button" class="c-opt <%= (!selectedPatient || selectedPatient.gender === '男') ? 'is-sel' : '' %>" data-val="男">M</button>
+                      <button type="button" class="c-opt <%= (selectedPatient && selectedPatient.gender === '女') ? 'is-sel' : '' %>" data-val="女">F</button>
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th>区分・室</th>
+                <td>
+                  <div class="s-inline">
+                    <span class="circle-group" data-circle-group="ward">
+                      <button type="button" class="c-opt <%= initialWard === '外来' ? 'is-sel' : '' %>" data-val="外来">外来</button>
+                      <button type="button" class="c-opt <%= (initialWard === '医療病棟' || initialWard === '病棟') ? 'is-sel' : '' %>" data-val="医療病棟">医療病棟</button>
+                      <button type="button" class="c-opt <%= (initialWard === '介護医療院(うみかぜ)' || initialWard === '介護医療院') ? 'is-sel' : '' %>" data-val="介護医療院(うみかぜ)">うみかぜ</button>
+                      <button type="button" class="c-opt <%= initialWard === '介護医療院(しおかぜ)' ? 'is-sel' : '' %>" data-val="介護医療院(しおかぜ)">しおかぜ</button>
+                    </span>
+                    <input type="text" id="fRoom" class="s-input s-room" value="<%= selectedPatient ? (selectedPatient.wardRoom || '') : '' %>" placeholder="病室">
+                  </div>
+                </td>
+              </tr>
+            </table>
+
+            <table class="slip-table">
+              <tr>
+                <th class="w-lbl">検査日時</th>
+                <td>
+                  <div class="s-inline">
+                    <input type="date" id="fSchedDate" class="s-input">
+                    <input type="time" id="fSchedTime" class="s-input s-time">
+                  </div>
+                </td>
+                <th class="w-lbl-sm">依頼医</th>
+                <td>
+                  <input type="text" id="fDoctorName" class="s-input s-bold" value="<%= actorDisplayName || user.fullName %>" placeholder="担当医">
+                </td>
+              </tr>
+              <tr>
+                <th>感染症</th>
+                <td colspan="3">
+                  <div class="s-inline">
+                    <span class="circle-group" data-circle-group="infection">
+                      <button type="button" class="c-opt is-sel" data-val="無">無</button>
+                      <button type="button" class="c-opt" data-val="有">有</button>
+                    </span>
+                    <input type="text" id="fInfectionNote" class="s-input" placeholder="感染症名（MRSA等）">
+                    <label class="chk-inline chk-urgent"><input type="checkbox" id="fIsUrgent">至急</label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th>移動方法</th>
+                <td colspan="3">
+                  <span class="circle-group" data-circle-group="mobility">
+                    <button type="button" class="c-opt is-sel" data-val="徒歩">徒歩</button>
+                    <button type="button" class="c-opt" data-val="車椅子">車椅子</button>
+                    <button type="button" class="c-opt" data-val="ベッド">ベッド</button>
+                    <button type="button" class="c-opt" data-val="ストレッチャー">ストレッチャー</button>
+                  </span>
+                </td>
+              </tr>
+              <tr data-field-group="physique">
+                <th>体格/依頼科</th>
+                <td colspan="3">
+                  <div class="s-inline">
+                    <span class="s-unit">身長</span><input type="text" id="fHeight" class="s-input s-num" placeholder="cm">
+                    <span class="s-unit">体重</span><input type="text" id="fWeight" class="s-input s-num" placeholder="kg">
+                    <span class="s-unit">依頼科</span><input type="text" id="fRequestDept" class="s-input" value="内科" placeholder="診療科">
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- 様式1: CT検査依頼書 -->
+          <div class="slip-panel" data-form-panel="CT">
+            <div class="slip-body-grid">
+              <table class="slip-table">
+                <thead><tr><th>CT撮影部位（複数選択可）</th></tr></thead>
+                <tbody>
+                  <% [
+                    ['頭部', '詳細・部位指定'],
+                    ['頸部', '詳細・部位指定'],
+                    ['胸部 (肺・横隔)', '詳細'],
+                    ['腹部 (肝・胆・膵・腎)', '詳細'],
+                    ['骨盤腔', '詳細・部位指定'],
+                    ['脊椎', '頸椎・胸椎・腰椎等'],
+                    ['上肢', '右・左・肩・肘・手等'],
+                    ['下肢', '右・左・股・膝・足等']
+                  ].forEach(([label, ph]) => { %>
+                    <tr>
+                      <td>
+                        <label class="part-row">
+                          <input type="checkbox" name="ctParts" value="<%= label %>">
+                          <strong><%= label %></strong>
+                          <input type="text" class="s-input s-part-note js-ct-part-note" data-part="<%= label %>" placeholder="<%= ph %>">
+                        </label>
+                      </td>
+                    </tr>
+                  <% }) %>
+                  <tr>
+                    <td>
+                      <label class="part-row">
+                        <input type="checkbox" name="ctParts" value="その他">
+                        <strong>その他</strong>
+                        <input type="text" id="fCtPartsDetail" class="s-input" placeholder="その他部位の直接記入">
+                      </label>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <table class="slip-table">
+                <tr>
+                  <th class="w-lbl">造影区分</th>
+                  <td>
+                    <div class="s-inline">
+                      <span class="circle-group" data-circle-group="ctContrast">
+                        <button type="button" class="c-opt is-sel" data-val="単純">単純</button>
+                        <button type="button" class="c-opt" data-val="造影">造影</button>
+                      </span>
+                      <span class="s-unit">Dynamic:</span>
+                      <label class="chk-inline"><input type="checkbox" name="ctDynamic" value="2phase">2p</label>
+                      <label class="chk-inline"><input type="checkbox" name="ctDynamic" value="3phase">3p</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-field-group="meds">
+                  <th>使用薬剤</th>
+                  <td>
+                    <textarea id="fCtMedications" class="s-textarea" rows="2" placeholder="例: イオパミロン注300 (100mL)、生理食塩水"></textarea>
+                  </td>
+                </tr>
+                <tr data-field-group="conditions">
+                  <th>撮影条件</th>
+                  <td>
+                    <div class="s-inline">
+                      <span class="s-unit">kV</span><input type="text" id="fCtKv" class="s-input s-num" placeholder="120">
+                      <span class="s-unit">mA</span><input type="text" id="fCtMa" class="s-input s-num" placeholder="200">
+                      <span class="s-unit">sec</span><input type="text" id="fCtSec" class="s-input s-num" placeholder="0.5">
+                      <label class="chk-inline"><input type="checkbox" id="fCtElecImg" checked>電子画像管理加算</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>検査目的</th>
+                  <td>
+                    <textarea id="fCtPurpose" class="s-textarea" rows="3" placeholder="臨床所見・疑い病名・精査理由"></textarea>
+                  </td>
+                </tr>
+                <tr>
+                  <th>備考/禁忌</th>
+                  <td>
+                    <input type="text" id="fCtRemarks" class="s-input" value="<%= selectedPatient && selectedPatient.allergies ? selectedPatient.allergies : '' %>" placeholder="アレルギー・造影禁忌・注意事項">
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- 様式2: 透視検査依頼書 -->
+          <div class="slip-panel" data-form-panel="FLUORO" hidden>
+            <div class="slip-body-grid slip-body-grid--fluoro">
+              <table class="slip-table">
+                <thead><tr><th>透視検査項目</th></tr></thead>
+                <tbody>
+                  <% ['PEG交換', 'VF検査', '消化管造影検査', '単純透視'].forEach((item) => { %>
+                    <tr>
+                      <td>
+                        <label class="part-row">
+                          <input type="checkbox" name="fluoroExam" value="<%= item %>">
+                          <strong><%= item %></strong>
+                        </label>
+                      </td>
+                    </tr>
+                  <% }) %>
+                  <tr>
+                    <td>
+                      <label class="part-row">
+                        <input type="checkbox" name="fluoroExam" value="その他">
+                        <strong>その他</strong>
+                        <input type="text" id="fFluoroOther" class="s-input" placeholder="検査項目">
+                      </label>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <table class="slip-table" data-field-group="meds">
+                <thead><tr><th>使用薬剤</th></tr></thead>
+                <tbody>
+                  <% [
+                    'ガストログラフィン 20ml',
+                    'キシロカインゼリー2% 10ml',
+                    '生理食塩水 20ml',
+                    '硫酸バリウム散98.8%ホリイ 300g',
+                    'バリコンミール 300g',
+                    'バロス発泡顆粒-S 3.5g×2'
+                  ].forEach((med) => { %>
+                    <tr>
+                      <td>
+                        <label class="part-row">
+                          <input type="checkbox" name="fluoroMed" value="<%= med %>">
+                          <span><%= med %></span>
+                        </label>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+
+              <table class="slip-table">
+                <tr data-field-group="meds">
+                  <th class="w-lbl">医療材料</th>
+                  <td>
+                    <input type="text" id="fFluoroMaterials" class="s-input" placeholder="例: ガストロボタン 24Fr 3.5cm、シリンジ、ガーゼ">
+                  </td>
+                </tr>
+                <tr>
+                  <th>詳細・目的</th>
+                  <td>
+                    <textarea id="fFluoroPurpose" class="s-textarea" rows="4" placeholder="臨床情報・胃瘻状態・嚥下評価目的など"></textarea>
+                  </td>
+                </tr>
+                <tr>
+                  <th>備考</th>
+                  <td>
+                    <input type="text" id="fFluoroRemarks" class="s-input" value="<%= selectedPatient && selectedPatient.allergies ? selectedPatient.allergies : '' %>" placeholder="注意事項・アレルギー">
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- 様式3: 診療X線照射録 -->
+          <div class="slip-panel" data-form-panel="XRAY" hidden>
+            <div class="slip-body-grid">
+              <table class="slip-table">
+                <thead><tr><th>照射部位（①〜⑨）</th></tr></thead>
+                <tbody>
+                  <% [
+                    '① 胸部 (立位 PA / 側面 R-L)',
+                    '② 腹部 (立位 / 臥位)',
+                    '③ 腰椎 (正面 / 側面)',
+                    '④ 膝関節 (R/L 正面・側面)',
+                    '⑤ 股関節 (R/L 正面・側面)',
+                    '⑥ 骨盤 (正面 / 斜位)',
+                    '⑦ 手 (リウマチ 2R 両/右/左)'
+                  ].forEach((part) => { %>
+                    <tr>
+                      <td>
+                        <label class="part-row">
+                          <input type="checkbox" name="xrayParts" value="<%= part %>">
+                          <span><%= part %></span>
+                        </label>
+                      </td>
+                    </tr>
+                  <% }) %>
+                  <tr>
+                    <td>
+                      <div class="s-inline">
+                        <strong>⑧</strong>
+                        <input type="text" id="fXrayFree1" class="s-input" placeholder="自由部位（例: 頸椎4方向、肩関節）">
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="s-inline">
+                        <strong>⑨</strong>
+                        <input type="text" id="fXrayFree2" class="s-input" placeholder="自由部位2">
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <table class="slip-table">
+                <tr>
+                  <th class="w-lbl">ポータブル</th>
+                  <td>
+                    <div class="s-inline">
+                      <label class="chk-inline"><input type="checkbox" id="fIsPortable">病室ポータブル撮影</label>
+                      <input type="text" id="fPortableRoom" class="s-input s-room" value="<%= selectedPatient ? (selectedPatient.wardRoom || '') : '' %>" placeholder="病室番号">
+                    </div>
+                  </td>
+                </tr>
+                <tr data-field-group="conditions">
+                  <th>撮影条件</th>
+                  <td>
+                    <div class="s-inline">
+                      <span class="s-unit">kV</span><input type="text" id="fXrayKv" class="s-input s-num" placeholder="110">
+                      <span class="s-unit">mA</span><input type="text" id="fXrayMa" class="s-input s-num" placeholder="250">
+                      <span class="s-unit">sec</span><input type="text" id="fXraySec" class="s-input s-num" placeholder="0.04">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>媒体・加算</th>
+                  <td>
+                    <div class="s-inline">
+                      <span class="s-unit">紹介DVD:</span>
+                      <span class="circle-group" data-circle-group="xrayDvd">
+                        <button type="button" class="c-opt is-sel" data-val="未">未</button>
+                        <button type="button" class="c-opt" data-val="済">済</button>
+                      </span>
+                      <label class="chk-inline"><input type="checkbox" id="fXrayElecImg" checked>電子画像管理加算</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>検査目的</th>
+                  <td>
+                    <textarea id="fXrayPurpose" class="s-textarea" rows="3" placeholder="術後経過観察、肺炎・心拡大・骨折評価など"></textarea>
+                  </td>
+                </tr>
+                <tr>
+                  <th>備考</th>
+                  <td>
+                    <input type="text" id="fXrayRemarks" class="s-input" value="<%= selectedPatient && selectedPatient.allergies ? selectedPatient.allergies : '' %>" placeholder="注意事項">
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 記入画面下部 1行アクションバー -->
+        <div class="editor-footer">
+          <span class="footer-note">※訂正・中止時は元オーダーへフラグを立てて履歴を保持します</span>
+          <div class="editor-footer__btns">
+            <button type="button" class="btn-cell btn-cell--sub" id="btnResetOrder">クリア</button>
+            <button type="button" class="btn-cell btn-cell--primary" id="btnSubmitSave">オーダー発行</button>
+            <button type="button" class="btn-cell btn-cell--print" id="btnSubmitPrint">発行して印刷（正・控え）</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/radiologyOrder.js"></script>
+</body>
+</html>

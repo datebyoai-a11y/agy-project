@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/workspace.css">
+  <link rel="stylesheet" href="/css/injectionScheduleModal.css">
+</head>
+<body
+  class="page-workspace"
+  data-dept-code="<%= screen.departmentCode %>"
+  data-dept-name="<%= screen.departmentName %>"
+  data-workspace-path="<%= screen.workspacePath || screen.path %>"
+  data-patient-id="<%= selectedPatient ? selectedPatient.patientId : '' %>"
+  data-patient-care-category="<%= selectedPatient ? selectedPatient.careCategory : '' %>"
+  data-patient-care-name="<%= selectedPatient ? selectedPatient.careCategoryName : '' %>"
+  data-rad-linked="<%= isRadiologyLinked ? '1' : '0' %>"
+>
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <main class="workspace-grid">
+    <!-- 左列: ツリー方式メニュー -->
+    <aside class="pane pane--tree" aria-label="機能ツリーメニュー">
+      <div class="pane__toolbar">
+        <label class="toggle-check">
+          <input type="checkbox" data-toggle-target="tree-badges" checked>
+          <span>件数</span>
+        </label>
+      </div>
+
+      <ul class="tree-list">
+        <% (leftMenuGroups || []).forEach((group) => { %>
+          <%
+            const isRadGroup = group.badgeType === 'rad';
+            const isRxGroup = group.badgeType === 'rx';
+            const isInjGroup = group.badgeType === 'inj';
+            const isMealGroup = group.badgeType === 'meal';
+            const isRehabGroup = group.badgeType === 'rehab';
+            const badgeCount = isRadGroup
+              ? activeRadiologyCount
+              : isRxGroup
+                ? activePrescriptionCount
+                : isInjGroup
+                  ? activeInjectionCount
+                  : isMealGroup
+                    ? activeMealCount
+                    : isRehabGroup
+                      ? activeRehabCount
+                      : 0;
+          %>
+          <li class="tree-node">
+            <details <%= group.open ? 'open' : '' %>>
+              <summary class="tree-node__summary">
+                <span><%= group.label %></span>
+                <% if (group.badgeType) { %>
+                  <span
+                    class="tree-badge <%= badgeCount > 0 ? 'tree-badge--active' : '' %>"
+                    data-toggle-group="tree-badges"
+                    <% if (isRadGroup) { %>id="radTreeCountBadge"<% } %>
+                    <% if (isRxGroup) { %>id="rxTreeCountBadge"<% } %>
+                    <% if (isInjGroup) { %>id="injTreeCountBadge"<% } %>
+                    <% if (isMealGroup) { %>id="mealTreeCountBadge"<% } %>
+                    <% if (isRehabGroup) { %>id="rehabTreeCountBadge"<% } %>
+                  ><%= badgeCount %></span>
+                <% } %>
+              </summary>
+              <ul class="tree-children">
+                <% (group.items || []).forEach((item) => { %>
+                  <li>
+                    <% if (item.href) { %>
+                      <a href="<%= item.href %>" class="tree-leaf tree-leaf--link"><%= item.label %></a>
+                    <% } else { %>
+                      <button
+                        type="button"
+                        class="tree-leaf"
+                        data-tree-item="<%= item.label %>"
+                        <% if (item.radAction) { %>data-rad-action="<%= item.radAction %>"<% } %>
+                        <% if (item.rxAction) { %>data-rx-action="<%= item.rxAction %>"<% } %>
+                        <% if (item.injAction) { %>data-inj-action="<%= item.injAction %>"<% } %>
+                        <% if (item.mealAction) { %>data-meal-action="<%= item.mealAction %>"<% } %>
+                        <% if (item.rehabAction) { %>data-rehab-action="<%= item.rehabAction %>"<% } %>
+                      ><%= item.label %></button>
+                    <% } %>
+                  </li>
+                <% }) %>
+              </ul>
+            </details>
+          </li>
+        <% }) %>
+      </ul>
+    </aside>
+
+    <!-- 中列: 過去記載（全オーダー時系列順 / 表示・非表示チェックボックス） -->
+    <section class="pane pane--history" aria-label="過去記載エリア">
+      <div class="pane__toolbar">
+        <div class="toolbar-checks">
+          <label class="toggle-check"><input type="checkbox" data-type-toggle="rx" checked><span>処方</span></label>
+          <label class="toggle-check"><input type="checkbox" data-type-toggle="inj" checked><span>注射</span></label>
+          <label class="toggle-check"><input type="checkbox" data-type-toggle="rad" checked><span>放射線</span></label>
+          <label class="toggle-check"><input type="checkbox" data-type-toggle="meal" checked><span>食事</span></label>
+          <label class="toggle-check"><input type="checkbox" data-type-toggle="rehab" checked><span>リハビリ</span></label>
+          <label class="toggle-check"><input type="checkbox" data-toggle-target="col-date" checked><span>日時</span></label>
+          <label class="toggle-check"><input type="checkbox" data-toggle-target="col-author" checked><span>記載者</span></label>
+          <label class="toggle-check"><input type="checkbox" data-toggle-target="col-category" checked><span>区分</span></label>
+          <label class="toggle-check"><input type="checkbox" id="chkWsShowFlagged" checked><span>中止/訂正</span></label>
+        </div>
+      </div>
+
+      <div class="pane__body pane__body--compact" id="historyPaneBody">
+        <div class="ws-hist-list" id="wsRadiologyHistory">
+          <% if (!combinedHistory || combinedHistory.length === 0) { %>
+            <div class="empty-state">
+              <p>過去記載はありません。</p>
+            </div>
+          <% } else { %>
+            <% combinedHistory.forEach((entry) => { %>
+              <% if (entry.kind === 'inj') { %>
+                <%
+                  const inj = entry.data;
+                  const stLabel = inj.isSuperseded ? '訂正済' : inj.isCancelled ? '中止' : '発行済';
+                  const stClass = inj.isSuperseded ? 'st-superseded' : inj.isCancelled ? 'st-cancelled' : 'st-completed';
+                  const dtStr = inj.createdAt
+                    ? new Date(inj.createdAt).toLocaleString('ja-JP', {
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                      })
+                    : inj.startDate;
+                %>
+                <article
+                  class="ws-hist-card ws-hist-card--inj <%= (inj.isCancelled || inj.isSuperseded) ? 'is-flagged' : '' %>"
+                  data-order-kind="inj"
+                  data-flagged="<%= (inj.isCancelled || inj.isSuperseded) ? 'true' : 'false' %>"
+                  data-detail-type="inj"
+                  data-detail-order="<%= inj.orderNumber %>"
+                  title="クリックで詳細表示"
+                >
+                  <div class="ws-hist-card__top">
+                    <span class="mod-tag mod-tag--inj" data-toggle-group="col-category">注射/<%= inj.injectionType %></span>
+                    <code class="ws-code"><%= inj.orderNumber %></code>
+                    <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                    <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__main">
+                    <% if (!selectedPatient) { %>
+                      <span class="ws-pt">[<%= inj.patientId %>] <%= inj.patientName %></span>
+                    <% } %>
+                    <% (inj.items || []).forEach((it) => { %>
+                      <div class="ws-rx-line">
+                        <strong>Rp<%= it.rpNo %>:</strong>
+                        <%= it.drugName %> <%= it.dose %>
+                        （<%= it.route %><% if (it.timing) { %>・<%= it.timing %><% } %><% if (it.rate) { %>・<%= it.rate %><% } %>・<%= it.days %><%= it.dayUnit %>）
+                        <% if (it.dailySchedule && it.dailySchedule.length > 0) { %>
+                          <div class="inj-sched-chips">
+                            <% it.dailySchedule.forEach((d) => { %>
+                              <span class="inj-chip <%= d.status === 'DELETE' ? 'inj-chip--del' : 'inj-chip--cont' %>"><%= d.date.slice(5).replace('-', '/') %>:<%= d.status === 'DELETE' ? '削' : '継' %></span>
+                            <% }) %>
+                          </div>
+                        <% } %>
+                      </div>
+                    <% }) %>
+                  </div>
+                  <% if (inj.isSuperseded) { %>
+                    <div class="ws-hist-card__flag">訂正先: <%= inj.supersededBy %></div>
+                  <% } %>
+                  <% if (inj.isCancelled) { %>
+                    <div class="ws-hist-card__flag">中止: <%= inj.cancelReason || '注射中止' %></div>
+                  <% } %>
+                  <div class="ws-hist-card__foot">
+                    <span class="ws-author" data-toggle-group="col-author">指示: <%= inj.doctorName %>（<%= inj.ward %><%= inj.room ? ' ' + inj.room : '' %>）</span>
+                    <div class="ws-actions">
+                      <% if (!inj.isCancelled && !inj.isSuperseded) { %>
+                        <% if (inj.injectionType === '入院注射') { %>
+                          <button type="button" class="btn-ws js-ws-inj-schedule" data-order="<%= inj.orderNumber %>">日付編集</button>
+                        <% } %>
+                        <button type="button" class="btn-ws js-ws-inj-revise" data-order="<%= inj.orderNumber %>" data-inj-type="<%= inj.injectionType %>">訂正再発行</button>
+                        <button type="button" class="btn-ws btn-ws--warn js-ws-inj-cancel" data-order="<%= inj.orderNumber %>">中止</button>
+                      <% } %>
+                      <a href="/injections/print/<%= encodeURIComponent(inj.orderNumber) %>" target="_blank" class="btn-ws">印刷</a>
+                    </div>
+                  </div>
+                </article>
+              <% } else if (entry.kind === 'rx') { %>
+                <%
+                  const rx = entry.data;
+                  const stLabel = rx.isSuperseded ? '訂正済' : rx.isCancelled ? '中止' : '発行済';
+                  const stClass = rx.isSuperseded ? 'st-superseded' : rx.isCancelled ? 'st-cancelled' : 'st-completed';
+                  const dtStr = rx.createdAt
+                    ? new Date(rx.createdAt).toLocaleString('ja-JP', {
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                      })
+                    : rx.startDate;
+                %>
+                <article
+                  class="ws-hist-card ws-hist-card--rx <%= (rx.isCancelled || rx.isSuperseded) ? 'is-flagged' : '' %>"
+                  data-order-kind="rx"
+                  data-flagged="<%= (rx.isCancelled || rx.isSuperseded) ? 'true' : 'false' %>"
+                  data-detail-type="rx"
+                  data-detail-order="<%= rx.orderNumber %>"
+                  title="クリックで詳細表示"
+                >
+                  <div class="ws-hist-card__top">
+                    <span class="mod-tag mod-tag--fluoro" data-toggle-group="col-category">処方/<%= rx.prescriptionType %></span>
+                    <code class="ws-code"><%= rx.orderNumber %></code>
+                    <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                    <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__main">
+                    <% if (!selectedPatient) { %>
+                      <span class="ws-pt">[<%= rx.patientId %>] <%= rx.patientName %></span>
+                    <% } %>
+                    <% (rx.rpItems || []).forEach((rp) => { %>
+                      <div class="ws-rx-line">
+                        <strong>Rp<%= rp.rpNo %>:</strong>
+                        <%= (rp.medicines || []).map((m) => `${m.name} ${m.dose}`).join(' / ') %>
+                        （<%= rp.usage %>・<%= rp.days %><%= rp.dayUnit %>）
+                      </div>
+                    <% }) %>
+                  </div>
+                  <% if (rx.isSuperseded) { %>
+                    <div class="ws-hist-card__flag">訂正先: <%= rx.supersededBy %></div>
+                  <% } %>
+                  <% if (rx.isCancelled) { %>
+                    <div class="ws-hist-card__flag">中止: <%= rx.cancelReason || '処方中止' %></div>
+                  <% } %>
+                  <div class="ws-hist-card__foot">
+                    <span class="ws-author" data-toggle-group="col-author">処方: <%= rx.doctorName %>（<%= rx.ward %><%= rx.room ? ' ' + rx.room : '' %>）</span>
+                    <div class="ws-actions">
+                      <button type="button" class="btn-ws btn-ws--do js-ws-rx-do" data-order="<%= rx.orderNumber %>" data-rx-type="<%= rx.prescriptionType %>">Do処方</button>
+                      <% if (!rx.isCancelled && !rx.isSuperseded) { %>
+                        <button type="button" class="btn-ws js-ws-rx-revise" data-order="<%= rx.orderNumber %>" data-rx-type="<%= rx.prescriptionType %>">訂正再発行</button>
+                        <button type="button" class="btn-ws btn-ws--warn js-ws-rx-cancel" data-order="<%= rx.orderNumber %>">中止</button>
+                      <% } %>
+                      <a href="/prescriptions/print/<%= encodeURIComponent(rx.orderNumber) %>" target="_blank" class="btn-ws">印刷</a>
+                    </div>
+                  </div>
+                </article>
+              <% } else if (entry.kind === 'rad') { %>
+                <%
+                  const o = entry.data;
+                  const stLabel = o.isSuperseded
+                    ? '訂正済'
+                    : o.isCancelled
+                      ? '中止'
+                      : o.orderStatus === 'COMPLETED'
+                        ? '実施済'
+                        : o.orderStatus === 'ACCEPTED'
+                          ? '受付済'
+                          : '未受付';
+                  const stClass = o.isSuperseded
+                    ? 'st-superseded'
+                    : o.isCancelled
+                      ? 'st-cancelled'
+                      : o.orderStatus === 'COMPLETED'
+                        ? 'st-completed'
+                        : o.orderStatus === 'ACCEPTED'
+                          ? 'st-accepted'
+                          : 'st-ordered';
+                  const dtStr = o.createdAt || o.scheduledDate
+                    ? new Date(o.createdAt || o.scheduledDate).toLocaleString('ja-JP', {
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                      })
+                    : '-';
+                %>
+                <article
+                  class="ws-hist-card ws-hist-card--<%= o.modalityKey %> <%= (o.isCancelled || o.isSuperseded) ? 'is-flagged' : '' %>"
+                  data-order-kind="rad"
+                  data-flagged="<%= (o.isCancelled || o.isSuperseded) ? 'true' : 'false' %>"
+                  data-detail-type="rad"
+                  data-detail-order="<%= o.orderNumber %>"
+                  title="クリックで詳細表示"
+                >
+                  <div class="ws-hist-card__top">
+                    <span class="mod-tag mod-tag--<%= o.modalityKey %>" data-toggle-group="col-category">放射線/<%= o.modality %></span>
+                    <code class="ws-code"><%= o.orderNumber %></code>
+                    <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                    <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__main">
+                    <% if (!selectedPatient) { %>
+                      <span class="ws-pt">[<%= o.patientId %>] <%= o.patientName %></span>
+                    <% } %>
+                    <strong><%= o.examType %></strong>
+                    <% if (o.isPortable) { %><span class="mini-alert mini-alert--port">ポータブル</span><% } %>
+                    <% if (o.isUrgent) { %><span class="mini-alert mini-alert--urgent">至急</span><% } %>
+                    <% if (o.contrast === '造影') { %><span class="mini-alert mini-alert--contrast">造影</span><% } %>
+                  </div>
+                  <% if (o.purpose) { %>
+                    <div class="ws-hist-card__sub">目的: <%= o.purpose %></div>
+                  <% } %>
+                  <% if (o.completedBy) { %>
+                    <div class="ws-hist-card__stamp">実施: <%= o.completedBy %></div>
+                  <% } else if (o.acceptedBy) { %>
+                    <div class="ws-hist-card__stamp">受付: <%= o.acceptedBy %></div>
+                  <% } %>
+                  <% if (o.isSuperseded) { %>
+                    <div class="ws-hist-card__flag">訂正先: <%= o.supersededBy %></div>
+                  <% } %>
+                  <% if (o.isCancelled) { %>
+                    <div class="ws-hist-card__flag">中止: <%= o.cancelReason || '中止' %></div>
+                  <% } %>
+                  <div class="ws-hist-card__foot">
+                    <span class="ws-author" data-toggle-group="col-author">依頼: <%= o.doctorName %>（<%= o.ward %><%= o.room ? ' ' + o.room : '' %>）</span>
+                    <div class="ws-actions">
+                      <% if (!o.isCancelled && !o.isSuperseded) { %>
+                        <button type="button" class="btn-ws js-ws-revise" data-order="<%= o.orderNumber %>">訂正再発行</button>
+                        <button type="button" class="btn-ws btn-ws--warn js-ws-cancel" data-order="<%= o.orderNumber %>">中止</button>
+                      <% } %>
+                      <a href="/radiology/print/<%= encodeURIComponent(o.orderNumber) %>" target="_blank" class="btn-ws">伝票</a>
+                    </div>
+                  </div>
+                </article>
+              <% } else if (entry.kind === 'meal') { %>
+                <%
+                  const m = entry.data;
+                  const stLabel = m.isSuperseded ? '訂正済' : m.isCancelled ? '中止' : '発行済';
+                  const stClass = m.isSuperseded ? 'st-superseded' : m.isCancelled ? 'st-cancelled' : 'st-completed';
+                  const dtStr = m.createdAt
+                    ? new Date(m.createdAt).toLocaleString('ja-JP', {
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                      })
+                    : m.startDate;
+                %>
+                <article
+                  class="ws-hist-card ws-hist-card--meal <%= (m.isCancelled || m.isSuperseded) ? 'is-flagged' : '' %>"
+                  data-order-kind="meal"
+                  data-flagged="<%= (m.isCancelled || m.isSuperseded) ? 'true' : 'false' %>"
+                  data-detail-type="meal"
+                  data-detail-order="<%= m.orderNumber %>"
+                  title="クリックで詳細表示"
+                >
+                  <div class="ws-hist-card__top">
+                    <span class="mod-tag mod-tag--meal" data-toggle-group="col-category">食事</span>
+                    <code class="ws-code"><%= m.orderNumber %></code>
+                    <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                    <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__main">
+                    <% if (!selectedPatient) { %>
+                      <span class="ws-pt">[<%= m.patientId %>] <%= m.patientName %></span>
+                    <% } %>
+                    <strong><%= m.dietType %></strong>（<%= m.startDate %> <%= m.startMeal %>〜 ／ 主食:<%= m.stapleType %> <%= m.stapleAmount %> ／ 副食:<%= m.sideTexture %><% if (m.thickener && m.thickener !== 'なし') { %> ／ とろみ:<%= m.thickener %><% } %>）
+                  </div>
+                  <% if (m.calories || (m.saltLimit && m.saltLimit !== '制限なし') || m.prohibitedFoods) { %>
+                    <div class="ws-hist-card__sub">
+                      <%= [m.calories, (m.saltLimit && m.saltLimit !== '制限なし') ? '塩分:' + m.saltLimit : '', m.prohibitedFoods ? '禁止:' + m.prohibitedFoods : ''].filter(Boolean).join(' ／ ') %>
+                    </div>
+                  <% } %>
+                  <% if (m.isSuperseded) { %><div class="ws-hist-card__flag">訂正先: <%= m.supersededBy %></div><% } %>
+                  <% if (m.isCancelled) { %><div class="ws-hist-card__flag">中止: <%= m.cancelReason || '食事中止' %></div><% } %>
+                  <div class="ws-hist-card__foot">
+                    <span class="ws-author" data-toggle-group="col-author">指示: <%= m.doctorName %>（<%= m.ward %><%= m.room ? ' ' + m.room : '' %>）</span>
+                    <div class="ws-actions">
+                      <% if (!m.isCancelled && !m.isSuperseded) { %>
+                        <button type="button" class="btn-ws js-ws-meal-revise" data-order="<%= m.orderNumber %>">訂正再発行</button>
+                        <button type="button" class="btn-ws btn-ws--warn js-ws-meal-cancel" data-order="<%= m.orderNumber %>">中止</button>
+                      <% } %>
+                      <a href="/meals/print/<%= encodeURIComponent(m.orderNumber) %>" target="_blank" class="btn-ws">印刷</a>
+                    </div>
+                  </div>
+                </article>
+              <% } else if (entry.kind === 'rehab') { %>
+                <%
+                  const r = entry.data;
+                  const stLabel = r.isSuperseded ? '訂正済' : r.isCancelled ? '中止' : '発行済';
+                  const stClass = r.isSuperseded ? 'st-superseded' : r.isCancelled ? 'st-cancelled' : 'st-completed';
+                  const dtStr = r.createdAt
+                    ? new Date(r.createdAt).toLocaleString('ja-JP', {
+                        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                      })
+                    : r.orderDate;
+                  const rehabParts = [];
+                  if (r.ptItems && r.ptItems.length) rehabParts.push('PT:' + r.ptItems.join('・'));
+                  if (r.otItems && r.otItems.length) rehabParts.push('OT:' + r.otItems.join('・'));
+                  if (r.stItems && r.stItems.length) rehabParts.push('ST:' + r.stItems.join('・'));
+                  if (r.evalItems && r.evalItems.length) rehabParts.push('評価:' + r.evalItems.join('・'));
+                %>
+                <article
+                  class="ws-hist-card ws-hist-card--rehab <%= (r.isCancelled || r.isSuperseded) ? 'is-flagged' : '' %>"
+                  data-order-kind="rehab"
+                  data-flagged="<%= (r.isCancelled || r.isSuperseded) ? 'true' : 'false' %>"
+                  data-detail-type="rehab"
+                  data-detail-order="<%= r.orderNumber %>"
+                  title="クリックで詳細表示"
+                >
+                  <div class="ws-hist-card__top">
+                    <span class="mod-tag mod-tag--rehab" data-toggle-group="col-category">リハ/<%= r.rehabCategory %></span>
+                    <code class="ws-code"><%= r.orderNumber %></code>
+                    <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                    <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__main">
+                    <% if (!selectedPatient) { %>
+                      <span class="ws-pt">[<%= r.patientId %>] <%= r.patientName %></span>
+                    <% } %>
+                    <strong><%= r.diagnosisName %></strong>（<%= r.frequencyPerWeek %>・<%= r.unitsPerDay %>・<%= r.location %>）
+                  </div>
+                  <% if (rehabParts.length > 0) { %>
+                    <div class="ws-hist-card__sub"><%= rehabParts.join(' ／ ') %></div>
+                  <% } %>
+                  <% if (r.isSuperseded) { %><div class="ws-hist-card__flag">訂正先: <%= r.supersededBy %></div><% } %>
+                  <% if (r.isCancelled) { %><div class="ws-hist-card__flag">中止: <%= r.cancelReason || 'リハビリ中止' %></div><% } %>
+                  <div class="ws-hist-card__foot">
+                    <span class="ws-author" data-toggle-group="col-author">指示: <%= r.doctorName %>（<%= r.ward %><%= r.room ? ' ' + r.room : '' %>）</span>
+                    <div class="ws-actions">
+                      <% if (!r.isCancelled && !r.isSuperseded) { %>
+                        <button type="button" class="btn-ws js-ws-rehab-revise" data-order="<%= r.orderNumber %>">訂正再発行</button>
+                        <button type="button" class="btn-ws btn-ws--warn js-ws-rehab-cancel" data-order="<%= r.orderNumber %>">中止</button>
+                      <% } %>
+                      <a href="/rehab/print/<%= encodeURIComponent(r.orderNumber) %>" target="_blank" class="btn-ws">印刷</a>
+                    </div>
+                  </div>
+                </article>
+              <% } %>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右列: 記入画面（最上列タイトル・ショートカットボタン・メニューなし） -->
+    <section class="pane pane--editor" aria-label="記入画面エリア">
+      <div class="pane__body" id="editorDefaultBody">
+        <div class="empty-state">
+          <p>左のツリーメニューから業務項目を選択してください。</p>
+        </div>
+      </div>
+
+      <div class="pane__body pane__body--compact" id="radSummaryPanel" hidden>
+        <div class="ws-table-wrap">
+          <table class="ws-table">
+            <thead>
+              <tr>
+                <th>状態</th>
+                <th>区分</th>
+                <th>番号</th>
+                <th>日時</th>
+                <th>患者</th>
+                <th>内容</th>
+                <th>対応</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="wsRadSummaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="embed-wrap" id="radEmbedWrap" hidden>
+        <iframe
+          id="radOrderFrame"
+          class="rad-embed-frame"
+          title="オーダー記入画面"
+          src="about:blank"
+        ></iframe>
+      </div>
+    </section>
+  </main>
+
+  <%- include('partials/injectionScheduleModal') %>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/injectionScheduleModal.js"></script>
+  <script src="/js/workspace.js"></script>
+</body>
+</html>

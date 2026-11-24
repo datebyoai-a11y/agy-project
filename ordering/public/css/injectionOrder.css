@@ -1,0 +1,425 @@
+.page-inj {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.inj-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 210px 300px 1fr;
+  gap: 1px;
+  background: var(--border-strong);
+}
+
+.inj-grid.is-embed-grid {
+  grid-template-columns: 1fr;
+}
+
+.pane {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pane__bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 11px;
+}
+
+.chk-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.chk-inline input { margin: 0; }
+
+/* 左列: ツリー */
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  flex: 1;
+}
+
+.tree-node { margin-bottom: 2px; }
+
+.tree-summary {
+  padding: 4px 5px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tree-summary:hover { background: var(--bg-subtle); }
+
+.tree-children {
+  list-style: none;
+  margin: 1px 0 4px 10px;
+  padding: 0 0 0 6px;
+  border-left: 1px solid var(--border-color);
+}
+
+.tree-leaf {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 3px 5px;
+  font-size: 11px;
+  color: var(--text-primary);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-leaf:hover,
+.tree-leaf.is-selected {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 中列: 過去記載 */
+.history-list {
+  flex: 1;
+  overflow: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.empty-msg {
+  padding: 8px 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.hist-card {
+  border: 1px solid var(--border-color);
+  border-left: 3px solid #7c3aed;
+  padding: 4px 5px;
+  font-size: 11px;
+  background: #ffffff;
+}
+
+.hist-card--out {
+  border-left-color: #0d9488;
+}
+
+.hist-card.is-flagged {
+  background: #f8f9fa;
+  opacity: 0.78;
+}
+
+.hist-card__top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hist-num { font-size: 10px; color: var(--text-secondary); }
+.hist-date { margin-left: auto; font-size: 10px; color: var(--text-secondary); }
+.hist-patient { margin-top: 2px; font-weight: 700; color: var(--accent); }
+
+.st-tag { padding: 0 4px; font-size: 10px; font-weight: 700; border-radius: 2px; }
+.st-inj { background: #ede9fe; color: #5b21b6; }
+.st-ordered { background: #dcfce7; color: #166534; }
+.st-cancelled { background: #fee2e2; color: #991b1b; }
+.st-superseded { background: #e5e7eb; color: #374151; }
+
+.hist-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.hist-mini-table td {
+  border-top: 1px dashed #e2e8f0;
+  padding: 2px 3px;
+  vertical-align: top;
+}
+
+.hm-rp { white-space: nowrap; font-weight: 700; color: #5b21b6; width: 30px; }
+.hm-dose, .hm-days { white-space: nowrap; text-align: right; }
+.hm-route { color: var(--text-secondary); font-size: 10px; border-top: none !important; padding-top: 0 !important; }
+.hm-note { color: var(--text-secondary); font-size: 10px; border-top: none !important; padding-top: 0 !important; }
+.hist-rem { margin-top: 2px; font-size: 10px; color: var(--text-secondary); }
+.hist-flag { margin-top: 2px; color: var(--danger); font-weight: 700; }
+
+.hist-card__foot {
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.hist-doc { color: var(--text-secondary); font-size: 10px; }
+.hist-actions { display: flex; gap: 3px; }
+
+.btn-mini {
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-mini:hover { background: var(--bg-subtle); }
+.btn-mini--copy { color: #0f5f8c; border-color: #7dd3fc; background: #f0f9ff; }
+.btn-mini--copy:hover { background: #e0f2fe; }
+.btn-mini--warn { color: var(--danger); border-color: #f3b8b5; background: #fff5f5; }
+
+/* 右列: 注射箋入力 */
+.inj-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.revision-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  background: #fffbeb;
+  border-bottom: 1px solid #f59e0b;
+  font-size: 11px;
+  color: #92400e;
+  flex-wrap: wrap;
+}
+
+.revision-banner[hidden] { display: none; }
+.s-rev-note { max-width: 180px; }
+
+.inj-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 5px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.inline-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.s-input,
+.s-select {
+  height: 24px;
+  padding: 0 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.s-input:focus, .s-select:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.s-mono { font-family: monospace; font-weight: 700; }
+.s-bold { font-weight: 700; }
+.s-room { max-width: 64px; }
+.s-cat { width: 78px; flex: 0 0 78px; }
+
+.meta-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.meta-table th,
+.meta-table td {
+  border: 1px solid var(--border-color);
+  padding: 2px 4px;
+}
+
+.meta-table th {
+  background: #eef3f8;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.search-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.active-filter-tag {
+  padding: 2px 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 2px;
+}
+
+.active-filter-tag[hidden] { display: none; }
+
+.suggest-box {
+  max-height: 170px;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  background: #ffffff;
+}
+
+.suggest-box[hidden] { display: none; }
+
+.suggest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.suggest-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 3px 5px;
+}
+
+.suggest-row { cursor: pointer; }
+.suggest-row:hover { background: #ede9fe; }
+
+/* 注射内容入力テーブル */
+.inj-entry-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.inj-entry-table th,
+.inj-entry-table td {
+  border: 1px solid var(--border-strong);
+  padding: 3px 4px;
+  vertical-align: middle;
+}
+
+.inj-entry-table thead th {
+  background: #e9e5f8;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.col-rp { width: 46px; }
+.col-drug { min-width: 165px; }
+.col-dose { width: 106px; }
+.col-route { width: 120px; }
+.col-timing { min-width: 160px; }
+.col-rate { width: 110px; }
+.col-days { width: 96px; }
+.col-note { min-width: 100px; }
+.col-del { width: 66px; text-align: center; }
+
+.row-ops-cell {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.row-ops-cell .btn-mini + .btn-mini {
+  margin-left: 2px;
+}
+
+.dose-cell,
+.days-cell {
+  display: flex;
+  gap: 2px;
+}
+
+.dose-cell .js-inj-dose-num { width: 44px; text-align: right; }
+.dose-cell .js-inj-dose-unit { width: 58px; }
+.days-cell .js-inj-days { width: 42px; text-align: right; }
+.days-cell .js-inj-day-unit { width: 50px; }
+
+.timing-checks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+}
+
+.timing-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.timing-opt input { margin: 0; }
+
+.whole-remarks { display: flex; }
+
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.status-msg { font-size: 11px; font-weight: 700; }
+.status-msg.is-ok { color: #146c43; }
+.status-msg.is-err { color: var(--danger); }
+
+.btn-cell {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-cell--primary { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+.btn-cell--primary:hover { background: var(--accent-hover); }
+.btn-cell--print { background: #15803d; border-color: #15803d; color: #ffffff; }
+.btn-cell--print:hover { background: #166534; }
+.btn-cell--sub:hover { background: #e2eaf3; }
+
+.is-hidden { display: none !important; }

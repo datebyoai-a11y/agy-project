@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/radiologyMonitor.css">
+</head>
+<body class="page-rad-monitor">
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <!-- 1行目: 統計・フィルター・検索・アクション -->
+  <div class="compact-bar" role="region" aria-label="統計とフィルター操作">
+    <div class="compact-bar__group">
+      <span class="stat-pill stat-pill--ordered">未受付 <strong id="statOrdered">0</strong></span>
+      <span class="stat-pill stat-pill--accepted">受付済 <strong id="statAccepted">0</strong></span>
+      <span class="stat-pill stat-pill--completed">実施済 <strong id="statCompleted">0</strong></span>
+      <span class="stat-pill stat-pill--portable">ポータブル <strong id="statPortable">0</strong></span>
+    </div>
+
+    <div class="compact-bar__group" role="group" aria-label="ステータス絞込">
+      <button type="button" class="filter-btn is-active" data-filter="ACTIVE">実施待ち</button>
+      <button type="button" class="filter-btn" data-filter="ALL">すべて表示（一覧）</button>
+      <button type="button" class="filter-btn" data-filter="ORDERED">未受付のみ</button>
+      <button type="button" class="filter-btn" data-filter="COMPLETED">実施済のみ</button>
+      <input type="text" id="searchInput" class="ctrl-input" placeholder="ID・氏名・部位・病室・番号" aria-label="オーダー検索">
+    </div>
+
+    <div class="compact-bar__group">
+      <span class="perm-pill <%= rolePerm.canExecute ? 'perm-pill--ok' : 'perm-pill--warn' %>">
+        実施権限: <%= rolePerm.canExecute ? '可' : '参照' %>
+      </span>
+      <button type="button" class="btn-cell btn-cell--sub" id="btnRefresh">更新</button>
+      <a href="/radiology" class="btn-cell btn-cell--primary">＋ オーダー入力</a>
+      <span class="status-msg" id="monitorStatus" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <!-- 2行目: 表示・非表示項目チェックボックス -->
+  <div class="compact-bar compact-bar--checks" role="region" aria-label="表示項目の切替">
+    <div class="compact-bar__group">
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="xray" checked>一般撮影列</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="ct" checked>CT列</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="fluoro" checked>透視列</label>
+      <label class="chk-inline"><input type="checkbox" data-card-toggle="purpose" checked>検査目的</label>
+      <label class="chk-inline"><input type="checkbox" data-card-toggle="alerts" checked>感染症・移動タグ</label>
+      <label class="chk-inline"><input type="checkbox" data-card-toggle="doctor" checked>依頼医</label>
+      <label class="chk-inline"><input type="checkbox" id="chkIncludeInactive">中止/訂正済含む</label>
+    </div>
+    <div class="compact-bar__group">
+      <label class="chk-inline"><input type="checkbox" id="chkAutoPoll" checked>自動更新（5秒）</label>
+      <span class="last-updated" id="lastUpdatedLabel">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- モダリティ別 縦3列 Kanban モニター -->
+  <main class="kanban-grid" id="kanbanContainer">
+    <section class="kanban-col" data-col-panel="xray" aria-label="一般撮影カラム">
+      <div class="col-head col-head--xray">
+        <span class="col-head__name">一般撮影（X-Ray）</span>
+        <span class="col-head__sub">単純撮影 / ポータブル</span>
+        <span class="col-count" id="badgeXrayCount">0件</span>
+      </div>
+      <div class="col-body" id="xrayCardList"></div>
+    </section>
+
+    <section class="kanban-col" data-col-panel="ct" aria-label="CT検査カラム">
+      <div class="col-head col-head--ct">
+        <span class="col-head__name">CT検査（CT）</span>
+        <span class="col-head__sub">単純CT / 造影CT / Dynamic</span>
+        <span class="col-count" id="badgeCtCount">0件</span>
+      </div>
+      <div class="col-body" id="ctCardList"></div>
+    </section>
+
+    <section class="kanban-col" data-col-panel="fluoro" aria-label="X線透視カラム">
+      <div class="col-head col-head--fluoro">
+        <span class="col-head__name">X線透視（Fluoroscopy）</span>
+        <span class="col-head__sub">PEG交換 / VF嚥下 / 消化管</span>
+        <span class="col-count" id="badgeFluoroCount">0件</span>
+      </div>
+      <div class="col-body" id="fluoroCardList"></div>
+    </section>
+  </main>
+
+  <!-- 全件一覧テーブルビュー（「すべて表示（一覧）」選択時に表示） -->
+  <section class="list-view" id="listViewContainer" hidden aria-label="放射線オーダー全件一覧">
+    <div class="list-bar">
+      <span class="list-bar__info">表示件数: <strong id="tableCountBadge">0件</strong></span>
+      <span class="list-bar__sort" id="currentSortBadge">並替: 検査日時（降順）</span>
+      <button type="button" class="btn-mini" id="btnResetSort" hidden>初期順に戻す</button>
+    </div>
+    <div class="table-wrap">
+      <table class="grid-table" id="ordersTable">
+        <thead>
+          <tr>
+            <th class="th-sort" data-sort="status">状態 <span>↕</span></th>
+            <th class="th-sort" data-sort="modality">区分 <span>↕</span></th>
+            <th class="th-sort" data-sort="orderNumber">オーダー番号 <span>↕</span></th>
+            <th class="th-sort" data-sort="date">検査日時 <span>▼</span></th>
+            <th class="th-sort" data-sort="patient">患者 <span>↕</span></th>
+            <th class="th-sort" data-sort="exam">検査種別・部位 <span>↕</span></th>
+            <th class="th-sort" data-sort="purpose" data-card-item="purpose">検査目的 <span>↕</span></th>
+            <th class="th-sort" data-sort="doctor" data-card-item="doctor">依頼医 <span>↕</span></th>
+            <th class="th-sort" data-sort="operator">対応技師 <span>↕</span></th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/radiologyMonitor.js"></script>
+</body>
+</html>

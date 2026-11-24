@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>リハビリ指示 | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/clinicalOrder.css">
+</head>
+<body
+  class="page-clin"
+  data-embed="<%= isEmbed ? '1' : '0' %>"
+  data-source-dept="<%= sourceDept %>"
+  data-revise="<%= reviseOrderNumber %>"
+  data-selected-patient-id="<%= selectedPatient ? selectedPatient.patientId : '' %>"
+  data-default-doctor="<%= actorDisplayName || (user ? user.fullName : '') %>"
+>
+  <% if (!isEmbed) { %>
+    <%- include('partials/statusBar', { statusBar }) %>
+  <% } %>
+
+  <main class="clin-grid <%= isEmbed ? 'is-embed-grid' : '' %>">
+    <% if (!isEmbed) { %>
+      <!-- 左列: リハビリ指示テンプレート -->
+      <aside class="pane pane--left" aria-label="リハビリ指示テンプレートツリー">
+        <ul class="tree-list" id="rehabPresetTree">
+          <li class="tree-node">
+            <details open>
+              <summary class="tree-summary">定型テンプレート</summary>
+              <ul class="tree-children">
+                <li>
+                  <button
+                    type="button"
+                    class="tree-leaf js-rehab-preset"
+                    data-cat="廃用症候群"
+                    data-freq="週5回"
+                    data-units="2単位(40分)"
+                    data-loc="病棟内・リハ室"
+                    data-pt="関節可動域訓練（ROM）,筋力・体力増強,基本動作（起居・立位）,歩行能力向上"
+                    data-ot="座位・立位保持訓練,更衣・整容・入浴動作"
+                  >廃用症候群（PT+OT 基本）</button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="tree-leaf js-rehab-preset"
+                    data-cat="運動器"
+                    data-freq="週5回"
+                    data-units="2単位(40分)"
+                    data-loc="リハ室"
+                    data-pt="関節可動域訓練（ROM）,筋力・体力増強,バランス訓練,歩行能力向上,ADL改善"
+                  >運動器リハ（術後・骨折）</button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="tree-leaf js-rehab-preset"
+                    data-cat="脳血管疾患等"
+                    data-freq="週5回"
+                    data-units="3単位(60分)"
+                    data-loc="病棟内・リハ室"
+                    data-pt="神経筋促通,基本動作（起居・立位）,移乗動作,歩行能力向上"
+                    data-ot="食事動作訓練,高次脳・注意・記憶・遂行訓練"
+                    data-st="嚥下・食事場面支援,誤嚥リスク観察,構音障害改善"
+                  >脳血管疾患（PT+OT+ST）</button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="tree-leaf js-rehab-preset"
+                    data-cat="廃用症候群"
+                    data-freq="週3回"
+                    data-units="1単位(20分)"
+                    data-loc="病棟内"
+                    data-st="嚥下・食事場面支援,食事姿勢調整,食形態評価,誤嚥リスク観察,サクション・口腔ケア"
+                  >摂食嚥下評価・訓練（ST）</button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="tree-leaf js-rehab-preset"
+                    data-cat="介護リハ"
+                    data-freq="週2回"
+                    data-units="1単位(20分)"
+                    data-loc="居室・フロア"
+                    data-pt="関節可動域訓練（ROM）,筋力・体力増強,移乗動作,車いす操作練習"
+                    data-ot="生活環境調整・福祉用具選定"
+                  >介護医療院 維持期リハ</button>
+                </li>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- 中列: 過去リハビリ指示 -->
+      <section class="pane pane--mid" aria-label="過去リハビリ指示一覧">
+        <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" id="chkRehabShowFlagged" checked><span>中止/訂正</span></label>
+          <label class="chk-inline"><input type="checkbox" id="chkRehabShowItems" checked><span>訓練内容</span></label>
+          <label class="chk-inline"><input type="checkbox" id="chkRehabShowRisk" checked><span>リスク</span></label>
+        </div>
+
+        <div class="history-list" id="rehabHistoryList">
+          <% if (!pastOrders || pastOrders.length === 0) { %>
+            <div class="empty-msg">過去のリハビリ指示はありません。</div>
+          <% } else { %>
+            <% pastOrders.forEach((r) => { %>
+              <%
+                const stLabel = r.isSuperseded ? '訂正済' : r.isCancelled ? '中止' : '発行済';
+                const stClass = r.isSuperseded ? 'st-superseded' : r.isCancelled ? 'st-cancelled' : 'st-ordered';
+                const flagged = r.isCancelled || r.isSuperseded;
+              %>
+              <article
+                class="hist-card hist-card--rehab <%= flagged ? 'is-flagged' : '' %>"
+                data-flagged="<%= flagged ? 'true' : 'false' %>"
+                data-detail-type="rehab"
+                data-detail-order="<%= r.orderNumber %>"
+                title="クリックで詳細表示"
+              >
+                <div class="hist-card__top">
+                  <span class="st-tag st-rehab">リハ/<%= r.rehabCategory %></span>
+                  <code class="hist-num"><%= r.orderNumber %></code>
+                  <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                  <span class="hist-date"><%= r.orderDate %></span>
+                </div>
+                <% if (!selectedPatient) { %>
+                  <div class="hist-patient">[<%= r.patientId %>] <%= r.patientName %>（<%= r.ward %><%= r.room ? ' ' + r.room : '' %>）</div>
+                <% } %>
+                <div class="hist-main">
+                  <strong><%= r.diagnosisName %></strong>（<%= r.frequencyPerWeek %>・<%= r.unitsPerDay %>・<%= r.location %>）
+                </div>
+                <div class="hist-sub js-rehab-items">
+                  <% if (r.ptItems && r.ptItems.length) { %><div>PT: <%= r.ptItems.join(' / ') %></div><% } %>
+                  <% if (r.otItems && r.otItems.length) { %><div>OT: <%= r.otItems.join(' / ') %></div><% } %>
+                  <% if (r.stItems && r.stItems.length) { %><div>ST: <%= r.stItems.join(' / ') %></div><% } %>
+                  <% if (r.evalItems && r.evalItems.length) { %><div>評価・物療: <%= r.evalItems.join(' / ') %></div><% } %>
+                </div>
+                <% if (r.risks && r.risks.length) { %>
+                  <div class="hist-sub js-rehab-risk" style="color:#92400e;">リスク: <%= r.risks.join('、') %></div>
+                <% } %>
+                <% if (r.isSuperseded) { %><div class="hist-flag">訂正先: <%= r.supersededBy %></div><% } %>
+                <% if (r.isCancelled) { %><div class="hist-flag">中止: <%= r.cancelReason || 'リハビリ中止' %></div><% } %>
+                <div class="hist-card__foot">
+                  <span class="hist-doc">指示: <%= r.doctorName %></span>
+                  <div class="hist-actions">
+                    <% if (!flagged) { %>
+                      <button type="button" class="btn-mini js-rehab-revise" data-order="<%= r.orderNumber %>">訂正再発行</button>
+                      <button type="button" class="btn-mini btn-mini--warn js-rehab-cancel" data-order="<%= r.orderNumber %>">中止</button>
+                    <% } %>
+                    <a href="/rehab/print/<%= encodeURIComponent(r.orderNumber) %>" target="_blank" class="btn-mini">印刷</a>
+                  </div>
+                </div>
+              </article>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- 右列: リハビリ指示記入画面 -->
+    <section class="pane pane--right" aria-label="リハビリ指示記入">
+      <div class="pane__bar">
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-patient" <%= !selectedPatient ? 'checked' : '' %>><span>患者・指示医</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-risk" checked><span>リスク・禁忌</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-pt" checked><span>PT</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-ot" checked><span>OT</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-st" checked><span>ST</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-eval" checked><span>評価・物療</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-remarks" checked><span>備考</span></label>
+      </div>
+
+      <form id="rehabOrderForm" class="clin-form">
+        <input type="hidden" id="rehabParentOrderNumber" value="">
+
+        <div id="rehabRevisionBanner" class="revision-banner" hidden>
+          <span>訂正再発行モード（元番号: <strong id="rehabRevisionParentLabel"></strong>）</span>
+          <input type="text" id="rehabRevisionNote" class="s-input s-rev-note" placeholder="訂正理由（任意）">
+          <button type="button" id="btnCancelRehabRevision" class="btn-mini">解除</button>
+        </div>
+
+        <div class="clin-scroll">
+          <!-- 患者・指示医（チェックボックス開閉） -->
+          <table class="clin-table <%= selectedPatient ? 'is-hidden' : '' %>" data-col-group="sec-patient">
+            <tr>
+              <th>患者選択</th>
+              <td colspan="3">
+                <select id="rehabInlinePatientSelect" class="s-select">
+                  <option value="">患者一覧から選択...</option>
+                  <% patients.forEach((p) => { %>
+                    <option
+                      value="<%= p.patientId %>"
+                      data-name="<%= p.fullName %>"
+                      data-kana="<%= p.kanaName || '' %>"
+                      data-gender="<%= p.gender || '不明' %>"
+                      data-age="<%= p.age != null ? p.age : '' %>"
+                      data-birth="<%= p.birthDate || '' %>"
+                      data-ward="<%= p.careCategoryName %>"
+                      data-room="<%= p.wardRoom || '' %>"
+                      <%= selectedPatient && selectedPatient.patientId === p.patientId ? 'selected' : '' %>
+                    >[<%= p.patientId %>] <%= p.fullName %>（<%= p.careCategoryName %><%= p.wardRoom ? ' ' + p.wardRoom : '' %>）</option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>患者ID / 氏名</th>
+              <td>
+                <div class="inline-row">
+                  <input type="text" id="rehabPatientId" class="s-input s-mono" style="width:76px;flex:0 0 76px;" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" placeholder="ID" required>
+                  <input type="text" id="rehabPatientName" class="s-input s-bold" value="<%= selectedPatient ? selectedPatient.fullName : '' %>" placeholder="患者氏名" required>
+                </div>
+                <input type="hidden" id="rehabPatientKana" value="<%= selectedPatient ? (selectedPatient.kanaName || '') : '' %>">
+                <input type="hidden" id="rehabGender" value="<%= selectedPatient ? (selectedPatient.gender || '不明') : '不明' %>">
+                <input type="hidden" id="rehabAge" value="<%= selectedPatient && selectedPatient.age != null ? selectedPatient.age : '' %>">
+                <input type="hidden" id="rehabBirthDate" value="<%= selectedPatient ? (selectedPatient.birthDate || '') : '' %>">
+              </td>
+              <th>区分 / 病室</th>
+              <td>
+                <div class="inline-row">
+                  <input type="text" id="rehabWard" class="s-input" value="<%= initialWard %>">
+                  <input type="text" id="rehabRoom" class="s-input s-room" value="<%= selectedPatient ? (selectedPatient.wardRoom || '') : '' %>" placeholder="病室">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>指示医師</th>
+              <td colspan="3">
+                <input type="text" id="rehabDoctorName" class="s-input" value="<%= actorDisplayName || (user ? user.fullName : '') %>">
+              </td>
+            </tr>
+          </table>
+
+          <!-- 基本情報・算定病名・頻度 -->
+          <table class="clin-table clin-table--rehab">
+            <tr>
+              <th>指示日</th>
+              <td><input type="date" id="rehabOrderDate" class="s-input" required></td>
+              <th>発症日・起算日</th>
+              <td><input type="date" id="rehabOnsetDate" class="s-input"></td>
+            </tr>
+            <tr>
+              <th>疾患別区分</th>
+              <td>
+                <select id="rehabCategory" class="s-select s-bold">
+                  <% rehabOptions.categories.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <th>実施場所</th>
+              <td>
+                <select id="rehabLocation" class="s-select">
+                  <% rehabOptions.locations.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>診断名・算定病名</th>
+              <td colspan="3">
+                <input type="text" id="rehabDiagnosisName" class="s-input s-bold" placeholder="例: 大腿骨頚部骨折術後、脳梗塞後遺症、廃用症候群" required>
+              </td>
+            </tr>
+            <tr>
+              <th>頻度 / 単位 / 期間</th>
+              <td colspan="3">
+                <div class="inline-row">
+                  <select id="rehabFrequency" class="s-select">
+                    <% rehabOptions.frequencies.forEach((opt) => { %>
+                      <option value="<%= opt %>" <%= opt === '週3回' ? 'selected' : '' %>><%= opt %></option>
+                    <% }) %>
+                  </select>
+                  <select id="rehabUnits" class="s-select">
+                    <% rehabOptions.units.forEach((opt) => { %>
+                      <option value="<%= opt %>" <%= opt === '2単位(40分)' ? 'selected' : '' %>><%= opt %></option>
+                    <% }) %>
+                  </select>
+                  <select id="rehabDuration" class="s-select">
+                    <% rehabOptions.durations.forEach((opt) => { %>
+                      <option value="<%= opt %>" <%= opt === '3ヶ月間' ? 'selected' : '' %>><%= opt %></option>
+                    <% }) %>
+                  </select>
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- リスク・禁忌・酸素 -->
+          <table class="clin-table clin-table--rehab" data-col-group="sec-risk">
+            <tr>
+              <th>急変・安全リスク</th>
+              <td colspan="3">
+                <div class="check-grid">
+                  <% rehabOptions.risks.forEach((opt) => { %>
+                    <label class="check-chip">
+                      <input type="checkbox" name="rehabRisks" value="<%= opt %>">
+                      <span><%= opt %></span>
+                    </label>
+                  <% }) %>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>酸素投与量</th>
+              <td><input type="text" id="rehabOxygenFlow" class="s-input" placeholder="例: 経鼻2L/分（労作時3L）"></td>
+              <th>禁忌・中止基準</th>
+              <td><input type="text" id="rehabContraindications" class="s-input" placeholder="例: SpO2 90%未満、BP 180以上、荷重禁止"></td>
+            </tr>
+            <tr>
+              <th>リハ必要性・目標</th>
+              <td colspan="3"><input type="text" id="rehabNecessityReason" class="s-input" placeholder="例: 屋内歩行自立・自宅退院に向けた筋力およびADL向上"></td>
+            </tr>
+          </table>
+
+          <!-- 理学療法（PT） -->
+          <div class="check-box-panel" data-col-group="sec-pt">
+            <div class="check-box-panel__head"><span>理学療法（PT）</span></div>
+            <div class="check-box-panel__body">
+              <% rehabOptions.ptItems.forEach((opt) => { %>
+                <label class="check-chip">
+                  <input type="checkbox" name="ptItems" value="<%= opt %>">
+                  <span><%= opt %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <!-- 作業療法（OT） -->
+          <div class="check-box-panel" data-col-group="sec-ot">
+            <div class="check-box-panel__head"><span>作業療法（OT）</span></div>
+            <div class="check-box-panel__body">
+              <% rehabOptions.otItems.forEach((opt) => { %>
+                <label class="check-chip">
+                  <input type="checkbox" name="otItems" value="<%= opt %>">
+                  <span><%= opt %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <!-- 言語聴覚療法（ST） -->
+          <div class="check-box-panel" data-col-group="sec-st">
+            <div class="check-box-panel__head"><span>言語聴覚療法（ST）</span></div>
+            <div class="check-box-panel__body">
+              <% rehabOptions.stItems.forEach((opt) => { %>
+                <label class="check-chip">
+                  <input type="checkbox" name="stItems" value="<%= opt %>">
+                  <span><%= opt %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <!-- 評価・物理療法 -->
+          <div class="check-box-panel" data-col-group="sec-eval">
+            <div class="check-box-panel__head"><span>評価・物理療法</span></div>
+            <div class="check-box-panel__body">
+              <% rehabOptions.evalItems.forEach((opt) => { %>
+                <label class="check-chip">
+                  <input type="checkbox" name="evalItems" value="<%= opt %>">
+                  <span><%= opt %></span>
+                </label>
+              <% }) %>
+            </div>
+          </div>
+
+          <!-- 備考 -->
+          <table class="clin-table clin-table--rehab" data-col-group="sec-remarks">
+            <tr>
+              <th>特記事項・連絡事項</th>
+              <td colspan="3">
+                <textarea id="rehabRemarks" class="s-textarea" rows="2" placeholder="リハ科への申し送り・装具指示・家族指導など"></textarea>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="editor-footer">
+          <span id="rehabStatusMessage" class="status-msg" role="status"></span>
+          <div class="inline-row">
+            <button type="button" id="btnResetRehab" class="btn-cell btn-cell--sub">クリア</button>
+            <button type="submit" id="btnSubmitRehab" class="btn-cell btn-cell--primary">リハビリ指示発行</button>
+            <button type="button" id="btnSubmitRehabPrint" class="btn-cell btn-cell--print">発行・印刷</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <% if (!isEmbed) { %>
+    <script src="/js/statusBar.js"></script>
+  <% } %>
+  <script src="/js/rehabOrder.js"></script>
+</body>
+</html>

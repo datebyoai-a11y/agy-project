@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/patients.css">
+</head>
+<body class="page-patients">
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <main class="patients-main">
+    <!-- 1行操作・絞込・表示項目切替バー -->
+    <div class="compact-bar" role="region" aria-label="検索・新規登録・表示項目切替">
+      <div class="compact-bar__group">
+        <button type="button" class="btn-cell btn-cell--primary" id="btnOpenCreateModal">＋ 新規患者登録</button>
+        <input
+          type="text"
+          id="filterKeyword"
+          class="ctrl-input ctrl-input--search"
+          placeholder="ID・氏名・カナ・病室・病名"
+          aria-label="患者検索"
+        >
+        <select id="filterCategory" class="ctrl-select" aria-label="区分で絞込">
+          <option value="">区分: すべて</option>
+          <% categories.forEach((c) => { %>
+            <option value="<%= c.code %>"><%= c.name %></option>
+          <% }) %>
+        </select>
+        <span class="count-badge" id="patientCountBadge"><%= patients.length %>件</span>
+      </div>
+
+      <div class="compact-bar__checks">
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="kana" checked>カナ</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="gender" checked>性別</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="birth" checked>生年月日</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="category" checked>区分・室</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="blood" checked>血液型</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="allergies" checked>アレルギー</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="cautions" checked>注意事項</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="diagnoses" checked>病名</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="insurance" checked>保険</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="contact">連絡先</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="notes" checked>備考</label>
+        <label class="chk-inline"><input type="checkbox" id="toggleInactive" checked>無効含む</label>
+      </div>
+
+      <div class="compact-bar__status" id="statusMessage" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- 患者一覧テーブル -->
+    <div class="table-wrap">
+      <table class="grid-table" id="patientsTable" data-selected-patient-id="<%= selectedPatientId %>">
+        <thead>
+          <tr>
+            <th class="col-id">患者ID</th>
+            <th class="col-name">氏名</th>
+            <th class="col-kana" data-col="kana">フリガナ</th>
+            <th class="col-gender" data-col="gender">性別</th>
+            <th class="col-birth" data-col="birth">生年月日</th>
+            <th class="col-age">年齢</th>
+            <th class="col-cat" data-col="category">区分・室</th>
+            <th class="col-blood" data-col="blood">血液型</th>
+            <th class="col-allergy" data-col="allergies">アレルギー・禁忌</th>
+            <th class="col-caution" data-col="cautions">注意事項</th>
+            <th class="col-dx" data-col="diagnoses">病名（開始日・中止日・転帰）</th>
+            <th class="col-ins" data-col="insurance">保険</th>
+            <th class="col-contact" data-col="contact">連絡先・緊急連絡先</th>
+            <th class="col-notes" data-col="notes">備考</th>
+            <th class="col-state">状態</th>
+            <th class="col-actions">操作</th>
+          </tr>
+        </thead>
+        <tbody id="patientsTableBody">
+          <% patients.forEach((p) => { %>
+            <%
+              const dxList = Array.isArray(p.diagnoses) ? p.diagnoses : [];
+              const dxSearch = dxList.map((d) => `${d.name} ${d.outcome}`).join(' ');
+            %>
+            <tr
+              class="patient-row <%= p.isActive ? '' : 'is-inactive' %> <%= p.patientId === selectedPatientId ? 'is-selected' : '' %>"
+              data-patient-id="<%= p.patientId %>"
+              data-category="<%= p.careCategory %>"
+              data-active="<%= p.isActive ? 'true' : 'false' %>"
+              data-search="<%= `${p.patientId} ${p.fullName} ${p.kana} ${p.wardRoom} ${p.allergies} ${p.cautions || ''} ${dxSearch}`.toLowerCase() %>"
+            >
+              <td class="cell-id"><code><%= p.patientId %></code></td>
+              <td class="cell-name"><%= p.fullName %></td>
+              <td class="cell-muted" data-col="kana"><%= p.kana || '-' %></td>
+              <td class="cell-center" data-col="gender"><%= p.gender %></td>
+              <td class="cell-nowrap" data-col="birth"><%= p.birthDate || '-' %></td>
+              <td class="cell-right cell-nowrap"><%= p.age != null ? `${p.age}歳` : '-' %></td>
+              <td class="cell-nowrap" data-col="category">
+                <span class="cat-tag cat-tag--<%= p.careCategory %>"><%= p.careCategoryName %></span>
+                <% if (p.wardRoom) { %><span class="room-code"><%= p.wardRoom %></span><% } %>
+              </td>
+              <td class="cell-center" data-col="blood"><%= p.bloodType %></td>
+              <td class="<%= p.allergies && p.allergies !== 'なし' ? 'cell-allergy-warn' : 'cell-muted' %>" data-col="allergies">
+                <%= p.allergies || 'なし' %>
+              </td>
+              <td class="<%= p.cautions && p.cautions !== 'なし' ? 'cell-caution-warn' : 'cell-muted' %>" data-col="cautions">
+                <%= p.cautions || '-' %>
+              </td>
+              <td class="cell-dx" data-col="diagnoses">
+                <% if (dxList.length === 0) { %>
+                  <span class="cell-muted">-</span>
+                <% } else { %>
+                  <ul class="dx-cell-list">
+                    <% dxList.forEach((dx) => { %>
+                      <%
+                        const isEnded = Boolean(dx.endDate) || (dx.outcome && dx.outcome !== '継続');
+                        const outClass = dx.outcome === '治癒' || dx.outcome === '軽快'
+                          ? 'dx-out--cured'
+                          : dx.outcome === '中止' || dx.outcome === '死亡'
+                            ? 'dx-out--stopped'
+                            : dx.outcome === '転院'
+                              ? 'dx-out--transfer'
+                              : 'dx-out--active';
+                      %>
+                      <li class="dx-cell-item <%= isEnded ? 'is-ended' : '' %>">
+                        <span class="dx-name"><%= dx.name %></span>
+                        <span class="dx-dates">
+                          <%= dx.startDate || '-' %>〜<%= dx.endDate || '' %>
+                        </span>
+                        <span class="dx-out-tag <%= outClass %>"><%= dx.outcome || '継続' %></span>
+                      </li>
+                    <% }) %>
+                  </ul>
+                <% } %>
+              </td>
+              <td class="cell-nowrap" data-col="insurance"><%= p.insuranceType || '-' %></td>
+              <td class="cell-contact" data-col="contact">
+                <div><%= p.phone || '-' %></div>
+                <% if (p.emergencyContact) { %><div class="cell-muted"><%= p.emergencyContact %></div><% } %>
+              </td>
+              <td class="cell-notes" data-col="notes"><%= p.notes || '-' %></td>
+              <td class="cell-center">
+                <span class="state-tag <%= p.isActive ? 'state-tag--active' : 'state-tag--inactive' %> js-state-tag">
+                  <%= p.isActive ? '有効' : '無効' %>
+                </span>
+              </td>
+              <td class="cell-actions">
+                <button type="button" class="btn-cell btn-cell--select js-select-patient">選択</button>
+                <button type="button" class="btn-cell btn-cell--primary js-edit-patient">編集</button>
+                <button
+                  type="button"
+                  class="btn-cell <%= p.isActive ? 'btn-cell--warn' : 'btn-cell--sub' %> js-toggle-active"
+                ><%= p.isActive ? '無効化' : '有効化' %></button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- 患者情報 入力・編集モーダルウィンドウ -->
+  <div class="modal-backdrop" id="patientModal" role="dialog" aria-modal="true" aria-labelledby="modalModeLabel" hidden>
+    <div class="modal-window">
+      <div class="modal-header">
+        <span class="modal-header__label" id="modalModeLabel">患者情報 登録</span>
+        <button type="button" class="modal-close-btn" id="btnCloseModal" aria-label="閉じる">×</button>
+      </div>
+
+      <form id="patientForm" class="modal-form" novalidate>
+        <div class="modal-alert" id="modalError" role="alert" hidden></div>
+
+        <div class="modal-grid">
+          <div class="m-field">
+            <label for="mPatientId" class="m-label">患者ID <span class="req">*</span></label>
+            <input type="text" id="mPatientId" name="patientId" class="m-input" placeholder="例: P0005" required autocomplete="off">
+          </div>
+
+          <div class="m-field">
+            <label for="mCareCategory" class="m-label">区分 <span class="req">*</span></label>
+            <select id="mCareCategory" name="careCategory" class="m-select">
+              <% categories.forEach((c) => { %>
+                <option value="<%= c.code %>"><%= c.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="m-field">
+            <label for="mFullName" class="m-label">氏名 <span class="req">*</span></label>
+            <input type="text" id="mFullName" name="fullName" class="m-input" placeholder="例: 山田 花子" required>
+          </div>
+
+          <div class="m-field">
+            <label for="mKana" class="m-label">フリガナ</label>
+            <input type="text" id="mKana" name="kana" class="m-input" placeholder="例: ヤマダ ハナコ">
+          </div>
+
+          <div class="m-field">
+            <label for="mBirthDate" class="m-label">生年月日 <span class="req">*</span> <span class="age-preview" id="mAgePreview"></span></label>
+            <input type="date" id="mBirthDate" name="birthDate" class="m-input" required>
+          </div>
+
+          <div class="m-field">
+            <label for="mGender" class="m-label">性別</label>
+            <select id="mGender" name="gender" class="m-select">
+              <% genders.forEach((g) => { %>
+                <option value="<%= g %>"><%= g %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="m-field">
+            <label for="mWardRoom" class="m-label">病室・居室</label>
+            <input type="text" id="mWardRoom" name="wardRoom" class="m-input" placeholder="例: 201-1（外来は空欄）">
+          </div>
+
+          <div class="m-field">
+            <label for="mBloodType" class="m-label">血液型</label>
+            <select id="mBloodType" name="bloodType" class="m-select">
+              <% bloodTypes.forEach((bt) => { %>
+                <option value="<%= bt %>"><%= bt %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="m-field">
+            <label for="mInsuranceType" class="m-label">保険種別</label>
+            <select id="mInsuranceType" name="insuranceType" class="m-select">
+              <option value="">未選択</option>
+              <% insuranceTypes.forEach((ins) => { %>
+                <option value="<%= ins %>"><%= ins %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="m-field">
+            <label for="mPhone" class="m-label">電話番号</label>
+            <input type="text" id="mPhone" name="phone" class="m-input" placeholder="例: 0142-23-0000">
+          </div>
+
+          <div class="m-field m-field--full">
+            <label for="mEmergencyContact" class="m-label">緊急連絡先</label>
+            <input type="text" id="mEmergencyContact" name="emergencyContact" class="m-input" placeholder="氏名（続柄）・電話番号">
+          </div>
+
+          <div class="m-field m-field--full">
+            <label for="mAllergies" class="m-label">アレルギー・禁忌</label>
+            <input type="text" id="mAllergies" name="allergies" class="m-input" placeholder="薬剤・食物・造影剤など（なければ空欄または「なし」）">
+          </div>
+
+          <div class="m-field m-field--full">
+            <label for="mCautions" class="m-label">注意事項（ステータスバー下へ表示）</label>
+            <input type="text" id="mCautions" name="cautions" class="m-input" placeholder="転倒リスク、誤嚥注意、感染症、採血禁止部位、ペースメーカーなど">
+          </div>
+
+          <div class="m-field m-field--full">
+            <div class="dx-editor-head">
+              <span class="m-label">病名（開始日・中止日・転帰）</span>
+              <button type="button" class="btn-cell btn-cell--select" id="btnAddDiagnosisRow">＋ 病名追加</button>
+            </div>
+            <table class="dx-editor-table" id="diagnosisEditorTable" data-outcomes="<%= JSON.stringify(diagnosisOutcomes || []) %>">
+              <thead>
+                <tr>
+                  <th>病名</th>
+                  <th style="width:128px;">開始日</th>
+                  <th style="width:128px;">中止日</th>
+                  <th style="width:92px;">転帰</th>
+                  <th style="width:54px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="diagnosisEditorBody"></tbody>
+            </table>
+          </div>
+
+          <div class="m-field m-field--full">
+            <label for="mNotes" class="m-label">備考・特記事項</label>
+            <textarea id="mNotes" name="notes" class="m-textarea" rows="2" placeholder="転倒リスク、嚥下形態、感染症注意など"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <label class="chk-inline modal-active-chk">
+            <input type="checkbox" id="mIsActive" name="isActive" checked>
+            <span>有効</span>
+          </label>
+          <div class="modal-footer__btns">
+            <button type="button" class="btn-cell btn-cell--sub" id="btnCancelModal">キャンセル</button>
+            <button type="submit" class="btn-cell btn-cell--primary" id="btnSubmitModal">登録</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/patients.js"></script>
+</body>
+</html>

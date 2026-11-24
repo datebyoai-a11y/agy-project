@@ -1,0 +1,153 @@
+<header class="status-bar" role="banner">
+  <div class="status-bar__left">
+    <% if (statusBar.user) { %>
+      <div class="menu-split" data-menu-dropdown>
+        <a href="<%= statusBar.homePath %>" class="menu-split__home">メインメニュー</a>
+        <button
+          type="button"
+          class="menu-split__toggle"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-label="他メニューへ遷移"
+          data-menu-toggle
+        >▾</button>
+
+        <div class="menu-dropdown" role="menu" hidden data-menu-panel>
+          <div class="menu-dropdown__section">部署選択</div>
+          <% (statusBar.switchableMenus || []).forEach((item) => { %>
+            <a
+              href="<%= item.path %>"
+              class="menu-dropdown__item <%= item.departmentCode === statusBar.user.departmentCode ? 'is-current' : '' %>"
+              role="menuitem"
+            >
+              <span><%= item.departmentName %></span>
+            </a>
+          <% }) %>
+          <div class="menu-dropdown__divider"></div>
+          <form action="/logout" method="POST" class="menu-dropdown__logout-form">
+            <button type="submit" class="menu-dropdown__item menu-dropdown__item--danger" role="menuitem">
+              ログアウト
+            </button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (statusBar.patient) { %>
+      <span class="status-pill status-pill--patient">
+        <span class="status-pill__label">患者ID</span>
+        <strong><%= statusBar.patient.id %></strong>
+      </span>
+      <span class="status-pill">
+        <span class="status-pill__label">生年月日</span>
+        <span><%= statusBar.patient.birthDate %></span>
+      </span>
+      <span class="status-pill">
+        <span class="status-pill__label">年齢</span>
+        <span><%= statusBar.patient.age %>歳</span>
+      </span>
+    <% } else if (!statusBar.user) { %>
+      <span class="status-brand">小病院オーダリングシステム</span>
+    <% } %>
+  </div>
+
+  <div class="status-bar__center">
+    <span class="status-bar__title" data-testid="status-bar-title"><%= statusBar.screenTitle %></span>
+  </div>
+
+  <div class="status-bar__right">
+    <% if (statusBar.user) { %>
+      <%
+        const elevated = statusBar.user.elevatedDoctor || null;
+        const doctorsList = Array.isArray(availableDoctors) ? availableDoctors : [];
+      %>
+      <div class="user-elevate" data-elevate-menu>
+        <button
+          type="button"
+          class="status-pill status-pill--user status-pill--btn <%= elevated ? 'status-pill--elevated' : '' %>"
+          aria-haspopup="true"
+          aria-expanded="false"
+          title="クリックして医師権限代行・解除"
+          data-elevate-toggle
+          data-testid="status-bar-user"
+        >
+          <% if (elevated) { %>
+            <span class="elevate-badge">権限代行</span>
+            <strong><%= elevated.fullName %></strong>
+            <span class="status-pill__role">（医師）</span>
+            <span class="elevate-sep">／</span>
+            <span class="status-pill__label">操作:</span>
+            <span><%= statusBar.user.fullName %></span>
+            <span class="status-pill__role">（<%= statusBar.user.roleName %>）</span>
+          <% } else { %>
+            <span class="status-pill__label"><%= statusBar.user.departmentName %></span>
+            <strong><%= statusBar.user.fullName %></strong>
+            <span class="status-pill__role">（<%= statusBar.user.roleName %>）</span>
+          <% } %>
+          <span class="elevate-caret">▾</span>
+        </button>
+
+        <div class="menu-dropdown elevate-dropdown" role="menu" hidden data-elevate-panel>
+          <div class="menu-dropdown__section">医師権限代行</div>
+          <% if (elevated) { %>
+            <div class="elevate-info">
+              <div>代行医師: <strong><%= elevated.fullName %>（医師）</strong></div>
+              <div>操作職員: <%= statusBar.user.fullName %>（<%= statusBar.user.roleName %>）</div>
+            </div>
+          <% } %>
+          <% doctorsList.forEach((doc) => { %>
+            <button
+              type="button"
+              class="menu-dropdown__item <%= (elevated && elevated.staffId === doc.staffId) ? 'is-current' : '' %>"
+              role="menuitem"
+              data-elevate-doctor="<%= doc.staffId %>"
+            >
+              <span><%= doc.fullName %>（医師）</span>
+              <span class="menu-dropdown__sub">ID: <%= doc.staffId %><%= (elevated && elevated.staffId === doc.staffId) ? ' ・代行中' : ' ・クリックで権限代行' %></span>
+            </button>
+          <% }) %>
+          <% if (elevated) { %>
+            <div class="menu-dropdown__divider"></div>
+            <button
+              type="button"
+              class="menu-dropdown__item menu-dropdown__item--danger"
+              role="menuitem"
+              data-elevate-clear
+            >
+              権限代行を解除（<%= statusBar.user.fullName %>に戻る）
+            </button>
+          <% } %>
+        </div>
+      </div>
+    <% } else { %>
+      <span class="status-pill">未ログイン</span>
+    <% } %>
+  </div>
+</header>
+<%
+  const emptyPattern = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+  const rawAllergies = statusBar.patient && statusBar.patient.allergies
+    ? String(statusBar.patient.allergies).trim()
+    : '';
+  const hasAllergy = Boolean(rawAllergies && !emptyPattern.test(rawAllergies));
+  const rawCautions = statusBar.patient && statusBar.patient.cautions
+    ? String(statusBar.patient.cautions).trim()
+    : '';
+  const hasCaution = Boolean(rawCautions && !emptyPattern.test(rawCautions));
+%>
+<% if (hasAllergy || hasCaution) { %>
+  <div class="patient-alert-bar" role="alert" data-testid="patient-alert-bar">
+    <% if (hasCaution) { %>
+      <div class="alert-seg alert-seg--caution" data-testid="caution-bar">
+        <span class="alert-seg__label alert-seg__label--caution">注意事項</span>
+        <span class="alert-seg__text"><%= rawCautions %></span>
+      </div>
+    <% } %>
+    <% if (hasAllergy) { %>
+      <div class="alert-seg alert-seg--allergy" data-testid="allergy-bar">
+        <span class="alert-seg__label alert-seg__label--allergy">アレルギー・禁忌</span>
+        <span class="alert-seg__text"><%= rawAllergies %></span>
+      </div>
+    <% } %>
+  </div>
+<% } %>

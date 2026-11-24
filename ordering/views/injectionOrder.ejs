@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/injectionOrder.css">
+  <link rel="stylesheet" href="/css/injectionScheduleModal.css">
+</head>
+<body
+  class="page-inj <%= isEmbed ? 'is-embed' : '' %>"
+  data-embed="<%= isEmbed ? '1' : '0' %>"
+  data-revise="<%= reviseOrderNumber || '' %>"
+  data-inj-kind="<%= injectionKind.kind %>"
+  data-inj-path="<%= injectionKind.path %>"
+  data-inj-title="<%= injectionKind.screenTitle %>"
+  data-default-days="<%= injectionKind.defaultDays %>"
+  data-default-day-unit="<%= injectionKind.defaultDayUnit %>"
+  data-default-timings="<%= injectionKind.defaultTimings.join(',') %>"
+  data-timing-options="<%= injectionKind.timingOptions.join(',') %>"
+>
+  <% if (!isEmbed) { %>
+    <%- include('partials/statusBar', { statusBar }) %>
+  <% } %>
+
+  <!-- 縦3分割（左: ツリーメニュー / 中: 過去記載 / 右: 記入画面） タイトル・不要ボタンなし -->
+  <main class="inj-grid <%= isEmbed ? 'is-embed-grid' : '' %>">
+    <% if (!isEmbed) { %>
+      <!-- 左列: ツリー方式メニュー（注射剤分類ツリー） -->
+      <aside class="pane pane--tree" aria-label="注射薬剤ツリーメニュー">
+        <ul class="tree-list" id="injCategoryTree">
+          <li class="tree-node">
+            <details open>
+              <summary class="tree-summary">剤形区分</summary>
+              <ul class="tree-children">
+                <li><button type="button" class="tree-leaf is-selected" data-tree-cat="注射剤" data-tree-major="">注射剤</button></li>
+                <li><button type="button" class="tree-leaf" data-tree-cat="" data-tree-major="">すべて</button></li>
+              </ul>
+            </details>
+          </li>
+          <li class="tree-node">
+            <details open>
+              <summary class="tree-summary">薬効分類（注射）</summary>
+              <ul class="tree-children">
+                <% (categoryTree || []).forEach((major) => { %>
+                  <li>
+                    <button
+                      type="button"
+                      class="tree-leaf"
+                      data-tree-cat="注射剤"
+                      data-tree-major="<%= major.name %>"
+                      title="<%= major.name %>"
+                    ><%= major.name %></button>
+                  </li>
+                <% }) %>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- 中列: 過去記載（表示項目チェックボックスのみ / タイトル・ショートカットボタンなし） -->
+      <section class="pane pane--history" aria-label="過去注射履歴">
+        <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="date" checked>日時</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="author" checked>記載者</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="route" checked>経路・速度</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="note" checked>備考</label>
+          <label class="chk-inline"><input type="checkbox" id="chkInjShowFlagged" checked>中止/訂正</label>
+        </div>
+
+        <div class="history-list" id="pastInjList">
+          <% if (!pastInjections || pastInjections.length === 0) { %>
+            <div class="empty-msg">過去の<%= injectionKind.screenTitle %>履歴はありません。</div>
+          <% } else { %>
+            <% pastInjections.forEach((inj) => { %>
+              <%
+                const stLabel = inj.isSuperseded ? '訂正済' : inj.isCancelled ? '中止' : '発行済';
+                const stCls = inj.isSuperseded ? 'st-superseded' : inj.isCancelled ? 'st-cancelled' : 'st-ordered';
+                const dtStr = inj.createdAt
+                  ? new Date(inj.createdAt).toLocaleString('ja-JP', {
+                      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                    })
+                  : inj.startDate;
+              %>
+              <article
+                class="hist-card hist-card--<%= inj.injectionType === '外来注射' ? 'out' : 'in' %> <%= (inj.isCancelled || inj.isSuperseded) ? 'is-flagged' : '' %>"
+                data-flagged="<%= (inj.isCancelled || inj.isSuperseded) ? 'true' : 'false' %>"
+                data-detail-type="inj"
+                data-detail-order="<%= inj.orderNumber %>"
+                title="クリックで詳細表示"
+              >
+                <div class="hist-card__top">
+                  <span class="st-tag st-inj"><%= inj.injectionType %></span>
+                  <code class="hist-num"><%= inj.orderNumber %></code>
+                  <span class="st-tag <%= stCls %>"><%= stLabel %></span>
+                  <span class="hist-date" data-hist-item="date"><%= dtStr %></span>
+                </div>
+                <% if (!selectedPatient) { %>
+                  <div class="hist-patient">[<%= inj.patientId %>] <%= inj.patientName %></div>
+                <% } %>
+                <table class="hist-mini-table">
+                  <tbody>
+                    <% (inj.items || []).forEach((it) => { %>
+                      <tr>
+                        <td class="hm-rp">Rp<%= it.rpNo %></td>
+                        <td class="hm-drug"><strong><%= it.drugName %></strong></td>
+                        <td class="hm-dose"><%= it.dose %></td>
+                        <td class="hm-days"><%= it.days %><%= it.dayUnit %></td>
+                      </tr>
+                      <tr data-hist-item="route">
+                        <td colspan="4" class="hm-route">
+                          <%= it.route %><% if (it.timing) { %> / <%= it.timing %><% } %><% if (it.rate) { %> / <%= it.rate %><% } %>
+                          <% if (it.dailySchedule && it.dailySchedule.length > 0) { %>
+                            <div class="inj-sched-chips">
+                              <% it.dailySchedule.forEach((d) => { %>
+                                <span class="inj-chip <%= d.status === 'DELETE' ? 'inj-chip--del' : 'inj-chip--cont' %>"><%= d.date.slice(5).replace('-', '/') %>:<%= d.status === 'DELETE' ? '削' : '継' %></span>
+                              <% }) %>
+                            </div>
+                          <% } %>
+                        </td>
+                      </tr>
+                      <% if (it.note) { %>
+                        <tr data-hist-item="note">
+                          <td colspan="4" class="hm-note">備考: <%= it.note %></td>
+                        </tr>
+                      <% } %>
+                    <% }) %>
+                  </tbody>
+                </table>
+                <% if (inj.remarks) { %>
+                  <div class="hist-rem" data-hist-item="note">全体備考: <%= inj.remarks %></div>
+                <% } %>
+                <% if (inj.isSuperseded) { %>
+                  <div class="hist-flag">訂正先: <%= inj.supersededBy %></div>
+                <% } %>
+                <% if (inj.isCancelled) { %>
+                  <div class="hist-flag">中止: <%= inj.cancelReason || '注射中止' %></div>
+                <% } %>
+                <div class="hist-card__foot">
+                  <span class="hist-doc" data-hist-item="author"><%= inj.doctorName %>（<%= inj.ward %><%= inj.room ? ' ' + inj.room : '' %>）</span>
+                  <div class="hist-actions">
+                    <% if (!inj.isCancelled && !inj.isSuperseded) { %>
+                      <% if (inj.injectionType === '入院注射') { %>
+                        <button type="button" class="btn-mini js-inj-schedule" data-order="<%= inj.orderNumber %>">日付編集</button>
+                      <% } %>
+                      <button type="button" class="btn-mini js-inj-revise" data-order="<%= inj.orderNumber %>">訂正再発行</button>
+                      <button type="button" class="btn-mini btn-mini--warn js-inj-cancel" data-order="<%= inj.orderNumber %>">中止</button>
+                    <% } %>
+                    <a href="/injections/print/<%= encodeURIComponent(inj.orderNumber) %>" target="_blank" class="btn-mini">印刷</a>
+                  </div>
+                </div>
+              </article>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- 右列: 注射箋 記入画面（タイトル・不要ボタンなし） -->
+    <section class="pane pane--editor" aria-label="<%= injectionKind.screenTitle %>入力">
+      <form id="injOrderForm" class="inj-form" novalidate>
+        <input type="hidden" id="injType" value="<%= injectionKind.injectionType %>">
+        <input type="hidden" id="injParentOrderNumber" value="">
+        <input type="hidden" id="injAge" value="<%= selectedPatient && selectedPatient.age != null ? selectedPatient.age : '' %>">
+        <input type="hidden" id="injGender" value="<%= selectedPatient ? selectedPatient.gender : '不明' %>">
+        <input type="hidden" id="injBirthDate" value="<%= selectedPatient ? (selectedPatient.birthDate || '') : '' %>">
+        <input type="hidden" id="injPatientKana" value="<%= selectedPatient ? (selectedPatient.kana || '') : '' %>">
+        <input type="hidden" id="injSourceDept" value="<%= sourceDept %>">
+        <input type="hidden" id="injDoctorName" value="<%= actorDisplayName || user.fullName %>">
+
+        <!-- 表示・非表示チェックボックス行（タイトルなし・不要ボタンなし） -->
+        <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="rp" checked>Rp</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="dose" checked>投与量</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="route" checked>投与経路</label>
+          <% if (injectionKind.kind !== 'inpatient') { %>
+            <label class="chk-inline"><input type="checkbox" data-col-toggle="timing" checked>実施時間</label>
+          <% } %>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="rate" checked>速度・時間</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="days" checked>日数/回数</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="note" checked>備考欄</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="meta" <%= selectedPatient ? '' : 'checked' %>>患者・日付詳細</label>
+        </div>
+
+        <!-- 訂正再発行バナー（訂正時のみ） -->
+        <div class="revision-banner" id="injRevisionBanner" hidden>
+          <span>訂正再発行（元注射箋 <strong id="injRevisionParent"></strong> に訂正済フラグを立て追記）</span>
+          <input type="text" id="injRevisionNote" class="s-input s-rev-note" placeholder="訂正理由">
+          <button type="button" class="btn-mini" id="btnInjCancelRevision">解除</button>
+        </div>
+
+        <div class="inj-scroll">
+          <!-- 患者・日付詳細（チェックボックスで表示切替可能） -->
+          <table class="meta-table" data-col="meta">
+            <tr>
+              <th>患者ID</th>
+              <td><input type="text" id="injPatientId" class="s-input s-mono" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" placeholder="患者ID" required></td>
+              <th>患者氏名</th>
+              <td><input type="text" id="injPatientName" class="s-input s-bold" value="<%= selectedPatient ? selectedPatient.fullName : '' %>" placeholder="患者氏名" required></td>
+              <th>開始日</th>
+              <td><input type="date" id="injStartDate" class="s-input"></td>
+              <th>区分・室</th>
+              <td>
+                <div class="inline-row">
+                  <select id="injWard" class="s-select">
+                    <option value="医療病棟" <%= (initialWard === '医療病棟' || initialWard === '病棟') ? 'selected' : '' %>>医療病棟</option>
+                    <option value="外来" <%= initialWard === '外来' ? 'selected' : '' %>>外来</option>
+                    <option value="介護医療院(うみかぜ)" <%= (initialWard === '介護医療院(うみかぜ)' || initialWard === '介護医療院') ? 'selected' : '' %>>介護医療院(うみかぜ)</option>
+                    <option value="介護医療院(しおかぜ)" <%= initialWard === '介護医療院(しおかぜ)' ? 'selected' : '' %>>介護医療院(しおかぜ)</option>
+                  </select>
+                  <input type="text" id="injRoom" class="s-input s-room" value="<%= selectedPatient ? (selectedPatient.wardRoom || '') : '' %>" placeholder="病室">
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- 注射剤マスタ検索入力 -->
+          <div class="search-strip">
+            <select id="injMedCatFilter" class="s-select s-cat" aria-label="剤形絞込">
+              <option value="注射剤" selected>注射剤</option>
+              <option value="">全剤形</option>
+            </select>
+            <input
+              type="text"
+              id="injMedSearch"
+              class="s-input"
+              placeholder="注射薬剤名・一般名・カナ（例: ソルデム, 生食, セフトリアキソン, ラスビック）で検索して追加"
+              autocomplete="off"
+            >
+            <span class="active-filter-tag" id="injMajorFilterTag" hidden></span>
+          </div>
+
+          <div class="suggest-box" id="injMedSuggestWrap" hidden>
+            <table class="suggest-table">
+              <tbody id="injMedSuggestBody"></tbody>
+            </table>
+          </div>
+
+          <!-- 注射薬剤入力テーブル -->
+          <table class="inj-entry-table" id="injItemsTable">
+            <thead>
+              <tr>
+                <th class="col-rp" data-col="rp">Rp</th>
+                <th class="col-drug">薬剤名</th>
+                <th class="col-dose" data-col="dose">投与量</th>
+                <th class="col-route" data-col="route">投与経路</th>
+                <% if (injectionKind.kind !== 'inpatient') { %>
+                  <th class="col-timing" data-col="timing">実施時間</th>
+                <% } %>
+                <th class="col-rate" data-col="rate">速度・時間</th>
+                <th class="col-days" data-col="days">日数/回数</th>
+                <th class="col-note" data-col="note">備考欄</th>
+                <th class="col-del">操作</th>
+              </tr>
+            </thead>
+            <tbody id="injItemsBody"></tbody>
+          </table>
+
+          <!-- 全体備考欄 -->
+          <div class="whole-remarks" data-col="note">
+            <input
+              type="text"
+              id="injRemarks"
+              class="s-input"
+              value="<%= selectedPatient && selectedPatient.allergies && selectedPatient.allergies !== 'なし' ? 'アレルギー: ' + selectedPatient.allergies : '' %>"
+              placeholder="注射指示全体備考（混注注意・ルート指示・アレルギー等）"
+            >
+          </div>
+        </div>
+
+        <!-- 下部発行操作バー -->
+        <div class="editor-footer">
+          <div class="inline-row">
+            <button type="button" class="btn-cell btn-cell--sub" id="btnInjAddRow">＋ 行追加</button>
+            <button type="button" class="btn-cell btn-cell--sub" id="btnInjAddRp">＋ 新Rp追加</button>
+            <% if (injectionKind.kind === 'inpatient') { %>
+              <button type="button" class="btn-cell btn-cell--sub" id="btnInjScheduleModal">日付別 継続/削除</button>
+            <% } %>
+            <span class="status-msg" id="injStatusMsg" role="status" aria-live="polite"></span>
+          </div>
+          <div class="inline-row">
+            <button type="button" class="btn-cell btn-cell--primary" id="btnSubmitInj">発行</button>
+            <button type="button" class="btn-cell btn-cell--print" id="btnSubmitInjPrint">発行・印刷</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <datalist id="injRatePresetList">
+    <% ratePresets.forEach((r) => { %>
+      <option value="<%= r %>"></option>
+    <% }) %>
+  </datalist>
+
+  <%- include('partials/injectionScheduleModal') %>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/injectionScheduleModal.js"></script>
+  <script src="/js/injectionOrder.js"></script>
+</body>
+</html>

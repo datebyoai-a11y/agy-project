@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/users.css">
+</head>
+<body class="page-users">
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <main class="users-main">
+    <!-- 1行操作・表示制御バー -->
+    <div class="compact-bar" role="region" aria-label="検索と表示項目の設定">
+      <div class="compact-bar__group">
+        <input
+          type="text"
+          id="filterKeyword"
+          class="ctrl-input ctrl-input--search"
+          placeholder="ID・氏名で絞込"
+          aria-label="ID・氏名で絞込"
+        >
+        <select id="filterRole" class="ctrl-select" aria-label="職種で絞込">
+          <option value="">職種: すべて</option>
+          <% roles.forEach((r) => { %>
+            <option value="<%= r.code %>"><%= r.name %></option>
+          <% }) %>
+        </select>
+        <select id="filterDept" class="ctrl-select" aria-label="部署で絞込">
+          <option value="">部署: すべて</option>
+          <% departments.forEach((d) => { %>
+            <option value="<%= d.code %>"><%= d.name %></option>
+          <% }) %>
+        </select>
+        <span class="count-badge" id="userCountBadge"><%= users.length %>件</span>
+      </div>
+
+      <div class="compact-bar__checks">
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="new-row" checked>新規登録行</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="allowed-depts" checked>許可部署</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="password" checked>PW変更</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="last-login">最終ログイン</label>
+        <label class="chk-inline"><input type="checkbox" id="toggleInactive" checked>無効含む</label>
+        <label class="chk-inline"><input type="checkbox" data-section-toggle="role-orders" checked>職種別可能オーダー</label>
+      </div>
+
+      <div class="compact-bar__status" id="statusMessage" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- ユーザー管理テーブル -->
+    <div class="table-wrap table-wrap--users">
+      <table class="grid-table" id="usersTable" data-current-staff-id="<%= currentStaffId %>">
+        <thead>
+          <tr>
+            <th class="col-id">職員ID</th>
+            <th class="col-name">氏名</th>
+            <th class="col-role">職種</th>
+            <th class="col-dept">主所属部署</th>
+            <th class="col-allowed" data-col="allowed-depts">許可部署（複数選択可）</th>
+            <th class="col-status">状態</th>
+            <th class="col-pw" data-col="password">パスワード</th>
+            <th class="col-login" data-col="last-login">最終ログイン</th>
+            <th class="col-actions">操作</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <!-- 新規登録行 -->
+          <tr class="row-new" data-row-type="new" data-col="new-row">
+            <td>
+              <input type="text" id="newStaffId" class="cell-input cell-input--id" placeholder="新規ID" autocomplete="off">
+            </td>
+            <td>
+              <input type="text" id="newFullName" class="cell-input" placeholder="氏名">
+            </td>
+            <td>
+              <select id="newRoleCode" class="cell-select">
+                <% roles.forEach((r) => { %>
+                  <option value="<%= r.code %>"><%= r.name %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td>
+              <select id="newDefaultDept" class="cell-select">
+                <% departments.forEach((d) => { %>
+                  <option value="<%= d.code %>"><%= d.name %></option>
+                <% }) %>
+              </select>
+            </td>
+            <td data-col="allowed-depts">
+              <div class="dept-checks" id="newAllowedDepts">
+                <% departments.forEach((d, idx) => { %>
+                  <label class="dept-chk">
+                    <input type="checkbox" value="<%= d.code %>" <%= idx === 0 ? 'checked' : '' %>>
+                    <span><%= d.name %></span>
+                  </label>
+                <% }) %>
+              </div>
+            </td>
+            <td class="cell-center">
+              <span class="state-tag state-tag--new">新規</span>
+            </td>
+            <td data-col="password">
+              <input type="password" id="newPassword" class="cell-input cell-input--pw" placeholder="初期PW(4文字〜)" autocomplete="new-password">
+            </td>
+            <td class="cell-muted" data-col="last-login">-</td>
+            <td class="cell-actions">
+              <button type="button" class="btn-cell btn-cell--primary" id="btnCreateUser">追加</button>
+            </td>
+          </tr>
+
+          <!-- 既存ユーザー行 -->
+          <% users.forEach((u) => { %>
+            <%
+              const lastLoginStr = u.lastLoginAt
+                ? new Date(u.lastLoginAt).toLocaleString('ja-JP', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                  })
+                : '-';
+            %>
+            <tr
+              class="user-row <%= u.isActive ? '' : 'is-inactive' %>"
+              data-staff-id="<%= u.staffId %>"
+              data-active="<%= u.isActive ? 'true' : 'false' %>"
+            >
+              <td class="cell-id"><code><%= u.staffId %></code></td>
+              <td>
+                <input type="text" class="cell-input js-full-name" value="<%= u.fullName %>" aria-label="氏名">
+              </td>
+              <td>
+                <select class="cell-select js-role-code" aria-label="職種">
+                  <% roles.forEach((r) => { %>
+                    <option value="<%= r.code %>" <%= u.roleCode === r.code ? 'selected' : '' %>><%= r.name %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <td>
+                <select class="cell-select js-default-dept" aria-label="主所属部署">
+                  <% departments.forEach((d) => { %>
+                    <option value="<%= d.code %>" <%= u.defaultDepartmentCode === d.code ? 'selected' : '' %>><%= d.name %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <td data-col="allowed-depts">
+                <div class="dept-checks">
+                  <% departments.forEach((d) => { %>
+                    <label class="dept-chk">
+                      <input
+                        type="checkbox"
+                        class="js-allowed-dept"
+                        value="<%= d.code %>"
+                        <%= u.allowedDepartmentCodes.includes(d.code) ? 'checked' : '' %>
+                      >
+                      <span><%= d.name %></span>
+                    </label>
+                  <% }) %>
+                </div>
+              </td>
+              <td class="cell-center">
+                <span class="state-tag <%= u.isActive ? 'state-tag--active' : 'state-tag--inactive' %> js-state-tag">
+                  <%= u.isActive ? '有効' : '無効' %>
+                </span>
+              </td>
+              <td data-col="password">
+                <input
+                  type="password"
+                  class="cell-input cell-input--pw js-password"
+                  placeholder="変更時のみ"
+                  autocomplete="new-password"
+                  aria-label="新パスワード"
+                >
+              </td>
+              <td class="cell-muted cell-nowrap" data-col="last-login"><%= lastLoginStr %></td>
+              <td class="cell-actions">
+                <button type="button" class="btn-cell btn-cell--primary js-save-user">保存</button>
+                <button
+                  type="button"
+                  class="btn-cell <%= u.isActive ? 'btn-cell--warn' : 'btn-cell--sub' %> js-toggle-active"
+                  <%= u.staffId === currentStaffId && u.isActive ? 'disabled title="ログイン中アカウントは無効化不可"' : '' %>
+                ><%= u.isActive ? '無効化' : '有効化' %></button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 職種別 可能オーダー管理テーブル -->
+    <section class="role-orders-section" data-section="role-orders" aria-label="職種別可能オーダー管理表">
+      <div class="compact-bar compact-bar--sub">
+        <div class="compact-bar__group">
+          <span class="bar-label">職種別 可能オーダー</span>
+          <span class="bar-legend">発＝オーダー発行可 / 実＝指示受け・実施可</span>
+        </div>
+        <div class="compact-bar__group">
+          <label class="chk-inline"><input type="checkbox" data-perm-col="create" checked>発(発行)</label>
+          <label class="chk-inline"><input type="checkbox" data-perm-col="execute" checked>実(実施)</label>
+          <button type="button" class="btn-cell btn-cell--sub" id="btnResetRoleOrders">初期値に戻す</button>
+          <button type="button" class="btn-cell btn-cell--primary" id="btnSaveRoleOrders">オーダー権限を保存</button>
+        </div>
+      </div>
+
+      <div class="table-wrap table-wrap--orders">
+        <table class="grid-table grid-table--matrix" id="roleOrdersTable">
+          <thead>
+            <tr>
+              <th class="col-matrix-role">職種</th>
+              <% orderTypes.forEach((ot) => { %>
+                <th><%= ot.name %></th>
+              <% }) %>
+            </tr>
+          </thead>
+          <tbody>
+            <% roles.forEach((r) => { %>
+              <tr data-role-code="<%= r.code %>">
+                <th class="matrix-role-cell"><%= r.name %></th>
+                <% orderTypes.forEach((ot) => { %>
+                  <% const perm = permissionMap[`${r.code}:${ot.code}`] || { canCreate: false, canExecute: false }; %>
+                  <td
+                    class="matrix-cell"
+                    data-role-code="<%= r.code %>"
+                    data-order-type-code="<%= ot.code %>"
+                  >
+                    <label class="perm-chk" data-perm-item="create">
+                      <input type="checkbox" class="js-perm-create" <%= perm.canCreate ? 'checked' : '' %>>
+                      <span>発</span>
+                    </label>
+                    <label class="perm-chk" data-perm-item="execute">
+                      <input type="checkbox" class="js-perm-execute" <%= perm.canExecute ? 'checked' : '' %>>
+                      <span>実</span>
+                    </label>
+                  </td>
+                <% }) %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/users.js"></script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>食事オーダー | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/clinicalOrder.css">
+</head>
+<body
+  class="page-clin"
+  data-embed="<%= isEmbed ? '1' : '0' %>"
+  data-source-dept="<%= sourceDept %>"
+  data-revise="<%= reviseOrderNumber %>"
+  data-selected-patient-id="<%= selectedPatient ? selectedPatient.patientId : '' %>"
+  data-default-doctor="<%= actorDisplayName || (user ? user.fullName : '') %>"
+>
+  <% if (!isEmbed) { %>
+    <%- include('partials/statusBar', { statusBar }) %>
+  <% } %>
+
+  <main class="clin-grid <%= isEmbed ? 'is-embed-grid' : '' %>">
+    <% if (!isEmbed) { %>
+      <!-- 左列: よく使う食種プリセット -->
+      <aside class="pane pane--left" aria-label="食種プリセットツリー">
+        <ul class="tree-list" id="mealPresetTree">
+          <li class="tree-node">
+            <details open>
+              <summary class="tree-summary">一般食プリセット</summary>
+              <ul class="tree-children">
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="常食" data-staple="米飯" data-amount="全量" data-side="常菜" data-thick="なし">常食（米飯・常菜）</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="軟菜食" data-staple="軟飯" data-amount="全量" data-side="一口大" data-thick="なし">軟菜食（軟飯・一口大）</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="全粥食" data-staple="全粥" data-amount="全量" data-side="刻み" data-thick="なし">全粥食（全粥・刻み）</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="全粥食" data-staple="全粥" data-amount="全量" data-side="ソフト食" data-thick="中間">嚥下配慮（全粥・ソフト・とろみ中間）</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="五分粥食" data-staple="五分粥" data-amount="半量" data-side="ミキサー食" data-thick="中間">五分粥・ミキサー食</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="絶食（禁食）" data-staple="なし" data-amount="なし" data-side="なし" data-thick="なし">絶食（禁食）</button></li>
+              </ul>
+            </details>
+          </li>
+          <li class="tree-node">
+            <details open>
+              <summary class="tree-summary">治療食プリセット</summary>
+              <ul class="tree-children">
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="糖尿病食" data-staple="米飯" data-amount="150g" data-side="常菜" data-cal="1600kcal" data-salt="6g未満">糖尿病食 1600kcal</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="糖尿病食" data-staple="米飯" data-amount="120g" data-side="常菜" data-cal="1400kcal" data-salt="6g未満">糖尿病食 1400kcal</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="減塩食" data-staple="米飯" data-amount="全量" data-side="常菜" data-cal="標準" data-salt="6g未満">減塩食（塩分6g未満）</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="腎臓病食" data-staple="米飯" data-amount="150g" data-side="常菜" data-cal="1800kcal" data-salt="6g未満" data-protein="40g以下">腎臓病食（蛋白制限・塩分6g未満）</button></li>
+                <li><button type="button" class="tree-leaf js-meal-preset" data-diet="経管栄養" data-staple="なし" data-amount="なし" data-side="なし" data-cal="1200kcal">経管栄養</button></li>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- 中列: 過去食事オーダー -->
+      <section class="pane pane--mid" aria-label="過去食事オーダー一覧">
+        <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" id="chkMealShowFlagged" checked><span>中止/訂正</span></label>
+          <label class="chk-inline"><input type="checkbox" id="chkMealShowNutrition" checked><span>制限</span></label>
+          <label class="chk-inline"><input type="checkbox" id="chkMealShowAid" checked><span>介助・禁止</span></label>
+        </div>
+
+        <div class="history-list" id="mealHistoryList">
+          <% if (!pastOrders || pastOrders.length === 0) { %>
+            <div class="empty-msg">過去の食事オーダーはありません。</div>
+          <% } else { %>
+            <% pastOrders.forEach((m) => { %>
+              <%
+                const stLabel = m.isSuperseded ? '訂正済' : m.isCancelled ? '中止' : '発行済';
+                const stClass = m.isSuperseded ? 'st-superseded' : m.isCancelled ? 'st-cancelled' : 'st-ordered';
+                const flagged = m.isCancelled || m.isSuperseded;
+              %>
+              <article
+                class="hist-card hist-card--meal <%= flagged ? 'is-flagged' : '' %>"
+                data-flagged="<%= flagged ? 'true' : 'false' %>"
+                data-detail-type="meal"
+                data-detail-order="<%= m.orderNumber %>"
+                title="クリックで詳細表示"
+              >
+                <div class="hist-card__top">
+                  <span class="st-tag st-meal">食事</span>
+                  <code class="hist-num"><%= m.orderNumber %></code>
+                  <span class="st-tag <%= stClass %>"><%= stLabel %></span>
+                  <span class="hist-date"><%= m.startDate %> <%= m.startMeal %>〜</span>
+                </div>
+                <% if (!selectedPatient) { %>
+                  <div class="hist-patient">[<%= m.patientId %>] <%= m.patientName %>（<%= m.ward %><%= m.room ? ' ' + m.room : '' %>）</div>
+                <% } %>
+                <div class="hist-main">
+                  <strong><%= m.dietType %></strong>（主食: <%= m.stapleType %> <%= m.stapleAmount %> ／ 副食: <%= m.sideTexture %><% if (m.thickener && m.thickener !== 'なし') { %> ／ とろみ: <%= m.thickener %><% } %>）
+                </div>
+                <div class="hist-sub js-meal-nutr">
+                  <%
+                    const nuts = [];
+                    if (m.calories) nuts.push(m.calories);
+                    if (m.saltLimit && m.saltLimit !== '制限なし') nuts.push('塩分:' + m.saltLimit);
+                    if (m.proteinLimit) nuts.push('蛋白:' + m.proteinLimit);
+                    if (m.waterLimit) nuts.push('水分:' + m.waterLimit);
+                    if (m.supplement) nuts.push('補助:' + m.supplement);
+                  %>
+                  <%= nuts.length > 0 ? nuts.join(' ／ ') : '' %>
+                </div>
+                <div class="hist-sub js-meal-aid">
+                  <% if (m.eatingAid && m.eatingAid.length > 0) { %>介助: <%= m.eatingAid.join('・') %> <% } %>
+                  <% if (m.prohibitedFoods) { %>禁止: <%= m.prohibitedFoods %><% } %>
+                </div>
+                <% if (m.isSuperseded) { %><div class="hist-flag">訂正先: <%= m.supersededBy %></div><% } %>
+                <% if (m.isCancelled) { %><div class="hist-flag">中止: <%= m.cancelReason || '食事中止' %></div><% } %>
+                <div class="hist-card__foot">
+                  <span class="hist-doc">指示: <%= m.doctorName %></span>
+                  <div class="hist-actions">
+                    <% if (!flagged) { %>
+                      <button type="button" class="btn-mini js-meal-revise" data-order="<%= m.orderNumber %>">訂正再発行</button>
+                      <button type="button" class="btn-mini btn-mini--warn js-meal-cancel" data-order="<%= m.orderNumber %>">中止</button>
+                    <% } %>
+                    <a href="/meals/print/<%= encodeURIComponent(m.orderNumber) %>" target="_blank" class="btn-mini">印刷</a>
+                  </div>
+                </div>
+              </article>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- 右列: 食事オーダー記入画面 -->
+    <section class="pane pane--right" aria-label="食事オーダー記入">
+      <div class="pane__bar">
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-patient" <%= !selectedPatient ? 'checked' : '' %>><span>患者・指示者</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-texture" checked><span>主食・副食・とろみ</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-nutrition" checked><span>エネルギー・栄養制限</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-aid" checked><span>禁止食品・介助</span></label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="sec-remarks" checked><span>備考</span></label>
+      </div>
+
+      <form id="mealOrderForm" class="clin-form">
+        <input type="hidden" id="mealParentOrderNumber" value="">
+
+        <div id="mealRevisionBanner" class="revision-banner" hidden>
+          <span>訂正再発行モード（元番号: <strong id="mealRevisionParentLabel"></strong>）</span>
+          <input type="text" id="mealRevisionNote" class="s-input s-rev-note" placeholder="訂正理由（任意）">
+          <button type="button" id="btnCancelMealRevision" class="btn-mini">解除</button>
+        </div>
+
+        <div class="clin-scroll">
+          <!-- 患者・指示者詳細（チェックボックス開閉） -->
+          <table class="clin-table <%= selectedPatient ? 'is-hidden' : '' %>" data-col-group="sec-patient">
+            <tr>
+              <th>患者選択</th>
+              <td colspan="3">
+                <select id="mealInlinePatientSelect" class="s-select">
+                  <option value="">患者一覧から選択...</option>
+                  <% patients.forEach((p) => { %>
+                    <option
+                      value="<%= p.patientId %>"
+                      data-name="<%= p.fullName %>"
+                      data-kana="<%= p.kanaName || '' %>"
+                      data-gender="<%= p.gender || '不明' %>"
+                      data-age="<%= p.age != null ? p.age : '' %>"
+                      data-birth="<%= p.birthDate || '' %>"
+                      data-ward="<%= p.careCategoryName %>"
+                      data-room="<%= p.wardRoom || '' %>"
+                      data-allergies="<%= p.allergies || '' %>"
+                      <%= selectedPatient && selectedPatient.patientId === p.patientId ? 'selected' : '' %>
+                    >[<%= p.patientId %>] <%= p.fullName %>（<%= p.careCategoryName %><%= p.wardRoom ? ' ' + p.wardRoom : '' %>）</option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>患者ID / 氏名</th>
+              <td>
+                <div class="inline-row">
+                  <input type="text" id="mealPatientId" class="s-input s-mono" style="width:76px;flex:0 0 76px;" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" placeholder="ID" required>
+                  <input type="text" id="mealPatientName" class="s-input s-bold" value="<%= selectedPatient ? selectedPatient.fullName : '' %>" placeholder="患者氏名" required>
+                </div>
+                <input type="hidden" id="mealPatientKana" value="<%= selectedPatient ? (selectedPatient.kanaName || '') : '' %>">
+                <input type="hidden" id="mealGender" value="<%= selectedPatient ? (selectedPatient.gender || '不明') : '不明' %>">
+                <input type="hidden" id="mealAge" value="<%= selectedPatient && selectedPatient.age != null ? selectedPatient.age : '' %>">
+                <input type="hidden" id="mealBirthDate" value="<%= selectedPatient ? (selectedPatient.birthDate || '') : '' %>">
+              </td>
+              <th>区分 / 病室</th>
+              <td>
+                <div class="inline-row">
+                  <input type="text" id="mealWard" class="s-input" value="<%= initialWard %>">
+                  <input type="text" id="mealRoom" class="s-input s-room" value="<%= selectedPatient ? (selectedPatient.wardRoom || '') : '' %>" placeholder="病室">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>指示者</th>
+              <td colspan="3">
+                <input type="text" id="mealDoctorName" class="s-input" value="<%= actorDisplayName || (user ? user.fullName : '') %>">
+              </td>
+            </tr>
+          </table>
+
+          <!-- 開始日時・基本食種 -->
+          <table class="clin-table clin-table--meal">
+            <tr>
+              <th>開始日</th>
+              <td><input type="date" id="mealStartDate" class="s-input" required></td>
+              <th>開始食</th>
+              <td>
+                <select id="mealStartMeal" class="s-select">
+                  <% mealOptions.startMeals.forEach((opt) => { %>
+                    <option value="<%= opt %>" <%= opt === '昼食' ? 'selected' : '' %>><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>食種</th>
+              <td colspan="3">
+                <select id="mealDietType" class="s-select s-bold" required>
+                  <% mealOptions.dietTypes.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+          </table>
+
+          <!-- 主食・副食形態・とろみ -->
+          <table class="clin-table clin-table--meal" data-col-group="sec-texture">
+            <tr>
+              <th>主食種類</th>
+              <td>
+                <select id="mealStapleType" class="s-select">
+                  <% mealOptions.stapleTypes.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <th>主食量</th>
+              <td>
+                <select id="mealStapleAmount" class="s-select">
+                  <% mealOptions.stapleAmounts.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>副食形態</th>
+              <td>
+                <select id="mealSideTexture" class="s-select">
+                  <% mealOptions.sideTextures.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <th>とろみ指定</th>
+              <td>
+                <select id="mealThickener" class="s-select">
+                  <% mealOptions.thickeners.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+          </table>
+
+          <!-- エネルギー・栄養制限 -->
+          <table class="clin-table clin-table--meal" data-col-group="sec-nutrition">
+            <tr>
+              <th>エネルギー量</th>
+              <td>
+                <select id="mealCalories" class="s-select">
+                  <% mealOptions.calories.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+              <th>塩分制限</th>
+              <td>
+                <select id="mealSaltLimit" class="s-select">
+                  <% mealOptions.saltLimits.forEach((opt) => { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }) %>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>蛋白制限</th>
+              <td><input type="text" id="mealProteinLimit" class="s-input" placeholder="例: 40g以下"></td>
+              <th>水分制限</th>
+              <td><input type="text" id="mealWaterLimit" class="s-input" placeholder="例: 1000ml/日"></td>
+            </tr>
+            <tr>
+              <th>補助食品・濃厚流動</th>
+              <td colspan="3"><input type="text" id="mealSupplement" class="s-input" placeholder="例: エンシュア1缶（15時）、メイバランス1本"></td>
+            </tr>
+          </table>
+
+          <!-- 禁止食品・介助方法 -->
+          <table class="clin-table clin-table--meal" data-col-group="sec-aid">
+            <tr>
+              <th>禁止食品・アレルギー</th>
+              <td colspan="3">
+                <input
+                  type="text"
+                  id="mealProhibitedFoods"
+                  class="s-input"
+                  value="<%= selectedPatient ? (selectedPatient.allergies || '') : '' %>"
+                  placeholder="例: そば、甲殻類、青魚、グレープフルーツ"
+                >
+              </td>
+            </tr>
+            <tr>
+              <th>食事介助・食器</th>
+              <td colspan="3">
+                <div class="check-grid" id="mealEatingAidGroup">
+                  <% mealOptions.eatingAids.forEach((opt) => { %>
+                    <label class="check-chip">
+                      <input type="checkbox" name="eatingAid" value="<%= opt %>">
+                      <span><%= opt %></span>
+                    </label>
+                  <% }) %>
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- 備考 -->
+          <table class="clin-table clin-table--meal" data-col-group="sec-remarks">
+            <tr>
+              <th>備考・栄養科連絡</th>
+              <td colspan="3">
+                <textarea id="mealRemarks" class="s-textarea" rows="2" placeholder="配膳上の注意・嚥下状態・個別希望など"></textarea>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="editor-footer">
+          <span id="mealStatusMessage" class="status-msg" role="status"></span>
+          <div class="inline-row">
+            <button type="button" id="btnResetMeal" class="btn-cell btn-cell--sub">クリア</button>
+            <button type="submit" id="btnSubmitMeal" class="btn-cell btn-cell--primary">食事オーダー発行</button>
+            <button type="button" id="btnSubmitMealPrint" class="btn-cell btn-cell--print">発行・印刷</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <% if (!isEmbed) { %>
+    <script src="/js/statusBar.js"></script>
+  <% } %>
+  <script src="/js/mealOrder.js"></script>
+</body>
+</html>

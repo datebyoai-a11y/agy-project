@@ -1,0 +1,126 @@
+<%
+  const rxLabelMap = {
+    '臨時処方': { title: '臨時処方箋', spaced: '臨 時 処 方 箋' },
+    '定期処方': { title: '定期処方箋', spaced: '定 期 処 方 箋' },
+    '外来処方': { title: '外来処方箋', spaced: '外 来 処 方 箋' }
+  };
+  const rxLabel = rxLabelMap[order.prescriptionType] || rxLabelMap['臨時処方'];
+%>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title><%= rxLabel.title %> (<%= order.orderNumber %>)</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 12px; color: #000; background: #eee; }
+    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .no-print button { padding: 4px 12px; font-weight: 700; cursor: pointer; }
+    .sheet { width: 186mm; margin: 8mm auto; background: #fff; padding: 10mm; border: 1px solid #000; }
+    .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
+    .head-title { font-size: 18px; font-weight: 700; letter-spacing: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; }
+    th { background: #f3f4f6; text-align: left; }
+    .meta-th { width: 15%; }
+    .num-col { text-align: center; width: 28px; }
+    .center { text-align: center; white-space: nowrap; }
+    .flag-banner { border: 2px solid #b91c1c; color: #b91c1c; padding: 4px 8px; font-weight: 700; margin-bottom: 8px; }
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none; }
+      .sheet { margin: 0; border: none; width: 100%; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <span><%= rxLabel.title %>プレビュー: <%= order.orderNumber %></span>
+    <div>
+      <button type="button" onclick="window.print()">印刷</button>
+      <button type="button" onclick="window.close()">閉じる</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="head">
+      <span>処方番号: <strong><%= order.orderNumber %></strong></span>
+      <span class="head-title"><%= rxLabel.spaced %></span>
+      <span><%= order.dispenseType %></span>
+    </div>
+
+    <% if (order.isCancelled) { %>
+      <div class="flag-banner">【中止】<%= order.cancelReason %>（<%= order.cancelledBy %>）</div>
+    <% } %>
+    <% if (order.isSuperseded) { %>
+      <div class="flag-banner">【訂正済】新処方番号: <%= order.supersededBy %></div>
+    <% } %>
+
+    <table>
+      <tr>
+        <th class="meta-th">患者ID</th>
+        <td><strong><%= order.patientId %></strong></td>
+        <th class="meta-th">氏名（カナ）</th>
+        <td><strong><%= order.patientName %></strong>（<%= order.patientKana || '-' %>）</td>
+      </tr>
+      <tr>
+        <th class="meta-th">生年月日/性/年齢</th>
+        <td><%= order.birthDate || '-' %> / <%= order.gender %> / <%= order.age != null ? order.age + '歳' : '-' %></td>
+        <th class="meta-th">区分・病室</th>
+        <td><%= order.ward %> <%= order.room ? order.room + '号室' : '' %></td>
+      </tr>
+      <tr>
+        <th class="meta-th">服用開始日</th>
+        <td><%= order.startDate %></td>
+        <th class="meta-th">処方医師</th>
+        <td><%= order.doctorName %></td>
+      </tr>
+    </table>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="num-col">#</th>
+          <th>薬剤名</th>
+          <th class="center">1日量</th>
+          <th class="center">分割回数</th>
+          <th>服用方法</th>
+          <th class="center">処方日数</th>
+          <th>備考</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (order.items || []).forEach((it, idx) => { %>
+          <tr>
+            <td class="num-col"><%= idx + 1 %></td>
+            <td>
+              <strong><%= it.drugName %></strong>
+              <% if (it.genericName) { %><div style="font-size:10px;color:#444;"><%= it.genericName %></div><% } %>
+            </td>
+            <td class="center"><strong><%= it.dailyDose %></strong></td>
+            <td class="center"><%= it.divisionCount && /^\d+$/.test(it.divisionCount) ? `分${it.divisionCount}` : it.divisionCount %></td>
+            <td><%= it.administrationMethod %></td>
+            <td class="center"><strong><%= it.prescriptionDays %><%= it.dayUnit %></strong></td>
+            <td><%= it.note || '' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <table>
+      <tr>
+        <th class="meta-th">全体備考</th>
+        <td>
+          <%= order.remarks || '-' %>
+          <% if (order.parentOrderNumber) { %> 【訂正元: <%= order.parentOrderNumber %>】<% } %>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <% if (autoPrint) { %>
+    <script>window.addEventListener('load', () => window.print());</script>
+  <% } %>
+</body>
+</html>

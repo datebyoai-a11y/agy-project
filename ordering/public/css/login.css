@@ -1,0 +1,179 @@
+.page-login {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.login-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px 40px;
+  gap: 18px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(17, 42, 69, 0.08);
+  padding: 28px 26px;
+}
+
+.login-alert {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: 2px solid rgba(15, 95, 140, 0.25);
+  border-color: var(--accent);
+}
+
+.password-input-wrap {
+  display: flex;
+  gap: 6px;
+}
+
+.password-input-wrap .form-input {
+  flex: 1;
+}
+
+.password-toggle-btn {
+  min-width: 58px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.password-toggle-btn:hover {
+  background: #e1ebf4;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  margin-top: 6px;
+}
+
+.login-submit-btn {
+  width: 100%;
+  height: 42px;
+}
+
+/* 開発・検証用 初期アカウント補助パネル */
+.demo-accounts {
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.demo-accounts__summary {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.demo-accounts__body {
+  padding: 0 12px 12px;
+  overflow-x: auto;
+}
+
+.demo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.demo-table th,
+.demo-table td {
+  padding: 6px 8px;
+  border-top: 1px solid var(--border-color);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.demo-table th {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.btn-quick-fill {
+  padding: 3px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-quick-fill:hover {
+  background: var(--accent-soft);
+}

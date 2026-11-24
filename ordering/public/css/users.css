@@ -1,0 +1,340 @@
+.page-users {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.users-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 1行コンパクトツールバー（無駄な余白・装飾なし） */
+.compact-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+}
+
+.compact-bar--sub {
+  border-top: 2px solid var(--border-strong);
+  background: #f5f8fb;
+}
+
+.compact-bar__group,
+.compact-bar__checks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.compact-bar__status {
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 18px;
+}
+
+.compact-bar__status.is-ok {
+  color: #146c43;
+}
+
+.compact-bar__status.is-err {
+  color: var(--danger);
+}
+
+.bar-label {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bar-legend {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.ctrl-input,
+.ctrl-select {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.ctrl-input--search {
+  width: 150px;
+}
+
+.count-badge {
+  padding: 1px 6px;
+  background: #dce7f2;
+  color: var(--text-primary);
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.chk-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+/* テーブル領域 */
+.table-wrap {
+  overflow: auto;
+  background: #ffffff;
+}
+
+.table-wrap--users {
+  flex: 1;
+  min-height: 160px;
+}
+
+.role-orders-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 40vh;
+}
+
+.table-wrap--orders {
+  overflow: auto;
+}
+
+.grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.grid-table th,
+.grid-table td {
+  border: 1px solid var(--border-color);
+  padding: 3px 5px;
+  vertical-align: middle;
+}
+
+.grid-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #e6eef6;
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.grid-table tbody tr:hover {
+  background: #f7fbff;
+}
+
+.grid-table tbody tr.row-new {
+  background: #f0f7fc;
+}
+
+.grid-table tbody tr.is-dirty {
+  background: #fffbeb;
+}
+
+.grid-table tbody tr.is-inactive {
+  background: #f5f5f5;
+  color: #777777;
+}
+
+.col-id { width: 88px; }
+.col-name { width: 124px; }
+.col-role { width: 106px; }
+.col-dept { width: 106px; }
+.col-status { width: 54px; text-align: center; }
+.col-pw { width: 108px; }
+.col-login { width: 118px; }
+.col-actions { width: 112px; }
+
+.cell-id {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cell-center {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cell-muted {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.cell-nowrap {
+  white-space: nowrap;
+}
+
+.cell-input,
+.cell-select {
+  width: 100%;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.cell-input:focus,
+.cell-select:focus {
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
+}
+
+.dept-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+}
+
+.dept-chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dept-chk input,
+.perm-chk input,
+.chk-inline input {
+  margin: 0;
+}
+
+.state-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.state-tag--active {
+  background: #def7ec;
+  color: #03543f;
+}
+
+.state-tag--inactive {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.state-tag--new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.cell-actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.btn-cell {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-cell:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-cell--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-cell--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-cell--sub {
+  background: #ffffff;
+  color: var(--text-primary);
+}
+
+.btn-cell--sub:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.btn-cell--warn {
+  background: #fff5f5;
+  border-color: #f3b8b5;
+  color: var(--danger);
+}
+
+.btn-cell--warn:hover:not(:disabled) {
+  background: #fee4e2;
+}
+
+/* 職種別オーダーマトリクス表 */
+.grid-table--matrix th {
+  text-align: center;
+}
+
+.col-matrix-role,
+.matrix-role-cell {
+  width: 110px;
+  text-align: left !important;
+  background: #f5f8fb;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.matrix-cell {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.perm-chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 3px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.is-hidden {
+  display: none !important;
+}

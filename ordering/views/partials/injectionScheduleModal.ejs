@@ -1,0 +1,46 @@
+<!-- 入院注射箋 日付別 継続・削除編集モーダル -->
+<div class="inj-modal-backdrop" id="injScheduleModal" hidden role="dialog" aria-modal="true" aria-labelledby="injScheduleModalTitle">
+  <div class="inj-modal">
+    <div class="inj-modal__head">
+      <div class="inj-modal__title" id="injScheduleModalTitle">入院注射箋 日付別 継続・削除編集</div>
+      <div class="inj-modal__meta" id="injScheduleMeta"></div>
+      <button type="button" class="inj-modal__close" id="btnCloseInjScheduleModal" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="inj-modal__toolbar">
+      <label class="inj-modal__lbl">
+        <span>基準開始日</span>
+        <input type="date" id="injSchedStartDate" class="inj-m-input">
+      </label>
+      <button type="button" class="inj-m-btn" id="btnInjSchedAddDay">＋ 1日延長</button>
+      <button type="button" class="inj-m-btn" id="btnInjSchedAdd3Days">＋ 3日延長</button>
+      <button type="button" class="inj-m-btn inj-m-btn--ok" id="btnInjSchedAllContinue">全日程 継続</button>
+      <button type="button" class="inj-m-btn inj-m-btn--danger" id="btnInjSchedAllDelete">全日程 削除</button>
+      <span class="inj-modal__hint">※セルクリックで「継続 ↔ 削除」切替／日付見出しクリックで同日一括切替</span>
+    </div>
+
+    <div class="inj-modal__body">
+      <div class="inj-sched-table-wrap">
+        <table class="inj-sched-table" id="injSchedTable">
+          <thead id="injSchedHead"></thead>
+          <tbody id="injSchedBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="inj-modal__foot">
+      <div class="inj-modal__foot-left">
+        <label class="inj-modal__lbl" id="injSchedRevWrap">
+          <span>変更理由</span>
+          <input type="text" id="injSchedRevNote" class="inj-m-input inj-m-rev" value="日付別 継続・削除編集" placeholder="変更理由">
+        </label>
+        <span class="inj-modal__append-note" id="injSchedAppendNote">※元記録へ訂正済フラグを立て新記録として追記保存します</span>
+        <span class="inj-modal__status" id="injSchedStatus" role="status" aria-live="polite"></span>
+      </div>
+      <div class="inj-modal__foot-right">
+        <button type="button" class="inj-m-btn" id="btnCancelInjScheduleModal">キャンセル</button>
+        <button type="button" class="inj-m-btn inj-m-btn--primary" id="btnSaveInjScheduleModal">保存</button>
+      </div>
+    </div>
+  </div>
+</div>

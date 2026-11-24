@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/adhocPrescription.css">
+</head>
+<body
+  class="page-rx <%= isEmbed ? 'is-embed' : '' %>"
+  data-embed="<%= isEmbed ? '1' : '0' %>"
+  data-revise="<%= reviseOrderNumber || '' %>"
+  data-do="<%= doOrderNumber || '' %>"
+  data-rx-kind="<%= prescriptionKind.kind %>"
+  data-rx-path="<%= prescriptionKind.path %>"
+  data-rx-title="<%= prescriptionKind.screenTitle %>"
+  data-default-days="<%= prescriptionKind.defaultDays %>"
+>
+  <% if (!isEmbed) { %>
+    <%- include('partials/statusBar', { statusBar }) %>
+  <% } %>
+
+  <!-- 縦3分割（左: ツリーメニュー / 中: 過去記載 / 右: 記入画面） タイトル・不要ボタンなし -->
+  <main class="rx-grid <%= isEmbed ? 'is-embed-grid' : '' %>">
+    <% if (!isEmbed) { %>
+      <!-- 左列: ツリー方式メニュー（薬効分類ツリー） -->
+      <aside class="pane pane--tree" aria-label="薬剤分類ツリーメニュー">
+        <ul class="tree-list" id="rxCategoryTree">
+          <li class="tree-node">
+            <details open>
+              <summary class="tree-summary">剤形区分</summary>
+              <ul class="tree-children">
+                <li><button type="button" class="tree-leaf is-selected" data-tree-cat="内服薬" data-tree-major="">内服薬</button></li>
+                <li><button type="button" class="tree-leaf" data-tree-cat="外用薬" data-tree-major="">外用薬</button></li>
+                <li><button type="button" class="tree-leaf" data-tree-cat="" data-tree-major="">すべて</button></li>
+              </ul>
+            </details>
+          </li>
+          <li class="tree-node">
+            <details>
+              <summary class="tree-summary">薬効分類から絞り込み</summary>
+              <ul class="tree-children">
+                <% (categoryTree || []).forEach((major) => { %>
+                  <li>
+                    <button
+                      type="button"
+                      class="tree-leaf"
+                      data-tree-cat=""
+                      data-tree-major="<%= major.name %>"
+                      title="<%= major.name %>"
+                    ><%= major.name %></button>
+                  </li>
+                <% }) %>
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- 中列: 過去記載（表示項目チェックボックスのみ / タイトル・ショートカットボタンなし） -->
+      <section class="pane pane--history" aria-label="過去処方履歴">
+        <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="date" checked>日時</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="author" checked>記載者</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="method" checked>分割・服用</label>
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="note" checked>備考</label>
+          <label class="chk-inline"><input type="checkbox" id="chkRxShowFlagged" checked>中止/訂正</label>
+        </div>
+
+        <div class="history-list" id="pastRxList">
+          <% if (!pastPrescriptions || pastPrescriptions.length === 0) { %>
+            <div class="empty-msg">過去の処方履歴はありません。</div>
+          <% } else { %>
+            <% pastPrescriptions.forEach((rx) => { %>
+              <%
+                const stLabel = rx.isSuperseded ? '訂正済' : rx.isCancelled ? '中止' : '発行済';
+                const stCls = rx.isSuperseded ? 'st-superseded' : rx.isCancelled ? 'st-cancelled' : 'st-ordered';
+                const dtStr = rx.createdAt
+                  ? new Date(rx.createdAt).toLocaleString('ja-JP', {
+                      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+                    })
+                  : rx.startDate;
+              %>
+              <article
+                class="hist-card <%= (rx.isCancelled || rx.isSuperseded) ? 'is-flagged' : '' %>"
+                data-flagged="<%= (rx.isCancelled || rx.isSuperseded) ? 'true' : 'false' %>"
+                data-detail-type="rx"
+                data-detail-order="<%= rx.orderNumber %>"
+                title="クリックで詳細表示"
+              >
+                <div class="hist-card__top">
+                  <span class="st-tag st-ordered"><%= rx.prescriptionType %></span>
+                  <code class="hist-num"><%= rx.orderNumber %></code>
+                  <span class="st-tag <%= stCls %>"><%= stLabel %></span>
+                  <span class="hist-date" data-hist-item="date"><%= dtStr %></span>
+                </div>
+                <% if (!selectedPatient) { %>
+                  <div class="hist-patient">[<%= rx.patientId %>] <%= rx.patientName %></div>
+                <% } %>
+                <table class="hist-mini-table">
+                  <tbody>
+                    <% (rx.items || []).forEach((it) => { %>
+                      <tr>
+                        <td class="hm-drug"><strong><%= it.drugName %></strong></td>
+                        <td class="hm-dose"><%= it.dailyDose %></td>
+                        <td class="hm-method" data-hist-item="method">
+                          <%= it.divisionCount && /^\d+$/.test(it.divisionCount) ? `分${it.divisionCount}` : it.divisionCount %>
+                          <%= it.administrationMethod %>
+                        </td>
+                        <td class="hm-days"><%= it.prescriptionDays %><%= it.dayUnit %></td>
+                      </tr>
+                      <% if (it.note) { %>
+                        <tr data-hist-item="note">
+                          <td colspan="4" class="hm-note">備考: <%= it.note %></td>
+                        </tr>
+                      <% } %>
+                    <% }) %>
+                  </tbody>
+                </table>
+                <% if (rx.remarks) { %>
+                  <div class="hist-rem" data-hist-item="note">全体備考: <%= rx.remarks %></div>
+                <% } %>
+                <% if (rx.isSuperseded) { %>
+                  <div class="hist-flag">訂正先: <%= rx.supersededBy %></div>
+                <% } %>
+                <% if (rx.isCancelled) { %>
+                  <div class="hist-flag">中止: <%= rx.cancelReason || '処方中止' %></div>
+                <% } %>
+                <div class="hist-card__foot">
+                  <span class="hist-doc" data-hist-item="author"><%= rx.doctorName %>（<%= rx.ward %><%= rx.room ? ' ' + rx.room : '' %>）</span>
+                  <div class="hist-actions">
+                    <button type="button" class="btn-mini btn-mini--do js-rx-do" data-order="<%= rx.orderNumber %>">Do処方</button>
+                    <% if (!rx.isCancelled && !rx.isSuperseded) { %>
+                      <button type="button" class="btn-mini js-rx-revise" data-order="<%= rx.orderNumber %>">訂正再発行</button>
+                      <button type="button" class="btn-mini btn-mini--warn js-rx-cancel" data-order="<%= rx.orderNumber %>">中止</button>
+                    <% } %>
+                    <a href="/prescriptions/print/<%= encodeURIComponent(rx.orderNumber) %>" target="_blank" class="btn-mini">印刷</a>
+                  </div>
+                </div>
+              </article>
+            <% }) %>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+
+    <!-- 右列: 処方箋 記入画面（タイトル・不要ボタンなし） -->
+    <section class="pane pane--editor" aria-label="<%= prescriptionKind.screenTitle %>入力">
+      <form id="rxOrderForm" class="rx-form" novalidate>
+        <input type="hidden" id="rxPrescriptionType" value="<%= prescriptionKind.prescriptionType %>">
+        <input type="hidden" id="rxParentOrderNumber" value="">
+        <input type="hidden" id="rxDoSourceOrderNumber" value="">
+        <input type="hidden" id="rxAge" value="<%= selectedPatient && selectedPatient.age != null ? selectedPatient.age : '' %>">
+        <input type="hidden" id="rxGender" value="<%= selectedPatient ? selectedPatient.gender : '不明' %>">
+        <input type="hidden" id="rxBirthDate" value="<%= selectedPatient ? (selectedPatient.birthDate || '') : '' %>">
+        <input type="hidden" id="rxPatientKana" value="<%= selectedPatient ? (selectedPatient.kana || '') : '' %>">
+        <input type="hidden" id="rxSourceDept" value="<%= sourceDept %>">
+        <input type="hidden" id="rxDoctorName" value="<%= actorDisplayName || user.fullName %>">
+
+        <!-- 表示・非表示チェックボックス行（タイトルなし・ボタンなし） -->
+        <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="daily-dose" checked>1日量</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="division" checked>分割回数</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="method" checked>服用方法</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="days" checked>処方日数</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="note" checked>備考欄</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="handling">懸濁/粉砕</label>
+          <label class="chk-inline"><input type="checkbox" data-col-toggle="meta" <%= selectedPatient ? '' : 'checked' %>>患者・日付詳細</label>
+        </div>
+
+        <!-- 訂正再発行バナー（訂正時のみ） -->
+        <div class="revision-banner" id="rxRevisionBanner" hidden>
+          <span>訂正再発行（元処方 <strong id="rxRevisionParent"></strong> に訂正済フラグを立て追記）</span>
+          <input type="text" id="rxRevisionNote" class="s-input s-rev-note" placeholder="訂正理由">
+          <button type="button" class="btn-mini" id="btnRxCancelRevision">解除</button>
+        </div>
+
+        <div class="rx-scroll">
+          <!-- 患者・日付詳細（チェックボックスで表示切替可能） -->
+          <table class="meta-table" data-col="meta">
+            <tr>
+              <th>患者ID</th>
+              <td><input type="text" id="rxPatientId" class="s-input s-mono" value="<%= selectedPatient ? selectedPatient.patientId : '' %>" placeholder="患者ID" required></td>
+              <th>患者氏名</th>
+              <td><input type="text" id="rxPatientName" class="s-input s-bold" value="<%= selectedPatient ? selectedPatient.fullName : '' %>" placeholder="患者氏名" required></td>
+              <th>開始日</th>
+              <td><input type="date" id="rxStartDate" class="s-input"></td>
+              <th>院内/院外</th>
+              <td>
+                <select id="rxDispenseType" class="s-select">
+                  <option value="院内処方" <%= prescriptionKind.defaultDispenseType === '院内処方' ? 'selected' : '' %>>院内処方</option>
+                  <option value="院外処方箋" <%= prescriptionKind.defaultDispenseType === '院外処方箋' ? 'selected' : '' %>>院外処方箋</option>
+                </select>
+              </td>
+              <th>区分・室</th>
+              <td>
+                <div class="inline-row">
+                  <select id="rxWard" class="s-select">
+                    <option value="外来" <%= initialWard === '外来' ? 'selected' : '' %>>外来</option>
+                    <option value="医療病棟" <%= (initialWard === '医療病棟' || initialWard === '病棟') ? 'selected' : '' %>>医療病棟</option>
+                    <option value="介護医療院(うみかぜ)" <%= (initialWard === '介護医療院(うみかぜ)' || initialWard === '介護医療院') ? 'selected' : '' %>>介護医療院(うみかぜ)</option>
+                    <option value="介護医療院(しおかぜ)" <%= initialWard === '介護医療院(しおかぜ)' ? 'selected' : '' %>>介護医療院(しおかぜ)</option>
+                  </select>
+                  <input type="text" id="rxRoom" class="s-input s-room" value="<%= selectedPatient ? (selectedPatient.wardRoom || '') : '' %>" placeholder="病室">
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- 薬剤マスタ検索入力（入力→クリックで下の処方テーブルへ自動追加） -->
+          <div class="search-strip">
+            <select id="rxMedCatFilter" class="s-select s-cat" aria-label="剤形絞込">
+              <option value="内服薬" selected>内服薬</option>
+              <option value="外用薬">外用薬</option>
+              <option value="注射剤">注射剤</option>
+              <option value="">全剤形</option>
+            </select>
+            <input
+              type="text"
+              id="rxMedSearch"
+              class="s-input"
+              placeholder="薬剤名・一般名・カナ・通称（例: ロキソニン, カロナール, ムコスタ）で検索して追加"
+              autocomplete="off"
+            >
+            <span class="active-filter-tag" id="rxMajorFilterTag" hidden></span>
+          </div>
+
+          <div class="suggest-box" id="rxMedSuggestWrap" hidden>
+            <table class="suggest-table">
+              <tbody id="rxMedSuggestBody"></tbody>
+            </table>
+          </div>
+
+          <!-- 処方薬剤入力テーブル（薬剤名・1日量・分割回数・服用方法・処方日数・備考欄） -->
+          <table class="rx-entry-table" id="rxItemsTable">
+            <thead>
+              <tr>
+                <th class="col-drug">薬剤名</th>
+                <th class="col-dose" data-col="daily-dose">1日量</th>
+                <th class="col-div" data-col="division">分割回数</th>
+                <th class="col-method" data-col="method">服用方法</th>
+                <th class="col-days" data-col="days">処方日数</th>
+                <th class="col-note" data-col="note">備考欄</th>
+                <th class="col-hand" data-col="handling">懸/粉</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="rxItemsBody"></tbody>
+          </table>
+
+          <!-- 処方全体備考欄 -->
+          <div class="whole-remarks" data-col="note">
+            <input
+              type="text"
+              id="rxRemarks"
+              class="s-input"
+              value="<%= selectedPatient && selectedPatient.allergies && selectedPatient.allergies !== 'なし' ? 'アレルギー: ' + selectedPatient.allergies : '' %>"
+              placeholder="処方全体備考（一包化・粉砕・アレルギー等）"
+            >
+          </div>
+        </div>
+
+        <!-- 下部発行操作バー -->
+        <div class="editor-footer">
+          <div class="inline-row">
+            <button type="button" class="btn-cell btn-cell--sub" id="btnAddBlankRow">＋ 行追加</button>
+            <span class="status-msg" id="rxStatusMsg" role="status" aria-live="polite"></span>
+          </div>
+          <div class="inline-row">
+            <button type="button" class="btn-cell btn-cell--primary" id="btnSubmitRx">発行</button>
+            <button type="button" class="btn-cell btn-cell--print" id="btnSubmitRxPrint">発行・印刷</button>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <datalist id="adminMethodList">
+    <% administrationMethods.forEach((m) => { %>
+      <option value="<%= m %>"></option>
+    <% }) %>
+  </datalist>
+  <datalist id="divisionOptionList">
+    <% divisionOptions.forEach((d) => { %>
+      <option value="<%= d %>"></option>
+    <% }) %>
+  </datalist>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/adhocPrescription.js"></script>
+</body>
+</html>

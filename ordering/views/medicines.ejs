@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/medicines.css">
+</head>
+<body class="page-medicines">
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <!-- 1行目: 検索・絞込バー -->
+  <div class="compact-bar" role="region" aria-label="薬剤検索と絞込">
+    <div class="compact-bar__group">
+      <input
+        type="text"
+        id="medSearchInput"
+        class="ctrl-input ctrl-input--search"
+        placeholder="薬品名・一般名・カナ・通称(ロキソニン等)・ID [/]"
+        aria-label="薬剤検索キーワード"
+        autofocus
+      >
+      <select id="filterCategory" class="ctrl-select" aria-label="剤形区分">
+        <option value="">区分: すべて</option>
+        <option value="内服薬">内服薬</option>
+        <option value="注射剤">注射剤</option>
+        <option value="外用薬">外用薬</option>
+      </select>
+      <select id="filterBrand" class="ctrl-select" aria-label="先発・後発">
+        <option value="">先/後: すべて</option>
+        <option value="先発">先発</option>
+        <option value="後発">後発</option>
+      </select>
+      <select id="filterAdopt" class="ctrl-select" aria-label="採用区分">
+        <option value="ACTIVE" selected>採用・限定</option>
+        <option value="採用">採用のみ</option>
+        <option value="限定">限定のみ</option>
+        <option value="ALL">すべて（削除含む）</option>
+        <option value="削除">削除のみ</option>
+      </select>
+      <select id="filterSuspension" class="ctrl-select" aria-label="簡易懸濁">
+        <option value="">懸濁: すべて</option>
+        <option value="〇">懸濁 〇</option>
+        <option value="△">懸濁 △</option>
+        <option value="×">懸濁 ×</option>
+      </select>
+      <select id="filterCrush" class="ctrl-select" aria-label="粉砕">
+        <option value="">粉砕: すべて</option>
+        <option value="〇">粉砕 〇</option>
+        <option value="△">粉砕 △</option>
+        <option value="×">粉砕 ×</option>
+      </select>
+      <button type="button" class="btn-cell btn-cell--sub" id="btnResetFilters">クリア</button>
+    </div>
+
+    <div class="compact-bar__group">
+      <span class="count-badge" id="medCountBadge"><%= initialCount %>件 / 全<%= totalCount %>件</span>
+      <span class="status-msg" id="medStatusMsg" role="status" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <!-- 2行目: 表示・非表示項目チェックボックス -->
+  <div class="compact-bar compact-bar--checks" role="region" aria-label="表示項目の切替">
+    <div class="compact-bar__group">
+      <label class="chk-inline"><input type="checkbox" data-pane-toggle="tree" checked>薬効ツリー</label>
+      <label class="chk-inline"><input type="checkbox" data-pane-toggle="detail" checked>詳細ペイン</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="generic" checked>一般名</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="usage" checked>標準用法</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="handling" checked>懸/粉/脱</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="brand" checked>先/後</label>
+      <label class="chk-inline"><input type="checkbox" data-col-toggle="adopt" checked>採用</label>
+    </div>
+    <div class="compact-bar__group">
+      <span class="active-tree-crumb" id="activeTreeCrumb">分類: すべて</span>
+    </div>
+  </div>
+
+  <!-- 縦3分割メイン画面: 左=薬効ツリー / 中=検索結果テーブル / 右=薬剤詳細・同効薬 -->
+  <main class="med-grid" id="medGrid">
+    <!-- 左ペイン: 薬効分類ツリー -->
+    <aside class="pane pane--tree" data-pane="tree" aria-label="薬効分類ツリー">
+      <div class="pane__bar">
+        <span class="pane__label">薬効分類</span>
+        <button type="button" class="btn-mini" id="btnTreeAll">すべて (<%= totalCount %>)</button>
+      </div>
+      <ul class="tree-list" id="categoryTreeList">
+        <% categoryTree.forEach((major) => { %>
+          <li class="tree-node">
+            <details>
+              <summary class="tree-summary">
+                <button
+                  type="button"
+                  class="tree-major-btn"
+                  data-major="<%= major.name %>"
+                  title="<%= major.name %>"
+                ><%= major.name %></button>
+                <span class="tree-count"><%= major.count %></span>
+              </summary>
+              <% if (major.middles && major.middles.length > 0) { %>
+                <ul class="tree-children">
+                  <% major.middles.forEach((mid) => { %>
+                    <li>
+                      <button
+                        type="button"
+                        class="tree-leaf"
+                        data-major="<%= major.name %>"
+                        data-middle="<%= mid.name %>"
+                      >
+                        <span class="tree-leaf__name"><%= mid.name %></span>
+                        <span class="tree-count"><%= mid.count %></span>
+                      </button>
+                    </li>
+                  <% }) %>
+                </ul>
+              <% } %>
+            </details>
+          </li>
+        <% }) %>
+      </ul>
+    </aside>
+
+    <!-- 中ペイン: 薬剤一覧テーブル -->
+    <section class="pane pane--list" aria-label="薬剤検索結果一覧">
+      <div class="table-wrap">
+        <table class="grid-table" id="medicinesTable">
+          <thead>
+            <tr>
+              <th class="th-sort col-id" data-sort="drugId">ID <span>▲</span></th>
+              <th class="th-sort col-cat" data-sort="category">区分 <span>↕</span></th>
+              <th class="th-sort col-name" data-sort="name">薬品名 <span>↕</span></th>
+              <th class="th-sort col-generic" data-sort="genericName" data-col="generic">一般名 <span>↕</span></th>
+              <th class="col-spec">規格/単位</th>
+              <th class="col-usage" data-col="usage">標準用法</th>
+              <th class="col-flag" data-col="handling" title="簡易懸濁">懸</th>
+              <th class="col-flag" data-col="handling" title="粉砕">粉</th>
+              <th class="col-flag" data-col="handling" title="脱カプセル">脱</th>
+              <th class="th-sort col-brand" data-sort="brandType" data-col="brand">先/後 <span>↕</span></th>
+              <th class="th-sort col-adopt" data-sort="adoptType" data-col="adopt">採用 <span>↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="medicinesTableBody">
+            <% initialMedicines.forEach((m) => { %>
+              <tr class="med-row <%= m.adoptType === '削除' ? 'is-deleted' : '' %>" data-drug-id="<%= m.drugId %>">
+                <td class="cell-id"><code><%= m.drugId %></code></td>
+                <td class="cell-center">
+                  <span class="cat-tag cat-tag--<%= m.category === '内服薬' ? 'oral' : m.category === '注射剤' ? 'inj' : 'ext' %>">
+                    <%= m.category === '内服薬' ? '内服' : m.category === '注射剤' ? '注射' : '外用' %>
+                  </span>
+                </td>
+                <td class="cell-name"><%= m.name %></td>
+                <td class="cell-generic" data-col="generic"><%= m.genericName || '-' %></td>
+                <td class="cell-nowrap"><%= m.spec || '-' %><%= m.unit ? ` / ${m.unit}` : '' %></td>
+                <td class="cell-usage" data-col="usage"><%= m.standardUsage || m.dosage || '-' %></td>
+                <td class="cell-flag" data-col="handling"><span class="ok-mark ok-mark--<%= m.suspensionOk === '〇' ? 'ok' : m.suspensionOk === '△' ? 'tri' : m.suspensionOk === '×' ? 'ng' : 'none' %>"><%= m.suspensionOk || '-' %></span></td>
+                <td class="cell-flag" data-col="handling"><span class="ok-mark ok-mark--<%= m.crushOk === '〇' ? 'ok' : m.crushOk === '△' ? 'tri' : m.crushOk === '×' ? 'ng' : 'none' %>"><%= m.crushOk || '-' %></span></td>
+                <td class="cell-flag" data-col="handling"><span class="ok-mark ok-mark--<%= m.uncapsuleOk === '〇' ? 'ok' : m.uncapsuleOk === '△' ? 'tri' : m.uncapsuleOk === '×' ? 'ng' : 'none' %>"><%= m.uncapsuleOk || '-' %></span></td>
+                <td class="cell-center" data-col="brand"><span class="brand-tag brand-tag--<%= m.brandType === '先発' ? 'orig' : 'gen' %>"><%= m.brandType || '-' %></span></td>
+                <td class="cell-center" data-col="adopt"><span class="adopt-tag adopt-tag--<%= m.adoptType === '採用' ? 'ok' : m.adoptType === '限定' ? 'lim' : 'del' %>"><%= m.adoptType || '-' %></span></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 右ペイン: 選択薬剤の詳細・同成分/同効薬比較 -->
+    <section class="pane pane--detail" data-pane="detail" aria-label="薬剤詳細エリア">
+      <div class="pane__bar">
+        <span class="pane__label" id="detailHeaderLabel">薬剤詳細</span>
+        <button type="button" class="btn-mini" id="btnCopyDrug" disabled>名称・用法コピー</button>
+      </div>
+      <div class="detail-body" id="drugDetailBody">
+        <div class="empty-msg">中央の一覧から薬剤をクリックすると詳細・同成分薬・同効薬が表示されます。</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/medicines.js"></script>
+</body>
+</html>
