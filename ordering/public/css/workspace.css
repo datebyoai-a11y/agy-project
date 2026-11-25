@@ -164,6 +164,39 @@
   color: var(--accent);
 }
 
+.tree-subnode {
+  margin-top: 2px;
+}
+
+.tree-subnode__summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.tree-subnode__summary:hover {
+  background: var(--bg-subtle);
+}
+
+.tree-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.tree-dot--ct { background: #facc15; }
+.tree-dot--fluoro { background: #0284c7; }
+.tree-dot--xray { background: #16a34a; }
+
 /* 過去記載（放射線履歴カード） */
 .ws-hist-list {
   display: flex;
@@ -207,6 +240,20 @@
 .ws-hist-card__sub {
   margin-top: 2px;
   color: var(--text-secondary);
+}
+
+.ws-hist-card__allergy {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.ws-hist-card__allergy.is-alert {
+  color: #dc2626;
+  font-weight: 700;
+  background: #fef2f2;
+  padding: 1px 4px;
+  border-radius: 2px;
 }
 
 .ws-hist-card__stamp {

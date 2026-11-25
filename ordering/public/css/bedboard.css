@@ -3,7 +3,7 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #f4f6f9;
+  background: #dde2d9;
 }
 
 .bb-main {
@@ -19,8 +19,8 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  padding: 4px 8px;
+  gap: 4px 10px;
+  padding: 3px 8px;
   background: var(--bg-subtle);
   border-bottom: 1px solid var(--border-color);
   font-size: 12px;
@@ -31,12 +31,28 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
+
+.bb-floor-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 2px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bb-floor-badge--2 { background: #16a34a; }
+.bb-floor-badge--3 { background: #ea580c; }
+.bb-floor-badge--4 { background: #db2777; }
 
 .bb-input {
   height: 24px;
-  width: 210px;
+  width: 195px;
   padding: 0 6px;
   border: 1px solid var(--border-strong);
   border-radius: 2px;
@@ -46,7 +62,7 @@
 }
 
 .bb-occupancy {
-  padding: 1px 7px;
+  padding: 1px 6px;
   border-radius: 2px;
   background: #dce7f2;
   color: var(--text-primary);
@@ -76,7 +92,7 @@
 
 /* 移動履歴パネル */
 .bb-history-panel {
-  max-height: 180px;
+  max-height: 160px;
   overflow: auto;
   background: #ffffff;
   border-bottom: 1px solid var(--border-strong);
@@ -122,68 +138,110 @@
 .mv-tag--TRANSFER_WARD { background: #ede9fe; color: #5b21b6; }
 .mv-tag--DISCHARGE { background: #fee2e2; color: #991b1b; }
 
+/* 実機アイホン風 3列フロアマップ（左翼 ｜ 中央コア ｜ 右翼） */
 .bb-scroll {
   flex: 1;
   overflow: auto;
-  padding: 8px;
+  padding: 6px;
 }
 
-.bb-rooms {
+.bb-floormap {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(340px, 1.15fr) minmax(240px, 0.72fr) minmax(340px, 1.05fr);
+  gap: 6px;
   align-items: start;
+  min-width: 960px;
 }
 
-.bb-room {
-  background: #ffffff;
-  border: 1px solid var(--border-strong);
+.bb-wing {
   display: flex;
   flex-direction: column;
+  gap: 5px;
+}
+
+.bb-center-rooms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+/* 個室横並び（2F: 3連 208-206 / 3F・4F: 5連 x11-x06） */
+.bb-priv-row {
+  display: grid;
+  gap: 4px;
+}
+
+.bb-priv-row--3 { grid-template-columns: repeat(3, 1fr); }
+.bb-priv-row--5 { grid-template-columns: repeat(5, 1fr); }
+
+/* 病室カード */
+.bb-room {
+  background: #ffffff;
+  border: 1px solid #8fa0b3;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .bb-room__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 3px 7px;
-  background: #e6eef6;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 12px;
+  padding: 2px 5px;
+  background: #e2e8f0;
+  border-bottom: 1px solid #cbd5e1;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .bb-room__no {
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 800;
+  color: #0f172a;
 }
 
 .bb-room__meta {
-  font-size: 11px;
-  color: var(--text-secondary);
+  font-size: 10px;
+  color: #475569;
+  white-space: nowrap;
 }
 
 .bb-beds {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 1px;
-  background: var(--border-color);
+  background: #cbd5e1;
 }
 
+.bb-beds--1 { grid-template-columns: 1fr; }
+.bb-beds--4 { grid-template-columns: 1fr 1fr; }
+
+/* 個別ベッドタイル（アイホン実機風 男女色分け） */
 .bb-bed {
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  min-height: 92px;
+  min-height: 54px;
+  min-width: 0;
   color: var(--text-primary);
 }
 
-.bb-bed--occupied {
-  border-left: 3px solid var(--accent);
+.bb-bed--male {
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+}
+
+.bb-bed--female {
+  background: #fdf2f8;
+  border-left: 3px solid #ec4899;
+}
+
+.bb-bed--other {
+  background: #f0fdf4;
+  border-left: 3px solid #16a34a;
 }
 
 .bb-bed--occupied.is-current {
-  background: #e0f2fe;
-  border-left-color: #0369a1;
+  outline: 2px solid #0284c7;
+  outline-offset: -2px;
 }
 
 .bb-bed--occupied.is-dragging {
@@ -192,32 +250,38 @@
 
 .bb-bed__link {
   flex: 1;
-  padding: 5px 6px 3px;
+  padding: 3px 4px 2px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   text-decoration: none;
   color: inherit;
   cursor: pointer;
+  min-width: 0;
 }
 
 .bb-bed__link:hover {
-  background: #eff6ff;
+  filter: brightness(0.96);
 }
 
 .bb-bed__ops {
   display: flex;
   justify-content: flex-end;
-  gap: 3px;
-  padding: 3px 5px;
-  border-top: 1px dashed #e2e8f0;
-  background: #f8fafc;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px 3px;
+  border-top: 1px dashed #cbd5e1;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.bb-room--compact-priv .bb-bed__ops {
+  justify-content: center;
 }
 
 .bb-bed--empty {
-  background: #fafafa;
+  background: #f8fafc;
   color: #94a3b8;
-  padding: 5px 6px;
+  padding: 3px 4px;
   justify-content: space-between;
 }
 
@@ -229,7 +293,7 @@
 
 .bb-empty-pill {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 9px;
   color: #94a3b8;
 }
 
@@ -240,13 +304,13 @@
 }
 
 .bb-op-btn {
-  height: 20px;
-  padding: 0 5px;
-  border: 1px solid var(--border-strong);
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid #94a3b8;
   border-radius: 2px;
   background: #ffffff;
   color: var(--text-primary);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -263,57 +327,60 @@
 .bb-bed__top {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-size: 10px;
+  line-height: 1.1;
 }
 
-.bb-bed__code {
-  font-weight: 700;
-  color: var(--text-secondary);
+.bb-bed__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  background: #ffffff;
+  border: 1px solid #94a3b8;
+  border-radius: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #334155;
 }
 
 .bb-bed__id {
-  font-size: 10px;
-  color: var(--accent);
+  font-size: 9px;
+  color: #1d4ed8;
   font-weight: 700;
 }
 
 .bb-bed__demo {
   margin-left: auto;
-  font-size: 10px;
-  color: var(--text-secondary);
+  font-size: 9px;
+  color: #475569;
   white-space: nowrap;
 }
 
 .bb-gender {
   display: inline-block;
-  padding: 0 3px;
+  padding: 0 2px;
   border-radius: 2px;
   font-weight: 700;
 }
 
-.bb-gender--m { background: #dbeafe; color: #1e40af; }
-.bb-gender--f { background: #fce7f3; color: #9d174d; }
+.bb-gender--m { background: #bfdbfe; color: #1e3a8a; }
+.bb-gender--f { background: #fbcfe8; color: #831843; }
 .bb-gender--o { background: #e5e7eb; color: #374151; }
 
 .bb-bed__name {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.2;
-}
-
-.bb-bed__kana {
-  font-size: 10px;
-  color: var(--text-secondary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .bb-bed__dx {
-  font-size: 11px;
+  font-size: 10px;
   color: #1e3a5f;
   white-space: nowrap;
   overflow: hidden;
@@ -328,9 +395,9 @@
 
 .bb-tag {
   display: inline-block;
-  padding: 0 4px;
+  padding: 0 3px;
   border-radius: 2px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   max-width: 100%;
   overflow: hidden;
@@ -342,26 +409,123 @@
 .bb-tag--allergy { background: #fee2e2; color: #991b1b; }
 
 .bb-bed__orders {
-  margin-top: auto;
   display: flex;
-  gap: 3px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
 .bb-ord {
-  font-size: 10px;
-  padding: 0 3px;
+  font-size: 9px;
+  padding: 0 2px;
   border-radius: 2px;
-  background: #f1f5f9;
+  background: rgba(255, 255, 255, 0.7);
   color: #94a3b8;
 }
 
 .bb-ord.is-on { font-weight: 700; }
-.bb-ord--rx.is-on { background: #e0f2fe; color: #075985; }
-.bb-ord--inj.is-on { background: #ede9fe; color: #5b21b6; }
-.bb-ord--rad.is-on { background: #dcfce7; color: #166534; }
-.bb-ord--meal.is-on { background: #fef3c7; color: #92400e; }
-.bb-ord--rehab.is-on { background: #ccfbf1; color: #115e59; }
+.bb-ord--rx.is-on { background: #bae6fd; color: #075985; }
+.bb-ord--inj.is-on { background: #ddd6fe; color: #5b21b6; }
+.bb-ord--rad.is-on { background: #bbf7d0; color: #166534; }
+.bb-ord--meal.is-on { background: #fde68a; color: #92400e; }
+.bb-ord--rehab.is-on { background: #99f6e4; color: #115e59; }
+
+/* 中央コア諸室・スタッフステーション・食堂兼談話室・看護統計1 */
+.bb-facility-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.bb-facility-grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.bb-fac-chip {
+  background: #cbd5e1;
+  border: 1px solid #94a3b8;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 4px;
+}
+
+.bb-station {
+  border: 2px solid #16a34a;
+  background: #ecfdf5;
+  color: #14532d;
+  padding: 14px 8px;
+  text-align: center;
+}
+
+.bb-station--2 { border-color: #16a34a; background: #ecfdf5; color: #14532d; }
+.bb-station--3 { border-color: #ea580c; background: #fff7ed; color: #9a3412; }
+.bb-station--4 { border-color: #db2777; background: #fdf2f8; color: #9d174d; }
+
+.bb-station__name {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.bb-station__sub {
+  font-size: 11px;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+.bb-dayroom {
+  background: #e0f2fe;
+  border: 1px solid #38bdf8;
+  color: #0c4a6e;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  padding: 8px 6px;
+}
+
+.bb-stats-box {
+  background: #ffffff;
+  border: 1px solid #8fa0b3;
+}
+
+.bb-stats-box__head {
+  background: #e2e8f0;
+  border-bottom: 1px solid #cbd5e1;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.bb-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.bb-stats-table th,
+.bb-stats-table td {
+  border: 1px solid #cbd5e1;
+  padding: 3px 5px;
+}
+
+.bb-stats-table th {
+  background: #f8fafc;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bb-stats-table td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bb-extra-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
 /* モーダル */
 .bb-modal-backdrop {

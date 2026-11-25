@@ -161,6 +161,8 @@
 .hm-note { color: var(--text-secondary); font-size: 10px; border-top: none !important; padding-top: 0 !important; }
 .hist-rem { margin-top: 2px; font-size: 10px; color: var(--text-secondary); }
 .hist-flag { margin-top: 2px; color: var(--danger); font-weight: 700; }
+.hist-allergy { margin-top: 2px; font-size: 10px; color: var(--text-secondary); }
+.hist-allergy.is-alert { color: #dc2626; font-weight: 700; background: #fef2f2; padding: 1px 4px; border-radius: 2px; }
 
 .hist-card__foot {
   margin-top: 3px;

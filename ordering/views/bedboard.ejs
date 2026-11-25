@@ -8,16 +8,146 @@
   <link rel="stylesheet" href="/css/bedboard.css">
 </head>
 <body
-  class="page-bedboard"
+  class="page-bedboard <%= floorMeta.theme %>"
   data-dept-code="<%= department.code %>"
   data-dept-name="<%= department.name %>"
 >
   <%- include('partials/statusBar', { statusBar }) %>
 
+  <%
+    const emptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+    function renderRoomCard(room, compactPrivate) {
+      const occCount = room.beds.filter((b) => b.patient).length;
+      const bedGridCls = room.beds.length === 1 ? 'bb-beds--1' : 'bb-beds--4';
+  %>
+    <section
+      class="bb-room <%= room.isPrivate ? 'bb-room--private' : '' %> <%= compactPrivate ? 'bb-room--compact-priv' : '' %>"
+      data-room-no="<%= room.roomNo %>"
+      data-occupied="<%= occCount %>"
+    >
+      <div class="bb-room__head">
+        <span class="bb-room__no"><%= room.roomNo === '未割当' ? '未割当' : room.roomNo %></span>
+        <span class="bb-room__meta"><%= compactPrivate ? `${occCount}/${room.beds.length}` : `${room.roomType} (${occCount}/${room.beds.length})` %></span>
+      </div>
+
+      <div class="bb-beds <%= bedGridCls %>">
+        <% room.beds.forEach((bed) => { %>
+          <% if (bed.patient) { %>
+            <%
+              const p = bed.patient;
+              const hasAllergy = Boolean(p.allergies && !emptyPat.test(String(p.allergies).trim()));
+              const hasCaution = Boolean(p.cautions && !emptyPat.test(String(p.cautions).trim()));
+              const dxNames = (p.activeDiagnoses || []).map((d) => d.name).join('・');
+              const genderCls = p.gender === '男' ? 'bb-bed--male' : p.gender === '女' ? 'bb-bed--female' : 'bb-bed--other';
+              const bedShort = bed.bedCode.includes('-') ? bed.bedCode.split('-')[1] : bed.bedCode;
+              const searchStr = `${room.roomNo} ${bed.bedCode} ${p.patientId} ${p.fullName} ${p.kana || ''} ${dxNames} ${p.cautions || ''} ${p.allergies || ''}`.toLowerCase();
+            %>
+            <div
+              class="bb-bed bb-bed--occupied <%= genderCls %> <%= p.patientId === selectedPatientId ? 'is-current' : '' %>"
+              draggable="true"
+              data-occupied="1"
+              data-bed-code="<%= bed.bedCode %>"
+              data-patient-id="<%= p.patientId %>"
+              data-patient-name="<%= p.fullName %>"
+              data-search="<%= searchStr %>"
+            >
+              <a
+                href="<%= workspaceBasePath %>?patientId=<%= encodeURIComponent(p.patientId) %>"
+                class="bb-bed__link"
+                title="クリックでワークスペースを開く（空床へドラッグで同病棟内移動）"
+              >
+                <div class="bb-bed__top">
+                  <span class="bb-bed__num"><%= bedShort %></span>
+                  <code class="bb-bed__id"><%= p.patientId %></code>
+                  <span class="bb-bed__demo" data-bb-group="bb-demographics">
+                    <span class="bb-gender bb-gender--<%= p.gender === '男' ? 'm' : p.gender === '女' ? 'f' : 'o' %>"><%= p.gender %></span>
+                    <%= p.age != null ? `${p.age}歳` : '' %>
+                  </span>
+                </div>
+
+                <div class="bb-bed__name">
+                  <strong><%= p.fullName %></strong>
+                </div>
+
+                <% if (dxNames) { %>
+                  <div class="bb-bed__dx" data-bb-group="bb-dx" title="<%= dxNames %>"><%= dxNames %></div>
+                <% } %>
+
+                <% if (hasCaution || hasAllergy) { %>
+                  <div class="bb-bed__alerts">
+                    <% if (hasCaution) { %>
+                      <span class="bb-tag bb-tag--caution" data-bb-group="bb-caution" title="注意事項: <%= p.cautions %>">注:<%= p.cautions %></span>
+                    <% } %>
+                    <% if (hasAllergy) { %>
+                      <span class="bb-tag bb-tag--allergy" data-bb-group="bb-allergy" title="アレルギー: <%= p.allergies %>">禁:<%= p.allergies %></span>
+                    <% } %>
+                  </div>
+                <% } %>
+
+                <div class="bb-bed__orders" data-bb-group="bb-orders">
+                  <span class="bb-ord <%= p.counts.rx > 0 ? 'is-on bb-ord--rx' : '' %>">処<%= p.counts.rx %></span>
+                  <span class="bb-ord <%= p.counts.inj > 0 ? 'is-on bb-ord--inj' : '' %>">注<%= p.counts.inj %></span>
+                  <span class="bb-ord <%= p.counts.rad > 0 ? 'is-on bb-ord--rad' : '' %>">放<%= p.counts.rad %></span>
+                  <span class="bb-ord <%= p.counts.meal > 0 ? 'is-on bb-ord--meal' : '' %>">食<%= p.counts.meal %></span>
+                  <span class="bb-ord <%= p.counts.rehab > 0 ? 'is-on bb-ord--rehab' : '' %>">リ<%= p.counts.rehab %></span>
+                </div>
+              </a>
+
+              <div class="bb-bed__ops">
+                <button
+                  type="button"
+                  class="bb-op-btn js-bb-move"
+                  data-patient-id="<%= p.patientId %>"
+                  data-patient-name="<%= p.fullName %>"
+                  data-bed-code="<%= bed.bedCode %>"
+                >移動</button>
+                <button
+                  type="button"
+                  class="bb-op-btn bb-op-btn--transfer js-bb-transfer"
+                  data-patient-id="<%= p.patientId %>"
+                  data-patient-name="<%= p.fullName %>"
+                  data-bed-code="<%= bed.bedCode %>"
+                >他病棟</button>
+                <button
+                  type="button"
+                  class="bb-op-btn bb-op-btn--discharge js-bb-discharge"
+                  data-patient-id="<%= p.patientId %>"
+                  data-patient-name="<%= p.fullName %>"
+                  data-bed-code="<%= bed.bedCode %>"
+                >退床</button>
+              </div>
+            </div>
+          <% } else { %>
+            <% const bedShort = bed.bedCode.includes('-') ? bed.bedCode.split('-')[1] : bed.bedCode; %>
+            <div
+              class="bb-bed bb-bed--empty"
+              data-occupied="0"
+              data-bed-code="<%= bed.bedCode %>"
+              data-search="<%= `${room.roomNo} ${bed.bedCode} 空床`.toLowerCase() %>"
+            >
+              <div class="bb-bed__top">
+                <span class="bb-bed__num"><%= bedShort %></span>
+                <span class="bb-empty-pill">空床</span>
+              </div>
+              <div class="bb-bed__empty-ops">
+                <button
+                  type="button"
+                  class="bb-op-btn bb-op-btn--admit js-bb-admit"
+                  data-bed-code="<%= bed.bedCode %>"
+                >＋入床</button>
+              </div>
+            </div>
+          <% } %>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+
   <main class="bb-main">
     <!-- 1行コンパクト絞込・表示項目切替バー -->
     <div class="bb-toolbar" role="region" aria-label="ベッドボード絞込・表示項目設定">
       <div class="bb-toolbar__left">
+        <span class="bb-floor-badge bb-floor-badge--<%= floorMeta.floor %>"><%= floorMeta.floorLabel %></span>
         <input
           type="text"
           id="bbFilterInput"
@@ -25,7 +155,9 @@
           placeholder="病室・患者ID・氏名・病名で絞込"
           aria-label="ベッドボード検索"
         >
-        <span class="bb-occupancy" id="bbOccupancyText">在床 <%= occupiedBeds %>名 ／ 全 <%= totalBeds %>床</span>
+        <span class="bb-occupancy" id="bbOccupancyText">
+          在床 <%= stats.occupiedBeds %>名 ／ 空床 <%= stats.emptyBedCount %>床（全 <%= stats.totalBeds %>床・<%= stats.occupancyRate %>%）
+        </span>
         <span class="bb-status-msg" id="bbStatusMsg" role="status" aria-live="polite"></span>
       </div>
 
@@ -36,6 +168,7 @@
         <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-caution" checked><span>注意事項</span></label>
         <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-allergy" checked><span>アレルギー</span></label>
         <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-orders" checked><span>オーダー件数</span></label>
+        <label class="bb-chk"><input type="checkbox" data-bb-toggle="bb-facilities" checked><span>諸室・統計</span></label>
         <label class="bb-chk"><input type="checkbox" id="chkShowHistory"><span>移動履歴</span></label>
       </div>
     </div>
@@ -83,128 +216,100 @@
       <% } %>
     </section>
 
-    <!-- ベッドボード本体 -->
+    <!-- 実機写真準拠 3列フロアマップ（左翼病室群 ｜ 中央コア・スタッフステーション・看護統計 ｜ 右翼病室群・食堂） -->
     <div class="bb-scroll">
-      <div class="bb-rooms" id="bbRoomsGrid">
-        <% rooms.forEach((room) => { %>
-          <% const occCount = room.beds.filter((b) => b.patient).length; %>
-          <section class="bb-room" data-room-no="<%= room.roomNo %>" data-occupied="<%= occCount %>">
-            <div class="bb-room__head">
-              <span class="bb-room__no"><%= room.roomNo === '未割当' ? '病室未割当' : `${room.roomNo}号室` %></span>
-              <span class="bb-room__meta"><%= room.roomType %>（<%= occCount %>/<%= room.beds.length %>）</span>
-            </div>
+      <div class="bb-floormap" id="bbRoomsGrid">
+        <!-- 左翼病室群: x15, x13, x12(, 211), 個室連(208-206 / x11-x06), x05, x03, x02, x01 -->
+        <div class="bb-wing bb-wing--left">
+          <% wingGroups.leftTop.forEach((room) => { %>
+            <% renderRoomCard(room, false); %>
+          <% }) %>
 
-            <div class="bb-beds">
-              <% room.beds.forEach((bed) => { %>
-                <% if (bed.patient) { %>
-                  <%
-                    const p = bed.patient;
-                    const emptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
-                    const hasAllergy = Boolean(p.allergies && !emptyPat.test(String(p.allergies).trim()));
-                    const hasCaution = Boolean(p.cautions && !emptyPat.test(String(p.cautions).trim()));
-                    const dxNames = (p.activeDiagnoses || []).map((d) => d.name).join('・');
-                    const searchStr = `${room.roomNo} ${bed.bedCode} ${p.patientId} ${p.fullName} ${p.kana || ''} ${dxNames} ${p.cautions || ''} ${p.allergies || ''}`.toLowerCase();
-                  %>
-                  <div
-                    class="bb-bed bb-bed--occupied <%= p.patientId === selectedPatientId ? 'is-current' : '' %>"
-                    draggable="true"
-                    data-occupied="1"
-                    data-bed-code="<%= bed.bedCode %>"
-                    data-patient-id="<%= p.patientId %>"
-                    data-patient-name="<%= p.fullName %>"
-                    data-search="<%= searchStr %>"
-                  >
-                    <a
-                      href="<%= workspaceBasePath %>?patientId=<%= encodeURIComponent(p.patientId) %>"
-                      class="bb-bed__link"
-                      title="クリックで患者ワークスペースを開く（空床へドラッグで移動可）"
-                    >
-                      <div class="bb-bed__top">
-                        <span class="bb-bed__code"><%= bed.bedCode %></span>
-                        <code class="bb-bed__id"><%= p.patientId %></code>
-                        <span class="bb-bed__demo" data-bb-group="bb-demographics">
-                          <span class="bb-gender bb-gender--<%= p.gender === '男' ? 'm' : p.gender === '女' ? 'f' : 'o' %>"><%= p.gender %></span>
-                          <%= p.age != null ? `${p.age}歳` : '-' %>
-                        </span>
-                      </div>
+          <div class="bb-priv-row bb-priv-row--<%= wingGroups.leftPrivRow.length %>">
+            <% wingGroups.leftPrivRow.forEach((room) => { %>
+              <% renderRoomCard(room, true); %>
+            <% }) %>
+          </div>
 
-                      <div class="bb-bed__name">
-                        <strong><%= p.fullName %></strong>
-                        <% if (p.kana) { %><span class="bb-bed__kana"><%= p.kana %></span><% } %>
-                      </div>
+          <% wingGroups.leftBottom.forEach((room) => { %>
+            <% renderRoomCard(room, false); %>
+          <% }) %>
+        </div>
 
-                      <% if (dxNames) { %>
-                        <div class="bb-bed__dx" data-bb-group="bb-dx" title="<%= dxNames %>"><%= dxNames %></div>
-                      <% } %>
+        <!-- 中央コア: x16・x17個室 / EV・汚物室・処置室 / スタッフステーション / 休憩室・リネン・シャワー・特浴 / 看護統計1 -->
+        <div class="bb-wing bb-wing--center">
+          <div class="bb-center-rooms">
+            <% wingGroups.centerTop.forEach((room) => { %>
+              <% renderRoomCard(room, false); %>
+            <% }) %>
+          </div>
 
-                      <% if (hasCaution || hasAllergy) { %>
-                        <div class="bb-bed__alerts">
-                          <% if (hasCaution) { %>
-                            <span class="bb-tag bb-tag--caution" data-bb-group="bb-caution">注: <%= p.cautions %></span>
-                          <% } %>
-                          <% if (hasAllergy) { %>
-                            <span class="bb-tag bb-tag--allergy" data-bb-group="bb-allergy">禁: <%= p.allergies %></span>
-                          <% } %>
-                        </div>
-                      <% } %>
+          <div class="bb-facility-grid" data-bb-group="bb-facilities">
+            <div class="bb-fac-chip">EV（2基）</div>
+            <div class="bb-fac-chip">WC5・WC6・WC7</div>
+            <div class="bb-fac-chip">汚物室・不潔リネン</div>
+            <div class="bb-fac-chip">処置室・説明室</div>
+          </div>
 
-                      <div class="bb-bed__orders" data-bb-group="bb-orders">
-                        <span class="bb-ord <%= p.counts.rx > 0 ? 'is-on bb-ord--rx' : '' %>">処:<%= p.counts.rx %></span>
-                        <span class="bb-ord <%= p.counts.inj > 0 ? 'is-on bb-ord--inj' : '' %>">注:<%= p.counts.inj %></span>
-                        <span class="bb-ord <%= p.counts.rad > 0 ? 'is-on bb-ord--rad' : '' %>">放:<%= p.counts.rad %></span>
-                        <span class="bb-ord <%= p.counts.meal > 0 ? 'is-on bb-ord--meal' : '' %>">食:<%= p.counts.meal %></span>
-                        <span class="bb-ord <%= p.counts.rehab > 0 ? 'is-on bb-ord--rehab' : '' %>">リ:<%= p.counts.rehab %></span>
-                      </div>
-                    </a>
+          <div class="bb-station bb-station--<%= floorMeta.floor %>" data-bb-group="bb-facilities">
+            <div class="bb-station__name"><%= floorMeta.floorLabel %> スタッフステーション</div>
+            <div class="bb-station__sub"><%= department.name %></div>
+          </div>
 
-                    <div class="bb-bed__ops">
-                      <button
-                        type="button"
-                        class="bb-op-btn js-bb-move"
-                        data-patient-id="<%= p.patientId %>"
-                        data-patient-name="<%= p.fullName %>"
-                        data-bed-code="<%= bed.bedCode %>"
-                      >移動</button>
-                      <button
-                        type="button"
-                        class="bb-op-btn bb-op-btn--transfer js-bb-transfer"
-                        data-patient-id="<%= p.patientId %>"
-                        data-patient-name="<%= p.fullName %>"
-                        data-bed-code="<%= bed.bedCode %>"
-                      >他病棟</button>
-                      <button
-                        type="button"
-                        class="bb-op-btn bb-op-btn--discharge js-bb-discharge"
-                        data-patient-id="<%= p.patientId %>"
-                        data-patient-name="<%= p.fullName %>"
-                        data-bed-code="<%= bed.bedCode %>"
-                      >退床</button>
-                    </div>
-                  </div>
-                <% } else { %>
-                  <div
-                    class="bb-bed bb-bed--empty"
-                    data-occupied="0"
-                    data-bed-code="<%= bed.bedCode %>"
-                    data-search="<%= `${room.roomNo} ${bed.bedCode} 空床`.toLowerCase() %>"
-                  >
-                    <div class="bb-bed__top">
-                      <span class="bb-bed__code"><%= bed.bedCode %></span>
-                      <span class="bb-empty-pill">空床</span>
-                    </div>
-                    <div class="bb-bed__empty-ops">
-                      <button
-                        type="button"
-                        class="bb-op-btn bb-op-btn--admit js-bb-admit"
-                        data-bed-code="<%= bed.bedCode %>"
-                      >＋ 入床</button>
-                    </div>
-                  </div>
-                <% } %>
+          <div class="bb-facility-grid" data-bb-group="bb-facilities">
+            <div class="bb-fac-chip">休憩室・仮眠室</div>
+            <div class="bb-fac-chip">清潔リネン・収納</div>
+            <div class="bb-fac-chip">WC1〜WC4</div>
+            <div class="bb-fac-chip">シャワー・特別浴室・洗濯室</div>
+          </div>
+
+          <!-- 看護統計1（実機写真準拠） -->
+          <div class="bb-stats-box" data-bb-group="bb-facilities">
+            <div class="bb-stats-box__head">看護統計1（<%= floorMeta.floorLabel %>）</div>
+            <table class="bb-stats-table">
+              <tr>
+                <th>在床患者数</th>
+                <td class="num"><strong><%= stats.occupiedBeds %></strong> 名</td>
+                <th>男性 / 女性</th>
+                <td class="num">男 <%= stats.maleCount %> ／ 女 <%= stats.femaleCount %></td>
+              </tr>
+              <tr>
+                <th>空きベッド数</th>
+                <td class="num"><strong><%= stats.emptyBedCount %></strong> 床</td>
+                <th>総病床 / 稼働率</th>
+                <td class="num"><%= stats.totalBeds %>床（<%= stats.occupancyRate %>%）</td>
+              </tr>
+            </table>
+          </div>
+
+          <% if (wingGroups.extra && wingGroups.extra.length > 0) { %>
+            <div class="bb-extra-wrap">
+              <% wingGroups.extra.forEach((room) => { %>
+                <% renderRoomCard(room, false); %>
               <% }) %>
             </div>
-          </section>
-        <% }) %>
+          <% } %>
+        </div>
+
+        <!-- 右翼病室群: 倉庫・機械室 / x18, x20, x21, x22 / 食堂兼談話室 / x23, x25, x26 -->
+        <div class="bb-wing bb-wing--right">
+          <div class="bb-facility-grid bb-facility-grid--2" data-bb-group="bb-facilities">
+            <div class="bb-fac-chip">倉庫</div>
+            <div class="bb-fac-chip">機械室</div>
+          </div>
+
+          <% wingGroups.rightTop.forEach((room) => { %>
+            <% renderRoomCard(room, false); %>
+          <% }) %>
+
+          <div class="bb-dayroom" data-bb-group="bb-facilities">
+            <span>食堂兼談話室（<%= floorMeta.floorLabel %> デイルーム）</span>
+          </div>
+
+          <% wingGroups.rightBottom.forEach((room) => { %>
+            <% renderRoomCard(room, false); %>
+          <% }) %>
+        </div>
       </div>
     </div>
   </main>

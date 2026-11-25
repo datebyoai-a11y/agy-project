@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= statusBar.screenTitle %> | オーダリングシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/outpatientReception.css">
+</head>
+<body class="page-reception" data-visit-date="<%= visitDate %>" data-workspace-base="<%= workspaceBasePath %>">
+  <%- include('partials/statusBar', { statusBar }) %>
+
+  <main class="rcp-main">
+    <!-- 1行コンパクト操作・絞込・表示項目切替バー -->
+    <div class="rcp-toolbar" role="region" aria-label="外来受付操作・絞込・表示項目切替">
+      <div class="rcp-toolbar__group">
+        <button type="button" class="btn-cell btn-cell--primary" id="btnOpenNewReception">＋ 新規外来受付</button>
+        <input type="date" id="rcpDateInput" class="ctrl-input" value="<%= visitDate %>" aria-label="受診日">
+        <select id="rcpStatusFilter" class="ctrl-select" aria-label="状態で絞込">
+          <option value="">状態: すべて</option>
+          <option value="WAITING">診察待</option>
+          <option value="IN_EXAM">診察中</option>
+          <option value="ACCOUNTING">会計待</option>
+          <option value="DONE">完了</option>
+        </select>
+        <input
+          type="text"
+          id="rcpKeywordInput"
+          class="ctrl-input ctrl-input--search"
+          placeholder="ID・氏名・カナ・主訴・担当医"
+          aria-label="受付検索"
+        >
+        <span class="rcp-summary" id="rcpSummaryBadge">
+          計 <%= summary.total %>名（待:<%= summary.waiting %> / 診:<%= summary.inExam %> / 会計:<%= summary.accounting %> / 完:<%= summary.done %>）
+        </span>
+      </div>
+
+      <div class="rcp-toolbar__checks">
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="dept" checked>診療科/医師</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="complaint" checked>主訴</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="allergy" checked>アレルギー</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="caution" checked>注意事項</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="insurance" checked>保険</label>
+        <label class="chk-inline"><input type="checkbox" data-col-toggle="orders" checked>オーダー件数</label>
+        <label class="chk-inline"><input type="checkbox" id="chkShowCancelled" checked>取消含む</label>
+      </div>
+
+      <div class="rcp-status" id="rcpStatusMsg" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- 外来受付一覧テーブル -->
+    <div class="rcp-table-wrap">
+      <table class="rcp-table" id="receptionTable">
+        <thead>
+          <tr>
+            <th style="width:52px;">番号</th>
+            <th style="width:58px;">時刻</th>
+            <th style="width:68px;">状態</th>
+            <th style="width:64px;">区分</th>
+            <th style="width:74px;">患者ID</th>
+            <th>氏名</th>
+            <th style="width:68px;">性/年齢</th>
+            <th data-col="dept">診療科 / 担当医</th>
+            <th data-col="complaint">主訴・来院理由</th>
+            <th data-col="allergy">アレルギー</th>
+            <th data-col="caution">注意事項</th>
+            <th data-col="insurance" style="width:76px;">保険</th>
+            <th data-col="orders" style="width:128px;">オーダー</th>
+            <th style="width:210px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="receptionTableBody">
+          <%
+            const emptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+          %>
+          <% if (!receptions || receptions.length === 0) { %>
+            <tr>
+              <td colspan="14" class="rcp-empty">選択日（<%= visitDate %>）の外来受付はありません。「＋ 新規外来受付」から登録してください。</td>
+            </tr>
+          <% } else { %>
+            <% receptions.forEach((r) => { %>
+              <%
+                const timeStr = r.createdAt
+                  ? new Date(r.createdAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false })
+                  : '-';
+                const hasAllergy = Boolean(r.allergies && !emptyPat.test(String(r.allergies).trim()));
+                const hasCaution = Boolean(r.cautions && !emptyPat.test(String(r.cautions).trim()));
+                const searchStr = `${r.receptionNo} ${r.receptionNumber} ${r.patientId} ${r.patientName} ${r.patientKana} ${r.clinicDepartment} ${r.assignedDoctor} ${r.chiefComplaint}`.toLowerCase();
+              %>
+              <tr
+                class="rcp-row <%= r.isCancelled ? 'is-cancelled' : '' %>"
+                data-reception-number="<%= r.receptionNumber %>"
+                data-patient-id="<%= r.patientId %>"
+                data-status="<%= r.status %>"
+                data-cancelled="<%= r.isCancelled ? 'true' : 'false' %>"
+                data-search="<%= searchStr %>"
+              >
+                <td class="cell-center"><strong><%= r.receptionNo %></strong></td>
+                <td class="cell-center cell-nowrap"><%= timeStr %></td>
+                <td class="cell-center">
+                  <span class="rcp-st rcp-st--<%= r.status %>"><%= r.statusLabel %></span>
+                </td>
+                <td class="cell-center">
+                  <span class="rcp-vtype <%= r.visitType === '初診' ? 'rcp-vtype--first' : r.visitType === '救急・時間外' ? 'rcp-vtype--emerg' : '' %>"><%= r.visitType %></span>
+                </td>
+                <td class="cell-nowrap"><code><%= r.patientId %></code></td>
+                <td class="cell-nowrap">
+                  <a href="<%= workspaceBasePath %>?patientId=<%= encodeURIComponent(r.patientId) %>" class="rcp-pt-link">
+                    <strong><%= r.patientName %></strong>
+                  </a>
+                  <% if (r.patientKana) { %><span class="cell-muted"><%= r.patientKana %></span><% } %>
+                </td>
+                <td class="cell-center cell-nowrap"><%= r.gender %> / <%= r.age != null ? `${r.age}歳` : '-' %></td>
+                <td class="cell-nowrap" data-col="dept">
+                  <%= r.clinicDepartment %><%= r.assignedDoctor ? ` ／ ${r.assignedDoctor}` : '' %>
+                </td>
+                <td data-col="complaint">
+                  <%= r.chiefComplaint || '-' %>
+                  <% if (r.isCancelled && r.cancelReason) { %>
+                    <div class="rcp-cancel-note">取消理由: <%= r.cancelReason %>（<%= r.cancelledBy %>）</div>
+                  <% } %>
+                </td>
+                <td class="<%= hasAllergy ? 'cell-allergy' : 'cell-muted' %>" data-col="allergy">
+                  <%= hasAllergy ? r.allergies : 'なし' %>
+                </td>
+                <td class="<%= hasCaution ? 'cell-caution' : 'cell-muted' %>" data-col="caution">
+                  <%= hasCaution ? r.cautions : '-' %>
+                </td>
+                <td class="cell-nowrap" data-col="insurance"><%= r.insuranceType || '-' %></td>
+                <td class="cell-nowrap" data-col="orders">
+                  <span class="rcp-ord <%= r.counts.rx > 0 ? 'is-on rcp-ord--rx' : '' %>">処:<%= r.counts.rx %></span>
+                  <span class="rcp-ord <%= r.counts.inj > 0 ? 'is-on rcp-ord--inj' : '' %>">注:<%= r.counts.inj %></span>
+                  <span class="rcp-ord <%= r.counts.rad > 0 ? 'is-on rcp-ord--rad' : '' %>">放:<%= r.counts.rad %></span>
+                  <span class="rcp-ord <%= r.counts.rehab > 0 ? 'is-on rcp-ord--rehab' : '' %>">リ:<%= r.counts.rehab %></span>
+                </td>
+                <td class="cell-actions">
+                  <a href="<%= workspaceBasePath %>?patientId=<%= encodeURIComponent(r.patientId) %>" class="btn-cell btn-cell--primary">オーダー</a>
+                  <% if (!r.isCancelled) { %>
+                    <% if (r.status === 'WAITING') { %>
+                      <button type="button" class="btn-cell btn-cell--exam js-rcp-status" data-next="IN_EXAM">診察開始</button>
+                    <% } else if (r.status === 'IN_EXAM') { %>
+                      <button type="button" class="btn-cell btn-cell--acct js-rcp-status" data-next="ACCOUNTING">会計へ</button>
+                    <% } else if (r.status === 'ACCOUNTING') { %>
+                      <button type="button" class="btn-cell btn-cell--done js-rcp-status" data-next="DONE">完了</button>
+                    <% } %>
+                    <% if (r.status !== 'DONE') { %>
+                      <button type="button" class="btn-cell btn-cell--warn js-rcp-cancel">取消</button>
+                    <% } %>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- 新規外来受付モーダル -->
+  <div class="modal-backdrop" id="receptionModal" role="dialog" aria-modal="true" aria-labelledby="rcpModalTitle" hidden>
+    <div class="modal-window">
+      <div class="modal-header">
+        <span id="rcpModalTitle">新規外来受付登録</span>
+        <button type="button" class="modal-close-btn" id="btnCloseRcpModal" aria-label="閉じる">×</button>
+      </div>
+      <form id="receptionForm" class="modal-form">
+        <div class="modal-alert" id="rcpModalError" role="alert" hidden></div>
+
+        <div class="m-field">
+          <label for="mRcpPatientId" class="m-label">対象患者 <span class="req">*</span></label>
+          <select id="mRcpPatientId" class="m-select" required>
+            <option value="">患者を選択してください...</option>
+            <% patients.forEach((p) => { %>
+              <option value="<%= p.patientId %>">
+                [<%= p.patientId %>] <%= p.fullName %>（<%= p.careCategoryName %> / <%= p.gender %> <%= p.age != null ? p.age + '歳' : '-' %>）
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="modal-grid">
+          <div class="m-field">
+            <label for="mRcpDate" class="m-label">受診日</label>
+            <input type="date" id="mRcpDate" class="m-input" value="<%= visitDate %>" required>
+          </div>
+          <div class="m-field">
+            <label for="mRcpVisitType" class="m-label">受診区分</label>
+            <select id="mRcpVisitType" class="m-select">
+              <% visitTypes.forEach((vt) => { %>
+                <option value="<%= vt %>"><%= vt %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="m-field">
+            <label for="mRcpClinicDept" class="m-label">診療科</label>
+            <select id="mRcpClinicDept" class="m-select">
+              <% clinicDepartments.forEach((cd) => { %>
+                <option value="<%= cd %>"><%= cd %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="m-field">
+            <label for="mRcpDoctor" class="m-label">担当医師</label>
+            <select id="mRcpDoctor" class="m-select">
+              <option value="">指定なし</option>
+              <% doctors.forEach((d) => { %>
+                <option value="<%= d.fullName %>"><%= d.fullName %>（<%= d.staffId %>）</option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+
+        <div class="m-field">
+          <label for="mRcpComplaint" class="m-label">主訴・来院理由</label>
+          <input type="text" id="mRcpComplaint" class="m-input" placeholder="例: 高血圧定期受診、発熱・咳嗽、検査結果説明">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cell" id="btnCancelRcpModal">キャンセル</button>
+          <button type="submit" class="btn-cell btn-cell--primary" id="btnSubmitRcpModal">受付登録</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/statusBar.js"></script>
+  <script src="/js/outpatientReception.js"></script>
+</body>
+</html>

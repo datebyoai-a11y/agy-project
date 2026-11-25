@@ -253,6 +253,37 @@ function buildRolePermLookup(roleCode, rolePerms) {
   return map;
 }
 
+const RADIOLOGY_PRESET_GROUPS = [
+  {
+    label: 'CT検査依頼書',
+    dot: 'ct',
+    items: [
+      { label: '胸部精査（単純）', radPreset: 'ct:chest' },
+      { label: '腹部・骨盤（造影2p）', radPreset: 'ct:abdo' },
+      { label: '頭部打撲（単純）', radPreset: 'ct:head' }
+    ]
+  },
+  {
+    label: '透視検査依頼書',
+    dot: 'fluoro',
+    items: [
+      { label: 'PEG胃瘻チューブ交換', radPreset: 'fluoro:peg' },
+      { label: 'VF嚥下造影検査', radPreset: 'fluoro:vf' },
+      { label: '消化管造影検査', radPreset: 'fluoro:gi' }
+    ]
+  },
+  {
+    label: '診療X線照射録',
+    dot: 'xray',
+    items: [
+      { label: '胸部2方向（立位/側面）', radPreset: 'xray:chest' },
+      { label: '胸部ポータブル（病室）', radPreset: 'xray:portable_chest' },
+      { label: '腹部立位・臥位', radPreset: 'xray:abdo' },
+      { label: '腰椎正面・側面', radPreset: 'xray:lumbar' }
+    ]
+  }
+];
+
 /**
  * 選択中の部署 × 有効職種（権限代行時は医師）× 職種別オーダー権限マスタに応じて
  * 左列ツリーメニューを動的生成する。
@@ -266,6 +297,19 @@ function buildWorkspaceLeftMenu(departmentCode, effectiveRoleCode, rolePerms) {
   const groups = [];
 
   if (departmentCode === 'outpatient') {
+    if (canAny('admission_discharge') || effectiveRoleCode === 'doctor' || effectiveRoleCode === 'nurse') {
+      const receptionItems = [{ label: '外来受付一覧', href: '/outpatient/reception' }];
+      if (canAny('admission_discharge') || effectiveRoleCode === 'doctor' || effectiveRoleCode === 'nurse') {
+        receptionItems.push({ label: '患者情報管理', href: '/patients' });
+      }
+      groups.push({
+        label: '外来受付・患者情報',
+        badgeType: null,
+        open: true,
+        items: receptionItems
+      });
+    }
+
     if (canCreate('prescription')) {
       groups.push({
         label: '処方オーダー',
@@ -289,7 +333,8 @@ function buildWorkspaceLeftMenu(departmentCode, effectiveRoleCode, rolePerms) {
         label: '放射線検査オーダー',
         badgeType: 'rad',
         open: true,
-        items: [{ label: '新規オーダー作成', radAction: 'create' }]
+        items: [{ label: '新規オーダー作成', radAction: 'create' }],
+        subGroups: RADIOLOGY_PRESET_GROUPS
       });
     }
 
@@ -308,18 +353,6 @@ function buildWorkspaceLeftMenu(departmentCode, effectiveRoleCode, rolePerms) {
         badgeType: null,
         open: effectiveRoleCode === 'nurse',
         items: [{ label: '外来指示受け' }, { label: '問診・バイタル' }, { label: '看護記録' }]
-      });
-    }
-
-    if (canAny('admission_discharge')) {
-      groups.push({
-        label: '外来受付・患者情報',
-        badgeType: null,
-        open: effectiveRoleCode === 'clerk',
-        items: [
-          { label: '患者情報管理', href: '/patients' },
-          { label: '外来受付一覧' }
-        ]
       });
     }
 
@@ -360,7 +393,8 @@ function buildWorkspaceLeftMenu(departmentCode, effectiveRoleCode, rolePerms) {
         label: '放射線検査オーダー',
         badgeType: 'rad',
         open: isWard,
-        items: [{ label: '新規オーダー作成', radAction: 'create' }]
+        items: [{ label: '新規オーダー作成', radAction: 'create' }],
+        subGroups: RADIOLOGY_PRESET_GROUPS
       });
     }
 
@@ -422,7 +456,13 @@ function buildWorkspaceLeftMenu(departmentCode, effectiveRoleCode, rolePerms) {
       items.push({ label: '放射線科オーダー作成', radAction: 'create' });
     }
     if (items.length > 0) {
-      groups.push({ label: '放射線検査オーダー', badgeType: 'rad', open: true, items });
+      groups.push({
+        label: '放射線検査オーダー',
+        badgeType: 'rad',
+        open: true,
+        items,
+        subGroups: canCreate('radiology') ? RADIOLOGY_PRESET_GROUPS : null
+      });
     }
 
     if (canExecute('radiology')) {
@@ -487,7 +527,11 @@ function buildWorkspaceLeftMenu(departmentCode, effectiveRoleCode, rolePerms) {
         label: '受付・算定業務',
         badgeType: null,
         open: true,
-        items: [{ label: '外来受付・入退院登録' }, { label: 'オーダー算定確認' }, { label: '会計・レセプト確認' }]
+        items: [
+          { label: '外来受付一覧', href: '/outpatient/reception' },
+          { label: 'オーダー算定確認' },
+          { label: '会計・レセプト確認' }
+        ]
       });
     }
   }

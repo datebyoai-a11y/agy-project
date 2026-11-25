@@ -31,7 +31,7 @@ const INITIAL_PATIENTS = [
     birth_date: '1938-11-03',
     gender: '女',
     care_category: 'care_umikaze',
-    ward_room: '305-2',
+    ward_room: '405-2',
     blood_type: 'O',
     allergies: 'なし',
     cautions: '誤嚥注意（ソフト食）',

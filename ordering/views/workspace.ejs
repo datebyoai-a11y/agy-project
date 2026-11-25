@@ -85,6 +85,30 @@
                     <% } %>
                   </li>
                 <% }) %>
+                <% if (group.subGroups && group.subGroups.length > 0) { %>
+                  <% group.subGroups.forEach((sg) => { %>
+                    <li class="tree-subnode">
+                      <details>
+                        <summary class="tree-subnode__summary">
+                          <% if (sg.dot) { %><span class="tree-dot tree-dot--<%= sg.dot %>"></span><% } %>
+                          <span><%= sg.label %></span>
+                        </summary>
+                        <ul class="tree-children">
+                          <% (sg.items || []).forEach((sub) => { %>
+                            <li>
+                              <button
+                                type="button"
+                                class="tree-leaf"
+                                data-tree-item="<%= sub.label %>"
+                                <% if (sub.radPreset) { %>data-rad-preset="<%= sub.radPreset %>"<% } %>
+                              ><%= sub.label %></button>
+                            </li>
+                          <% }) %>
+                        </ul>
+                      </details>
+                    </li>
+                  <% }) %>
+                <% } %>
               </ul>
             </details>
           </li>
@@ -104,6 +128,7 @@
           <label class="toggle-check"><input type="checkbox" data-toggle-target="col-date" checked><span>日時</span></label>
           <label class="toggle-check"><input type="checkbox" data-toggle-target="col-author" checked><span>記載者</span></label>
           <label class="toggle-check"><input type="checkbox" data-toggle-target="col-category" checked><span>区分</span></label>
+          <label class="toggle-check"><input type="checkbox" data-toggle-target="col-allergy" checked><span>アレルギー</span></label>
           <label class="toggle-check"><input type="checkbox" id="chkWsShowFlagged" checked><span>中止/訂正</span></label>
         </div>
       </div>
@@ -115,10 +140,19 @@
               <p>過去記載はありません。</p>
             </div>
           <% } else { %>
+            <%
+              const wsAllergyEmptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+              const formatWsAllergy = (raw) => {
+                const text = String(raw || '').trim();
+                const hasVal = Boolean(text && !wsAllergyEmptyPat.test(text));
+                return { text: hasVal ? text : 'なし', hasVal };
+              };
+            %>
             <% combinedHistory.forEach((entry) => { %>
               <% if (entry.kind === 'inj') { %>
                 <%
                   const inj = entry.data;
+                  const injAllergy = formatWsAllergy(inj.patientAllergies);
                   const stLabel = inj.isSuperseded ? '訂正済' : inj.isCancelled ? '中止' : '発行済';
                   const stClass = inj.isSuperseded ? 'st-superseded' : inj.isCancelled ? 'st-cancelled' : 'st-completed';
                   const dtStr = inj.createdAt
@@ -140,6 +174,9 @@
                     <code class="ws-code"><%= inj.orderNumber %></code>
                     <span class="st-tag <%= stClass %>"><%= stLabel %></span>
                     <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__allergy <%= injAllergy.hasVal ? 'is-alert' : '' %>" data-toggle-group="col-allergy">
+                    アレルギー: <%= injAllergy.text %>
                   </div>
                   <div class="ws-hist-card__main">
                     <% if (!selectedPatient) { %>
@@ -183,6 +220,7 @@
               <% } else if (entry.kind === 'rx') { %>
                 <%
                   const rx = entry.data;
+                  const rxAllergy = formatWsAllergy(rx.patientAllergies);
                   const stLabel = rx.isSuperseded ? '訂正済' : rx.isCancelled ? '中止' : '発行済';
                   const stClass = rx.isSuperseded ? 'st-superseded' : rx.isCancelled ? 'st-cancelled' : 'st-completed';
                   const dtStr = rx.createdAt
@@ -204,6 +242,9 @@
                     <code class="ws-code"><%= rx.orderNumber %></code>
                     <span class="st-tag <%= stClass %>"><%= stLabel %></span>
                     <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__allergy <%= rxAllergy.hasVal ? 'is-alert' : '' %>" data-toggle-group="col-allergy">
+                    アレルギー: <%= rxAllergy.text %>
                   </div>
                   <div class="ws-hist-card__main">
                     <% if (!selectedPatient) { %>
@@ -238,6 +279,7 @@
               <% } else if (entry.kind === 'rad') { %>
                 <%
                   const o = entry.data;
+                  const radAllergy = formatWsAllergy(o.patientAllergies);
                   const stLabel = o.isSuperseded
                     ? '訂正済'
                     : o.isCancelled
@@ -275,6 +317,9 @@
                     <code class="ws-code"><%= o.orderNumber %></code>
                     <span class="st-tag <%= stClass %>"><%= stLabel %></span>
                     <span class="ws-date" data-toggle-group="col-date"><%= dtStr %></span>
+                  </div>
+                  <div class="ws-hist-card__allergy <%= radAllergy.hasVal ? 'is-alert' : '' %>" data-toggle-group="col-allergy">
+                    アレルギー: <%= radAllergy.text %>
                   </div>
                   <div class="ws-hist-card__main">
                     <% if (!selectedPatient) { %>

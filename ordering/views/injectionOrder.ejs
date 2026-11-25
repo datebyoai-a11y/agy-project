@@ -63,6 +63,7 @@
       <!-- 中列: 過去記載（表示項目チェックボックスのみ / タイトル・ショートカットボタンなし） -->
       <section class="pane pane--history" aria-label="過去注射履歴">
         <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="allergy" checked>アレルギー</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="date" checked>日時</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="author" checked>記載者</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="route" checked>経路・速度</label>
@@ -71,11 +72,16 @@
         </div>
 
         <div class="history-list" id="pastInjList">
+          <%
+            const injAllergyEmptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+          %>
           <% if (!pastInjections || pastInjections.length === 0) { %>
             <div class="empty-msg">過去の<%= injectionKind.screenTitle %>履歴はありません。</div>
           <% } else { %>
             <% pastInjections.forEach((inj) => { %>
               <%
+                const injAlgRaw = String(inj.patientAllergies || '').trim();
+                const injAlgHas = Boolean(injAlgRaw && !injAllergyEmptyPat.test(injAlgRaw));
                 const stLabel = inj.isSuperseded ? '訂正済' : inj.isCancelled ? '中止' : '発行済';
                 const stCls = inj.isSuperseded ? 'st-superseded' : inj.isCancelled ? 'st-cancelled' : 'st-ordered';
                 const dtStr = inj.createdAt
@@ -96,6 +102,9 @@
                   <code class="hist-num"><%= inj.orderNumber %></code>
                   <span class="st-tag <%= stCls %>"><%= stLabel %></span>
                   <span class="hist-date" data-hist-item="date"><%= dtStr %></span>
+                </div>
+                <div class="hist-allergy <%= injAlgHas ? 'is-alert' : '' %>" data-hist-item="allergy">
+                  アレルギー: <%= injAlgHas ? injAlgRaw : 'なし' %>
                 </div>
                 <% if (!selectedPatient) { %>
                   <div class="hist-patient">[<%= inj.patientId %>] <%= inj.patientName %></div>

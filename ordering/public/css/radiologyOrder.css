@@ -247,6 +247,20 @@
   color: var(--text-secondary);
 }
 
+.hist-item__allergy {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.hist-item__allergy.is-alert {
+  color: #dc2626;
+  font-weight: 700;
+  background: #fef2f2;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
 .hist-item__flag {
   margin-top: 2px;
   color: var(--danger);
@@ -425,6 +439,12 @@
 
 .s-mono { font-family: monospace; font-weight: 700; }
 .s-bold { font-weight: 700; }
+.s-input.is-allergy-alert {
+  color: #dc2626;
+  font-weight: 700;
+  border-color: #f87171;
+  background: #fef2f2;
+}
 .s-kana { max-width: 130px; font-size: 11px; }
 .s-room { max-width: 72px; }
 .s-time { max-width: 82px; }

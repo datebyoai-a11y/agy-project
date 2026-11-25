@@ -4,137 +4,155 @@
   <meta charset="UTF-8">
   <title>リハビリテーション指示箋 (<%= order.orderNumber %>)</title>
   <style>
-    @page { size: A4 portrait; margin: 12mm; }
+    @page { size: A4 portrait; margin: 10mm; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 12px; color: #000; background: #eee; }
-    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 11.5px; color: #000; background: #cbd5e1; }
+    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
     .no-print button { padding: 4px 12px; font-weight: 700; cursor: pointer; }
-    .sheet { width: 186mm; margin: 8mm auto; background: #fff; padding: 10mm; border: 1px solid #000; }
-    .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 8px; }
+    .a4-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 6mm auto;
+      background: #fff;
+      padding: 10mm;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+    }
+    .sheet-inner {
+      flex: 1;
+      border: 1.5px solid #000;
+      padding: 6mm;
+      display: flex;
+      flex-direction: column;
+    }
+    .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 8px; }
     .head-title { font-size: 17px; font-weight: 700; letter-spacing: 3px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 9px; }
-    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
-    th { background: #f3f4f6; text-align: left; width: 18%; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; line-height: 1.35; }
+    th { background: #f3f4f6; text-align: left; width: 18%; white-space: nowrap; }
     .flag-banner { border: 2px solid #b91c1c; color: #b91c1c; padding: 4px 8px; font-weight: 700; margin-bottom: 8px; }
-    .sign-grid { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .sign-grid { width: 100%; border-collapse: collapse; margin-top: auto; margin-bottom: 0; }
     .sign-grid th { text-align: center; width: 33.3%; }
     .sign-grid td { height: 20mm; }
     @media print {
       body { background: #fff; }
       .no-print { display: none; }
-      .sheet { margin: 0; border: none; width: 100%; padding: 0; }
+      .a4-sheet { margin: 0; padding: 0; width: 190mm; min-height: 277mm; box-shadow: none; }
     }
   </style>
 </head>
 <body>
   <div class="no-print">
-    <span>リハビリテーション指示箋プレビュー: <%= order.orderNumber %></span>
+    <span>リハビリテーション指示箋プレビュー（A4縦）: <%= order.orderNumber %></span>
     <div>
       <button type="button" onclick="window.print()">印刷</button>
       <button type="button" onclick="window.close()">閉じる</button>
     </div>
   </div>
 
-  <div class="sheet">
-    <div class="head">
-      <span>指示番号: <strong><%= order.orderNumber %></strong></span>
-      <span class="head-title">リ ハ ビ リ テ ー シ ョ ン 指 示 箋</span>
-      <span><%= order.rehabCategory %></span>
+  <div class="a4-sheet">
+    <div class="sheet-inner">
+      <div class="head">
+        <span>指示番号: <strong><%= order.orderNumber %></strong></span>
+        <span class="head-title">リ ハ ビ リ テ ー シ ョ ン 指 示 箋</span>
+        <span><%= order.rehabCategory %></span>
+      </div>
+
+      <% if (order.isCancelled) { %>
+        <div class="flag-banner">【中止】<%= order.cancelReason %>（<%= order.cancelledBy %>）</div>
+      <% } %>
+      <% if (order.isSuperseded) { %>
+        <div class="flag-banner">【訂正済】新指示番号: <%= order.supersededBy %></div>
+      <% } %>
+
+      <table>
+        <tr>
+          <th>患者ID</th>
+          <td><strong><%= order.patientId %></strong></td>
+          <th>氏名（カナ）</th>
+          <td><strong><%= order.patientName %></strong>（<%= order.patientKana || '-' %>）</td>
+        </tr>
+        <tr>
+          <th>生年月日/性/年齢</th>
+          <td><%= order.birthDate || '-' %> / <%= order.gender %> / <%= order.age != null ? order.age + '歳' : '-' %></td>
+          <th>区分・病室</th>
+          <td><%= order.ward %> <%= order.room ? order.room + '号室' : '' %></td>
+        </tr>
+        <tr>
+          <th>指示日 / 発症日</th>
+          <td><%= order.orderDate %> ／ 発症・起算: <%= order.onsetDate || '-' %></td>
+          <th>指示医師</th>
+          <td><%= order.doctorName %></td>
+        </tr>
+      </table>
+
+      <table>
+        <tr>
+          <th>診断名・算定病名</th>
+          <td colspan="3"><strong><%= order.diagnosisName %></strong>（<%= order.rehabCategory %>）</td>
+        </tr>
+        <tr>
+          <th>実施頻度・単位</th>
+          <td><strong><%= order.frequencyPerWeek %> ／ <%= order.unitsPerDay %></strong></td>
+          <th>期間・実施場所</th>
+          <td><%= order.durationMonths %> ／ <%= order.location %></td>
+        </tr>
+        <tr>
+          <th>急変・安全リスク</th>
+          <td colspan="3"><%= (order.risks && order.risks.length) ? order.risks.join(' ／ ') : '特記なし' %></td>
+        </tr>
+        <tr>
+          <th>酸素投与量</th>
+          <td><%= order.oxygenFlow || '-' %></td>
+          <th>禁忌・中止基準</th>
+          <td><%= order.contraindications || '-' %></td>
+        </tr>
+        <tr>
+          <th>リハ必要性・目標</th>
+          <td colspan="3"><%= order.necessityReason || '-' %></td>
+        </tr>
+      </table>
+
+      <table>
+        <tr>
+          <th>理学療法（PT）</th>
+          <td><%= (order.ptItems && order.ptItems.length) ? order.ptItems.join(' ／ ') : '-' %></td>
+        </tr>
+        <tr>
+          <th>作業療法（OT）</th>
+          <td><%= (order.otItems && order.otItems.length) ? order.otItems.join(' ／ ') : '-' %></td>
+        </tr>
+        <tr>
+          <th>言語聴覚療法（ST）</th>
+          <td><%= (order.stItems && order.stItems.length) ? order.stItems.join(' ／ ') : '-' %></td>
+        </tr>
+        <tr>
+          <th>評価・物理療法</th>
+          <td><%= (order.evalItems && order.evalItems.length) ? order.evalItems.join(' ／ ') : '-' %></td>
+        </tr>
+        <tr>
+          <th>特記事項・備考</th>
+          <td>
+            <%= order.remarks || '-' %>
+            <% if (order.parentOrderNumber) { %> 【訂正元: <%= order.parentOrderNumber %>】<% } %>
+          </td>
+        </tr>
+      </table>
+
+      <table class="sign-grid">
+        <tr>
+          <th>指示医師署名・印</th>
+          <th>リハビリ科受付・担当療法士</th>
+          <th>医療病棟・連携確認</th>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
     </div>
-
-    <% if (order.isCancelled) { %>
-      <div class="flag-banner">【中止】<%= order.cancelReason %>（<%= order.cancelledBy %>）</div>
-    <% } %>
-    <% if (order.isSuperseded) { %>
-      <div class="flag-banner">【訂正済】新指示番号: <%= order.supersededBy %></div>
-    <% } %>
-
-    <table>
-      <tr>
-        <th>患者ID</th>
-        <td><strong><%= order.patientId %></strong></td>
-        <th>氏名（カナ）</th>
-        <td><strong><%= order.patientName %></strong>（<%= order.patientKana || '-' %>）</td>
-      </tr>
-      <tr>
-        <th>生年月日/性/年齢</th>
-        <td><%= order.birthDate || '-' %> / <%= order.gender %> / <%= order.age != null ? order.age + '歳' : '-' %></td>
-        <th>区分・病室</th>
-        <td><%= order.ward %> <%= order.room ? order.room + '号室' : '' %></td>
-      </tr>
-      <tr>
-        <th>指示日 / 発症日</th>
-        <td><%= order.orderDate %> ／ 発症・起算: <%= order.onsetDate || '-' %></td>
-        <th>指示医師</th>
-        <td><%= order.doctorName %></td>
-      </tr>
-    </table>
-
-    <table>
-      <tr>
-        <th>診断名・算定病名</th>
-        <td colspan="3"><strong><%= order.diagnosisName %></strong>（<%= order.rehabCategory %>）</td>
-      </tr>
-      <tr>
-        <th>実施頻度・単位</th>
-        <td><strong><%= order.frequencyPerWeek %> ／ <%= order.unitsPerDay %></strong></td>
-        <th>期間・実施場所</th>
-        <td><%= order.durationMonths %> ／ <%= order.location %></td>
-      </tr>
-      <tr>
-        <th>急変・安全リスク</th>
-        <td colspan="3"><%= (order.risks && order.risks.length) ? order.risks.join(' ／ ') : '特記なし' %></td>
-      </tr>
-      <tr>
-        <th>酸素投与量</th>
-        <td><%= order.oxygenFlow || '-' %></td>
-        <th>禁忌・中止基準</th>
-        <td><%= order.contraindications || '-' %></td>
-      </tr>
-      <tr>
-        <th>リハ必要性・目標</th>
-        <td colspan="3"><%= order.necessityReason || '-' %></td>
-      </tr>
-    </table>
-
-    <table>
-      <tr>
-        <th>理学療法（PT）</th>
-        <td><%= (order.ptItems && order.ptItems.length) ? order.ptItems.join(' ／ ') : '-' %></td>
-      </tr>
-      <tr>
-        <th>作業療法（OT）</th>
-        <td><%= (order.otItems && order.otItems.length) ? order.otItems.join(' ／ ') : '-' %></td>
-      </tr>
-      <tr>
-        <th>言語聴覚療法（ST）</th>
-        <td><%= (order.stItems && order.stItems.length) ? order.stItems.join(' ／ ') : '-' %></td>
-      </tr>
-      <tr>
-        <th>評価・物理療法</th>
-        <td><%= (order.evalItems && order.evalItems.length) ? order.evalItems.join(' ／ ') : '-' %></td>
-      </tr>
-      <tr>
-        <th>特記事項・備考</th>
-        <td>
-          <%= order.remarks || '-' %>
-          <% if (order.parentOrderNumber) { %> 【訂正元: <%= order.parentOrderNumber %>】<% } %>
-        </td>
-      </tr>
-    </table>
-
-    <table class="sign-grid">
-      <tr>
-        <th>指示医師署名・印</th>
-        <th>リハビリ科受付・担当療法士</th>
-        <th>病棟・連携確認</th>
-      </tr>
-      <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-    </table>
   </div>
 
   <% if (autoPrint) { %>

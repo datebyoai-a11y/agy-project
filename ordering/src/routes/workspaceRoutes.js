@@ -176,21 +176,29 @@ router.get('/workspace/:departmentCode/:roleCode', requireAuth, async (req, res,
       return Number.isNaN(t) ? 0 : t;
     };
 
+    const patientAllergiesMap = Object.fromEntries(
+      allPatients.map((p) => [p.patientId, p.allergies || ''])
+    );
+    const attachAllergy = (rec) => ({
+      ...rec,
+      patientAllergies: patientAllergiesMap[rec.patientId] || ''
+    });
+
     const combinedHistory = [
       ...prescriptions.map((rx) => ({
         kind: 'rx',
         sortMs: toSortMs(rx.createdAt || rx.startDate),
-        data: rx
+        data: attachAllergy(rx)
       })),
       ...injectionOrders.map((inj) => ({
         kind: 'inj',
         sortMs: toSortMs(inj.createdAt || inj.startDate),
-        data: inj
+        data: attachAllergy(inj)
       })),
       ...radiologyOrders.map((o) => ({
         kind: 'rad',
         sortMs: toSortMs(o.createdAt || o.scheduledDate),
-        data: o
+        data: attachAllergy(o)
       })),
       ...mealOrders.map((m) => ({
         kind: 'meal',

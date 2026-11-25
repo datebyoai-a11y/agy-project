@@ -25,6 +25,7 @@
   const fRoom = document.getElementById('fRoom');
   const isEmbed = document.body.dataset.embed === '1';
   const initialReviseOrder = document.body.dataset.revise || '';
+  const initialPreset = document.body.dataset.preset || '';
   const fSchedDate = document.getElementById('fSchedDate');
   const fSchedTime = document.getElementById('fSchedTime');
   const fDoctorName = document.getElementById('fDoctorName');
@@ -37,6 +38,21 @@
   const fRequestDept = document.getElementById('fRequestDept');
   const fCtContrast = document.getElementById('fCtContrast');
   const fXrayDvd = document.getElementById('fXrayDvd');
+
+  const ALLERGY_EMPTY_PAT = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+  function syncAllergyPresetStyle(el) {
+    if (!el) return;
+    const val = String(el.value || '').trim();
+    const isAlert = Boolean(val && !ALLERGY_EMPTY_PAT.test(val));
+    el.classList.toggle('is-allergy-alert', isAlert);
+  }
+  function syncAllAllergyPresets() {
+    document.querySelectorAll('.js-allergy-preset').forEach(syncAllergyPresetStyle);
+  }
+  document.querySelectorAll('.js-allergy-preset').forEach((el) => {
+    el.addEventListener('input', () => syncAllergyPresetStyle(el));
+    syncAllergyPresetStyle(el);
+  });
 
   function showStatus(msg, isError) {
     if (!statusEl) return;
@@ -203,83 +219,94 @@
     if (portCb) portCb.checked = false;
   }
 
+  function applyPreset(preset) {
+    if (!preset) return;
+    clearModalityInputs();
+    setNowDateTime();
+
+    if (preset === 'ct:chest') {
+      switchFormType('CT');
+      setCircleValue('ctContrast', '単純');
+      const c = form.querySelector('input[name="ctParts"][value="胸部 (肺・横隔)"]');
+      if (c) c.checked = true;
+      document.getElementById('fCtPurpose').value = '発熱・咳嗽持続のため肺炎疑い、胸部精査';
+    } else if (preset === 'ct:abdo') {
+      switchFormType('CT');
+      setCircleValue('ctContrast', '造影');
+      ['腹部 (肝・胆・膵・腎)', '骨盤腔'].forEach((v) => {
+        const c = form.querySelector(`input[name="ctParts"][value="${v}"]`);
+        if (c) c.checked = true;
+      });
+      document.getElementById('fCtPurpose').value = '腹痛・肝胆膵病変精査のため腹部骨盤造影CT';
+    } else if (preset === 'ct:head') {
+      switchFormType('CT');
+      setCircleValue('ctContrast', '単純');
+      const c = form.querySelector('input[name="ctParts"][value="頭部"]');
+      if (c) c.checked = true;
+      document.getElementById('fCtPurpose').value = '転倒・頭部打撲後の頭蓋内出血否定、精査';
+    } else if (preset === 'fluoro:peg') {
+      switchFormType('FLUORO');
+      const e = form.querySelector('input[name="fluoroExam"][value="PEG交換"]');
+      if (e) e.checked = true;
+      ['ガストログラフィン 20ml', 'キシロカインゼリー2% 10ml'].forEach((v) => {
+        const m = form.querySelector(`input[name="fluoroMed"][value="${v}"]`);
+        if (m) m.checked = true;
+      });
+      document.getElementById('fFluoroMaterials').value = 'ガストロボタン 24Fr 3.5cm、交換用シリンジ、滅菌ガーゼ';
+      document.getElementById('fFluoroPurpose').value = '定期PEGチューブ交換、胃内留置位置の造影確認';
+    } else if (preset === 'fluoro:vf') {
+      switchFormType('FLUORO');
+      const e = form.querySelector('input[name="fluoroExam"][value="VF検査"]');
+      if (e) e.checked = true;
+      const m = form.querySelector('input[name="fluoroMed"][value="硫酸バリウム散98.8%ホリイ 300g"]');
+      if (m) m.checked = true;
+      document.getElementById('fFluoroMaterials').value = '嚥下食、トロミ水、バリウム液';
+      document.getElementById('fFluoroPurpose').value = '誤嚥・嚥下障害の評価、嚥下造影検査(VF)';
+    } else if (preset === 'fluoro:gi') {
+      switchFormType('FLUORO');
+      const e = form.querySelector('input[name="fluoroExam"][value="消化管造影検査"]');
+      if (e) e.checked = true;
+      const m = form.querySelector('input[name="fluoroMed"][value="ガストログラフィン 20ml"]');
+      if (m) m.checked = true;
+      document.getElementById('fFluoroPurpose').value = '通過障害・消化管造影評価';
+    } else if (preset === 'xray:chest') {
+      switchFormType('XRAY');
+      const p = form.querySelector('input[name="xrayParts"][value="① 胸部 (立位 PA / 側面 R-L)"]');
+      if (p) p.checked = true;
+      document.getElementById('fXrayPurpose').value = '経過観察、胸水・気胸・心拡大の有無確認';
+    } else if (preset === 'xray:portable_chest') {
+      switchFormType('XRAY');
+      const p = form.querySelector('input[name="xrayParts"][value="① 胸部 (立位 PA / 側面 R-L)"]');
+      if (p) p.checked = true;
+      document.getElementById('fIsPortable').checked = true;
+      document.getElementById('fPortableRoom').value = fRoom.value || '';
+      setCircleValue('mobility', 'ベッド');
+      document.getElementById('fXrayPurpose').value = '病室ポータブル胸部撮影（肺炎・胸水・チューブ位置確認）';
+    } else if (preset === 'xray:abdo') {
+      switchFormType('XRAY');
+      const p = form.querySelector('input[name="xrayParts"][value="② 腹部 (立位 / 臥位)"]');
+      if (p) p.checked = true;
+      document.getElementById('fXrayPurpose').value = '腹痛・イレウス疑い、ニボー像・フリーエア確認';
+    } else if (preset === 'xray:lumbar') {
+      switchFormType('XRAY');
+      const p = form.querySelector('input[name="xrayParts"][value="③ 腰椎 (正面 / 側面)"]');
+      if (p) p.checked = true;
+      document.getElementById('fXrayPurpose').value = '腰痛精査、圧迫骨折・変形性脊椎症の確認';
+    }
+    showStatus('プリセットを適用しました。', false);
+  }
+
   document.querySelectorAll('[data-preset]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const preset = btn.getAttribute('data-preset');
-      clearModalityInputs();
-      setNowDateTime();
-
-      if (preset === 'ct:chest') {
-        switchFormType('CT');
-        setCircleValue('ctContrast', '単純');
-        const c = form.querySelector('input[name="ctParts"][value="胸部 (肺・横隔)"]');
-        if (c) c.checked = true;
-        document.getElementById('fCtPurpose').value = '発熱・咳嗽持続のため肺炎疑い、胸部精査';
-      } else if (preset === 'ct:abdo') {
-        switchFormType('CT');
-        setCircleValue('ctContrast', '造影');
-        ['腹部 (肝・胆・膵・腎)', '骨盤腔'].forEach((v) => {
-          const c = form.querySelector(`input[name="ctParts"][value="${v}"]`);
-          if (c) c.checked = true;
-        });
-        document.getElementById('fCtPurpose').value = '腹痛・肝胆膵病変精査のため腹部骨盤造影CT';
-      } else if (preset === 'ct:head') {
-        switchFormType('CT');
-        setCircleValue('ctContrast', '単純');
-        const c = form.querySelector('input[name="ctParts"][value="頭部"]');
-        if (c) c.checked = true;
-        document.getElementById('fCtPurpose').value = '転倒・頭部打撲後の頭蓋内出血否定、精査';
-      } else if (preset === 'fluoro:peg') {
-        switchFormType('FLUORO');
-        const e = form.querySelector('input[name="fluoroExam"][value="PEG交換"]');
-        if (e) e.checked = true;
-        ['ガストログラフィン 20ml', 'キシロカインゼリー2% 10ml'].forEach((v) => {
-          const m = form.querySelector(`input[name="fluoroMed"][value="${v}"]`);
-          if (m) m.checked = true;
-        });
-        document.getElementById('fFluoroMaterials').value = 'ガストロボタン 24Fr 3.5cm、交換用シリンジ、滅菌ガーゼ';
-        document.getElementById('fFluoroPurpose').value = '定期PEGチューブ交換、胃内留置位置の造影確認';
-      } else if (preset === 'fluoro:vf') {
-        switchFormType('FLUORO');
-        const e = form.querySelector('input[name="fluoroExam"][value="VF検査"]');
-        if (e) e.checked = true;
-        const m = form.querySelector('input[name="fluoroMed"][value="硫酸バリウム散98.8%ホリイ 300g"]');
-        if (m) m.checked = true;
-        document.getElementById('fFluoroMaterials').value = '嚥下食、トロミ水、バリウム液';
-        document.getElementById('fFluoroPurpose').value = '誤嚥・嚥下障害の評価、嚥下造影検査(VF)';
-      } else if (preset === 'fluoro:gi') {
-        switchFormType('FLUORO');
-        const e = form.querySelector('input[name="fluoroExam"][value="消化管造影検査"]');
-        if (e) e.checked = true;
-        const m = form.querySelector('input[name="fluoroMed"][value="ガストログラフィン 20ml"]');
-        if (m) m.checked = true;
-        document.getElementById('fFluoroPurpose').value = '通過障害・消化管造影評価';
-      } else if (preset === 'xray:chest') {
-        switchFormType('XRAY');
-        const p = form.querySelector('input[name="xrayParts"][value="① 胸部 (立位 PA / 側面 R-L)"]');
-        if (p) p.checked = true;
-        document.getElementById('fXrayPurpose').value = '経過観察、胸水・気胸・心拡大の有無確認';
-      } else if (preset === 'xray:portable_chest') {
-        switchFormType('XRAY');
-        const p = form.querySelector('input[name="xrayParts"][value="① 胸部 (立位 PA / 側面 R-L)"]');
-        if (p) p.checked = true;
-        document.getElementById('fIsPortable').checked = true;
-        document.getElementById('fPortableRoom').value = fRoom.value || '';
-        setCircleValue('mobility', 'ベッド');
-        document.getElementById('fXrayPurpose').value = '病室ポータブル胸部撮影（肺炎・胸水・チューブ位置確認）';
-      } else if (preset === 'xray:abdo') {
-        switchFormType('XRAY');
-        const p = form.querySelector('input[name="xrayParts"][value="② 腹部 (立位 / 臥位)"]');
-        if (p) p.checked = true;
-        document.getElementById('fXrayPurpose').value = '腹痛・イレウス疑い、ニボー像・フリーエア確認';
-      } else if (preset === 'xray:lumbar') {
-        switchFormType('XRAY');
-        const p = form.querySelector('input[name="xrayParts"][value="③ 腰椎 (正面 / 側面)"]');
-        if (p) p.checked = true;
-        document.getElementById('fXrayPurpose').value = '腰痛精査、圧迫骨折・変形性脊椎症の確認';
-      }
-      showStatus('プリセットを適用しました。', false);
+      applyPreset(btn.getAttribute('data-preset'));
     });
+  });
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin) return;
+    if (event.data && event.data.type === 'APPLY_RADIOLOGY_PRESET' && event.data.preset) {
+      applyPreset(event.data.preset);
+    }
   });
 
   // 訂正再発行モード
@@ -362,6 +389,7 @@
         setCircleValue('xrayDvd', order.mediaDvd || '未');
       }
 
+      syncAllAllergyPresets();
       showStatus(`オーダー ${order.orderNumber} を訂正再発行用に読み込みました。`, false);
     } catch (err) {
       showStatus(err.message, true);
@@ -539,5 +567,7 @@
   setNowDateTime();
   if (initialReviseOrder) {
     loadOrderForRevision(initialReviseOrder);
+  } else if (initialPreset) {
+    applyPreset(initialPreset);
   }
 })();

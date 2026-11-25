@@ -13,12 +13,15 @@ const injectionRepository = require('./repositories/injectionRepository');
 const mealOrderRepository = require('./repositories/mealOrderRepository');
 const rehabOrderRepository = require('./repositories/rehabOrderRepository');
 const bedMovementRepository = require('./repositories/bedMovementRepository');
+const outpatientReceptionRepository = require('./repositories/outpatientReceptionRepository');
+const patientRepository = require('./repositories/patientRepository');
 const userRepository = require('./repositories/userRepository');
 const roleOrderRepository = require('./repositories/roleOrderRepository');
 const { formatActorForRecord } = require('./utils/actorHelper');
 const { DEFAULT_ROLE_ORDER_PERMISSIONS } = require('./config/constants');
 const authRoutes = require('./routes/authRoutes');
 const bedboardRoutes = require('./routes/bedboardRoutes');
+const outpatientReceptionRoutes = require('./routes/outpatientReceptionRoutes');
 const workspaceRoutes = require('./routes/workspaceRoutes');
 const userRoutes = require('./routes/userRoutes');
 const patientRoutes = require('./routes/patientRoutes');
@@ -75,6 +78,7 @@ app.use(async (req, res, next) => {
 
 app.use('/', authRoutes);
 app.use('/', bedboardRoutes);
+app.use('/', outpatientReceptionRoutes);
 app.use('/', workspaceRoutes);
 app.use('/', userRoutes);
 app.use('/', patientRoutes);
@@ -101,6 +105,8 @@ async function start() {
   await mealOrderRepository.ensureIndexes();
   await rehabOrderRepository.ensureIndexes();
   await bedMovementRepository.ensureIndexes();
+  await outpatientReceptionRepository.ensureIndexes();
+  await outpatientReceptionRepository.seedInitialIfEmpty(await patientRepository.findAll());
   await roleOrderRepository.seedDefaults(DEFAULT_ROLE_ORDER_PERMISSIONS);
 
   const server = app.listen(PORT, HOST, () => {

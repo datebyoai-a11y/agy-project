@@ -61,6 +61,7 @@
       <!-- 中列: 過去記載（表示項目チェックボックスのみ / タイトル・ショートカットボタンなし） -->
       <section class="pane pane--history" aria-label="過去処方履歴">
         <div class="pane__bar">
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="allergy" checked>アレルギー</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="date" checked>日時</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="author" checked>記載者</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="method" checked>分割・服用</label>
@@ -69,11 +70,16 @@
         </div>
 
         <div class="history-list" id="pastRxList">
+          <%
+            const rxAllergyEmptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+          %>
           <% if (!pastPrescriptions || pastPrescriptions.length === 0) { %>
             <div class="empty-msg">過去の処方履歴はありません。</div>
           <% } else { %>
             <% pastPrescriptions.forEach((rx) => { %>
               <%
+                const rxAlgRaw = String(rx.patientAllergies || '').trim();
+                const rxAlgHas = Boolean(rxAlgRaw && !rxAllergyEmptyPat.test(rxAlgRaw));
                 const stLabel = rx.isSuperseded ? '訂正済' : rx.isCancelled ? '中止' : '発行済';
                 const stCls = rx.isSuperseded ? 'st-superseded' : rx.isCancelled ? 'st-cancelled' : 'st-ordered';
                 const dtStr = rx.createdAt
@@ -94,6 +100,9 @@
                   <code class="hist-num"><%= rx.orderNumber %></code>
                   <span class="st-tag <%= stCls %>"><%= stLabel %></span>
                   <span class="hist-date" data-hist-item="date"><%= dtStr %></span>
+                </div>
+                <div class="hist-allergy <%= rxAlgHas ? 'is-alert' : '' %>" data-hist-item="allergy">
+                  アレルギー: <%= rxAlgHas ? rxAlgRaw : 'なし' %>
                 </div>
                 <% if (!selectedPatient) { %>
                   <div class="hist-patient">[<%= rx.patientId %>] <%= rx.patientName %></div>

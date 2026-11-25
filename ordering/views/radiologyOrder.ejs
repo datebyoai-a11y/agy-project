@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/css/common.css">
   <link rel="stylesheet" href="/css/radiologyOrder.css">
 </head>
-<body class="page-rad-order <%= isEmbed ? 'is-embed' : '' %>" data-embed="<%= isEmbed ? '1' : '0' %>" data-revise="<%= reviseOrderNumber || '' %>">
+<body class="page-rad-order <%= isEmbed ? 'is-embed' : '' %>" data-embed="<%= isEmbed ? '1' : '0' %>" data-revise="<%= reviseOrderNumber || '' %>" data-preset="<%= initialPreset || '' %>">
   <% if (!isEmbed) { %>
     <%- include('partials/statusBar', { statusBar }) %>
   <% } %>
@@ -117,17 +117,29 @@
       <div class="pane__bar">
         <span class="pane__label">過去オーダー（<%= selectedPatient ? selectedPatient.fullName : '全患者' %>）</span>
         <div class="pane__checks">
+          <label class="chk-inline"><input type="checkbox" data-hist-toggle="allergy" checked>アレルギー</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="purpose" checked>目的</label>
           <label class="chk-inline"><input type="checkbox" data-hist-toggle="cond">条件</label>
           <label class="chk-inline"><input type="checkbox" id="toggleHistoryInactive" checked>中止/訂正済</label>
         </div>
       </div>
       <div class="history-list" id="pastOrdersList">
+        <%
+          const radAllergyEmptyPat = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+          const hasRadAllergyVal = (raw) => {
+            const s = String(raw || '').trim();
+            return Boolean(s && !radAllergyEmptyPat.test(s));
+          };
+          const presetAllergyText = selectedPatient && selectedPatient.allergies ? String(selectedPatient.allergies).trim() : '';
+          const presetAllergyAlert = hasRadAllergyVal(presetAllergyText);
+        %>
         <% if (!pastOrders || pastOrders.length === 0) { %>
           <div class="empty-msg">過去の放射線オーダーはありません。</div>
         <% } else { %>
           <% pastOrders.forEach((o) => { %>
             <%
+              const oAllergyHas = hasRadAllergyVal(o.patientAllergies);
+              const oAllergyText = oAllergyHas ? String(o.patientAllergies).trim() : 'なし';
               const stLabel = o.isSuperseded
                 ? '訂正済'
                 : o.isCancelled
@@ -165,6 +177,9 @@
                 <code class="hist-num"><%= o.orderNumber %></code>
                 <span class="st-tag <%= stClass %>"><%= stLabel %></span>
                 <span class="hist-date"><%= dtStr %></span>
+              </div>
+              <div class="hist-item__allergy <%= oAllergyHas ? 'is-alert' : '' %>" data-hist-item="allergy">
+                アレルギー: <%= oAllergyText %>
               </div>
               <div class="hist-item__main">
                 <% if (!selectedPatient) { %>
@@ -407,7 +422,7 @@
                 <tr>
                   <th>備考/禁忌</th>
                   <td>
-                    <input type="text" id="fCtRemarks" class="s-input" value="<%= selectedPatient && selectedPatient.allergies ? selectedPatient.allergies : '' %>" placeholder="アレルギー・造影禁忌・注意事項">
+                    <input type="text" id="fCtRemarks" class="s-input js-allergy-preset <%= presetAllergyAlert ? 'is-allergy-alert' : '' %>" value="<%= presetAllergyText %>" placeholder="アレルギー・造影禁忌・注意事項">
                   </td>
                 </tr>
               </table>
@@ -481,7 +496,7 @@
                 <tr>
                   <th>備考</th>
                   <td>
-                    <input type="text" id="fFluoroRemarks" class="s-input" value="<%= selectedPatient && selectedPatient.allergies ? selectedPatient.allergies : '' %>" placeholder="注意事項・アレルギー">
+                    <input type="text" id="fFluoroRemarks" class="s-input js-allergy-preset <%= presetAllergyAlert ? 'is-allergy-alert' : '' %>" value="<%= presetAllergyText %>" placeholder="注意事項・アレルギー">
                   </td>
                 </tr>
               </table>
@@ -573,7 +588,7 @@
                 <tr>
                   <th>備考</th>
                   <td>
-                    <input type="text" id="fXrayRemarks" class="s-input" value="<%= selectedPatient && selectedPatient.allergies ? selectedPatient.allergies : '' %>" placeholder="注意事項">
+                    <input type="text" id="fXrayRemarks" class="s-input js-allergy-preset <%= presetAllergyAlert ? 'is-allergy-alert' : '' %>" value="<%= presetAllergyText %>" placeholder="注意事項">
                   </td>
                 </tr>
               </table>

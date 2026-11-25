@@ -165,12 +165,18 @@ router.get('/radiology', requireAuth, async (req, res, next) => {
       '外来';
     const sourceDept = String(req.query.sourceDept || sessionUser.departmentCode || '').trim();
     const reviseOrderNumber = String(req.query.revise || '').trim();
+    const initialPreset = String(req.query.preset || '').trim();
 
-    const pastOrders = isEmbed
+    const allergyMap = Object.fromEntries(patients.map((p) => [p.patientId, p.allergies || '']));
+    const rawPastOrders = isEmbed
       ? []
       : selectedPatient
         ? await radiologyOrderRepository.findByPatientId(selectedPatient.patientId)
         : await radiologyOrderRepository.findOrders({ status: 'ALL', includeInactive: true });
+    const pastOrders = rawPastOrders.map((o) => ({
+      ...o,
+      patientAllergies: allergyMap[o.patientId] || ''
+    }));
 
     res.render('radiologyOrder', {
       statusBar: {
@@ -188,7 +194,8 @@ router.get('/radiology', requireAuth, async (req, res, next) => {
       isEmbed,
       initialWard,
       sourceDept,
-      reviseOrderNumber
+      reviseOrderNumber,
+      initialPreset
     });
   } catch (err) {
     next(err);
@@ -265,6 +272,13 @@ router.get('/api/radiology-orders', requireAuth, async (req, res, next) => {
         includeInactive: showInactive
       });
     }
+
+    const allPatients = await patientRepository.findAll();
+    const allergyMap = Object.fromEntries(allPatients.map((p) => [p.patientId, p.allergies || '']));
+    orders = orders.map((o) => ({
+      ...o,
+      patientAllergies: allergyMap[o.patientId] || ''
+    }));
 
     const grouped = { xray: [], ct: [], fluoro: [] };
     for (const o of orders) {

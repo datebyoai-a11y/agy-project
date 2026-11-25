@@ -151,8 +151,23 @@
 
   let currentEmbedType = '';
 
-  function openRadiologyEmbed(reviseOrderNumber) {
+  function openRadiologyEmbed(reviseOrderNumber, presetKey) {
     if (!embedFrame) return;
+    if (
+      presetKey &&
+      !reviseOrderNumber &&
+      currentEmbedType === 'rad' &&
+      embedWrap &&
+      !embedWrap.hidden &&
+      embedFrame.contentWindow
+    ) {
+      embedFrame.contentWindow.postMessage(
+        { type: 'APPLY_RADIOLOGY_PRESET', preset: presetKey },
+        window.location.origin
+      );
+      setStatusTitle('放射線検査オーダー');
+      return;
+    }
     const params = new URLSearchParams({
       embed: '1',
       sourceDept: deptCode,
@@ -160,6 +175,7 @@
     });
     if (selectedPatientId) params.set('patientId', selectedPatientId);
     if (reviseOrderNumber) params.set('revise', reviseOrderNumber);
+    if (presetKey) params.set('preset', presetKey);
     currentEmbedType = 'rad';
     embedFrame.src = `/radiology?${params.toString()}`;
     setStatusTitle('放射線検査オーダー');
@@ -275,6 +291,13 @@
       return Number.isNaN(t) ? 0 : t;
     }
 
+    const ALLERGY_EMPTY_PAT = /^(なし|無し|無|none|-|ー|―|特になし)$/i;
+    function renderAllergyLine(raw) {
+      const text = String(raw || '').trim();
+      const hasVal = Boolean(text && !ALLERGY_EMPTY_PAT.test(text));
+      return `<div class="ws-hist-card__allergy ${hasVal ? 'is-alert' : ''}" data-toggle-group="col-allergy">アレルギー: ${esc(hasVal ? text : 'なし')}</div>`;
+    }
+
     function renderInjCard(inj) {
       const st = getRxStatusMeta(inj);
       const flagged = Boolean(inj.isCancelled || inj.isSuperseded);
@@ -302,6 +325,7 @@
             <span class="st-tag ${st.cls}">${st.label}</span>
             <span class="ws-date" data-toggle-group="col-date">${fmtDateTime(inj.createdAt)}</span>
           </div>
+          ${renderAllergyLine(inj.patientAllergies)}
           <div class="ws-hist-card__main">
             ${!selectedPatientId ? `<span class="ws-pt">[${esc(inj.patientId)}] ${esc(inj.patientName)}</span>` : ''}
             ${itemLines}
@@ -338,6 +362,7 @@
             <span class="st-tag ${st.cls}">${st.label}</span>
             <span class="ws-date" data-toggle-group="col-date">${fmtDateTime(rx.createdAt)}</span>
           </div>
+          ${renderAllergyLine(rx.patientAllergies)}
           <div class="ws-hist-card__main">
             ${!selectedPatientId ? `<span class="ws-pt">[${esc(rx.patientId)}] ${esc(rx.patientName)}</span>` : ''}
             ${rpLines}
@@ -371,6 +396,7 @@
             <span class="st-tag ${st.cls}">${st.label}</span>
             <span class="ws-date" data-toggle-group="col-date">${fmtDateTime(o.createdAt || o.scheduledDate)}</span>
           </div>
+          ${renderAllergyLine(o.patientAllergies)}
           <div class="ws-hist-card__main">
             ${!selectedPatientId ? `<span class="ws-pt">[${esc(o.patientId)}] ${esc(o.patientName)}</span>` : ''}
             <strong>${esc(o.examType)}</strong>
@@ -648,7 +674,12 @@
 
       const radAction = btn.getAttribute('data-rad-action');
       if (radAction === 'create') {
-        openRadiologyEmbed('');
+        openRadiologyEmbed('', '');
+        return;
+      }
+      const radPreset = btn.getAttribute('data-rad-preset');
+      if (radPreset) {
+        openRadiologyEmbed('', radPreset);
         return;
       }
       if (radAction === 'list') {

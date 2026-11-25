@@ -234,7 +234,8 @@ router.get('/injections/:kind(inpatient|outpatient)', requireAuth, async (req, r
     const sourceDept = String(req.query.sourceDept || sessionUser.departmentCode || '').trim();
     const reviseOrderNumber = String(req.query.revise || '').trim();
 
-    const pastInjections = isEmbed
+    const allergyMap = Object.fromEntries(allPatients.map((p) => [p.patientId, p.allergies || '']));
+    const rawPastInjections = isEmbed
       ? []
       : selectedPatient
         ? await injectionRepository.findByPatientId(selectedPatient.patientId, {
@@ -244,6 +245,10 @@ router.get('/injections/:kind(inpatient|outpatient)', requireAuth, async (req, r
             includeInactive: true,
             injectionType: injectionKind.injectionType
           });
+    const pastInjections = rawPastInjections.map((inj) => ({
+      ...inj,
+      patientAllergies: allergyMap[inj.patientId] || ''
+    }));
 
     res.render('injectionOrder', {
       statusBar: {
@@ -307,6 +312,13 @@ router.get('/api/injections', requireAuth, async (req, res, next) => {
     } else {
       injections = await injectionRepository.findAll({ includeInactive, injectionType });
     }
+
+    const allPatients = await patientRepository.findAll();
+    const allergyMap = Object.fromEntries(allPatients.map((p) => [p.patientId, p.allergies || '']));
+    injections = injections.map((inj) => ({
+      ...inj,
+      patientAllergies: allergyMap[inj.patientId] || ''
+    }));
 
     res.set('Cache-Control', 'no-store');
     return res.json({ ok: true, count: injections.length, injections });

@@ -195,11 +195,16 @@ router.get('/prescriptions/:kind(adhoc|regular|outpatient)', requireAuth, async 
     const reviseOrderNumber = String(req.query.revise || '').trim();
     const doOrderNumber = String(req.query.do || '').trim();
 
-    const pastPrescriptions = isEmbed
+    const allergyMap = Object.fromEntries(allPatients.map((p) => [p.patientId, p.allergies || '']));
+    const rawPastPrescriptions = isEmbed
       ? []
       : selectedPatient
         ? await prescriptionRepository.findByPatientId(selectedPatient.patientId)
         : await prescriptionRepository.findAll({ includeInactive: true });
+    const pastPrescriptions = rawPastPrescriptions.map((rx) => ({
+      ...rx,
+      patientAllergies: allergyMap[rx.patientId] || ''
+    }));
 
     res.render('adhocPrescription', {
       statusBar: {
@@ -263,6 +268,13 @@ router.get('/api/prescriptions', requireAuth, async (req, res, next) => {
     } else {
       prescriptions = await prescriptionRepository.findAll({ includeInactive });
     }
+
+    const allPatients = await patientRepository.findAll();
+    const allergyMap = Object.fromEntries(allPatients.map((p) => [p.patientId, p.allergies || '']));
+    prescriptions = prescriptions.map((rx) => ({
+      ...rx,
+      patientAllergies: allergyMap[rx.patientId] || ''
+    }));
 
     res.set('Cache-Control', 'no-store');
     return res.json({ ok: true, count: prescriptions.length, prescriptions });

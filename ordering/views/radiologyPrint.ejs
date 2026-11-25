@@ -4,44 +4,78 @@
   <meta charset="UTF-8">
   <title><%= order.formName %> (<%= order.orderNumber %>)</title>
   <style>
-    @page { size: A4 portrait; margin: 10mm; }
+    @page { size: A4 portrait; margin: 8mm; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 11px; color: #000; background: #eee; }
-    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    body { margin: 0; font-family: "Noto Sans JP", "Yu Gothic", sans-serif; font-size: 10px; color: #000; background: #cbd5e1; }
+    .no-print { padding: 6px 12px; background: #15314b; color: #fff; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
     .no-print button { padding: 4px 12px; font-weight: 700; cursor: pointer; }
-    .sheet { width: 190mm; margin: 8mm auto; background: #fff; padding: 6mm; display: flex; flex-direction: column; gap: 6mm; }
-    .slip { border: 1.5px solid #000; }
-    .bar { height: 10px; border-bottom: 1.5px solid #000; }
+    .a4-sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 6mm auto;
+      padding: 8mm;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .a5-slip {
+      height: 136mm;
+      border: 1.5px solid #000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+    .bar { height: 7px; border-bottom: 1.5px solid #000; flex-shrink: 0; }
     .bar-CT { background: #facc15; }
     .bar-FLUORO { background: #0284c7; }
     .bar-XRAY { background: #16a34a; }
-    .slip-head { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; border-bottom: 1px solid #000; }
-    .slip-title { font-size: 15px; font-weight: 700; letter-spacing: 3px; }
-    .copy-badge { border: 1.5px solid #000; padding: 1px 8px; font-weight: 700; font-size: 11px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #000; padding: 3px 6px; vertical-align: top; }
-    th { background: #f3f4f6; width: 18%; text-align: left; }
-    .cut-line { border-top: 1px dashed #666; text-align: center; font-size: 9px; color: #555; padding-top: 2px; }
+    .slip-head { display: flex; justify-content: space-between; align-items: center; padding: 3px 8px; border-bottom: 1px solid #000; flex-shrink: 0; }
+    .slip-title { font-size: 14px; font-weight: 700; letter-spacing: 3px; }
+    .copy-badge { border: 1.5px solid #000; padding: 1px 6px; font-weight: 700; font-size: 9.5px; }
+    table { width: 100%; border-collapse: collapse; flex: 1; }
+    th, td { border: 1px solid #000; padding: 3px 6px; vertical-align: top; line-height: 1.25; }
+    th { background: #f3f4f6; width: 18%; text-align: left; white-space: nowrap; }
+    .cut-line {
+      height: 5mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: 8.5px;
+      color: #555;
+    }
+    .cut-line::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 1px dashed #666;
+    }
+    .cut-line span { position: relative; background: #fff; padding: 0 6px; }
     @media print {
       body { background: #fff; }
       .no-print { display: none; }
-      .sheet { margin: 0; padding: 0; width: 100%; }
+      .a4-sheet { margin: 0; padding: 0; width: 194mm; height: 281mm; box-shadow: none; }
     }
   </style>
 </head>
 <body>
   <div class="no-print">
-    <span>伝票プレビュー（A4 正・控え2枚組）: <%= order.orderNumber %></span>
+    <span>伝票プレビュー（A5正副／A4縦1枚）: <%= order.orderNumber %></span>
     <div>
       <button type="button" onclick="window.print()">印刷</button>
       <button type="button" onclick="window.close()">閉じる</button>
     </div>
   </div>
 
-  <div class="sheet">
-    <% ['【正】放射線科提出用', '【控え】病棟・外来保管用'].forEach((copyLabel, idx) => { %>
-      <% if (idx === 1) { %><div class="cut-line">切り取り線</div><% } %>
-      <div class="slip">
+  <div class="a4-sheet">
+    <% ['【正】放射線科提出用', '【副】医療病棟・外来保管用'].forEach((copyLabel, idx) => { %>
+      <% if (idx === 1) { %><div class="cut-line"><span>切り取り線（A5 正・副）</span></div><% } %>
+      <section class="a5-slip">
         <div class="bar bar-<%= order.formType %>"></div>
         <div class="slip-head">
           <span>オーダー番号: <strong><%= order.orderNumber %></strong></span>
@@ -96,7 +130,7 @@
             </td>
           </tr>
         </table>
-      </div>
+      </section>
     <% }) %>
   </div>
 
